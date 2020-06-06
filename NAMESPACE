@@ -1,0 +1,16 @@
+useDynLib(dlmtree.dev, .registration=TRUE)
+importFrom(Rcpp, evalCpp)
+exportPattern("^[[:alpha:]]+")
+S3method(summary, tdlnm)
+S3method(plot, summary.tdlnm)
+export(tdlnm)
+export(summary.tdlnm)
+export(plot.summary.tdlnm)
+import(ggplot2)
+import(viridis)
+importFrom("stats", "as.formula", "dgamma", "dnorm", "ecdf",
+               "model.frame", "model.matrix", "model.response", "qnorm",
+               "quantile", "rbeta", "rbinom", "rgamma", "rgeom",
+               "rmultinom", "rnorm", "runif", "sd", "terms.formula",
+               "time")
+importFrom("utils", "data")
