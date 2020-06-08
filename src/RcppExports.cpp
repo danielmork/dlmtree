@@ -9,7 +9,7 @@ using namespace Rcpp;
 
 // controlEst
 List controlEst(const Eigen::Map<Eigen::VectorXd> R, const Eigen::Map<Eigen::MatrixXd> Z, const Eigen::Map<Eigen::MatrixXd> V, const Eigen::Map<Eigen::MatrixXd> Vchol, double sigma2, double sumTermXP, double sumFexp);
-RcppExport SEXP _dlmtree_dev_controlEst(SEXP RSEXP, SEXP ZSEXP, SEXP VSEXP, SEXP VcholSEXP, SEXP sigma2SEXP, SEXP sumTermXPSEXP, SEXP sumFexpSEXP) {
+RcppExport SEXP _dlmtree_controlEst(SEXP RSEXP, SEXP ZSEXP, SEXP VSEXP, SEXP VcholSEXP, SEXP sigma2SEXP, SEXP sumTermXPSEXP, SEXP sumFexpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -26,7 +26,7 @@ END_RCPP
 }
 // cppIntersection
 std::vector<int> cppIntersection(const IntegerVector& A, const IntegerVector& B);
-RcppExport SEXP _dlmtree_dev_cppIntersection(SEXP ASEXP, SEXP BSEXP) {
+RcppExport SEXP _dlmtree_cppIntersection(SEXP ASEXP, SEXP BSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -38,7 +38,7 @@ END_RCPP
 }
 // dlnmEst
 SEXP dlnmEst(arma::dmat dlnm, arma::dvec xsplits, int nlags, int nsamp, double center, double se, bool smooth, bool dlm);
-RcppExport SEXP _dlmtree_dev_dlnmEst(SEXP dlnmSEXP, SEXP xsplitsSEXP, SEXP nlagsSEXP, SEXP nsampSEXP, SEXP centerSEXP, SEXP seSEXP, SEXP smoothSEXP, SEXP dlmSEXP) {
+RcppExport SEXP _dlmtree_dlnmEst(SEXP dlnmSEXP, SEXP xsplitsSEXP, SEXP nlagsSEXP, SEXP nsampSEXP, SEXP centerSEXP, SEXP seSEXP, SEXP smoothSEXP, SEXP dlmSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -56,7 +56,7 @@ END_RCPP
 }
 // dlnmMHR1
 List dlnmMHR1(const Eigen::Map<Eigen::VectorXd>& Y, const Eigen::Map<Eigen::MatrixXd>& Z, double& XX, const Eigen::Map<Eigen::VectorXd>& ZtX, const Eigen::Map<Eigen::VectorXd>& VgZtX, const Eigen::Map<Eigen::MatrixXd>& Vg, const Eigen::Map<Eigen::VectorXd>& Xd, const Eigen::Map<Eigen::VectorXd>& ZY, double LInv, double sigma);
-RcppExport SEXP _dlmtree_dev_dlnmMHR1(SEXP YSEXP, SEXP ZSEXP, SEXP XXSEXP, SEXP ZtXSEXP, SEXP VgZtXSEXP, SEXP VgSEXP, SEXP XdSEXP, SEXP ZYSEXP, SEXP LInvSEXP, SEXP sigmaSEXP) {
+RcppExport SEXP _dlmtree_dlnmMHR1(SEXP YSEXP, SEXP ZSEXP, SEXP XXSEXP, SEXP ZtXSEXP, SEXP VgZtXSEXP, SEXP VgSEXP, SEXP XdSEXP, SEXP ZYSEXP, SEXP LInvSEXP, SEXP sigmaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -76,7 +76,7 @@ END_RCPP
 }
 // dlnmMHR
 List dlnmMHR(const Eigen::Map<Eigen::VectorXd>& Y, const Eigen::Map<Eigen::MatrixXd>& Z, const Eigen::Map<Eigen::MatrixXd>& ZtX, const Eigen::Map<Eigen::MatrixXd>& VgZtX, const Eigen::Map<Eigen::MatrixXd>& Vg, const Eigen::Map<Eigen::MatrixXd>& Xd, const Eigen::Map<Eigen::VectorXd>& ZY, double LInv, double sigma);
-RcppExport SEXP _dlmtree_dev_dlnmMHR(SEXP YSEXP, SEXP ZSEXP, SEXP ZtXSEXP, SEXP VgZtXSEXP, SEXP VgSEXP, SEXP XdSEXP, SEXP ZYSEXP, SEXP LInvSEXP, SEXP sigmaSEXP) {
+RcppExport SEXP _dlmtree_dlnmMHR(SEXP YSEXP, SEXP ZSEXP, SEXP ZtXSEXP, SEXP VgZtXSEXP, SEXP VgSEXP, SEXP XdSEXP, SEXP ZYSEXP, SEXP LInvSEXP, SEXP sigmaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -95,7 +95,7 @@ END_RCPP
 }
 // minmax
 NumericVector minmax(NumericVector x);
-RcppExport SEXP _dlmtree_dev_minmax(SEXP xSEXP) {
+RcppExport SEXP _dlmtree_minmax(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -106,7 +106,7 @@ END_RCPP
 }
 // nodeCount
 List nodeCount(const Eigen::Map<Eigen::MatrixXd>& X, const Eigen::Map<Eigen::MatrixXd>& Z, const Eigen::Map<Eigen::MatrixXd>& Vg, NumericVector parCount, double xmin, double xmax, double tmin, double tmax);
-RcppExport SEXP _dlmtree_dev_nodeCount(SEXP XSEXP, SEXP ZSEXP, SEXP VgSEXP, SEXP parCountSEXP, SEXP xminSEXP, SEXP xmaxSEXP, SEXP tminSEXP, SEXP tmaxSEXP) {
+RcppExport SEXP _dlmtree_nodeCount(SEXP XSEXP, SEXP ZSEXP, SEXP VgSEXP, SEXP parCountSEXP, SEXP xminSEXP, SEXP xmaxSEXP, SEXP tminSEXP, SEXP tmaxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -124,7 +124,7 @@ END_RCPP
 }
 // nodeCountSE
 List nodeCountSE(const Eigen::Map<Eigen::MatrixXd>& X, const Eigen::Map<Eigen::MatrixXd>& SE, const Eigen::Map<Eigen::MatrixXd>& Z, const Eigen::Map<Eigen::MatrixXd>& Vg, NumericVector parCount, double xmin, double xmax, double tmin, double tmax);
-RcppExport SEXP _dlmtree_dev_nodeCountSE(SEXP XSEXP, SEXP SESEXP, SEXP ZSEXP, SEXP VgSEXP, SEXP parCountSEXP, SEXP xminSEXP, SEXP xmaxSEXP, SEXP tminSEXP, SEXP tmaxSEXP) {
+RcppExport SEXP _dlmtree_nodeCountSE(SEXP XSEXP, SEXP SESEXP, SEXP ZSEXP, SEXP VgSEXP, SEXP parCountSEXP, SEXP xminSEXP, SEXP xmaxSEXP, SEXP tminSEXP, SEXP tmaxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -143,18 +143,18 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_dlmtree_dev_controlEst", (DL_FUNC) &_dlmtree_dev_controlEst, 7},
-    {"_dlmtree_dev_cppIntersection", (DL_FUNC) &_dlmtree_dev_cppIntersection, 2},
-    {"_dlmtree_dev_dlnmEst", (DL_FUNC) &_dlmtree_dev_dlnmEst, 8},
-    {"_dlmtree_dev_dlnmMHR1", (DL_FUNC) &_dlmtree_dev_dlnmMHR1, 10},
-    {"_dlmtree_dev_dlnmMHR", (DL_FUNC) &_dlmtree_dev_dlnmMHR, 9},
-    {"_dlmtree_dev_minmax", (DL_FUNC) &_dlmtree_dev_minmax, 1},
-    {"_dlmtree_dev_nodeCount", (DL_FUNC) &_dlmtree_dev_nodeCount, 8},
-    {"_dlmtree_dev_nodeCountSE", (DL_FUNC) &_dlmtree_dev_nodeCountSE, 9},
+    {"_dlmtree_controlEst", (DL_FUNC) &_dlmtree_controlEst, 7},
+    {"_dlmtree_cppIntersection", (DL_FUNC) &_dlmtree_cppIntersection, 2},
+    {"_dlmtree_dlnmEst", (DL_FUNC) &_dlmtree_dlnmEst, 8},
+    {"_dlmtree_dlnmMHR1", (DL_FUNC) &_dlmtree_dlnmMHR1, 10},
+    {"_dlmtree_dlnmMHR", (DL_FUNC) &_dlmtree_dlnmMHR, 9},
+    {"_dlmtree_minmax", (DL_FUNC) &_dlmtree_minmax, 1},
+    {"_dlmtree_nodeCount", (DL_FUNC) &_dlmtree_nodeCount, 8},
+    {"_dlmtree_nodeCountSE", (DL_FUNC) &_dlmtree_nodeCountSE, 9},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_dlmtree_dev(DllInfo *dll) {
+RcppExport void R_init_dlmtree(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

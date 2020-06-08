@@ -1,6 +1,6 @@
-Package: dlmtree.dev
+Package: dlmtree
 Type: Package
-Title: Bayesian Treed Distributed Lag Models (developmental version)
+Title: Bayesian Treed Distributed Lag Models
 Version: 0.3.0
 Author: Daniel Mork
 Maintainer: Daniel Mork <daniel.mork@colostate.edu>

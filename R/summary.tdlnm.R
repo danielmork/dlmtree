@@ -1,4 +1,21 @@
-summary.tdlnm <- function(object, pred.at = c(), cenval = 0, conf.level = 0.95,
+#' summary.tdlnm
+#'
+#' @param object an object of class 'tdlnm', result of a call to tdlnm
+#' @param pred.at numerical vector of exposure values to make predictions for
+#' at each time period
+#' @param cenval scalar exposure value that acts as a reference point for
+#' predictions at all other exposure values
+#' @param conf.level confidence level for computation of credible intervals
+#' @param exposure.se smoothing factor, if different from model
+#'
+#' @return
+#' @export
+#'
+#' @examples
+summary.tdlnm <- function(object, 
+                          pred.at = c(), 
+                          cenval = 0, 
+                          conf.level = 0.95,
                           exposure.se = NULL)
 {
   Iter <-  max(object$DLM$Iter)

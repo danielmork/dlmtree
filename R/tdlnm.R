@@ -1,9 +1,49 @@
-tdlnm <- function(formula, data,
-                  exposure.data, exposure.se = NULL, exposure.splits = 100,
-                  n.trees = 20, n.burn = 2000, n.iter = 5000, n.thin = 10,
-                  tree.params = c(.95, 2), step.prob = c(.3, .4),
+#' tdlnm
+#'
+#' @param formula object of class formula, a symbolic description of the fixed 
+#' effect model to be fitted, e.g. y ~ a + b
+#' @param data data frome containing variables used in the formula
+#' @param exposure.data numerical matrix of complete exposure data with same
+#' length as data
+#' @param exposure.se numerical matrix of exposure standard errors with same
+#' length as data or scalar smoothing factor representing a uniform standard
+#' error over each exposure measurement
+#' @param exposure.splits scalar indicating the number of splits (divided
+#' evenly across quantiles of the exposure data) or list with two components:
+#' 'type' set to 'values' or 'quantiles', and 'split.vals' set as a numerical
+#' vector indicating the corresponding exposure values or quantiles for splits
+#' @param n.trees integer for number of trees in ensemble (default = 20)
+#' @param n.burn integer for length of burn-in
+#' @param n.iter integer for number of iterations to run model after burn-in
+#' @param n.thin integer thinning factor, i.e. keep every tenth iteration
+#' @param tree.params numerical vector of alpha and beta hyperparameters 
+#' controlling tree depth (see Bayesian CART, 1998)
+#' @param step.prob numerical vector for probability of 1) grow/prune, 2) change
+#' @param subset integer vector to analyze only a subset of data and exposures
+#' @param verbose true/false print output
+#' @param diagnostics true/false keep model diagnostic such as terminal nodes, 
+#' acceptance details, etc.
+#' @param ... NA
+#'
+#' @return
+#' @export
+#'
+#' @examples
+tdlnm <- function(formula, 
+                  data,
+                  exposure.data, 
+                  exposure.se = NULL, 
+                  exposure.splits = 100,
+                  n.trees = 20, 
+                  n.burn = 2000, 
+                  n.iter = 5000, 
+                  n.thin = 10,
+                  tree.params = c(.95, 2), 
+                  step.prob = c(.3, .4),
                   subset = c(),
-                  verbose = TRUE, diagnostics = FALSE, ...)
+                  verbose = TRUE, 
+                  diagnostics = FALSE, 
+                  ...)
 {
   # ---- Check inputs ----
   options(stringsAsFactors = F)

@@ -14,46 +14,46 @@
 #' * new gamma estimate
 #' * new xi estimate (sigma2 hyperparameter)
 controlEst <- function(R, Z, V, Vchol, sigma2, sumTermXP, sumFexp) {
-    .Call(`_dlmtree_dev_controlEst`, R, Z, V, Vchol, sigma2, sumTermXP, sumFexp)
+    .Call(`_dlmtree_controlEst`, R, Z, V, Vchol, sigma2, sumTermXP, sumFexp)
 }
 
 cppIntersection <- function(A, B) {
-    .Call(`_dlmtree_dev_cppIntersection`, A, B)
+    .Call(`_dlmtree_cppIntersection`, A, B)
 }
 
 dlnmEst <- function(dlnm, xsplits, nlags, nsamp, center, se, smooth, dlm) {
-    .Call(`_dlmtree_dev_dlnmEst`, dlnm, xsplits, nlags, nsamp, center, se, smooth, dlm)
+    .Call(`_dlmtree_dlnmEst`, dlnm, xsplits, nlags, nsamp, center, se, smooth, dlm)
 }
 
 #' @param
 #'
 #' @return
 dlnmMHR1 <- function(Y, Z, XX, ZtX, VgZtX, Vg, Xd, ZY, LInv, sigma) {
-    .Call(`_dlmtree_dev_dlnmMHR1`, Y, Z, XX, ZtX, VgZtX, Vg, Xd, ZY, LInv, sigma)
+    .Call(`_dlmtree_dlnmMHR1`, Y, Z, XX, ZtX, VgZtX, Vg, Xd, ZY, LInv, sigma)
 }
 
 #' @param
 #'
 #' @return
 dlnmMHR <- function(Y, Z, ZtX, VgZtX, Vg, Xd, ZY, LInv, sigma) {
-    .Call(`_dlmtree_dev_dlnmMHR`, Y, Z, ZtX, VgZtX, Vg, Xd, ZY, LInv, sigma)
+    .Call(`_dlmtree_dlnmMHR`, Y, Z, ZtX, VgZtX, Vg, Xd, ZY, LInv, sigma)
 }
 
 minmax <- function(x) {
-    .Call(`_dlmtree_dev_minmax`, x)
+    .Call(`_dlmtree_minmax`, x)
 }
 
 #' @param
 #'
 #' @return
 nodeCount <- function(X, Z, Vg, parCount, xmin, xmax, tmin, tmax) {
-    .Call(`_dlmtree_dev_nodeCount`, X, Z, Vg, parCount, xmin, xmax, tmin, tmax)
+    .Call(`_dlmtree_nodeCount`, X, Z, Vg, parCount, xmin, xmax, tmin, tmax)
 }
 
 #' @param
 #'
 #' @return
 nodeCountSE <- function(X, SE, Z, Vg, parCount, xmin, xmax, tmin, tmax) {
-    .Call(`_dlmtree_dev_nodeCountSE`, X, SE, Z, Vg, parCount, xmin, xmax, tmin, tmax)
+    .Call(`_dlmtree_nodeCountSE`, X, SE, Z, Vg, parCount, xmin, xmax, tmin, tmax)
 }
 
