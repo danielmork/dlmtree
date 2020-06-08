@@ -17,10 +17,6 @@ controlEst <- function(R, Z, V, Vchol, sigma2, sumTermXP, sumFexp) {
     .Call(`_dlmtree_controlEst`, R, Z, V, Vchol, sigma2, sumTermXP, sumFexp)
 }
 
-cppIntersection <- function(A, B) {
-    .Call(`_dlmtree_cppIntersection`, A, B)
-}
-
 dlnmEst <- function(dlnm, xsplits, nlags, nsamp, center, se, smooth, dlm) {
     .Call(`_dlmtree_dlnmEst`, dlnm, xsplits, nlags, nsamp, center, se, smooth, dlm)
 }
@@ -39,20 +35,10 @@ dlnmMHR <- function(Y, Z, ZtX, VgZtX, Vg, Xd, ZY, LInv, sigma) {
     .Call(`_dlmtree_dlnmMHR`, Y, Z, ZtX, VgZtX, Vg, Xd, ZY, LInv, sigma)
 }
 
-minmax <- function(x) {
-    .Call(`_dlmtree_minmax`, x)
-}
-
-#' @param
-#'
-#' @return
 nodeCount <- function(X, Z, Vg, parCount, xmin, xmax, tmin, tmax) {
     .Call(`_dlmtree_nodeCount`, X, Z, Vg, parCount, xmin, xmax, tmin, tmax)
 }
 
-#' @param
-#'
-#' @return
 nodeCountSE <- function(X, SE, Z, Vg, parCount, xmin, xmax, tmin, tmax) {
     .Call(`_dlmtree_nodeCountSE`, X, SE, Z, Vg, parCount, xmin, xmax, tmin, tmax)
 }

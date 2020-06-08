@@ -13,4 +13,4 @@ Depends: R (>= 3.6.0)
 Imports: Rcpp (>= 0.12.16), ggplot2, viridis
 Recommended: gganimate, doParallel
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.0

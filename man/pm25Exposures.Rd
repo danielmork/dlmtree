@@ -4,7 +4,9 @@
 \name{pm25Exposures}
 \alias{pm25Exposures}
 \title{PM2.5 Exposure data}
-\format{}
+\format{
+
+}
 \source{
 
 }

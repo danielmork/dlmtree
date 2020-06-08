@@ -7,9 +7,7 @@ double phi(double x1, double x2)
 {
   return (erf(x2/sqrt(2)) - erf(x1/sqrt(2)))/2;
 }
-//' @param
-//'
-//' @return
+
 // [[Rcpp::export]]
 
 List nodeCount(const Eigen::Map<Eigen::MatrixXd> &X,
@@ -59,9 +57,7 @@ List nodeCount(const Eigen::Map<Eigen::MatrixXd> &X,
   }
 }
 
-//' @param
-//'
-//' @return
+
 // [[Rcpp::export]]
 
 List nodeCountSE(const Eigen::Map<Eigen::MatrixXd> &X,
@@ -79,11 +75,6 @@ List nodeCountSE(const Eigen::Map<Eigen::MatrixXd> &X,
   double checkZero = 1.11e-16;
   bool empty = true;
   bool sibempty = true;
-  // for (int j = tmin - 1; j < tmax; j++) {
-  //   for (int i = 0; i < X.nrow(); i++) {
-  //     nvec[i] += phi((xmin - X(i,j)) / SE(i,j), (xmax - X(i,j)) / SE(i, j));
-  //   }
-  // }
 
 
   for (int i = 0; i < X.rows(); i++) {
@@ -119,11 +110,4 @@ List nodeCountSE(const Eigen::Map<Eigen::MatrixXd> &X,
                         Named("SibZtX") = wrap(sZtX),
                         Named("SibVgZtX") = wrap(Vg * sZtX));
   }
-
-  // double snvec = sum(nvec);
-  //
-  // if (snvec == 0)
-  //   return List::create(Named("Empty") = wrap(1));
-  // else
-  //   return List::create(Named("Empty") = wrap(0), Named("Count") = wrap(nvec/(sqrt(X.nrow()) * X.ncol())));
 }

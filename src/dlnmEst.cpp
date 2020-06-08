@@ -7,8 +7,8 @@ double phi2(double x1, double x2)
   return (erf(x2/sqrt(2)) - erf(x1/sqrt(2)))/2;
 }
 
-
 // [[Rcpp::export]]
+
 SEXP dlnmEst(arma::dmat dlnm,
                    arma::dvec xsplits,
                    int nlags,

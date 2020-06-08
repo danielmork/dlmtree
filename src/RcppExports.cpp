@@ -24,18 +24,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// cppIntersection
-std::vector<int> cppIntersection(const IntegerVector& A, const IntegerVector& B);
-RcppExport SEXP _dlmtree_cppIntersection(SEXP ASEXP, SEXP BSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const IntegerVector& >::type A(ASEXP);
-    Rcpp::traits::input_parameter< const IntegerVector& >::type B(BSEXP);
-    rcpp_result_gen = Rcpp::wrap(cppIntersection(A, B));
-    return rcpp_result_gen;
-END_RCPP
-}
 // dlnmEst
 SEXP dlnmEst(arma::dmat dlnm, arma::dvec xsplits, int nlags, int nsamp, double center, double se, bool smooth, bool dlm);
 RcppExport SEXP _dlmtree_dlnmEst(SEXP dlnmSEXP, SEXP xsplitsSEXP, SEXP nlagsSEXP, SEXP nsampSEXP, SEXP centerSEXP, SEXP seSEXP, SEXP smoothSEXP, SEXP dlmSEXP) {
@@ -93,17 +81,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// minmax
-NumericVector minmax(NumericVector x);
-RcppExport SEXP _dlmtree_minmax(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(minmax(x));
-    return rcpp_result_gen;
-END_RCPP
-}
 // nodeCount
 List nodeCount(const Eigen::Map<Eigen::MatrixXd>& X, const Eigen::Map<Eigen::MatrixXd>& Z, const Eigen::Map<Eigen::MatrixXd>& Vg, NumericVector parCount, double xmin, double xmax, double tmin, double tmax);
 RcppExport SEXP _dlmtree_nodeCount(SEXP XSEXP, SEXP ZSEXP, SEXP VgSEXP, SEXP parCountSEXP, SEXP xminSEXP, SEXP xmaxSEXP, SEXP tminSEXP, SEXP tmaxSEXP) {
@@ -144,11 +121,9 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dlmtree_controlEst", (DL_FUNC) &_dlmtree_controlEst, 7},
-    {"_dlmtree_cppIntersection", (DL_FUNC) &_dlmtree_cppIntersection, 2},
     {"_dlmtree_dlnmEst", (DL_FUNC) &_dlmtree_dlnmEst, 8},
     {"_dlmtree_dlnmMHR1", (DL_FUNC) &_dlmtree_dlnmMHR1, 10},
     {"_dlmtree_dlnmMHR", (DL_FUNC) &_dlmtree_dlnmMHR, 9},
-    {"_dlmtree_minmax", (DL_FUNC) &_dlmtree_minmax, 1},
     {"_dlmtree_nodeCount", (DL_FUNC) &_dlmtree_nodeCount, 8},
     {"_dlmtree_nodeCountSE", (DL_FUNC) &_dlmtree_nodeCountSE, 9},
     {NULL, NULL, 0}

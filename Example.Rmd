@@ -7,7 +7,7 @@ output: pdf_document
 
 # Code example of TDLNM
 ```{r}
-library(dlmtree.dev)
+library(dlmtree)
 data("pm25Exposures")
 pm25Exposures <- log(pm25Exposures[which(pm25Exposures$S == "Colorado"),-c(1:2)])[,1:37]
 n <- nrow(pm25Exposures)
@@ -59,8 +59,8 @@ plot(res.sum)
 \newpage
 ## Slices of surface
 ```{r, fig.width=3, fig.height=3}
-plot(res.sum, "slice", var = 3)
-plot(res.sum, "slice", lag = 13)
+plot(res.sum, "slice", val = 3)
+plot(res.sum, "slice", time = 13)
 ```
 
 ## Compare estimated surface to truth
