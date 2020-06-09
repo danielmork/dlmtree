@@ -8,64 +8,48 @@ output: pdf_document
 # Code example of TDLNM
 ```{r}
 library(dlmtree)
-data("pm25Exposures")
-pm25Exposures <- log(pm25Exposures[which(pm25Exposures$S == "Colorado"),-c(1:2)])[,1:37]
-n <- nrow(pm25Exposures)
-```
-
-## Create fixed effect
-```{r}
+# Piecewise constant effect in exposure and time
 set.seed(1)
-data <- as.data.frame(cbind(matrix(rnorm(5*n), n, 5), matrix(rbinom(5*n, 1, .5), n, 5)))
-colnames(data) <- c(paste0("c", 1:5), paste0("b", 1:5))
-params <- rnorm(10)
-z.gamma <- c(as.matrix(data)[,1:10] %*% params) 
-```
-
-## Create DLNM effect: piecewise in time and exposure
-```{r}
-dlnm.fun <- function(exposure.data) {
-  dlnm <- t(sapply(1:nrow(exposure.data), function(i) {
-      sapply(1:ncol(exposure.data), function(j) {
-        ifelse(j %in% 11:15, ifelse(exposure.data[i, j] > 2, -1, 0), 0)
-    })}))
-  colnames(dlnm) <- paste0("Time", 1:ncol(exposure.data))
-  return(dlnm)
-}
-f <- rowSums(dlnm.fun(pm25Exposures))
-```
-
-## Combine fixed effect, DLNM effect, and error to create continuous response
-```{r}
-data$y <- z.gamma + f + rnorm(n, sd = sd(f))
+D <- tdlnm.sim("A", 1) # try also B, C, and D!
 ```
 
 ## Run TDLNM
+* Warning: For speed, this simulation runs only a small number of iterations.
+We recommend $\geq5000$ burn-in with $\geq15000$ iterations thinned by 10, using
+20 trees.
 ```{r}
-splits <- seq(min(pm25Exposures), max(pm25Exposures), length.out = 52)[-c(1,52)]
-res <- tdlnm(y ~ ., data, as.matrix(pm25Exposures),
+splits <- seq(min(D$exposure), max(D$exposure), length.out = 52)[-c(1,52)]
+smoothing <- 
+res <- tdlnm(y ~ ., data = D$dat, exposure.data = as.matrix(D$exposure),
+             #exposure.se = sd(D$exposure)/2, # uncomment this line to try smoothing
              exposure.splits = list("type" = "values", "split.vals" = splits),
              n.trees = 10, n.burn = 500, n.iter = 1000, n.thin = 1)
 res.sum <- summary(res,
-                   pred.at = seq(min(pm25Exposures), max(pm25Exposures), length.out = 102), 
-                   cenval = 1.5)
+                   pred.at = seq(min(D$exposure), max(D$exposure), length.out = 102), 
+                   cenval = D$cenval)
+```
+
+## Fixed effect estimates vs. truth
+```{r}
+boxplot(res$gamma[,-1], xlab = "Parameters", ylab = "Effect") # Boxplot estimated effects
+points(1:10, D$params, col = "red", pch = 16) # Red dots = truth
 ```
 
 ## Plot of exposure-time response surface
 ```{r}
-plot(res.sum)
+plot(res.sum, main = "Estimated exposure-time-response")
 ```
 
 \newpage
 ## Slices of surface
 ```{r, fig.width=3, fig.height=3}
-plot(res.sum, "slice", val = 3)
-plot(res.sum, "slice", time = 13)
+plot(res.sum, "slice", val = 3, main = "Slice at concentration 3")
+plot(res.sum, "slice", time = 13, main = "Slice at time 13")
 ```
 
 ## Compare estimated surface to truth
 ```{r}
-truth <- dlnm.fun(sapply(1:37, function(i) res.sum$pred.vals))
+truth <- D$dlnm.fun(sapply(1:37, function(i) res.sum$pred.vals), D$cenval, F)
 # RMSE
 sqrt(mean((res.sum$matfit - truth)^2))
 # Coverage

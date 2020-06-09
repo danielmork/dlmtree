@@ -49,8 +49,11 @@ tdlnm <- function(formula,
   options(stringsAsFactors = F)
   if (!is.data.frame(data)) stop("Data must be a data.frame.")
   if (!is.numeric(exposure.data)) stop("`exposure.data` must be a numeric matrix")
-  if (!is.null(exposure.se))
+  if (!is.null(exposure.se)) {
     if (!is.numeric(exposure.se)) stop("`exposure.se` must be a numeric matrix")
+    if (length(exposure.se) == 1)
+      exposure.se <- matrix(exposure.se, nrow(exposure.data), ncol(exposure.data))
+  }
   if (nrow(data) != nrow(exposure.data))
     stop("`data` and `exposure.data` must have same number of observations.")
   if (!all(sapply(list(n.trees,n.burn,n.iter,n.thin), function(i) is.numeric(i) & i>0)))
