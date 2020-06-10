@@ -1,32 +1,33 @@
 ---
 title: "TDLNM"
 author: "Daniel Mork"
-date: "6/5/2020"
+date: "6/9/2020"
 output: pdf_document
 ---
 
 # Code example of TDLNM
 ```{r}
 library(dlmtree)
-# Piecewise constant effect in exposure and time
 set.seed(1)
-D <- tdlnm.sim("A", 1) # try also B, C, and D!
+D <- tdlnm.sim(effect = "A", error.to.signal = 1) # try effects B, C, and D
 ```
 
 ## Run TDLNM
 * Warning: For speed, this simulation runs only a small number of iterations.
 We recommend $\geq5000$ burn-in with $\geq15000$ iterations thinned by 10, using
-20 trees.
+20 trees. Model convergence can be checked by comparing the consistency of
+results across multiple runs.
 ```{r}
 splits <- seq(min(D$exposure), max(D$exposure), length.out = 52)[-c(1,52)]
 smoothing <- 
-res <- tdlnm(y ~ ., data = D$dat, exposure.data = as.matrix(D$exposure),
+res <- tdlnm(formula = y ~ ., data = D$dat, exposure.data = as.matrix(D$exposure),
              #exposure.se = sd(D$exposure)/2, # uncomment this line to try smoothing
              exposure.splits = list("type" = "values", "split.vals" = splits),
              n.trees = 10, n.burn = 500, n.iter = 1000, n.thin = 1)
 res.sum <- summary(res,
                    pred.at = seq(min(D$exposure), max(D$exposure), length.out = 102), 
-                   cenval = D$cenval)
+                   cenval = D$cenval, conf.level = 0.95)
+res.sum
 ```
 
 ## Fixed effect estimates vs. truth
@@ -37,14 +38,16 @@ points(1:10, D$params, col = "red", pch = 16) # Red dots = truth
 
 ## Plot of exposure-time response surface
 ```{r}
-plot(res.sum, main = "Estimated exposure-time-response")
+plot(res.sum, main = "Estimated exposure-time-response",
+     xlab = "Week", ylab = "log(Exposure)", start.time = 1)
 ```
 
 \newpage
 ## Slices of surface
 ```{r, fig.width=3, fig.height=3}
-plot(res.sum, "slice", val = 3, main = "Slice at concentration 3")
-plot(res.sum, "slice", time = 13, main = "Slice at time 13")
+plot(res.sum, plot.type = "slice", val = 3, main = "Slice at concentration 3")
+plot(res.sum, plot.type = "slice", time = 13, main = "Slice at time 13")
+#plot(res.sum, plot.type = "animate") # try animated slice plot in console
 ```
 
 ## Compare estimated surface to truth

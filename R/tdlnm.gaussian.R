@@ -145,7 +145,7 @@ tdlnm.gaussian <- function(model)
   # Rescale parameter estimates
   if (model$intercept) {
     dgn$gamma[,-1] <- sapply(2:ncol(dgn$gamma), function(i) dgn$gamma[,i] * model$rescale$Z[i])
-    dgn$gamma[,1] <- attr(model$Y, "scaled:center") + dgn$gamma[,1] -
+    dgn$gamma[,1] <- attr(model$Y, "scaled:center") + dgn$gamma[,1] * model$rescale$Y -
       (rowSums(sapply(2:ncol(dgn$gamma), function(i) {
            dgn$gamma[,i] * attr(model$Z, "scaled:center")[i]
           })))

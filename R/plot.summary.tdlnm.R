@@ -70,7 +70,9 @@ plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(
       labs(x = xlab, y = ylab, fill = flab, title = main)
   } else if (plot.type == "animate") {
     if (!require(gganimate))
-     stop("Package gganimate required.")
+      stop("Package gganimate required.")
+    if (!require(transformr))
+      stop("Package transformr required.")
     summary$dlnm.estimates$Xmin <- round(summary$dlnm.estimates$Xmin, 2)
     p <- ggplot(summary$dlnm.estimates) +
       geom_hline(yintercept = 0, color = "red") +

@@ -50,8 +50,6 @@ summary.tdlnm <- function(object,
   cat("Centered DLNM at exposure value", cenval, "\n")
   if (exposure.se == 0) {
     cen.quant <- which.min(abs(pred.vals - cenval))
-    # cen.val <- pred.vals[cen.quant]
-    # cat("Centered DLNM at exposure value", cen.val, "\n")
     if (length(object$Mo$Xsplits) == 0)
       dlmest <- dlnmEst(as.matrix(object$DLM), Xsplits, Lags, Iter, cen.quant, exposure.se, FALSE, TRUE)
     else
@@ -60,7 +58,7 @@ summary.tdlnm <- function(object,
     dlmest <- dlnmEst(as.matrix(object$DLM), Xsplits, Lags, Iter, cen.val, exposure.se, TRUE, FALSE)
   }
 
-  # Estimates
+  # DLNM Estimates
   cumexp <- as.data.frame(t(sapply(1:length(half.quants), function(i) {
     cs <- colSums(dlmest[,i,])
     c("mean" = mean(cs), quantile(cs, ci.lims))
@@ -76,13 +74,7 @@ summary.tdlnm <- function(object,
       coordest <- dlmest[i,j,]
       m <- mean(coordest)
       s <- sd(coordest)
-      # if (ci.type == "HPD") {
-        # ci <- HPD(coordest, conf.level)
-      # } else if (ci.type == "normal") {
-        # ci <- m + c(-1, 1) * s * qnorm(ci.lims[2])
-      # } else {
-        ci <- quantile(coordest, ci.lims)
-      # }
+      ci <- quantile(coordest, ci.lims)
       effect <- ifelse(min(ci) > 0, 1, ifelse(max(ci) < 0, -1, 0))
       dlmmean[(i - 1) * (length(Xsplits) - 1) + j, ] <-
         c(i - 1, i, Xsplits[j], Xsplits[j + 1],
@@ -93,13 +85,26 @@ summary.tdlnm <- function(object,
     }
   }
   dlmmean$Effect <- factor(dlmmean$Effect, levels = c(-1, 0, 1), labels = c("-", " ", "+"))
+  
+  # Fixed effect estimates
+  gamma.mean <- colMeans(object$gamma)
+  gamma.ci <- apply(object$gamma, 2, quantile, probs = ci.lims)
 
   # Return
-  ret <- list("dlnm.estimates" = dlmmean, "matfit" = matfit,
-              "cilower" = cilower, "ciupper" = ciupper,
-              "Xsplits" = Xsplits, "cenval" = cen.val,
-              "cumexp" = cumexp, "pred.vals" = pred.vals,
-              "halfQuants" = half.quants)
+  ret <- list("ctr" = object$ctr,
+              "conf.level" = conf.level,
+              "sig.to.noise" = var(object$fhat) / mean(object$sigma2),
+              "dlnm.estimates" = dlmmean, 
+              "matfit" = matfit,
+              "cilower" = cilower, 
+              "ciupper" = ciupper,
+              "Xsplits" = Xsplits, 
+              "cenval" = cen.val,
+              "cumexp" = cumexp, 
+              "pred.vals" = pred.vals,
+              "halfQuants" = half.quants,
+              "gamma.mean" = gamma.mean,
+              "gamma.ci" = gamma.ci)
   class(ret) <- "summary.tdlnm"
   return(ret)
 }
