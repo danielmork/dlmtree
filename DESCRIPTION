@@ -11,6 +11,6 @@ Encoding: UTF-8
 LazyData: true
 Depends: R (>= 3.6.0)
 Imports: Rcpp (>= 0.12.16), ggplot2, viridis
-Recommended: gganimate, doParallel
+Recommended: gganimate, transformr
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen
 RoxygenNote: 7.1.0
