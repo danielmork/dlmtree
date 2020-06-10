@@ -2,7 +2,7 @@
 title: "TDLNM"
 author: "Daniel Mork"
 date: "6/9/2020"
-output: pdf_document
+output: html_document
 ---
 
 # Code example of TDLNM
@@ -19,7 +19,6 @@ We recommend $\geq5000$ burn-in with $\geq15000$ iterations thinned by 10, using
 results across multiple runs.
 ```{r}
 splits <- seq(min(D$exposure), max(D$exposure), length.out = 52)[-c(1,52)]
-smoothing <- 
 res <- tdlnm(formula = y ~ ., data = D$dat, exposure.data = as.matrix(D$exposure),
              #exposure.se = sd(D$exposure)/2, # uncomment this line to try smoothing
              exposure.splits = list("type" = "values", "split.vals" = splits),
