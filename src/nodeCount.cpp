@@ -82,13 +82,11 @@ List nodeCountSE(const Eigen::Map<Eigen::MatrixXd> &X,
     if (curCount > checkZero) {
       svec(i) = curCount;
       for (int j = tmin-1; j < tmax; j++) {
-        if ((X(i, j) >= xmin) & (X(i, j) < xmax)) {
           double inc = phi((xmin - X(i,j)) / SE(i,j),
                            (xmax - X(i,j)) / SE(i, j))/(sqrt(X.rows()) * X.cols());
           nvec(i) += inc;
           svec(i) -= inc;
           empty = false;
-        }
       }
       if (svec(i) > checkZero) {
         sibempty = false;
