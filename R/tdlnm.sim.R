@@ -6,7 +6,6 @@
 #' @return
 #' @export
 #'
-#' @examples
 tdlnm.sim <- function(effect = "A", error.to.signal = 1)
 {
   data("pm25Exposures")
