@@ -7,125 +7,78 @@
 
 using namespace Rcpp;
 
-// controlEst
-List controlEst(const Eigen::Map<Eigen::VectorXd> R, const Eigen::Map<Eigen::MatrixXd> Z, const Eigen::Map<Eigen::MatrixXd> V, const Eigen::Map<Eigen::MatrixXd> Vchol, double sigma2, double sumTermXP, double sumFexp);
-RcppExport SEXP _dlmtree_controlEst(SEXP RSEXP, SEXP ZSEXP, SEXP VSEXP, SEXP VcholSEXP, SEXP sigma2SEXP, SEXP sumTermXPSEXP, SEXP sumFexpSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd> >::type R(RSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type Z(ZSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type V(VSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type Vchol(VcholSEXP);
-    Rcpp::traits::input_parameter< double >::type sigma2(sigma2SEXP);
-    Rcpp::traits::input_parameter< double >::type sumTermXP(sumTermXPSEXP);
-    Rcpp::traits::input_parameter< double >::type sumFexp(sumFexpSEXP);
-    rcpp_result_gen = Rcpp::wrap(controlEst(R, Z, V, Vchol, sigma2, sumTermXP, sumFexp));
-    return rcpp_result_gen;
-END_RCPP
-}
 // dlnmEst
-SEXP dlnmEst(arma::dmat dlnm, arma::dvec xsplits, int nlags, int nsamp, double center, double se, bool smooth, bool dlm);
-RcppExport SEXP _dlmtree_dlnmEst(SEXP dlnmSEXP, SEXP xsplitsSEXP, SEXP nlagsSEXP, SEXP nsampSEXP, SEXP centerSEXP, SEXP seSEXP, SEXP smoothSEXP, SEXP dlmSEXP) {
+SEXP dlnmEst(arma::dmat dlnm, arma::dvec predAt, int nlags, int nsamp, double center, double se);
+RcppExport SEXP _dlmtree_dlnmEst(SEXP dlnmSEXP, SEXP predAtSEXP, SEXP nlagsSEXP, SEXP nsampSEXP, SEXP centerSEXP, SEXP seSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::dmat >::type dlnm(dlnmSEXP);
-    Rcpp::traits::input_parameter< arma::dvec >::type xsplits(xsplitsSEXP);
+    Rcpp::traits::input_parameter< arma::dvec >::type predAt(predAtSEXP);
     Rcpp::traits::input_parameter< int >::type nlags(nlagsSEXP);
     Rcpp::traits::input_parameter< int >::type nsamp(nsampSEXP);
     Rcpp::traits::input_parameter< double >::type center(centerSEXP);
     Rcpp::traits::input_parameter< double >::type se(seSEXP);
-    Rcpp::traits::input_parameter< bool >::type smooth(smoothSEXP);
-    Rcpp::traits::input_parameter< bool >::type dlm(dlmSEXP);
-    rcpp_result_gen = Rcpp::wrap(dlnmEst(dlnm, xsplits, nlags, nsamp, center, se, smooth, dlm));
+    rcpp_result_gen = Rcpp::wrap(dlnmEst(dlnm, predAt, nlags, nsamp, center, se));
     return rcpp_result_gen;
 END_RCPP
 }
-// dlnmMHR1
-List dlnmMHR1(const Eigen::Map<Eigen::VectorXd>& Y, const Eigen::Map<Eigen::MatrixXd>& Z, double& XX, const Eigen::Map<Eigen::VectorXd>& ZtX, const Eigen::Map<Eigen::VectorXd>& VgZtX, const Eigen::Map<Eigen::MatrixXd>& Vg, const Eigen::Map<Eigen::VectorXd>& Xd, const Eigen::Map<Eigen::VectorXd>& ZY, double LInv, double sigma);
-RcppExport SEXP _dlmtree_dlnmMHR1(SEXP YSEXP, SEXP ZSEXP, SEXP XXSEXP, SEXP ZtXSEXP, SEXP VgZtXSEXP, SEXP VgSEXP, SEXP XdSEXP, SEXP ZYSEXP, SEXP LInvSEXP, SEXP sigmaSEXP) {
+// dlmEst
+SEXP dlmEst(arma::dmat dlm, int nlags, int nsamp);
+RcppExport SEXP _dlmtree_dlmEst(SEXP dlmSEXP, SEXP nlagsSEXP, SEXP nsampSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd>& >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type Z(ZSEXP);
-    Rcpp::traits::input_parameter< double& >::type XX(XXSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd>& >::type ZtX(ZtXSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd>& >::type VgZtX(VgZtXSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type Vg(VgSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd>& >::type Xd(XdSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd>& >::type ZY(ZYSEXP);
-    Rcpp::traits::input_parameter< double >::type LInv(LInvSEXP);
-    Rcpp::traits::input_parameter< double >::type sigma(sigmaSEXP);
-    rcpp_result_gen = Rcpp::wrap(dlnmMHR1(Y, Z, XX, ZtX, VgZtX, Vg, Xd, ZY, LInv, sigma));
+    Rcpp::traits::input_parameter< arma::dmat >::type dlm(dlmSEXP);
+    Rcpp::traits::input_parameter< int >::type nlags(nlagsSEXP);
+    Rcpp::traits::input_parameter< int >::type nsamp(nsampSEXP);
+    rcpp_result_gen = Rcpp::wrap(dlmEst(dlm, nlags, nsamp));
     return rcpp_result_gen;
 END_RCPP
 }
-// dlnmMHR
-List dlnmMHR(const Eigen::Map<Eigen::VectorXd>& Y, const Eigen::Map<Eigen::MatrixXd>& Z, const Eigen::Map<Eigen::MatrixXd>& ZtX, const Eigen::Map<Eigen::MatrixXd>& VgZtX, const Eigen::Map<Eigen::MatrixXd>& Vg, const Eigen::Map<Eigen::MatrixXd>& Xd, const Eigen::Map<Eigen::VectorXd>& ZY, double LInv, double sigma);
-RcppExport SEXP _dlmtree_dlnmMHR(SEXP YSEXP, SEXP ZSEXP, SEXP ZtXSEXP, SEXP VgZtXSEXP, SEXP VgSEXP, SEXP XdSEXP, SEXP ZYSEXP, SEXP LInvSEXP, SEXP sigmaSEXP) {
+// mixEst
+SEXP mixEst(arma::dmat dlm, int nlags, int nsamp, bool mirror);
+RcppExport SEXP _dlmtree_mixEst(SEXP dlmSEXP, SEXP nlagsSEXP, SEXP nsampSEXP, SEXP mirrorSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd>& >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type Z(ZSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type ZtX(ZtXSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type VgZtX(VgZtXSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type Vg(VgSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type Xd(XdSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::VectorXd>& >::type ZY(ZYSEXP);
-    Rcpp::traits::input_parameter< double >::type LInv(LInvSEXP);
-    Rcpp::traits::input_parameter< double >::type sigma(sigmaSEXP);
-    rcpp_result_gen = Rcpp::wrap(dlnmMHR(Y, Z, ZtX, VgZtX, Vg, Xd, ZY, LInv, sigma));
+    Rcpp::traits::input_parameter< arma::dmat >::type dlm(dlmSEXP);
+    Rcpp::traits::input_parameter< int >::type nlags(nlagsSEXP);
+    Rcpp::traits::input_parameter< int >::type nsamp(nsampSEXP);
+    Rcpp::traits::input_parameter< bool >::type mirror(mirrorSEXP);
+    rcpp_result_gen = Rcpp::wrap(mixEst(dlm, nlags, nsamp, mirror));
     return rcpp_result_gen;
 END_RCPP
 }
-// nodeCount
-List nodeCount(const Eigen::Map<Eigen::MatrixXd>& X, const Eigen::Map<Eigen::MatrixXd>& Z, const Eigen::Map<Eigen::MatrixXd>& Vg, NumericVector parCount, double xmin, double xmax, double tmin, double tmax);
-RcppExport SEXP _dlmtree_nodeCount(SEXP XSEXP, SEXP ZSEXP, SEXP VgSEXP, SEXP parCountSEXP, SEXP xminSEXP, SEXP xmaxSEXP, SEXP tminSEXP, SEXP tmaxSEXP) {
+// tdlnmGaussian
+Rcpp::List tdlnmGaussian(const Rcpp::List model);
+RcppExport SEXP _dlmtree_tdlnmGaussian(SEXP modelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type Z(ZSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type Vg(VgSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type parCount(parCountSEXP);
-    Rcpp::traits::input_parameter< double >::type xmin(xminSEXP);
-    Rcpp::traits::input_parameter< double >::type xmax(xmaxSEXP);
-    Rcpp::traits::input_parameter< double >::type tmin(tminSEXP);
-    Rcpp::traits::input_parameter< double >::type tmax(tmaxSEXP);
-    rcpp_result_gen = Rcpp::wrap(nodeCount(X, Z, Vg, parCount, xmin, xmax, tmin, tmax));
+    Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
+    rcpp_result_gen = Rcpp::wrap(tdlnmGaussian(model));
     return rcpp_result_gen;
 END_RCPP
 }
-// nodeCountSE
-List nodeCountSE(const Eigen::Map<Eigen::MatrixXd>& X, const Eigen::Map<Eigen::MatrixXd>& SE, const Eigen::Map<Eigen::MatrixXd>& Z, const Eigen::Map<Eigen::MatrixXd>& Vg, NumericVector parCount, double xmin, double xmax, double tmin, double tmax);
-RcppExport SEXP _dlmtree_nodeCountSE(SEXP XSEXP, SEXP SESEXP, SEXP ZSEXP, SEXP VgSEXP, SEXP parCountSEXP, SEXP xminSEXP, SEXP xmaxSEXP, SEXP tminSEXP, SEXP tmaxSEXP) {
+// tdlnmMixGaussian
+Rcpp::List tdlnmMixGaussian(const Rcpp::List model);
+RcppExport SEXP _dlmtree_tdlnmMixGaussian(SEXP modelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type SE(SESEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type Z(ZSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd>& >::type Vg(VgSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type parCount(parCountSEXP);
-    Rcpp::traits::input_parameter< double >::type xmin(xminSEXP);
-    Rcpp::traits::input_parameter< double >::type xmax(xmaxSEXP);
-    Rcpp::traits::input_parameter< double >::type tmin(tminSEXP);
-    Rcpp::traits::input_parameter< double >::type tmax(tmaxSEXP);
-    rcpp_result_gen = Rcpp::wrap(nodeCountSE(X, SE, Z, Vg, parCount, xmin, xmax, tmin, tmax));
+    Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
+    rcpp_result_gen = Rcpp::wrap(tdlnmMixGaussian(model));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_dlmtree_controlEst", (DL_FUNC) &_dlmtree_controlEst, 7},
-    {"_dlmtree_dlnmEst", (DL_FUNC) &_dlmtree_dlnmEst, 8},
-    {"_dlmtree_dlnmMHR1", (DL_FUNC) &_dlmtree_dlnmMHR1, 10},
-    {"_dlmtree_dlnmMHR", (DL_FUNC) &_dlmtree_dlnmMHR, 9},
-    {"_dlmtree_nodeCount", (DL_FUNC) &_dlmtree_nodeCount, 8},
-    {"_dlmtree_nodeCountSE", (DL_FUNC) &_dlmtree_nodeCountSE, 9},
+    {"_dlmtree_dlnmEst", (DL_FUNC) &_dlmtree_dlnmEst, 6},
+    {"_dlmtree_dlmEst", (DL_FUNC) &_dlmtree_dlmEst, 3},
+    {"_dlmtree_mixEst", (DL_FUNC) &_dlmtree_mixEst, 4},
+    {"_dlmtree_tdlnmGaussian", (DL_FUNC) &_dlmtree_tdlnmGaussian, 1},
+    {"_dlmtree_tdlnmMixGaussian", (DL_FUNC) &_dlmtree_tdlnmMixGaussian, 1},
     {NULL, NULL, 0}
 };
 

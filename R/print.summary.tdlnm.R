@@ -6,17 +6,20 @@
 #' @return
 #' @export
 #'
-#' @examples
 print.summary.tdlnm <- function(object, digits = 3)
 {
-  cat("TDLNM summary\n\n")
+  cat("---\n")
+  if (object$ctr$dl.function == "tdlnm")
+    cat("TDLNM summary\n\n")
+  else
+    cat("TDLM summary\n\n")
   cat("Model run info\n")
   cat("-", object$ctr$n.trees, "trees\n")
   cat("-", object$ctr$n.burn, "burn-in iterations\n")
   cat("-", object$ctr$n.iter, "post-burn iterations\n")
   cat("-", object$ctr$n.thin, "thinning factor\n")
   cat("-", object$conf.level, "confidence level\n")
-  
+
   cat("\nFixed effect coefficients:\n")
   gamma.out <- data.frame("Mean" = round(object$gamma.mean, digits),
                           "Lower Bound" = round(object$gamma.ci[1,], digits),
@@ -27,11 +30,29 @@ print.summary.tdlnm <- function(object, digits = 3)
   print(gamma.out)
   cat("---\n")
   cat("* = CI does not contain zero\n")
-  
-  cat("\nDLNM effect:")
+
+  if (object$ctr$dl.function == "tdlnm")
+    cat("\nDLNM effect:")
+  else
+    cat("\nDLM effect:")
   cat("\nrange = ["); cat(round(range(object$matfit), 3), sep = ", "); cat("]")
-  cat("\nsignal-to-noise =", round(object$sig.to.noise, digits))
+  if (!is.na(object$sig.to.noise))
+    cat("\nsignal-to-noise =", round(object$sig.to.noise, digits))
   cat("\ncritical windows: ")
-  cw <- which((colSums(object$cilower > 0) + colSums(object$ciupper < 0)) > 0)
+  if (object$ctr$dl.function == "tdlnm")
+    cw <- which((colSums(object$cilower > 0) + colSums(object$ciupper < 0)) > 0)
+  else
+    cw <- which(object$cilower > 0 | object$ciupper < 0)
   cat(cw, "\n")
+  if (object$ctr$dl.function == "tdlm") {
+    dlm.out <- data.frame("Mean" = round(object$matfit, digits),
+                          "Lower Bound" = round(object$cilower, digits),
+                          "Upper Bound" = round(object$ciupper, digits))
+    rownames(dlm.out) <- ifelse(object$cilower > 0 | object$ciupper < 0,
+                                paste0("*Period ", 1:nrow(dlm.out)),
+                                paste0("Period ", 1:nrow(dlm.out)))
+    print(dlm.out)
+    cat("---\n")
+    cat("* = CI does not contain zero\n")
+  }
 }
