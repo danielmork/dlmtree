@@ -30,30 +30,30 @@ void tdlnmModelEst(tdlnmCtr *ctr)
 }
 
 
-void tdlnmModelEstBinomial(tdlnmCtr *ctr)
-{
-  int i;
-  ctr->gamma = ctr->Vg.transpose() * (ctr->Zw).transpose() * ctr->R;
-  (ctr->gamma).noalias() += ctr->VgChol * as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, 1));
-
-  Eigen::VectorXd psi = ctr->fhat;
-  for (i = 0; i < ctr->pZ; ++i)
-    psi.noalias() += (ctr->Z).col(i) * (ctr->gamma)(i);
-
-  ctr->Omega = rcpp_pgdraw(ctr->binomialSize, psi);
-  ctr->Zw = ctr->Z;
-  Eigen::MatrixXd VgInv(ctr->pZ, ctr->pZ);
-  for (i = 0; i < ctr->pZ; ++i) {
-    (ctr->Zw).col(i).array() *= (ctr->Omega).array();
-  }
-  VgInv.triangularView<Eigen::Lower>() = (ctr->Z).transpose() * ctr->Zw;
-  VgInv.diagonal().array() += 1/10000;
-  ctr->Vg.triangularView<Eigen::Lower>() =
-    VgInv.selfadjointView<Eigen::Lower>().llt().solve(
-        Eigen::MatrixXd::Identity(ctr->pZ, ctr->pZ));
-  ctr->VgChol = (ctr->Vg).selfadjointView<Eigen::Lower>().llt().matrixL();
-  ctr->Lambda = (ctr->kappa).array() / (ctr->Omega).array();
-}
+// void tdlnmModelEstBinomial(tdlnmCtr *ctr)
+// {
+//   int i;
+//   ctr->gamma = ctr->Vg.transpose() * (ctr->Zw).transpose() * ctr->R;
+//   (ctr->gamma).noalias() += ctr->VgChol * as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, 1));
+// 
+//   Eigen::VectorXd psi = ctr->fhat;
+//   for (i = 0; i < ctr->pZ; ++i)
+//     psi.noalias() += (ctr->Z).col(i) * (ctr->gamma)(i);
+// 
+//   ctr->Omega = rcpp_pgdraw(ctr->binomialSize, psi);
+//   ctr->Zw = ctr->Z;
+//   Eigen::MatrixXd VgInv(ctr->pZ, ctr->pZ);
+//   for (i = 0; i < ctr->pZ; ++i) {
+//     (ctr->Zw).col(i).array() *= (ctr->Omega).array();
+//   }
+//   VgInv.triangularView<Eigen::Lower>() = (ctr->Z).transpose() * ctr->Zw;
+//   VgInv.diagonal().array() += 1/10000;
+//   ctr->Vg.triangularView<Eigen::Lower>() =
+//     VgInv.selfadjointView<Eigen::Lower>().llt().solve(
+//         Eigen::MatrixXd::Identity(ctr->pZ, ctr->pZ));
+//   ctr->VgChol = (ctr->Vg).selfadjointView<Eigen::Lower>().llt().matrixL();
+//   ctr->Lambda = (ctr->kappa).array() / (ctr->Omega).array();
+// }
 
 
 

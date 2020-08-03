@@ -61,24 +61,12 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// tdlnmMixGaussian
-Rcpp::List tdlnmMixGaussian(const Rcpp::List model);
-RcppExport SEXP _dlmtree_tdlnmMixGaussian(SEXP modelSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
-    rcpp_result_gen = Rcpp::wrap(tdlnmMixGaussian(model));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dlmtree_dlnmEst", (DL_FUNC) &_dlmtree_dlnmEst, 6},
     {"_dlmtree_dlmEst", (DL_FUNC) &_dlmtree_dlmEst, 3},
     {"_dlmtree_mixEst", (DL_FUNC) &_dlmtree_mixEst, 4},
     {"_dlmtree_tdlnmGaussian", (DL_FUNC) &_dlmtree_tdlnmGaussian, 1},
-    {"_dlmtree_tdlnmMixGaussian", (DL_FUNC) &_dlmtree_tdlnmMixGaussian, 1},
     {NULL, NULL, 0}
 };
 

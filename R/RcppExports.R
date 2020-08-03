@@ -17,7 +17,3 @@ tdlnmGaussian <- function(model) {
     .Call(`_dlmtree_tdlnmGaussian`, model)
 }
 
-tdlnmMixGaussian <- function(model) {
-    .Call(`_dlmtree_tdlnmMixGaussian`, model)
-}
-
