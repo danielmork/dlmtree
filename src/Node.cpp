@@ -26,8 +26,8 @@ NodeVals::NodeVals(const NodeVals& x)
   tempV = x.tempV;
 }
 
-Node::Node(int depth_in = 0,
-           bool update_in = 1)
+Node::Node(int depth_in,
+           bool update_in)
 {
   depth = depth_in;
   update = update_in;

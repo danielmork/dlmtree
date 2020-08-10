@@ -3,6 +3,7 @@ importFrom(Rcpp, evalCpp)
 exportPattern("^[[:alpha:]]+")
 
 S3method(summary, tdlnm)
+S3method(summary, tdlm)
 S3method(print, summary.tdlnm)
 S3method(plot, summary.tdlnm)
 
@@ -13,3 +14,6 @@ export(print.summary.tdlnm)
 
 import(ggplot2)
 import(viridis)
+importFrom("stats", "as.formula", "model.frame", "model.matrix",
+                "model.response", "pnorm", "quantile", "rbinom", "rnorm",
+                "sd", "terms.formula", "var")

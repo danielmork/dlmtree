@@ -1,7 +1,7 @@
 ---
-title: "TDLNM"
+title: "Treed Distributed Lag Non-Linear Models"
 author: "Daniel Mork, Colorado State University"
-date: "`r Sys.Date()`"
+date: "8/3/2020"
 output:
   html_document: 
     theme: lumen

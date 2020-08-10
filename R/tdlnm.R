@@ -49,7 +49,7 @@
 #' acceptance details, etc.
 #' @param ... NA
 #'
-#' @usage Model is recommended to be run for at minimum 5000 burn-in iterations
+#' @details Model is recommended to be run for at minimum 5000 burn-in iterations
 #' followed by 15000 sampling iterations with a thinning factor of 10.
 #' Convergence can be checked by re-running the model and validating consistency
 #' of results.
@@ -77,7 +77,6 @@ tdlnm <- function(formula,
                   subset = NULL,
                   verbose = TRUE,
                   diagnostics = FALSE,
-                  max.threads = 2,
                   ...)
 {
   model <- new.env()

@@ -15,7 +15,7 @@ public:
 
 class Node {
 public:
-  Node(int, bool);
+  Node(int depth_in = 0, bool update_in = 1);
   ~Node();
   Node(const Node&);
 
