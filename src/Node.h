@@ -31,6 +31,7 @@ public:
   bool grow();
   void prune();
   bool change();
+  // bool swap();
   // Node* copy(Node*, bool, bool);
   void accept();
   void reject();

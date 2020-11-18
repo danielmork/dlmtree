@@ -48,7 +48,7 @@ Node::~Node()
     nodestruct = 0;
   }
 
-  if (c2 != 0) {
+  if (c1 != 0) {
     delete c1;
     c1 = 0;
   }
@@ -199,10 +199,6 @@ bool Node::change()
   NodeStruct* new_ns = nodestruct->clone();
 
   if (new_ns->proposeSplit()) {
-    // nodestruct->printStruct();
-    // c1->nodestruct->printStruct();
-    // c2->nodestruct->printStruct();
-    // new_ns->printStruct();
     proposed = new Node(depth, update);
     proposed->nodestruct = new_ns;
     proposed->c1 = new Node(*c1);
@@ -212,8 +208,6 @@ bool Node::change()
       proposed = 0;
       return(0);
     }
-    // proposed->c1->nodestruct->printStruct();
-    // proposed->c2->nodestruct->printStruct();
 
     proposed->nodevals = nodevals;
     (proposed->c1)->parent = proposed;
@@ -230,6 +224,44 @@ bool Node::change()
   proposed = 0;
   return(0);
 }
+
+// Swap node rule with parent node rule
+// bool Node::swap()
+// {
+//   if ((depth == 0) || (c1 == 0) || (parent == 0)) {
+//     return(0);
+//   }
+// 
+//   NodeStruct* cur_ns = nodestruct->clone();
+//   NodeStruct* par_ns = (parent->nodestruct)->clone();
+//   NodeStruct* sib_ns = 0;
+//   if (this->sib()->c1 != 0) {
+//     sib_ns = sib()->nodestruct->clone();
+//   }
+// 
+//   parent->proposed = new Node(depth, update);
+//   parent->proposed->nodestruct = cur_ns;
+//   parent->proposed->c1 = new Node(*this);
+//   parent->proposed->c1->nodestruct = par_ns;
+//   parent->proposed->c2 = new Node(*sib());
+//   if (sib_ns != 0) {
+//     if (sib_ns->checkEqual(cur_ns)) {
+//       parent->proposed->c2->nodestruct = par_ns;
+//     }
+//   }
+//   if (!(parent->proposed)->updateStruct()) {
+//     delete parent->proposed;
+//     parent->proposed = 0;
+//     if (sib_ns != 0) {
+//       delete sib_ns;
+//       sib_ns = 0;
+//     }
+//     return(0);
+//   }
+// 
+//   return(1);
+// 
+// }
 
 void Node::accept()
 {

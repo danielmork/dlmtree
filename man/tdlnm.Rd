@@ -14,14 +14,10 @@ tdlnm(
   n.burn = 2000,
   n.iter = 5000,
   n.thin = 10,
-  response.type = "gaussian",
-  binomial.size = NULL,
-  mixture.interactions = "noself",
+  family = "gaussian",
+  binomial.size = 1,
   tree.params = c(0.95, 2),
-  step.prob = c(0.4, 0.2, 0.2),
-  time.prior.period = NULL,
-  time.prior.certainty = NULL,
-  time.split.prior = NULL,
+  step.prob = c(0.25, 0.25),
   subset = NULL,
   verbose = TRUE,
   diagnostics = FALSE,
@@ -39,14 +35,14 @@ length as data}
 
 \item{exposure.splits}{scalar indicating the number of splits (divided
 evenly across quantiles of the exposure data) or list with two components:
-'type' set to 'values' or 'quantiles', and 'split.vals' set as a numerical
+'type' = 'values' or 'quantiles', and 'split.vals' = a numerical
 vector indicating the corresponding exposure values or quantiles for splits.
 Setting exposure.splits equal to 0 will change the model to a distributed lag
 model, which assumes a linear effect of exposure.}
 
 \item{exposure.se}{numerical matrix of exposure standard errors with same
-length as data or scalar smoothing factor representing a uniform standard
-error over each exposure measurement}
+size as exposure.data or a scalar smoothing factor representing a uniform
+smoothing factor applied to each exposure measurement}
 
 \item{n.trees}{integer for number of trees in ensemble}
 
@@ -56,40 +52,26 @@ error over each exposure measurement}
 
 \item{n.thin}{integer thinning factor, i.e. keep every tenth iteration}
 
-\item{response.type}{'gaussian' (default), 'binary', or 'binomial', if
-'binomial', must set binomial.size}
+\item{family}{'gaussian' for continuous response, or 'logit' for binomial
+response with logit link}
 
-\item{binomial.size}{integer vector of binomial size for 'binomial' response}
-
-\item{mixture.interactions}{'noself' (default) which allows interactions to
-occur only between two different exposures, 'all' which also allows
-interactions within the same exposure, or 'none' which eliminates all
-interactions and estimates only main effects of each exposure}
+\item{binomial.size}{integer type scalar (if all equal, default = 1) or
+vector defining binomial size for 'logit' family}
 
 \item{tree.params}{numerical vector of alpha and beta hyperparameters
-controlling tree depth (see Bayesian CART, 1998)}
+controlling tree depth (see Bayesian CART, 1998), default: alpha = 0.95,
+beta = 2}
 
-\item{step.prob}{numerical vector for probability of 1) grow/prune, 2) change}
-
-\item{time.prior.period}{integer vector corresponding to columns of exposure.data
-for which there is prior belief of the beginning/end of a critical window;
-for example, if a critical window is believed to exists between periods
-10 and 15, enter c(10, 15)}
-
-\item{time.prior.certainty}{integer from 1 to 10 corresponding to prior
-certainty (10 is absolute certainty) that a critical window exists in
-'time.prior.period'}
-
-\item{time.split.prior}{numeric vector of splitting probabilities for time,
-must be length 1 less than columns of exposure.data; this entry will nullify
-entries into time.prior.period and time.prior.certainty}
+\item{step.prob}{numerical vector for probability of 1) grow/prune, and
+2) change, defaults to (0.25, 0.25) or equal
+probability of each step for tree updates}
 
 \item{subset}{integer vector to analyze only a subset of data and exposures}
 
-\item{verbose}{true/false print output}
+\item{verbose}{true (default) or false: print output}
 
-\item{diagnostics}{true/false keep model diagnostic such as terminal nodes,
-acceptance details, etc.}
+\item{diagnostics}{true or false (default) keep model diagnostic such as
+terminal nodes, acceptance details, etc.}
 
 \item{...}{NA}
 }
@@ -97,10 +79,12 @@ acceptance details, etc.}
 obect of class 'tdlnm' or 'tdlm'
 }
 \description{
-TDLNM is a method for estimating a Treed Distirubted Lag
-Non-Linear Model. It operates by building an ensemble of regression trees,
-which each contribute a partial estimate of the exposure-time surface using
-the 'exposure.data', while controlling for a model given by 'formula'.
+TDLNM is a method for estimating Distributed Lag
+Linear and Non-Linear Models (DLMs/DLNMs). It operates by building an
+ensemble of regression trees, which each partition the exposure-time-
+response surface and make estimates at each sector. Trees from the ensemble
+each contribute a partial estimate of the exposure-time surface, while
+controlling for a model given by 'formula'.
 }
 \details{
 tdlnm

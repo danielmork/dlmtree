@@ -28,10 +28,10 @@ plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(
   start.time <- ifelse(!is.null(args$start.time), args$start.time, 1)
   if (plot.type == "mean") {
     flab <- ifelse(!is.null(args$flab), args$flab, "Est Effect")
-    p <- ggplot(summary$plot.dat, aes(xmin = Tmin + start.time,
-                                      xmax = Tmax + start.time,
-                                      ymin = Xmin,
-                                      ymax = Xmax, fill = Est)) +
+    p <- ggplot(summary$plot.dat, aes(xmin = `Tmin` + start.time,
+                                      xmax = `Tmax` + start.time,
+                                      ymin = `Xmin`,
+                                      ymax = `Xmax`, fill = `Est`)) +
       geom_rect() +
       scale_color_viridis(aesthetics = "fill", option = "D") +
       scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
@@ -39,10 +39,10 @@ plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(
       labs(x = xlab, y = ylab, fill = flab, title = main)
   } else if (plot.type == "se") {
     flab <- ifelse(!is.null(args$flab), args$flab, "SE Effect")
-    p <- ggplot(summary$plot.dat, aes(xmin = Tmin + start.time,
-                                      xmax = Tmax + start.time,
-                                      ymin = Xmin,
-                                      ymax = Xmax, fill = SD)) +
+    p <- ggplot(summary$plot.dat, aes(xmin = `Tmin` + start.time,
+                                      xmax = `Tmax` + start.time,
+                                      ymin = `Xmin`,
+                                      ymax = `Xmax`, fill = `SD`)) +
       geom_rect() +
       scale_color_viridis(aesthetics = "fill", option = "B") +
       scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
@@ -50,9 +50,9 @@ plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(
       labs(x = xlab, y = ylab, fill = flab, title = main)
   } else if (plot.type == "ci-min") {
     flab <- ifelse(!is.null(args$flab), args$flab, "CI Min")
-    p <- ggplot(summary$plot.dat, aes(xmin = Tmin, xmax = Tmax,
-                                      ymin = Xmin,
-                                      ymax = Xmax, fill = CIMin)) +
+    p <- ggplot(summary$plot.dat, aes(xmin = `Tmin`, xmax = `Tmax`,
+                                      ymin = `Xmin`,
+                                      ymax = `Xmax`, fill = `CIMin`)) +
       geom_rect() +
       scale_color_viridis(aesthetics = "fill", option = "A") +
       scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
@@ -60,10 +60,10 @@ plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(
       labs(x = xlab, y = ylab, fill = flab, title = main)
   } else if (plot.type == "ci-max") {
     flab <- ifelse(!is.null(args$flab), args$flab, "CI Max")
-    p <- ggplot(summary$plot.dat, aes(xmin = Tmin + start.time,
-                                      xmax = Tmax + start.time,
-                                      ymin = Xmin,
-                                      ymax = Xmax, fill = CIMax)) +
+    p <- ggplot(summary$plot.dat, aes(xmin = `Tmin` + start.time,
+                                      xmax = `Tmax` + start.time,
+                                      ymin = `Xmin`,
+                                      ymax = `Xmax`, fill = `CIMax`)) +
       geom_rect() +
       scale_color_viridis(aesthetics = "fill", option = "A") +
       scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
@@ -87,10 +87,10 @@ plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(
   #   return(animate(p, duration = 20, fps = 10))
   } else if (plot.type == "effect") {
     flab <- ifelse(!is.null(args$flab), args$flab, "Effect")
-    p <- ggplot(summary$plot.dat, aes(xmin = Tmin + start.time,
-                                      xmax = Tmax + start.time,
-                                      ymin = Xmin,
-                                      ymax = Xmax, fill = Effect)) +
+    p <- ggplot(summary$plot.dat, aes(xmin = `Tmin` + start.time,
+                                      xmax = `Tmax` + start.time,
+                                      ymin = `Xmin`,
+                                      ymax = `Xmax`, fill = `Effect`)) +
       geom_rect() +
       scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
       theme_bw() +
@@ -107,8 +107,8 @@ plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(
                      summary$plot.dat$Xmax > val)
       p <- ggplot(summary$plot.dat[idx,]) +
         geom_hline(yintercept = 0, color = "red") +
-        geom_ribbon(aes(x = Tmin + start.time, ymin = CIMin, ymax = CIMax), fill = "grey") +
-        geom_line(aes(x = Tmin + start.time, y = Est)) +
+        geom_ribbon(aes(x = `Tmin` + start.time, ymin = `CIMin`, ymax = `CIMax`), fill = "grey") +
+        geom_line(aes(x = `Tmin` + start.time, y = `Est`)) +
         theme_bw() +
         scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
         labs(x = xlab, y = ylab, title = main)
@@ -120,8 +120,8 @@ plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(
                      summary$plot.dat$Tmax + start.time > time)
       p <- ggplot(summary$plot.dat[idx,]) +
         geom_hline(yintercept = 0, color = "red") +
-        geom_ribbon(aes(x = PredVal, ymin = CIMin, ymax = CIMax), fill = "grey") +
-        geom_line(aes(x = PredVal, y = Est)) +
+        geom_ribbon(aes(x = `PredVal`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey") +
+        geom_line(aes(x = `PredVal`, y = `Est`)) +
         theme_bw() +
         scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
         labs(x = xlab, y = ylab, title = main)
@@ -135,8 +135,8 @@ plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(
                     "X" = start.time:(start.time + length(summary$matfit) - 1))
     p <- ggplot(d) +
       geom_hline(yintercept = 0, color = "red") +
-      geom_ribbon(aes(x = X, ymin = CIMin, ymax = CIMax), fill = "grey") +
-      geom_line(aes(x = X, y = Est)) +
+      geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey") +
+      geom_line(aes(x = `X`, y = `Est`)) +
       theme_bw() +
       scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
       labs(x = xlab, y = ylab, title = main)

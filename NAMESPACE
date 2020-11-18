@@ -4,16 +4,31 @@ exportPattern("^[[:alpha:]]+")
 
 S3method(summary, tdlnm)
 S3method(summary, tdlm)
-S3method(print, summary.tdlnm)
+S3method(summary, tdlmm)
 S3method(plot, summary.tdlnm)
+S3method(plot, summary.tdlmm)
+S3method(print, summary.tdlnm)
+S3method(print, summary.tdlmm)
 
-export(tdlnm)
-export(summary.tdlnm)
-export(plot.summary.tdlnm)
-export(print.summary.tdlnm)
 
 import(ggplot2)
 import(viridis)
+
 importFrom("stats", "as.formula", "model.frame", "model.matrix",
-                "model.response", "pnorm", "quantile", "rbinom", "rnorm",
-                "sd", "terms.formula", "var")
+          "model.response", "pnorm", "quantile", "rbinom", "rnorm",
+          "sd", "terms.formula", "var")
+
+export(tdlnm)
+export(tdlmm)
+
+export(sim.tdlnm)
+
+export(summary.tdlnm)
+export(summary.tdlm)
+export(summary.tdlmm)
+
+export(plot.summary.tdlnm)
+export(plot.summary.tdlmm)
+
+export(print.summary.tdlnm)
+export(print.summary.tdlmm)

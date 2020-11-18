@@ -9,8 +9,24 @@ dlmEst <- function(dlm, nlags, nsamp) {
     .Call(`_dlmtree_dlmEst`, dlm, nlags, nsamp)
 }
 
-mixEst <- function(dlm, nlags, nsamp, mirror) {
-    .Call(`_dlmtree_mixEst`, dlm, nlags, nsamp, mirror)
+mixEst <- function(dlm, nlags, nsamp) {
+    .Call(`_dlmtree_mixEst`, dlm, nlags, nsamp)
+}
+
+quantileHPD <- function(samp, prob) {
+    .Call(`_dlmtree_quantileHPD`, samp, prob)
+}
+
+tdlmmBinomial <- function(model) {
+    .Call(`_dlmtree_tdlmmBinomial`, model)
+}
+
+tdlmmGaussian <- function(model) {
+    .Call(`_dlmtree_tdlmmGaussian`, model)
+}
+
+tdlnmBinomial <- function(model) {
+    .Call(`_dlmtree_tdlnmBinomial`, model)
 }
 
 tdlnmGaussian <- function(model) {

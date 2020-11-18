@@ -41,11 +41,11 @@ double logDirichletDensity(Eigen::VectorXd x, Eigen::VectorXd alpha)
 {
   if (x.size() != alpha.size())
     stop("logDirichletDensity incorrect size");
-  double sumAlpha = alpha.sum();
-  double sumAlphaX = ((alpha.array() - 1) * x.array().log()).matrix().sum();
-  double out = sumAlphaX + lgamma(sumAlpha);
-  for (int i = 0; i < alpha.size(); i++)
-    out -= lgamma(alpha(i));
+  // double sumAlphaX = ((alpha.array() - 1) * x.array().log()).matrix().sum();
+  double out = lgamma(alpha.sum());
+  for (int i = 0; i < alpha.size(); i++) {
+    out += ((alpha(i) - 1) * log(x(i))) - lgamma(alpha(i));
+  }
   return(out);
 }
 
