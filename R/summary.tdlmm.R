@@ -8,6 +8,7 @@
 #' @param log10BF.crit Bayes Factor criteria for selecting exposures and
 #' interactions, such that log10(BayesFactor) > x. Default = 0.5
 #' @param verbose show progress in console
+#' @param return.mcmc return all mcmc iteration results
 #' @param ... NA
 #'
 #' @return list of type 'summary.tdlmm'
