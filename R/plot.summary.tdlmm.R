@@ -18,7 +18,6 @@
 #' @return ggplot
 #' @export
 #'
-#' @examples
 plot.summary.tdlmm <- function(object,
                                type = "marginal",
                                exposure1 = NULL,
@@ -39,7 +38,7 @@ plot.summary.tdlmm <- function(object,
       plot(plot.summary.tdlmm(object, type, ex.name, NULL, time1, time2, ...))
       readline(prompt = "Press [enter] to continue")
     }
-
+    
     if (length(object$mixNames) > 0 & object$interaction > 0) {
       cat("Plotting interaction effects:\n")
       for (ex.name1 in object$expNames) {
@@ -54,25 +53,25 @@ plot.summary.tdlmm <- function(object,
     }
     return(invisible())
   }
-
-
+  
+  
   # Plot setup
   args <- list(...)
   start.time <- ifelse(!is.null(args$start.time), args$start.time, 1)
   Lags <- start.time:(start.time + object$nLags - 1)
   base_size <- ifelse(!is.null(args$base_size), args$base_size, 11)
-
+  
   if (is.numeric(exposure1)) {
     if (exposure1 > length(object$expNames))
       stop("exposure1 incorrectly specified")
     exposure1 <- object$expNames[exposure1]
   }
-
+  
   # Plot DLM
   if (is.null(exposure2)) {
     xlab <- ifelse(!is.null(args$xlab), args$xlab, "Time")
     ylab <- ifelse(!is.null(args$ylab), args$ylab, "Effect")
-
+    
     if (type == "marginal") {
       main <- ifelse(!is.null(args$main), args$main,
                      paste0("Marginal effect: ", exposure1))
@@ -81,8 +80,8 @@ plot.summary.tdlmm <- function(object,
                         "CIMax" = object$DLM[[exposure1]]$marg.ciupper,
                         "X" = Lags)
     }
-
-
+    
+    
     p <- ggplot(dat) +
       geom_hline(yintercept = 0, color = "red") +
       geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey") +
@@ -91,11 +90,11 @@ plot.summary.tdlmm <- function(object,
       scale_y_continuous(expand = c(0, 0)) +
       scale_x_continuous(expand = c(0, 0)) +
       labs(x = xlab, y = ylab, title = main)
-
+    
     return(p)
-
-
-
+    
+    
+    
     # Plot Mixture
   } else {
     if (is.numeric(exposure2)) {
@@ -103,21 +102,21 @@ plot.summary.tdlmm <- function(object,
         stop("exposure2 incorrectly specified")
       exposure2 <- object$expNames[exposure2]
     }
-
+    
     plotDat <- data.frame(x = rep(Lags, length(Lags)),
                           y = rep(Lags, each = length(Lags)))
-
+    
     if (paste0(exposure1, "-", exposure2) %in% names(object$MIX))
       mix.name <- paste0(exposure1, "-", exposure2)
     else if (paste0(exposure2, "-", exposure1) %in% names(object$MIX))
       mix.name <- paste0(exposure2, "-", exposure1)
     else
       stop("mixture not found, check exposures names or numbers")
-
+    
     plotDat <- cbind.data.frame(plotDat,
                                 Effect = c(object$MIX[[mix.name]]$matfit),
                                 CW = c(object$MIX[[mix.name]]$cw.plot))
-
+    
     main <- ifelse(!is.null(args$main), args$main, "Interaction effect")
     xlab <- ifelse(!is.null(args$xlab), args$xlab, paste0("Time: ",exposure1))
     ylab <- ifelse(!is.null(args$ylab), args$ylab, paste0("Time: ",exposure2))
@@ -128,24 +127,24 @@ plot.summary.tdlmm <- function(object,
     }
     cw.lab <- ifelse(!is.null(args$cw.lab), args$cw.lab, "Conf. Level")
     cw.lab.show <- ifelse(!is.null(args$cw.lab.show), args$cw.lab.show, FALSE)
-
+    
     p <- ggplot(plotDat, aes(x = `x`, y = `y`, z = `Effect`, fill = `Effect`)) +
       geom_tile() +
       scale_fill_viridis()
-
+    
     if (show.cw)
       p <- p + geom_point(data = plotDat[which(plotDat$CW != 0),],
                           aes(x = `x`, y = `y`, size = `CW`),
                           color = "red", show.legend = cw.lab.show) +
       scale_size_continuous(name = cw.lab, range = cw.point.range)
-
+    
     p <- p +
       theme_bw(base_size = base_size) +
       coord_equal() +
       scale_x_continuous(expand = c(0, 0)) +
       scale_y_continuous(expand = c(0, 0)) +
       labs(x = xlab, y = ylab, title = main)
-
+    
     return(p)
   }
 }
