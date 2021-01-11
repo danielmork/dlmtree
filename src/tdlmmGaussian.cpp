@@ -2,7 +2,6 @@
 #include "tdlmCtr.h"
 #include "exposureDat.h"
 #include "Fncs.h"
-#include "omp.h"
 using namespace Rcpp;
 
 void tdlmmGaussianTreeMCMC(int, Node*, Node*, tdlmCtr*, tdlmLog*,
