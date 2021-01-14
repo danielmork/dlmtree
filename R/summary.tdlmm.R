@@ -170,7 +170,7 @@ summary.tdlmm <- function(object,
               sapply(1:res$nLags, function(l) {
                 min(c(11,which(
                   sapply(1:10, function(p) {
-                    (mixCIs[[k]][p, l] > 0 | mixCIs[[k]][41 - p, l] < 0)
+                    (mixCIs[[k]][p, l] > 0 | mixCIs[[k]][21 - p, l] < 0)
                   })
                 )))
               })
