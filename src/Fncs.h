@@ -1,11 +1,18 @@
 #include <RcppEigen.h>
+using namespace Rcpp;
 
-int sampleInt(std::vector<double>, double);
+// General function library:
+// * sampling
+// * densities
+// * sets
 
-int sampleInt(Eigen::VectorXd);
-
-double logPSplit(double, double, int, bool);
-
-double logDirichletDensity(Eigen::VectorXd, Eigen::VectorXd);
-
-Eigen::VectorXd rDirichlet(Eigen::VectorXd);
+int sampleInt(std::vector<double> probs, double totProb);
+int sampleInt(Eigen::VectorXd probs);
+double logPSplit(double alpha, double beta, int depth, bool terminal);
+double logDirichletDensity(Eigen::VectorXd x, Eigen::VectorXd alpha);
+void rHalfCauchyFC(double* x2, double a, double b, double* yInv = 0);
+Eigen::VectorXd rDirichlet(Eigen::VectorXd alpha);
+std::vector<std::vector<int> > 
+  intersectAndDiff(std::vector<int> origVec, std::vector<int> newVec);
+std::vector<int> cppIntersection(const IntegerVector& A, 
+                                 const IntegerVector& B);

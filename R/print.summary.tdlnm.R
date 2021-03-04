@@ -4,6 +4,7 @@
 #' @param digits integer number of digits to round
 #'
 #' @return
+#' @export print.summary.tdlnm
 #' @export
 #'
 print.summary.tdlnm <- function(object, digits = 3)

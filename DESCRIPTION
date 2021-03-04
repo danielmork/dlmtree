@@ -1,15 +1,16 @@
 Package: dlmtree
 Type: Package
 Title: Bayesian Treed Distributed Lag Models
-Version: 0.6.2.0
+Version: 0.7.1
 Author: Daniel Mork
 Maintainer: Daniel Mork <daniel.mork@colostate.edu>
-Description: A set of Bayesian additive regression tree models for estimating 
-    distributed lag linear and non-linear models.
+Description: This package provides a set of tools for estimating distributed
+  lag linear and nonlinear models. These methods are based on the Bayesian
+  Additive Regression Trees (BART) framework.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 Depends: R (>= 3.5.0)
-Imports: Rcpp (>= 1.0.4.6), ggplot2, viridis
+Imports: Rcpp (>= 1.0.6), ggplot2, viridis
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1

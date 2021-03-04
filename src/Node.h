@@ -1,16 +1,25 @@
+#define NODE_H
 #include <RcppEigen.h>
-#include "NodeStruct.h"
+class NodeStruct;
+class Node;
 
 struct NodeVals {
-  NodeVals(int n, int pZ = 0);
+  NodeVals(int n, int pZ);
+  NodeVals(int n);
   ~NodeVals();
   NodeVals(const NodeVals&);
+  
 public:
   Eigen::VectorXd X;
+  Eigen::MatrixXd XtX;
   Eigen::VectorXd ZtX;
+  Eigen::MatrixXd ZtXmat;
   Eigen::VectorXd VgZtX;
+  Eigen::MatrixXd VgZtXmat;
   Eigen::MatrixXd tempV;
-  // Eigen::VectorXd idx;
+  bool updateXmat;
+  std::vector<int> idx;
+  Node* nestedTree;
 };
 
 class Node {
@@ -19,32 +28,38 @@ public:
   ~Node();
   Node(const Node&);
 
-  // Node variables
+  // node variables
   int depth;
   bool update;
   Node *c1, *c2, *parent, *proposed;
   NodeStruct *nodestruct;
   NodeVals *nodevals;
 
-  // Node functions
-  // Node* clone();
+  // tree proposal functions
   bool grow();
   void prune();
   bool change();
-  // bool swap();
-  // Node* copy(Node*, bool, bool);
+  bool swap(Node* c);
   void accept();
   void reject();
+
+  // tree information functions
   int nTerminal();
   int nGen2();
   std::vector<Node*> listTerminal(bool follow_proposed = 0);
   std::vector<Node*> listInternal();
   std::vector<Node*> listGen2();
+  // double logPTree(double alpha, double beta);
+  
+  // current node information functions
+  Node* sib();
   bool isProposed();
   bool isGen2();
-  Node* sib();
-  void replaceNodeVals(Node*);
-  void setUpdate(bool);
+
+  // nodevals and nodestruct functions
+  void replaceNodeVals(Node* n);
+  void setUpdate(bool update);
+  void setUpdateXmat(bool update);
   bool updateStruct();
 };
 

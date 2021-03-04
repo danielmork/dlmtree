@@ -1,5 +1,7 @@
 #include <RcppEigen.h>
 #include "exposureDat.h"
+#include "Node.h"
+#include "NodeStruct.h"
 using namespace Rcpp;
 
 #define DOUBLE_ERROR   0.000000000000000111022302462515654042363166809082031259999
@@ -110,6 +112,7 @@ void exposureDat::updateNodeVals(Node *n)
 
   // update parent nodes first, if needed
   Node *sib, *parent;
+  sib = 0; parent = 0;
   if ((n->depth > 0)) {
     // Rcout << "\ndepth>0\n";
     parent = n->parent;

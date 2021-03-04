@@ -1,0 +1,407 @@
+/**
+ * @file tdlnmGaussian.cpp
+ * @author Daniel Mork (danielmork.github.io)
+ * @brief Method for Treed DLNM and Treed DLM
+ * @version 1.0
+ * @date 2021-02-24
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
+#include <RcppEigen.h>
+#include "modelCtr.h"
+#include "exposureDat.h"
+#include "Node.h"
+#include "NodeStruct.h"
+#include "Fncs.h"
+using namespace Rcpp;
+
+/**
+ * @brief calculate half of metropolis-hastings ratio for given tree
+ * 
+ * @param nodes vector of Node pointers
+ * @param ctr control data for model
+ * @param ZtR Z^T * R
+ * @param var nu*tau
+ * @param tree pointer to top of tree
+ * @param newTree if true, recalculate node-specific values
+ * @return treeMHR 
+ */
+treeMHR dlnmMHR(std::vector<Node*> nodes, tdlmCtr *ctr,
+                Eigen::VectorXd ZtR, double var, Node* tree, bool newTree)
+{
+  treeMHR out;
+  int pX = int(nodes.size());
+  
+  if ((pX == 1) && (!ctr->binomial)) { // single terminal node, cont. response
+    double VTheta = var / (var * ctr->VTheta1Inv + 1.0);
+    double XtVzInvR = (ctr->X1).dot(ctr->R) - (ctr->VgZtX1).dot(ZtR);
+    double ThetaHat = VTheta * XtVzInvR;
+    double VThetaChol = sqrt(VTheta);
+    out.Xd.resize(ctr->n, 1);
+    out.Xd.col(0) = ctr->X1;
+    out.draw.resize(1);
+    out.draw(0) = VThetaChol * R::rnorm(0, sqrt(ctr->sigma2)) + ThetaHat;
+    out.beta = ThetaHat * XtVzInvR;
+    out.logVThetaChol = log(VThetaChol);
+  
+  } else { // 2+ terminal nodes or binomial response
+    Eigen::MatrixXd ZtX(ctr->pZ, pX); ZtX.setZero();
+    Eigen::MatrixXd VgZtX(ctr->pZ, pX); VgZtX.setZero();
+
+    // * Create design Xd, Z^tX, and VgZ^tX matrices
+    out.Xd.resize(ctr->n, pX);
+    for (std::size_t s = 0; s < nodes.size(); ++s) {
+      out.Xd.col(s) = (nodes[s]->nodevals)->X;
+      
+      if (ctr->binomial) {
+        ZtX.col(s) = ctr->Zw.transpose() * (nodes[s]->nodevals)->X;
+        VgZtX.col(s) = ctr->Vg * ZtX.col(s);
+        
+      } else {
+        ZtX.col(s) = (nodes[s]->nodevals)->ZtX;
+        VgZtX.col(s) = (nodes[s]->nodevals)->VgZtX;
+      }
+    }
+
+    // * Calculate covariance matrix V_theta
+    Eigen::MatrixXd tempV(pX, pX);
+    Eigen::VectorXd XtVzInvR(ctr->n);
+    
+    if (ctr->binomial) {
+      const Eigen::MatrixXd Xdw = (ctr->Omega).asDiagonal() * out.Xd;
+      tempV = Xdw.transpose() * out.Xd;
+      XtVzInvR = Xdw.transpose() * ctr->R;
+      
+    } else {
+      if (newTree) {
+        tempV = out.Xd.transpose() * out.Xd;
+        tempV.noalias() -= ZtX.transpose() * VgZtX;
+        out.tempV = tempV;
+      } else {
+        tempV = tree->nodevals->tempV;
+      }
+      XtVzInvR = out.Xd.transpose() * ctr->R;
+    }
+    XtVzInvR.noalias() -= VgZtX.transpose() * ZtR;
+    tempV.diagonal().array() += 1.0 / var;
+    const Eigen::MatrixXd VTheta = tempV.inverse();
+    const Eigen::MatrixXd VThetaChol = VTheta.llt().matrixL();
+    const Eigen::VectorXd ThetaHat = VTheta * XtVzInvR;
+    
+    // const Eigen::VectorXd XtVzInvR =
+    //   out.Xd.transpose() * ctr->R - VgZtX.transpose() * ZtR;
+    
+    out.draw = ThetaHat;
+    out.draw.noalias() += 
+      VThetaChol * as<Eigen::VectorXd>(rnorm(pX, 0, sqrt(ctr->sigma2)));
+    out.beta = ThetaHat.dot(XtVzInvR);
+    out.logVThetaChol = VThetaChol.diagonal().array().log().sum();
+  } // end 2+ terminal nodes
+
+  out.termT2 = (out.draw).dot(out.draw);
+  out.nTerm = double(pX);
+  return(out);
+} // end drawMHR
+
+/**
+ * @brief tree proposal and tree parameter sampling
+ * 
+ * @param t tree number
+ * @param tree pointer to tree
+ * @param ctr pointer to model control
+ * @param dgn pointer to model log
+ * @param Exp pointer to exposure data
+ */
+void tdlnmTreeMCMC(int t, Node *tree, tdlmCtr *ctr, tdlmLog *dgn, 
+                   exposureDat *Exp)
+{
+  int    step;
+  int    success = 0;
+  double stepMhr = 0;
+  double ratio = 0;
+  double treevar = (ctr->nu) * (ctr->tau)(t);
+  std::size_t s;
+  std::vector<Node*> dlnmTerm, newDlnmTerm;
+  treeMHR mhr0, mhr;
+
+  // List current tree terminal nodes
+  dlnmTerm = tree->listTerminal();
+  Eigen::VectorXd ZtR = (ctr->Zw).transpose() * (ctr->R);
+  mhr0 = dlnmMHR(dlnmTerm, ctr, ZtR, treevar, tree, 0);
+  if (dlnmTerm.size() > 1) {
+    step = sampleInt(ctr->stepProb, 1);
+  } else { // if single terminal node, grow is only option
+    step = 0;
+  }
+
+  // propose update
+  stepMhr = tdlmProposeTree(tree, Exp, ctr, step);
+  success = tree->isProposed();
+  if (success) {
+    // calculate new tree part of MHR and draw node effects
+    newDlnmTerm = tree->listTerminal(1);
+    mhr = dlnmMHR(newDlnmTerm, ctr, ZtR, treevar, tree, 1);
+
+    // combine mhr parts into log-MH ratio
+    if (ctr->binomial) {
+      ratio = stepMhr + (mhr.logVThetaChol - mhr0.logVThetaChol) +
+        0.5 * (mhr.beta - mhr0.beta) -
+        (log(treevar) * 0.5 * (mhr.nTerm - mhr0.nTerm));
+        
+    } else {
+      double RtR, RtZVgZtR;
+      RtR = (ctr->R).dot(ctr->R);
+      RtZVgZtR = ZtR.dot((ctr->Vg).selfadjointView<Eigen::Lower>() * ZtR);
+      ratio = stepMhr + (mhr.logVThetaChol - mhr0.logVThetaChol) -
+        (0.5 * (ctr->n + 1.0) *
+          (log(0.5 * (RtR - RtZVgZtR - mhr.beta) + ctr->xiInvSigma2) -
+           log(0.5 * (RtR - RtZVgZtR - mhr0.beta) + ctr->xiInvSigma2))) -
+        (log(treevar) * 0.5 * (mhr.nTerm - mhr0.nTerm));
+    }
+
+    if (log(R::runif(0, 1)) < ratio) {
+      mhr0 = mhr;
+      success = 2;
+      tree->accept();
+      dlnmTerm = tree->listTerminal();
+      if (!ctr->binomial) {
+        tree->nodevals->tempV.resize(dlnmTerm.size(), dlnmTerm.size());
+        tree->nodevals->tempV = mhr0.tempV;
+      }
+    } else {
+      tree->reject();
+    }
+  } else {
+    tree->reject();
+  }
+  // Update variance and residuals
+  if (ctr->shrinkage)
+    rHalfCauchyFC(&(ctr->tau(t)), mhr0.nTerm, 
+                mhr0.termT2 / (ctr->sigma2 * ctr->nu));
+
+  if ((ctr->tau)(t) != (ctr->tau)(t)) 
+    stop("\nNaN values occured during model run, rerun model.\n");
+
+  ctr->nTerm(t) = mhr0.nTerm;
+  ctr->totTerm += mhr0.nTerm;
+  ctr->sumTermT2 += mhr0.termT2 / ((ctr->tau)(t));
+  ctr->Rmat.col(t) = mhr0.Xd * mhr0.draw;
+
+  // Record
+  if (ctr->record > 0) {
+    Eigen::VectorXd rec(8);
+    rec << ctr->record, t, (dlnmTerm[0]->nodestruct)->get(1),
+    (dlnmTerm[0]->nodestruct)->get(2), (dlnmTerm[0]->nodestruct)->get(3),
+    (dlnmTerm[0]->nodestruct)->get(4), mhr0.draw(0), 0;
+    (dgn->DLMexp).push_back(rec);
+
+    for(s = 1; s < dlnmTerm.size(); ++s) {
+      rec[2] = (dlnmTerm[s]->nodestruct)->get(1);
+      rec[3] = (dlnmTerm[s]->nodestruct)->get(2);
+      rec[4] = (dlnmTerm[s]->nodestruct)->get(3);
+      rec[5] = (dlnmTerm[s]->nodestruct)->get(4);
+      rec[6] = mhr0.draw(s);
+      (dgn->DLMexp).push_back(rec);
+    }
+
+    if (ctr->diagnostics) {
+      Eigen::VectorXd acc(5);
+      acc << step, success, dlnmTerm.size(), stepMhr, ratio;
+      (dgn->TreeAccept).push_back(acc);
+    }
+  }
+} // end tdlnmGaussianTreeMCMC
+
+/**
+ * @brief tdlnm
+ * 
+ * @param model list of data and model control specs from R 
+ * @return Rcpp::List 
+ */
+// [[Rcpp::export]]
+Rcpp::List tdlnm_Cpp(const Rcpp::List model)
+{
+  // * Set up model control
+  tdlmCtr *ctr = new tdlmCtr;
+  ctr->iter = as<int>(model["nIter"]);
+  ctr->burn = as<int>(model["nBurn"]);
+  ctr->thin = as<int>(model["nThin"]);
+  ctr->nRec = floor(ctr->iter / ctr->thin);
+  ctr->nTrees = as<int>(model["nTrees"]);
+  ctr->verbose = as<bool>(model["verbose"]);
+  ctr->diagnostics = as<bool>(model["diagnostics"]);
+  ctr->binomial = as<bool>(model["binomial"]);
+  ctr->stepProb = as<std::vector<double> >(model["stepProb"]);
+  ctr->treePrior = as<std::vector<double> >(model["treePrior"]);
+  ctr->shrinkage = as<int>(model["shrinkage"]);
+  
+  // * Set up model data
+  ctr->Y = as<Eigen::VectorXd>(model["Y"]);
+  ctr->n = (ctr->Y).size();
+  ctr->Z = as<Eigen::MatrixXd>(model["Z"]);
+  ctr->Zw = ctr->Z;
+  ctr->pZ = (ctr->Z).cols();
+  Eigen::MatrixXd VgInv = (ctr->Z).transpose() * (ctr->Z);
+  VgInv.diagonal().array() += 1.0 / 100000.0;
+  ctr->Vg = VgInv.inverse();
+  ctr->VgChol = (ctr->Vg).llt().matrixL();
+  VgInv.resize(0,0);
+  
+  // * Set up data for logistic model
+  ctr->binomialSize.resize(ctr->n);               ctr->binomialSize.setZero();
+  ctr->kappa.resize(ctr->n);                      ctr->kappa.setOnes();
+  ctr->Omega.resize(ctr->n);                      ctr->Omega.setOnes();
+  if (ctr->binomial) {
+    ctr->binomialSize = as<Eigen::VectorXd>(model["binomialSize"]);
+    ctr->kappa = ctr->Y - 0.5 * (ctr->binomialSize);
+    ctr->Y = ctr->kappa;
+    ctr->Omega.resize(ctr->n);                      ctr->Omega.setOnes();
+  }
+  
+  // * Create exposure data management
+  exposureDat *Exp;
+  if (as<int>(model["nSplits"]) == 0) { // DLM
+    if (ctr->binomial)
+      Exp = new exposureDat(as<Eigen::MatrixXd>(model["Tcalc"]));
+    else
+      Exp = new exposureDat(as<Eigen::MatrixXd>(model["Tcalc"]),
+                            ctr->Z, ctr->Vg);
+  } else { // DLNM
+    if (ctr->binomial)
+      Exp = new exposureDat(as<Eigen::MatrixXd>(model["X"]),
+                            as<Eigen::MatrixXd>(model["SE"]),
+                            as<Eigen::VectorXd>(model["Xsplits"]),
+                            as<Eigen::MatrixXd>(model["Xcalc"]),
+                            as<Eigen::MatrixXd>(model["Tcalc"]));
+    else
+      Exp = new exposureDat(as<Eigen::MatrixXd>(model["X"]),
+                            as<Eigen::MatrixXd>(model["SE"]),
+                            as<Eigen::VectorXd>(model["Xsplits"]),
+                            as<Eigen::MatrixXd>(model["Xcalc"]),
+                            as<Eigen::MatrixXd>(model["Tcalc"]),
+                            ctr->Z, ctr->Vg);
+  }
+  ctr->pX = Exp->pX;
+  ctr->nSplits = Exp->nSplits;
+
+  // * Calculations used in special case: single-node trees
+  ctr->X1 = (Exp->Tcalc).col(ctr->pX - 1);
+  ctr->ZtX1 = (ctr->Z).transpose() * (ctr->X1);
+  ctr->VgZtX1 = (ctr->Vg).selfadjointView<Eigen::Lower>() * (ctr->ZtX1);
+  ctr->VTheta1Inv = (ctr->X1).dot(ctr->X1) - (ctr->ZtX1).dot(ctr->VgZtX1);
+
+  // * Create trees
+  int t;
+  std::vector<Node*> trees;
+  NodeStruct *ns;
+  ns = new DLNMStruct(0, ctr->nSplits + 1, 1, int (ctr->pX),
+                      as<Eigen::VectorXd>(model["splitProb"]),
+                      as<Eigen::VectorXd>(model["timeProb"]));
+  for (t = 0; t < ctr->nTrees; t++) {
+    trees.push_back(new Node(0, 1));
+    trees[t]->nodestruct = ns->clone();
+    Exp->updateNodeVals(trees[t]);
+  }
+  delete ns;
+  ctr->nTerm.resize(ctr->nTrees);                   ctr->nTerm.setOnes();
+  ctr->Rmat.resize(ctr->n, ctr->nTrees);            ctr->Rmat.setZero();
+  
+  // * Setup model logs
+  tdlmLog *dgn = new tdlmLog;
+  (dgn->gamma).resize(ctr->pZ, ctr->nRec);          (dgn->gamma).setZero();
+  (dgn->sigma2).resize(ctr->nRec);                  (dgn->sigma2).setZero();
+  (dgn->nu).resize(ctr->nRec);                      (dgn->nu).setZero();
+  (dgn->tau).resize(ctr->nTrees, ctr->nRec);        (dgn->tau).setZero();
+  (dgn->fhat).resize(ctr->n);                       (dgn->fhat).setZero();
+  (dgn->termNodes).resize(ctr->nTrees, ctr->nRec);  (dgn->termNodes).setZero();
+  
+  // * Initial values and draws
+  ctr->fhat.resize(ctr->n);                         (ctr->fhat).setZero();
+  ctr->R = ctr->Y;
+  ctr->gamma.resize(ctr->pZ);
+  ctr->totTerm = 0;
+  ctr->sumTermT2 = 0;
+  ctr->nu = 1.0; // ! Need to define nu and sigma2 prior to ModelEst
+  ctr->sigma2 = 1.0;
+  tdlmModelEst(ctr);
+  rHalfCauchyFC(&(ctr->nu), ctr->nTrees, 0.0);
+  (ctr->tau).resize(ctr->nTrees);                   (ctr->tau).setOnes();
+  if (ctr->shrinkage) {
+    for (t = 0; t < ctr->nTrees; t++) 
+      rHalfCauchyFC(&(ctr->tau(t)), 0.0, 0.0);
+  }
+  
+  // * Create progress meter
+  progressMeter* prog = new progressMeter(ctr);
+
+  // * Beginning of MCMC
+  std::size_t s;
+  for (ctr->b = 1; ctr->b <= (ctr->iter + ctr->burn); (ctr->b)++) {
+    if ((ctr->b > ctr->burn) && (((ctr->b - ctr->burn) % ctr->thin) == 0)) {
+      ctr->record = floor((ctr->b - ctr->burn) / ctr->thin);
+    } else {
+      ctr->record = 0;
+    }
+
+    // * Update trees
+    ctr->R += (ctr->Rmat).col(0);
+    (ctr->fhat).setZero();
+    ctr->totTerm = 0.0; ctr->sumTermT2 = 0.0;
+    for (t = 0; t < ctr->nTrees; t++) {
+      tdlnmTreeMCMC(t, trees[t], ctr, dgn, Exp);
+      ctr->fhat += (ctr->Rmat).col(t);
+      if (t < ctr->nTrees - 1)
+        ctr->R += (ctr->Rmat).col(t + 1) - (ctr->Rmat).col(t);
+    } // end update trees
+
+    // * Update model
+    ctr->R = ctr->Y - ctr->fhat;
+    tdlmModelEst(ctr);
+    rHalfCauchyFC(&(ctr->nu), ctr->totTerm, ctr->sumTermT2 / ctr->sigma2);
+    if ((ctr->sigma2 != ctr->sigma2) || (ctr->nu != ctr->nu))
+      stop("\nNaN values occured during model run, rerun model.\n");
+
+    // * Record
+    if (ctr->record > 0) {
+      (dgn->gamma).col(ctr->record - 1) = ctr->gamma;
+      (dgn->sigma2)(ctr->record - 1) = ctr->sigma2;
+      (dgn->nu)(ctr->record - 1) = ctr->nu;
+      (dgn->tau).col(ctr->record - 1) = ctr->tau;
+      (dgn->termNodes).col(ctr->record - 1) = ctr->nTerm;
+      dgn->fhat += ctr->fhat;
+    }
+
+    // * Update progress
+    prog->printMark();
+  } // end MCMC
+
+  // * Setup data for return
+  Eigen::MatrixXd DLM((dgn->DLMexp).size(), 8);
+  for (s = 0; s < (dgn->DLMexp).size(); ++s)
+    DLM.row(s) = dgn->DLMexp[s];
+  Eigen::VectorXd sigma2 = dgn->sigma2;
+  Eigen::VectorXd nu = dgn->nu;
+  Eigen::VectorXd fhat = (dgn->fhat).array() / ctr->nRec;
+  Eigen::MatrixXd gamma = (dgn->gamma).transpose();
+  Eigen::MatrixXd tau = (dgn->tau).transpose();
+  Eigen::MatrixXd termNodes = (dgn->termNodes).transpose();
+  Eigen::MatrixXd Accept((dgn->TreeAccept).size(), 5);
+  for (s = 0; s < (dgn->TreeAccept).size(); ++s)
+    Accept.row(s) = dgn->TreeAccept[s];
+  delete prog;
+  delete ctr;
+  delete dgn;
+  delete Exp;
+  for (s = 0; s < trees.size(); ++s)
+    delete trees[s];
+
+  return(Rcpp::List::create(Named("DLM")    = wrap(DLM),
+                            Named("fhat")   = wrap(fhat),
+                            Named("sigma2") = wrap(sigma2),
+                            Named("nu")     = wrap(nu),
+                            Named("tau")    = wrap(tau),
+                            Named("termNodes")  = wrap(termNodes),
+                            Named("gamma")  = wrap(gamma),
+                            Named("treeAccept") = wrap(Accept)));
+} // end tdlnm_Cpp

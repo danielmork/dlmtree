@@ -15,8 +15,9 @@ import(ggplot2)
 import(viridis)
 
 importFrom("stats", "as.formula", "model.frame", "model.matrix",
-          "model.response", "pnorm", "quantile", "rbinom", "rnorm",
-          "sd", "terms.formula", "var")
+           "model.response", "pnorm", "quantile", "rbinom", "rnorm",
+           "sd", "terms.formula", "var", "IQR", "median", "runif", "toeplitz")
+importFrom("utils", "combn", "data")
 
 export(tdlnm)
 export(tdlmm)

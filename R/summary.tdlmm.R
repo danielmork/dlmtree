@@ -11,6 +11,7 @@
 #' @param ... NA
 #'
 #' @return list of type 'summary.tdlmm'
+#' @export summary.tdlmm
 #' @export
 #'
 summary.tdlmm <- function(object,
@@ -21,24 +22,28 @@ summary.tdlmm <- function(object,
                           ...)
 {
   res <- list()
-  res$nLags <- max(object$DLM$tmax)
   res$nIter <- object$nIter
   res$nThin <- object$nThin
   res$mcmcIter <- floor(res$nIter / res$nThin)
   res$nBurn <- object$nBurn
   res$nTrees <- object$nTrees
-  res$family <- object$family
+  res$treePrior <- object$treePrior
+  res$nLags <- max(object$DLM$tmax)
   res$nExp <- object$nExp
   res$nMix <- object$nMix
   res$expNames <- object$expNames
   res$mixNames <- object$mixNames
   res$interaction <- object$interaction
+  res$mixPrior <- object$mixPrior
+  res$formula <- object$formula
+  res$family <- object$family
+  res$droppedCovar <- object$droppedCovar
   res$conf.level <- conf.level
   res$ci.lims <- c((1 - conf.level) / 2, 1 - (1 - conf.level) / 2)
   res$log10BF.crit <- log10BF.crit
-  
-  
-  
+
+
+
   # ---- Set levels for marginaliztion ----
   if (marginalize == "mean") {
     res$marg.values <- sapply(object$X, function(i) i$intX)
@@ -55,40 +60,25 @@ summary.tdlmm <- function(object,
          details")
   }
   names(res$marg.values) <- res$expNames
-  
-  
-  
-  
+
+
+
+
   # ---- Bayes factor variable selection ----
-  
+
   # individual exposures
-  res$log10BF.crit <- log10BF.crit
-  log10Im0 <- 2 * res$nTrees * log10(1 - 1 / res$nExp)
+  priorProbInc <- 1 - exp(lgamma(2*res$nTrees + res$nExp*res$mixPrior) +
+                        lgamma((res$nExp + 1)*res$mixPrior) -
+                        lgamma(2*res$nTrees + (res$nExp + 1)*res$mixPrior) -
+                        lgamma(res$nExp*res$mixPrior))
   BF <- (log10(colMeans(object$expCount > 0)) -
            log10(colMeans(object$expCount == 0))) -
-    (log1p(-10^(log10Im0)) / log(10) - log10Im0)
+    (log10(priorProbInc) - log10(1 - priorProbInc))
+
   res$expBF <- 10^BF
   res$expSel <- (BF > log10BF.crit)
-  
-  # interactions of two exposures
-  if (res$interaction > 0) {
-    log10Ii0 <-  rep(res$nTrees * log10(1 - 2 / res$nExp^2), res$nMix)
-    if (res$interaction == 2) {
-      sameExp <- c(1)
-      for (s in 0:(res$nExp - 2))
-        sameExp <- c(sameExp, sameExp[s + 1] + res$nExp - s)
-      log10Ii0[sameExp] <- res$nTrees * log10(1 - 1 / res$nExp^2)
-    }
-    BF <- (log10(colMeans(object$mixCount > 0)) -
-             log10(colMeans(object$mixCount == 0))) -
-      (log1p(-10^(log10Ii0) / log(10)) - log10Ii0)
-    res$mixBF <- 10^BF
-    res$mixSel <- (BF > log10BF.crit)
-  }
-  
-  
-  
-  
+
+
   # ---- Main effect MCMC samples ----
   if (verbose)
     cat("Reconstructing main effects...\n")
@@ -106,21 +96,28 @@ summary.tdlmm <- function(object,
   res$expVar <- apply((apply(object$muExp * object$expInf, 1, rank) - 1),
                       1, iqr_plus_mean) / (res$nExp - 1)
   res$expInc <- apply(object$expCount > 0, 2, mean)
-  
-  
+
+
   # ---- Mixture MCMC samples ----
   if (verbose)
-    cat("Reconstructing interaction effects...\n")
+    cat("Reconstructing interaction effects...\n0%...")
   res$MIX <- list()
+  nMix <- 1
   for (i in sort(unique(object$MIX$exp1))) {
     for (j in sort(unique(object$MIX$exp2))) {
-      
+      if (verbose) {
+        if (nMix == ceiling(0.25 * res$nMix)) cat("25%...")
+        if (nMix == ceiling(0.5 * res$nMix)) cat("50%...")
+        if (nMix == ceiling(0.75 * res$nMix)) cat("75%...")
+        if (nMix == res$nMix) cat("100%\n")
+        nMix = nMix + 1
+      }
       idx <- which(object$MIX$exp1 == i & object$MIX$exp2 == j)
       if (length(idx) > 0) {
-        
+
         est <- mixEst(as.matrix(object$MIX[idx,,drop = F]),
                       res$nLags, res$mcmcIter)
-        
+
         m <- paste0(object$expNames[i + 1], "-", object$expNames[j + 1])
         res$MIX[[m]] <-
           list("mcmc" = est,
@@ -131,19 +128,19 @@ summary.tdlmm <- function(object,
                  apply(est[,k,], 1, quantile, probs = res$ci.lims[2]) }),
                "rows" = object$expNames[i + 1],
                "cols" = object$expNames[j + 1])
-        
-        
-        
+
+
+
         # Calculate marginal effects
         res$DLM[[i + 1]]$marg <- res$DLM[[i + 1]]$marg +
           t(sapply(1:res$nLags, function(k) colSums(est[k,,]))) *
           res$marg.values[j + 1] * ifelse(i == j, 0.5, 1)
-        
+
         res$DLM[[j + 1]]$marg <- res$DLM[[j + 1]]$marg +
           t(sapply(1:res$nLags, function(k) colSums(est[,k,]))) *
           res$marg.values[i + 1] * ifelse(i == j, 0.5, 1)
-        
-        
+
+
         # Fold surface of self interaction
         if (i == j) {
           est <- 0.5 * est * array(upper.tri(diag(res$nLags), diag = T), dim(est)) +
@@ -158,7 +155,7 @@ summary.tdlmm <- function(object,
             apply(est[,k,], 1, quantile, probs = res$ci.lims[2]) })
         }
         res$MIX[[m]]$cw <- (res$MIX[[m]]$cilower > 0 | res$MIX[[m]]$ciupper < 0)
-        
+
         # Range of confidence levels for plots
         mixCIs <- lapply(1:res$nLags, function(k) {
           apply(est[,k,], 1, quantile, probs = c(1:10/200, 190:199/200))
@@ -174,23 +171,23 @@ summary.tdlmm <- function(object,
                   })
                 )))
               })
-              ]
+            ]
           })
       }
     }
   }
-  
+
   if (res$interaction > 0) {
     res$mixVar <- apply((apply(object$muMix * object$mixInf, 1, rank) - 1),
                         1, iqr_plus_mean) / (res$nMix - 1)
     res$mixInc <- apply(object$mixCount > 0, 2, mean)
   }
-  
+
   # ---- DLM marginal effects ----
   if (verbose)
     cat("Calculating marginal effects...\n")
   for (ex.name in names(res$DLM)) {
-    
+
     # DLM marginal effects
     marg <- res$DLM[[ex.name]]$mcmc + res$DLM[[ex.name]]$marg
     res$DLM[[ex.name]]$marg <- marg
@@ -201,14 +198,14 @@ summary.tdlmm <- function(object,
                                              probs = res$ci.lims[2])
     res$DLM[[ex.name]]$marg.cw <- (res$DLM[[ex.name]]$marg.cilower > 0 |
                                      res$DLM[[ex.name]]$marg.ciupper < 0)
-    
+
     # Cumulative effects
     cumulative <- colSums(marg)
     res$DLM[[ex.name]]$cumulative <-
       list("mean" = mean(cumulative),
            "ci.lower" = quantile(cumulative, res$ci.lims[1]),
            "ci.upper" = quantile(cumulative, res$ci.lims[2]))
-    
+
     # DLM non-linear effects
     # if (any(names(res$MIX) == paste0(ex.name, "-", ex.name))) {
     #   quad <- sapply(1:res$mcmcIter, function(i) {
@@ -241,16 +238,16 @@ summary.tdlmm <- function(object,
     #     colnames(res$DLM[[ex.name]]$marg.nonlin.cw) <-
     #     as.character(object$X[[ex.name]]$Xquant)
     # }
-    
+
   }
-  
-  
-  
+
+
+
   # ---- Fixed effect estimates ----
   res$gamma.mean <- colMeans(object$gamma)
   res$gamma.ci <- apply(object$gamma, 2, quantile, probs = res$ci.lims)
-  
-  
+
+
   # ---- Return ----
   res$sig2noise <- ifelse(is.null(object$sigma2), NA,
                           var(object$fhat) / mean(object$sigma2))

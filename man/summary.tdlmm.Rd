@@ -10,7 +10,6 @@
   marginalize = "mean",
   log10BF.crit = 0.5,
   verbose = TRUE,
-  return.mcmc = FALSE,
   ...
 )
 }

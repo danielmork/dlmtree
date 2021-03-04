@@ -7,6 +7,18 @@
 
 using namespace Rcpp;
 
+// cppIntersection
+std::vector<int> cppIntersection(const IntegerVector& A, const IntegerVector& B);
+RcppExport SEXP _dlmtree_cppIntersection(SEXP ASEXP, SEXP BSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerVector& >::type A(ASEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type B(BSEXP);
+    rcpp_result_gen = Rcpp::wrap(cppIntersection(A, B));
+    return rcpp_result_gen;
+END_RCPP
+}
 // dlnmEst
 SEXP dlnmEst(arma::dmat dlnm, arma::dvec predAt, int nlags, int nsamp, double center, double se);
 RcppExport SEXP _dlmtree_dlnmEst(SEXP dlnmSEXP, SEXP predAtSEXP, SEXP nlagsSEXP, SEXP nsampSEXP, SEXP centerSEXP, SEXP seSEXP) {
@@ -49,72 +61,36 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// quantileHPD
-SEXP quantileHPD(arma::dvec samp, double prob);
-RcppExport SEXP _dlmtree_quantileHPD(SEXP sampSEXP, SEXP probSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::dvec >::type samp(sampSEXP);
-    Rcpp::traits::input_parameter< double >::type prob(probSEXP);
-    rcpp_result_gen = Rcpp::wrap(quantileHPD(samp, prob));
-    return rcpp_result_gen;
-END_RCPP
-}
-// tdlmmBinomial
-Rcpp::List tdlmmBinomial(const Rcpp::List model);
-RcppExport SEXP _dlmtree_tdlmmBinomial(SEXP modelSEXP) {
+// tdlmm_Cpp
+Rcpp::List tdlmm_Cpp(const Rcpp::List model);
+RcppExport SEXP _dlmtree_tdlmm_Cpp(SEXP modelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
-    rcpp_result_gen = Rcpp::wrap(tdlmmBinomial(model));
+    rcpp_result_gen = Rcpp::wrap(tdlmm_Cpp(model));
     return rcpp_result_gen;
 END_RCPP
 }
-// tdlmmGaussian
-Rcpp::List tdlmmGaussian(const Rcpp::List model);
-RcppExport SEXP _dlmtree_tdlmmGaussian(SEXP modelSEXP) {
+// tdlnm_Cpp
+Rcpp::List tdlnm_Cpp(const Rcpp::List model);
+RcppExport SEXP _dlmtree_tdlnm_Cpp(SEXP modelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
-    rcpp_result_gen = Rcpp::wrap(tdlmmGaussian(model));
-    return rcpp_result_gen;
-END_RCPP
-}
-// tdlnmBinomial
-Rcpp::List tdlnmBinomial(const Rcpp::List model);
-RcppExport SEXP _dlmtree_tdlnmBinomial(SEXP modelSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
-    rcpp_result_gen = Rcpp::wrap(tdlnmBinomial(model));
-    return rcpp_result_gen;
-END_RCPP
-}
-// tdlnmGaussian
-Rcpp::List tdlnmGaussian(const Rcpp::List model);
-RcppExport SEXP _dlmtree_tdlnmGaussian(SEXP modelSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
-    rcpp_result_gen = Rcpp::wrap(tdlnmGaussian(model));
+    rcpp_result_gen = Rcpp::wrap(tdlnm_Cpp(model));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_dlmtree_cppIntersection", (DL_FUNC) &_dlmtree_cppIntersection, 2},
     {"_dlmtree_dlnmEst", (DL_FUNC) &_dlmtree_dlnmEst, 6},
     {"_dlmtree_dlmEst", (DL_FUNC) &_dlmtree_dlmEst, 3},
     {"_dlmtree_mixEst", (DL_FUNC) &_dlmtree_mixEst, 3},
-    {"_dlmtree_quantileHPD", (DL_FUNC) &_dlmtree_quantileHPD, 2},
-    {"_dlmtree_tdlmmBinomial", (DL_FUNC) &_dlmtree_tdlmmBinomial, 1},
-    {"_dlmtree_tdlmmGaussian", (DL_FUNC) &_dlmtree_tdlmmGaussian, 1},
-    {"_dlmtree_tdlnmBinomial", (DL_FUNC) &_dlmtree_tdlnmBinomial, 1},
-    {"_dlmtree_tdlnmGaussian", (DL_FUNC) &_dlmtree_tdlnmGaussian, 1},
+    {"_dlmtree_tdlmm_Cpp", (DL_FUNC) &_dlmtree_tdlmm_Cpp, 1},
+    {"_dlmtree_tdlnm_Cpp", (DL_FUNC) &_dlmtree_tdlnm_Cpp, 1},
     {NULL, NULL, 0}
 };
 

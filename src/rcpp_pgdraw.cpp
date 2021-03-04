@@ -1,4 +1,4 @@
-/*
+/**
  * This file implements the Polya-gamma sampler PG(1,z).
  * This is a C++ implementation of Algorithm 6 in PhD thesis of Jesse
  * Bennett Windle, 2013
@@ -19,6 +19,8 @@
  *   Korean Journal of Computational & Applied Mathematics, 1998, 5, 601-610
  *
  * (c) Copyright Enes Makalic and Daniel F Schmidt, 2018
+ *
+ * ! Changes for current work: Modified to work with RcppEigen
  */
 
 #include "RcppEigen.h"
@@ -44,6 +46,13 @@ double truncgamma();
 double randinvg(double);
 double aterm(int, double, double);
 
+/**
+ * @brief draw polya gamma latent variable for var c[i] with size b[i]
+ * 
+ * @param b vector of binomial sizes
+ * @param c vector of parameters
+ * @return Eigen::VectorXd 
+ */
 // [[Rcpp::depends(RcppEigen)]]
 Eigen::VectorXd rcpp_pgdraw(Eigen::VectorXd b,
                             Eigen::VectorXd c)
@@ -60,7 +69,7 @@ Eigen::VectorXd rcpp_pgdraw(Eigen::VectorXd b,
   }
 
   // Sample
-// #pragma omp parallel for
+  // TODO: add code for parallel draws: #pragma omp parallel for
   for (i = 0; i < n; i++)
   {
     if (m > 1)

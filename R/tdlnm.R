@@ -35,6 +35,8 @@
 #' @param step.prob numerical vector for probability of 1) grow/prune, and
 #' 2) change, defaults to (0.25, 0.25) or equal
 #' probability of each step for tree updates
+#' @param shrinkage int, 1 (default) turn on tree-specific shrinkage priors,
+#' 0 turn off
 #' @param subset integer vector to analyze only a subset of data and exposures
 #' @param verbose true (default) or false: print output
 #' @param diagnostics true or false (default) keep model diagnostic such as
@@ -62,12 +64,13 @@ tdlnm <- function(formula,
                   binomial.size = 1,
                   tree.params = c(.95, 2),
                   step.prob = c(.25, .25),
+                  shrinkage = 1,
                   subset = NULL,
                   verbose = TRUE,
                   diagnostics = FALSE,
                   ...)
 {
-  model <- new.env()
+  model <- list()
   options(stringsAsFactors = F)
 
   # ---- Check inputs ----
@@ -106,12 +109,15 @@ tdlnm <- function(formula,
     stop("`family` must be one of `gaussian`, or `logit`")
 
   # binomial size
+  model$binomial <- 0
+  model$binomialSize <- rep(0, nrow(data))
   if (family == "logit") {
     if (length(binomial.size) == 1)
       binomial.size <- rep(binomial.size, nrow(data))
     if (length(binomial.size) != nrow(data))
       stop("`binomial.size` must be positive integer and same length as data")
     model$binomialSize <- force(binomial.size)
+    model$binomial <- 1
   }
 
   # tree parameters
@@ -141,6 +147,7 @@ tdlnm <- function(formula,
   model$treePrior <- force(tree.params)
   model$stepProb <- force(c(step.prob[1], step.prob[1], step.prob[2]))
   model$stepProb <- force(model$stepProb / sum(model$stepProb))
+  model$shrinkage <- shrinkage
 
   if (model$verbose)
     cat("Preparing data...\n")
@@ -310,15 +317,11 @@ tdlnm <- function(formula,
 
 
   # ---- Run model ----
-  model.list <- lapply(ls(envir = model), function(i) model[[i]])
-  names(model.list) <- ls(envir = model)
+  # model.list <- lapply(ls(envir = model), function(i) model[[i]])
+  # names(model.list) <- ls(envir = model)
+  out <- tdlnm_Cpp(model)
 
-  if (model$family == "gaussian")
-    out <- tdlnmGaussian(model.list)
-  else
-    out <- tdlnmBinomial(model.list)
-
-  rm(model.list)
+  # rm(model.list)
   if (verbose)
     cat("\nCompiling results...")
 
@@ -368,7 +371,6 @@ tdlnm <- function(formula,
   # Change env to list
   model.out <- lapply(names(model), function(i) model[[i]])
   names(model.out) <- names(model)
-  rm(list = ls(envir = model), envir = model)
   rm(model)
   gc()
 

@@ -18,6 +18,7 @@ tdlnm(
   binomial.size = 1,
   tree.params = c(0.95, 2),
   step.prob = c(0.25, 0.25),
+  shrinkage = 1,
   subset = NULL,
   verbose = TRUE,
   diagnostics = FALSE,
@@ -65,6 +66,9 @@ beta = 2}
 \item{step.prob}{numerical vector for probability of 1) grow/prune, and
 2) change, defaults to (0.25, 0.25) or equal
 probability of each step for tree updates}
+
+\item{shrinkage}{int, 1 (default) turn on tree-specific shrinkage priors,
+0 turn off}
 
 \item{subset}{integer vector to analyze only a subset of data and exposures}
 

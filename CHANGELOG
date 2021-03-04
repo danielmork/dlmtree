@@ -1,5 +1,11 @@
 R package 'dlmtree' history of changes
 
+Version 0.7.1.0
+* combined identity and logistic link into single c++ file
+* several code efficiencies
+* updated print output of tdlmm summary
+* removed prior on dirichlet hyperparameter
+* exposure selection based on Beta-Binomial distribution
 Version 0.6.2.0
 * separated tdlmm from tdlnm function
 * included exposure selection into summary

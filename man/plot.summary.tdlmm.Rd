@@ -12,6 +12,7 @@
   time1 = c(),
   time2 = c(),
   show.cw = TRUE,
+  cw.plots.only = TRUE,
   ...
 )
 }
@@ -32,6 +33,8 @@ for 'exposure2'}
 
 \item{show.cw}{indicate location of critical windows in interaction plot
 with red points}
+
+\item{cw.plots.only}{show only plots with critical windows}
 
 \item{...}{additional plotting parameters for manipulating title and labels}
 }

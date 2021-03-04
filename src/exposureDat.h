@@ -1,5 +1,5 @@
 #include <RcppEigen.h>
-#include "Node.h"
+class Node;
 
 class exposureDat {
 public:

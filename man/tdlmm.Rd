@@ -17,6 +17,8 @@ tdlmm(
   mixture.interactions = "noself",
   tree.params = c(0.95, 2),
   step.prob = c(0.25, 0.25, 0.25),
+  mix.prior = 1,
+  shrinkage = "all",
   subset = NULL,
   verbose = TRUE,
   diagnostics = FALSE,
@@ -58,6 +60,11 @@ beta = 2}
 \item{step.prob}{numerical vector for probability of 1) grow/prune,
 2) change, 3) switch exposure, defaults to (0.25, 0.25, 0.25) or equal
 probability of each step for tree updates}
+
+\item{mix.prior}{positive scalar hyperparameter for sparsity of exposures}
+
+\item{shrinkage}{character "all" (default), "trees", "exposures", "none",
+turns on horseshoe-like shrinkage priors for different parts of model}
 
 \item{subset}{integer vector to analyze only a subset of data and exposures}
 

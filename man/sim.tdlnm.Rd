@@ -15,5 +15,5 @@ sim.tdlnm(effect = "A", error.to.signal = 1)
 
 }
 \description{
-Simulation scenarios to accompany TDLNM
+sim.tdlnm
 }

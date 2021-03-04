@@ -23,9 +23,6 @@ exposure values (requires package gganimate)}
 'flab' which sets the effect label for surface plots,
 'start.time' which sets the first time value}
 }
-\value{
-
-}
 \description{
 plot.summary.tdlnm
 }

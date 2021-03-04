@@ -5,6 +5,7 @@
 #' @param cw.only print only results for exposures with critical windows
 #'
 #' @return output in R console
+#' @export print.summary.tdlmm
 #' @export
 #'
 print.summary.tdlmm <- function(object, digits = 4, cw.only = TRUE)
@@ -13,19 +14,28 @@ print.summary.tdlmm <- function(object, digits = 4, cw.only = TRUE)
 
   # Print model info
   cat("Model run info\n")
-  cat("-", object$nTrees, "trees\n")
+  cat("-", Reduce(paste, deparse(object$formula)), "\n")
+  cat("-", object$nTrees, "trees (alpha =", object$treePrior[1], ", beta =", object$treePrior[2], ")\n")
   cat("-", object$nBurn, "burn-in iterations\n")
   cat("-", object$nIter, "post-burn iterations\n")
   cat("-", object$nThin, "thinning factor\n")
-  cat("-", object$nExp, "exposures\n")
+  cat("-", object$nExp, "exposures measured at", object$nLags, "time points\n")
   if (object$interaction > 0) {
-    cat("-", object$nMix, "two-way interactions\n")
+    cat("-", object$nMix, "two-way interactions")
+    if (object$interaction == 1) {
+      cat(" (no-self interactions)\n")
+    } else {
+      cat(" (all interactions)\n")
+    }
   }
+  cat("-", object$mixPrior, "kappa sparsity prior\n")
   cat("-", object$conf.level, "confidence level\n")
 
 
   # Print fixed effect coefficient results
   cat("\nFixed effects:\n")
+  if (length(object$droppedCovar) > 0)
+    cat("dropped collinear covariates:", paste(object$droppedCovar, collapse = ", "),"\n")
   gamma.out <- data.frame("Mean" = round(object$gamma.mean, digits),
                           "Lower" = round(object$gamma.ci[1,], digits),
                           "Upper" = round(object$gamma.ci[2,], digits))
@@ -40,9 +50,12 @@ print.summary.tdlmm <- function(object, digits = 4, cw.only = TRUE)
 
   # Print exposure effects
   cat("\n--\nExposure effects: critical windows\n")
+  cat("* = Exposure selected by Bayes Factor\n")
+  cat("(x.xx) = Relative effect size\n")
   # cat("exposure name (signal): critical windows")
   for (ex.name in object$expNames) {
-    if (length(which(object$DLM[[ex.name]]$marg.cw)) > 0 | !cw.only) {
+    if (length(which(object$DLM[[ex.name]]$marg.cw)) > 0 | !cw.only |
+        object$expSel[ex.name]) {
       cat("\n",
           paste0(ifelse(object$expSel[ex.name], "*", " "), ex.name,
                  " (", round(object$expVar[2, ex.name], 2), "): ",
@@ -64,12 +77,10 @@ print.summary.tdlmm <- function(object, digits = 4, cw.only = TRUE)
                    " (", round(object$mixVar[2, mix.name], 2), "):"))
         for (r in which(cw > 0)) {
           s <- which(object$MIX[[mix.name]]$cw[r,])
-          cat("\n   ", paste0(r, "/", ppRange(s[which(s >= r)])))
+          cat("\n", paste0(r, "/", ppRange(s)))
         }
       }
     }
   }
   cat("\n---\n")
-  cat("* = Model selected exposure or interaction\n")
-  cat("(0.xx) = Relative signal strength\n")
 }

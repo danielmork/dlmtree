@@ -1,5 +1,5 @@
 #' sim.tdlmm
-#' 
+#'
 #' @description Simulation scenarios to accompany TDLM/TDLMM
 #'
 #' @param sim integer (1-4) specifying simulation scenario
@@ -15,7 +15,6 @@
 #' @return
 #' @export
 #'
-#' @examples
 sim.tdlmm <- function(sim = 1,
                       error = 10,
                       mean.p = 0.5,
@@ -94,7 +93,7 @@ sim.tdlmm <- function(sim = 1,
                 "margDLM1" = margDLM1, "margDLM2" = margDLM2,
                 "c" = c, "f" = f))
   }
-  
+
   # create exposures for scenarios three and four
   S11 <- exp(-toeplitz(0:(36)) * 0.7)
   a <- 0.5
@@ -120,10 +119,10 @@ sim.tdlmm <- function(sim = 1,
       f <- f + rowSums(exp[[i]][,start:(start + 7)])
     }
     f <- scale(f)
-    
+
     # Create response
     y <- c + f + rnorm(n, sd = sqrt(error))
-    
+
     return(list("dat" =  cbind.data.frame(y, data), "params" = params,
                 "exposures" = exp,
                 "active" = active,
@@ -145,15 +144,15 @@ sim.tdlmm <- function(sim = 1,
     start4 <- sample.int(30, 1)
     start5 <- sample.int(30, 1)
     f <- rowSums(exp[[active[1]]][,start1:(start1 + 7)]) +
-      0.2 * rowSums(exp[[active[2]]][,start2:(start2 + 7)]) * 
-        rowSums(exp[[active[3]]][,start3:(start3 + 7)]) +
-      0.2 * rowSums(exp[[active[4]]][,start4:(start4 + 7)]) * 
-        rowSums(exp[[active[5]]][,start5:(start5 + 7)])
+      0.2 * rowSums(exp[[active[2]]][,start2:(start2 + 7)]) *
+      rowSums(exp[[active[3]]][,start3:(start3 + 7)]) +
+      0.2 * rowSums(exp[[active[4]]][,start4:(start4 + 7)]) *
+      rowSums(exp[[active[5]]][,start5:(start5 + 7)])
     f <- scale(f)
-    
+
     # Create response
     y <- c + f + rnorm(n, sd = sqrt(error))
-    
+
     return(list("dat" =  cbind.data.frame(y, data), "params" = params,
                 "exposures" = exp,
                 "active" = active,
