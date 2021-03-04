@@ -8,6 +8,7 @@
 #' @param log10BF.crit Bayes Factor criteria for selecting exposures and
 #' interactions, such that log10(BayesFactor) > x. Default = 0.5
 #' @param verbose show progress in console
+#' @param keep.mcmc keep all mcmc iterations (large memory requirement)
 #' @param ... NA
 #'
 #' @return list of type 'summary.tdlmm'
@@ -19,6 +20,7 @@ summary.tdlmm <- function(object,
                           marginalize = "mean",
                           log10BF.crit = 0.5,
                           verbose = TRUE,
+                          keep.mcmc = FALSE,
                           ...)
 {
   res <- list()
@@ -120,15 +122,16 @@ summary.tdlmm <- function(object,
 
         m <- paste0(object$expNames[i + 1], "-", object$expNames[j + 1])
         res$MIX[[m]] <-
-          list("mcmc" = est,
-               "matfit" = sapply(1:res$nLags, function(k) rowMeans(est[,k,])),
+          list("matfit" = sapply(1:res$nLags, function(k) rowMeans(est[,k,])),
                "cilower" = sapply(1:res$nLags, function(k) {
                  apply(est[,k,], 1, quantile, probs = res$ci.lims[1]) }),
                "ciupper" = sapply(1:res$nLags, function(k) {
                  apply(est[,k,], 1, quantile, probs = res$ci.lims[2]) }),
                "rows" = object$expNames[i + 1],
                "cols" = object$expNames[j + 1])
-
+        
+        if (keep.mcmc)
+          res$MIX[[m]]$mcmc <- est
 
 
         # Calculate marginal effects
@@ -146,7 +149,8 @@ summary.tdlmm <- function(object,
           est <- 0.5 * est * array(upper.tri(diag(res$nLags), diag = T), dim(est)) +
             0.5 * aperm(est, c(2, 1, 3)) *
             array(upper.tri(diag(res$nLags), diag = T), dim(est))
-          res$MIX[[m]]$mcmc <- est
+          if (keep.mcmc)
+            res$MIX[[m]]$mcmc <- est
           res$MIX[[m]]$matfit <- sapply(1:res$nLags, function(k) {
             rowMeans(est[,k,]) })
           res$MIX[[m]]$cilower <- sapply(1:res$nLags, function(k) {
@@ -190,7 +194,13 @@ summary.tdlmm <- function(object,
 
     # DLM marginal effects
     marg <- res$DLM[[ex.name]]$mcmc + res$DLM[[ex.name]]$marg
-    res$DLM[[ex.name]]$marg <- marg
+    if (keep.mcmc)
+      res$DLM[[ex.name]]$marg <- marg
+    else {
+      res$DLM[[ex.name]]$mcmc <- NULL
+      res$DLM[[ex.name]]$marg <- NULL
+    }
+
     res$DLM[[ex.name]]$marg.matfit <- apply(marg, 1, mean)
     res$DLM[[ex.name]]$marg.cilower <- apply(marg, 1, quantile,
                                              probs = res$ci.lims[1])
