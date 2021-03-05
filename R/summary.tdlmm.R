@@ -67,18 +67,21 @@ summary.tdlmm <- function(object,
 
 
   # ---- Bayes factor variable selection ----
+  res$expSel <- rep(FALSE, res$nExp)
+  names(res$expSel) <- res$expNames
+  if (res$mixPrior > 0) {
+    # individual exposures
+    priorProbInc <- 1 - exp(lgamma(2*res$nTrees + res$nExp*res$mixPrior) +
+                          lgamma((res$nExp + 1)*res$mixPrior) -
+                          lgamma(2*res$nTrees + (res$nExp + 1)*res$mixPrior) -
+                          lgamma(res$nExp*res$mixPrior))
+    BF <- (log10(colMeans(object$expCount > 0)) -
+             log10(colMeans(object$expCount == 0))) -
+      (log10(priorProbInc) - log10(1 - priorProbInc))
 
-  # individual exposures
-  priorProbInc <- 1 - exp(lgamma(2*res$nTrees + res$nExp*res$mixPrior) +
-                        lgamma((res$nExp + 1)*res$mixPrior) -
-                        lgamma(2*res$nTrees + (res$nExp + 1)*res$mixPrior) -
-                        lgamma(res$nExp*res$mixPrior))
-  BF <- (log10(colMeans(object$expCount > 0)) -
-           log10(colMeans(object$expCount == 0))) -
-    (log10(priorProbInc) - log10(1 - priorProbInc))
-
-  res$expBF <- 10^BF
-  res$expSel <- (BF > log10BF.crit)
+    res$expBF <- 10^BF
+    res$expSel <- (BF > log10BF.crit)
+  }
 
 
   # ---- Main effect MCMC samples ----
@@ -95,9 +98,14 @@ summary.tdlmm <- function(object,
   }
   names(res$DLM) <- res$expNames
   iqr_plus_mean <- function(i) c(quantile(i, 0.25), mean(i), quantile(i, 0.75))
-  res$expVar <- apply((apply(object$muExp * object$expInf, 1, rank) - 1),
-                      1, iqr_plus_mean) / (res$nExp - 1)
   res$expInc <- apply(object$expCount > 0, 2, mean)
+  if (res$nExp == 1) {
+    res$expVar <- apply(object$mixCount > 0, 2, mean)
+    names(res$expVar) <- names(res$expInc)
+  } else {
+    res$expVar <- apply((apply(object$muExp * object$expInf, 1, rank) - 1),
+                        1, iqr_plus_mean) / (res$nExp - 1)
+  }
 
 
   # ---- Mixture MCMC samples ----
@@ -129,7 +137,7 @@ summary.tdlmm <- function(object,
                  apply(est[,k,], 1, quantile, probs = res$ci.lims[2]) }),
                "rows" = object$expNames[i + 1],
                "cols" = object$expNames[j + 1])
-        
+
         if (keep.mcmc)
           res$MIX[[m]]$mcmc <- est
 
@@ -182,9 +190,14 @@ summary.tdlmm <- function(object,
   }
 
   if (res$interaction > 0) {
-    res$mixVar <- apply((apply(object$muMix * object$mixInf, 1, rank) - 1),
-                        1, iqr_plus_mean) / (res$nMix - 1)
     res$mixInc <- apply(object$mixCount > 0, 2, mean)
+    if (res$nMix == 1) {
+      res$mixVar <- c(1)
+      names(res$mixVar) <- names(res$mixInc)
+    } else {
+      res$mixVar <- apply((apply(object$muMix * object$mixInf, 1, rank) - 1),
+                          1, iqr_plus_mean) / (res$nMix - 1)
+    }
   }
 
   # ---- DLM marginal effects ----
