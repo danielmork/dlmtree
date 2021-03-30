@@ -91,12 +91,13 @@ treeMHR mixMHR(std::vector<Node*> nodes1, std::vector<Node*> nodes2,
   if (ctr->binomial) {
     const Eigen::MatrixXd Xdw = (ctr->Omega).asDiagonal() * out.Xd;
     tempV = Xdw.transpose() * out.Xd;
+    tempV.noalias() -= ZtX.transpose() * VgZtX;
     XtVzInvR = Xdw.transpose() * ctr->R;
     
   } else {
     if (newTree) {
-      tempV.triangularView<Eigen::Lower>() =
-        out.Xd.transpose() * out.Xd - ZtX.transpose() * VgZtX;
+      tempV.triangularView<Eigen::Lower>() = out.Xd.transpose() * out.Xd;
+      tempV.noalias() -= ZtX.transpose() * VgZtX;
       out.tempV = tempV;
     } else {
       tempV = tree->nodevals->tempV;
@@ -104,7 +105,7 @@ treeMHR mixMHR(std::vector<Node*> nodes1, std::vector<Node*> nodes2,
     XtVzInvR = out.Xd.transpose() * ctr->R;
   }
   XtVzInvR.noalias() -= VgZtX.transpose() * ZtR;
-  tempV.diagonal() += diagVar;
+  tempV.diagonal().noalias() += diagVar;
 
   // Rcout << ".";
   Eigen::MatrixXd VTheta(pXd, pXd);
@@ -529,6 +530,11 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   ctr->stepProb = as<std::vector<double> >(model["stepProb"]);
   ctr->treePrior = as<std::vector<double> >(model["treePrior"]);
   ctr->modKappa = as<double>(model["mixPrior"]);
+  bool updateKappa = false;
+  if (ctr->modKappa < 0) {
+    updateKappa = true;
+    ctr->modKappa = 1;
+  }
   ctr->shrinkage = as<int>(model["shrinkage"]); 
   // 3 = all, 2 = trees, 1 = exposures/interactions, 0 = none
   
@@ -737,8 +743,24 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
 
 
     // * Update exposure selection probability
-    if ((ctr->b > 1000) || (ctr->b > (0.5 * ctr->burn)))
+    if ((ctr->b > 1000) || (ctr->b > (0.5 * ctr->burn))) {
+      if (updateKappa) {
+        // double modKappaNew = exp(log(ctr->modKappa) + R::rnorm(0, 0.5));
+        double modKappaNew = R::rgamma(1.0, ctr->nTrees/4.0);
+        double mhrDir =
+          logDirichletDensity(ctr->expProb,
+                              ((ctr->expCount).array() + 
+                               modKappaNew).matrix()) -
+          logDirichletDensity(ctr->expProb,
+                              ((ctr->expCount).array() + 
+                               ctr->modKappa).matrix());
+
+        if (log(R::runif(0, 1)) < mhrDir)
+          ctr->modKappa = modKappaNew;
+      }
+      
       ctr->expProb = rDirichlet(((ctr->expCount).array() + ctr->modKappa).matrix());
+    }
       
     // * Record
     if (ctr->record > 0) {
@@ -784,6 +806,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
     DLM.row(s) = dgn->DLMexp[s];
   Eigen::VectorXd sigma2 = dgn->sigma2;
   Eigen::VectorXd nu = dgn->nu;
+  Eigen::VectorXd kappa = dgn->kappa;
   Eigen::VectorXd fhat = (dgn->fhat).array() / ctr->nRec;
   Eigen::MatrixXd gamma = (dgn->gamma).transpose();
   Eigen::MatrixXd tau = (dgn->tau).transpose();
@@ -837,6 +860,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
                             Named("mixCount") = wrap(mixCount),
                             Named("muExp") = wrap(muExp),
                             Named("muMix") = wrap(muMix),
+                            Named("kappa") = wrap(kappa),
                             Named("treeAccept") = wrap(Accept)));
 } // end tdlmm_Cpp
 
