@@ -9,6 +9,7 @@ S3method(plot, summary.tdlnm)
 S3method(plot, summary.tdlmm)
 S3method(print, summary.tdlnm)
 S3method(print, summary.tdlmm)
+S3method(predict, dlmtree)
 
 
 import(ggplot2)
