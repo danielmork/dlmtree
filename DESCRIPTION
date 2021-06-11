@@ -1,7 +1,7 @@
 Package: dlmtree
 Type: Package
 Title: Bayesian Treed Distributed Lag Models
-Version: 0.7.1.3
+Version: 0.8.0.0
 Author: Daniel Mork
 Maintainer: Daniel Mork <daniel.mork@colostate.edu>
 Description: This package provides a set of tools for estimating distributed

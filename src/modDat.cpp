@@ -70,12 +70,12 @@ std::vector<std::vector<int> >
     newAvailMod[splitVar] = idx;
 
   } else {
-    std::vector<std::vector<int> > iD =
+    std::pair<std::vector<int>, std::vector<int> > iD =
       intersectAndDiff(newAvailMod[splitVar], splitVec);
     if (left) {
-      newAvailMod[splitVar] = iD[0];
+      newAvailMod[splitVar] = iD.first;
     } else {
-      newAvailMod[splitVar] = iD[1];
+      newAvailMod[splitVar] = iD.second;
     }
   }
   return(newAvailMod);
@@ -87,43 +87,37 @@ void modDat::updateNodeVals(Node *n)
   // stop if no update needed
   if (n->update == 0)
     return;
-
+    
   // load NodeVals struct
-  if (n->nodevals == 0) {
+  if (n->nodevals == 0)
     n->nodevals = new NodeVals(this->n);
-  }
 
   // update parent nodes first, if needed
   Node *sib, *parent;
   sib = 0; parent = 0;
 
   if (n->depth > 0) {
-
     parent = n->parent;
     sib = n->sib();
-
-    if (sib == 0 || parent == 0)
-      stop("missing node sib or parent");
 
     if (parent->update) {
       updateNodeVals(parent);
       parent->nodevals->updateXmat = 1;
     }
 
-    if (sib->nodevals == 0) {
+    if (sib->nodevals == 0)
       sib->nodevals = new NodeVals(this->n);
-    }
 
   } else {
-    (n->nodevals)->idx = this->fullIdx;
+    n->nodevals->idx = this->fullIdx;
     n->update = 0;
     n->nodevals->updateXmat = 1;
     return;
   }
 
   if (parent->nodevals->idx.size() == 0){
-    (n->nodevals)->idx = parent->nodevals->idx;
-    (sib->nodevals)->idx = parent->nodevals->idx;
+    n->nodevals->idx = parent->nodevals->idx;
+    sib->nodevals->idx = parent->nodevals->idx;
     n->update = 0;
     n->nodevals->updateXmat = 1;
     sib->update = 0;
@@ -131,37 +125,43 @@ void modDat::updateNodeVals(Node *n)
     return;
   }
 
-
   int splitVar = (parent->nodestruct)->get(1);
-  std::vector<std::vector<int> > iD;
+  
+  // Find intersection and difference of parent and rule indices
+  std::pair<std::vector<int>, std::vector<int> > iD;
   if (varIsNum[splitVar]) {
     int splitVal = (parent->nodestruct)->get(2);
     iD = intersectAndDiff((parent->nodevals)->idx,
                           splitIdx[splitVar][splitVal]);
   } else {
     std::vector<int> splitVec = (parent->nodestruct)->get2(1);
+    int vecLen = 0;
+    for (auto i : splitVec)
+      vecLen += splitIdx[splitVar][i].size();
     std::vector<int> splitVecIdx;
-    for (std::size_t i = 0; i < splitVec.size(); ++i) {
+    splitVecIdx.reserve(vecLen);
+    for (auto i : splitVec)
       splitVecIdx.insert(splitVecIdx.end(),
-                          splitIdx[splitVar][splitVec[i]].begin(),
-                          splitIdx[splitVar][splitVec[i]].end());
-    }
+                         splitIdx[splitVar][i].begin(),
+                         splitIdx[splitVar][i].end());
+    std::sort(splitVecIdx.begin(), splitVecIdx.end());
     iD = intersectAndDiff((parent->nodevals)->idx, splitVecIdx);
   }
 
+  // Assign indices to node and sibling
   if (n == parent->c1) {
-    (n->nodevals)->idx = iD[0];
-    (sib->nodevals)->idx = iD[1];
+    (n->nodevals)->idx = iD.first;
+    (sib->nodevals)->idx = iD.second;
   } else if (n == parent->c2) {
-    (n->nodevals)->idx = iD[1];
-    (sib->nodevals)->idx = iD[0];
+    (n->nodevals)->idx = iD.second;
+    (sib->nodevals)->idx = iD.first;
   } else if (parent->proposed != 0) {
     if (n == (parent->proposed)->c1) {
-      (n->nodevals)->idx = iD[0];
-      (sib->nodevals)->idx = iD[1];
+      (n->nodevals)->idx = iD.first;
+      (sib->nodevals)->idx = iD.second;
     } else {
-      (n->nodevals)->idx = iD[1];
-      (sib->nodevals)->idx = iD[0];
+      (n->nodevals)->idx = iD.second;
+      (sib->nodevals)->idx = iD.first;
     }
   }
 

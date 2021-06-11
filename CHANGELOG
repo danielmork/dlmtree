@@ -1,5 +1,7 @@
 R package 'dlmtree' history of changes
 
+Version 0.8.0.0
+* add HDLM functionality (dlmtree)
 Version 0.7.1.1a
 * fix summary.tdlmm if nMix=1 or nExp=1
 Version 0.7.1.0

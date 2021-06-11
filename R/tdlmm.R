@@ -167,7 +167,7 @@ tdlmm <- function(formula,
   model$stepProb <- force(c(step.prob[1], step.prob[1],
                             step.prob[2], step.prob[3]))
   model$stepProb <- force(model$stepProb / sum(model$stepProb))
-  model$mixPrior <- mix.prior
+  model$mixPrior <- ifelse(mix.prior == "auto", -1, mix.prior)
   model$shrinkage <- ifelse(shrinkage == "all", 3,
                             ifelse(shrinkage == "trees", 2,
                                    ifelse(shrinkage == "exposures", 1, 0)))

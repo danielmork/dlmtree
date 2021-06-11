@@ -10,6 +10,7 @@
   marginalize = "mean",
   log10BF.crit = 0.5,
   verbose = TRUE,
+  keep.mcmc = FALSE,
   ...
 )
 }
@@ -26,6 +27,8 @@ a named vector with specific values for each exposure}
 interactions, such that log10(BayesFactor) > x. Default = 0.5}
 
 \item{verbose}{show progress in console}
+
+\item{keep.mcmc}{keep all mcmc iterations (large memory requirement)}
 
 \item{...}{NA}
 }

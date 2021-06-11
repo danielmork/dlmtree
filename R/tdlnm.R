@@ -64,6 +64,9 @@ tdlnm <- function(formula,
                   binomial.size = 1,
                   tree.params = c(.95, 2),
                   step.prob = c(.25, .25),
+                  monotone = FALSE,
+                  tree.time.params = c(.5, 2),
+                  tree.exp.params = c(.2, 2),
                   shrinkage = 1,
                   subset = NULL,
                   verbose = TRUE,
@@ -76,8 +79,7 @@ tdlnm <- function(formula,
   # ---- Check inputs ----
   # number of iterations
   if (n.iter < n.thin * 10)
-    stop("after thinning you will be left with less than 10 MCMC samples,
-         increase the number of iterations!")
+    stop("after thinning you will be left with less than 10 MCMC samples, increase the number of iterations!")
 
   # data for formula
   if (!is.data.frame(data))
@@ -148,6 +150,10 @@ tdlnm <- function(formula,
   model$stepProb <- force(c(step.prob[1], step.prob[1], step.prob[2]))
   model$stepProb <- force(model$stepProb / sum(model$stepProb))
   model$shrinkage <- shrinkage
+  model$monotone <- monotone
+  model$treePriorExp <- tree.exp.params
+  model$treePriorTime <- tree.time.params
+  model$debug <- 0
 
   if (model$verbose)
     cat("Preparing data...\n")
@@ -210,8 +216,7 @@ tdlnm <- function(formula,
     } else {
       model$dlFunction <- "tdlnm"
       if (is.list(exposure.splits)) {
-        stop("exposure.splits must be a scalar or list with two inputs:
-             'type' and 'split.vals'")
+        stop("exposure.splits must be a scalar or list with two inputs: 'type' and 'split.vals'")
       } else {
         model$Xsplits <- force(sort(unique(quantile(model$X,
                                                     (1:(exposure.splits - 1)) /
@@ -229,13 +234,11 @@ tdlnm <- function(formula,
     # if exposure.splits entered incorrectly, infer user input and inform
     if (!is.list(exposure.splits)) {
       if (any(exposure.splits > 1 | exposure.splits < 0)) {
-        cat("exposure.splits entered as numeric vector, assuming values are
-            exposure splitting points\n")
+        cat("exposure.splits entered as numeric vector, assuming values are exposure splitting points\n")
         exposure.splits <- list("type" = "values",
                                 "split.vals" = exposure.splits)
       } else {
-        cat("exposure.splits entered as numeric vector, assuming values are
-            exposure splitting quantiles\n")
+        cat("exposure.splits entered as numeric vector, assuming values are exposure splitting quantiles\n")
         exposure.splits <- list("type" = "quantiles", "split.vals" = exposure.splits)
       }
     }
@@ -249,8 +252,7 @@ tdlnm <- function(formula,
     # use specific quantiles as splitting points
     } else if (exposure.splits$type == "quantiles") {
       if (any(exposure.splits$split.vals > 1 | exposure.splits$split.vals < 0))
-        stop("`exposure.splits$split.vals` must be between zero and one if
-             using quantiles")
+        stop("`exposure.splits$split.vals` must be between zero and one if using quantiles")
       model$Xsplits <- force(sort(unique(quantile(model$X,
                                                   exposure.splits$split.vals))))
       model$Xsplits <- force(model$Xsplits[which(model$Xsplits > min(model$X) &
@@ -319,11 +321,14 @@ tdlnm <- function(formula,
   # ---- Run model ----
   # model.list <- lapply(ls(envir = model), function(i) model[[i]])
   # names(model.list) <- ls(envir = model)
-  out <- tdlnm_Cpp(model)
+  if (model$monotone)
+    out <- monotdlnm_Cpp(model)
+  else
+    out <- tdlnm_Cpp(model)
 
   # rm(model.list)
   if (verbose)
-    cat("\nCompiling results...")
+    cat("\nCompiling results...\n")
 
   for (n in names(out))
     model[[n]] <- out[[n]]

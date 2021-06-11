@@ -21,13 +21,15 @@ public:
   virtual std::vector<std::vector<int> > get3(int);
   virtual void updateStruct(NodeStruct*, bool);
   virtual bool checkEqual(NodeStruct*);
+  virtual void setTimeRange(int, int);
 };
 
 class DLNMStruct: public NodeStruct {
 public:
-  DLNMStruct(int, int, int, int, Eigen::VectorXd, Eigen::VectorXd);
+  DLNMStruct(int xmin_in, int xmax_in, int tmin_in, int tmax_in,
+                       Eigen::VectorXd Xp_in, Eigen::VectorXd Tp_in);
   ~DLNMStruct();
-  DLNMStruct(const DLNMStruct&);
+  DLNMStruct(const DLNMStruct& ns);
 
   int xmin, xmax, tmin, tmax; // DLNM limits
   int xsplit, tsplit; // set to 0 until split is created
@@ -38,23 +40,24 @@ public:
   bool valid();
   double logPRule();
   NodeStruct* clone();
-  bool checkEqual(NodeStruct*);
+  bool checkEqual(NodeStruct* n);
   void printStruct();
-  int get(int);
+  int get(int a);
   
   // proposal functions
   bool proposeSplit();
-  NodeStruct* subStruct(bool);
+  NodeStruct* subStruct(bool left);
   void dropSplit();
-  void updateStruct(NodeStruct*, bool);
+  void updateStruct(NodeStruct* parStruct, bool left);
+  void setTimeRange(int lower, int upper);
 };
 
 class ModStruct: public NodeStruct {
 public:
-  ModStruct(modDat*);
+  ModStruct(modDat* md);
   ModStruct(modDat* modFncs, std::vector<std::vector<int> > availMod);
   ~ModStruct();
-  ModStruct(const ModStruct&);
+  ModStruct(const ModStruct& ns);
 
   int splitVar;   // splitting modifier
   int splitVal;   // splitting value (continuous modifier)
@@ -74,17 +77,17 @@ public:
   bool proposeSplit();
   void dropSplit();
   bool valid();
-  bool checkEqual(NodeStruct*);
-  void updateStruct(NodeStruct*, bool);
+  bool checkEqual(NodeStruct* ns);
+  void updateStruct(NodeStruct* parStruct, bool left);
 
-  NodeStruct* subStruct(bool);
+  NodeStruct* subStruct(bool left);
   NodeStruct* clone();
 
   double logPRule();
 
-  int get(int);
-  std::vector<int> get2(int);
-  std::vector<std::vector<int> > get3(int);
+  int get(int a);
+  std::vector<int> get2(int a);
+  std::vector<std::vector<int> > get3(int a);
   void printStruct();
 
 };

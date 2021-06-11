@@ -9,7 +9,7 @@ using namespace Rcpp;
  * @param totP sum of p
  * @return integer from 0 to length of p minus 1
  */
-int sampleInt(std::vector<double> probs, double totP = 1)
+int sampleInt(const std::vector<double> &probs, double totP = 1)
 {
   double u = R::runif(0, totP);
   double sum = probs[0];
@@ -27,7 +27,7 @@ int sampleInt(std::vector<double> probs, double totP = 1)
  * @param probs vector of probabilities 
  * @return integer from 0 to length of p minus 1
  */
-int sampleInt(Eigen::VectorXd probs)
+int sampleInt(const Eigen::VectorXd &probs)
 {
   double totP = probs.sum();
   double u = R::runif(0, totP);
@@ -66,7 +66,8 @@ double logPSplit(double alpha, double beta, int depth, bool terminal)
  * @param alpha vector of parameters
  * @return log probability
  */
-double logDirichletDensity(Eigen::VectorXd x, Eigen::VectorXd alpha)
+double logDirichletDensity(const Eigen::VectorXd &x, 
+                           const Eigen::VectorXd &alpha)
 {
   if (x.size() != alpha.size()) // ! incorrect sizes
     stop("logDirichletDensity incorrect size");
@@ -82,7 +83,7 @@ double logDirichletDensity(Eigen::VectorXd x, Eigen::VectorXd alpha)
  * @param alpha parameters
  * @return vector containing draw from Dirichlet
  */
-Eigen::VectorXd rDirichlet(Eigen::VectorXd alpha)
+Eigen::VectorXd rDirichlet(const Eigen::VectorXd &alpha)
 {
   Eigen::VectorXd out(alpha.size());
   double norm = 0;
@@ -119,58 +120,51 @@ void rHalfCauchyFC(double* x2, double a, double b, double* yInv)
  * @param newVec vector of unsorted integers to be compared to origVec
  * @return std vector with 2 elements: intersection and difference
  */
-std::vector<std::vector<int> > 
-  intersectAndDiff(std::vector<int> origVec, std::vector<int> newVec)
+// std::vector<std::vector<int> > 
+std::pair<std::vector<int>, std::vector<int> >
+  intersectAndDiff(const std::vector<int> &origVec, 
+                   const std::vector<int> &newVec)
 {
-  // Assume origVec is sorted, sort newVec
-  std::sort(newVec.begin(), newVec.end());
+  // Assume origVec and newVec are sorted
+  // std::sort(newVec.begin(), newVec.end()); // not needed! ~20% speedup
   std::vector<int> intVec;
   std::vector<int> diffVec;
-  std::vector<std::vector<int> > iD;
   
-  if (origVec.size() == 0) {
-    iD.push_back(origVec); // intersection
-    iD.push_back(origVec); // difference
-    return(iD);
-  }
-  if (newVec.size() == 0) {
-    iD.push_back(newVec); // intersection
-    iD.push_back(origVec);// difference
-    return(iD);
-  }
+  if (origVec.size() == 0)
+    return(std::make_pair(origVec, origVec));
     
-  intVec.reserve(origVec.size());
+  if (newVec.size() == 0)
+    return(std::make_pair(newVec, origVec));
+    
+  intVec.reserve(newVec.size());
   diffVec.reserve(origVec.size());
 
   std::size_t i = 0;
   std::size_t j = 0;
   // iterate over origVec and newVec
   do {
-    if (origVec[i] == newVec[j]) { // intersection
-      intVec.push_back(origVec[i]);
-      ++i;
-      if (j < (newVec.size() - 1)) {
-        ++j;
-      }
-      
-    } else if (origVec[i] < newVec[j]) { // difference
-      diffVec.push_back(origVec[i]);
-      ++i;
-      
-    } else { // origVec[i] > newVec[i]
-      if (j < (newVec.size() - 1)) {
-        ++j;
-      } else { // exceeded newVec, difference
+
+      if (origVec[i] < newVec[j]) { // difference
         diffVec.push_back(origVec[i]);
         ++i;
+        continue;
+
+      } else if (origVec[i] == newVec[j]) { // intersection
+        intVec.push_back(origVec[i]);
+        ++i; ++j;
+
+      } else { // origVec[i] > newVec[j]
+        ++j;
       }
-    }
 
-  } while (i < origVec.size());
+      if (j == newVec.size()) {
+        diffVec.insert(diffVec.end(), origVec.begin() + i, origVec.end());
+        break;
+      }
 
-  iD.push_back(intVec);
-  iD.push_back(diffVec);
-  return(iD);
+    } while (i < origVec.size());
+
+  return(std::make_pair(intVec, diffVec));
 }
 
 /**

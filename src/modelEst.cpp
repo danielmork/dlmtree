@@ -16,6 +16,10 @@
 #include "Node.h"
 #include "NodeStruct.h"
 using namespace Rcpp;
+using Eigen::VectorXd;
+using Eigen::MatrixXd;
+using Eigen::Lower;
+using Eigen::Upper;
 
 /**
  * @brief function to update fixed effect coef., sigma^2, polya-gamma
@@ -24,8 +28,8 @@ using namespace Rcpp;
  */
 void tdlmModelEst(modelCtr *ctr)
 {
-  const Eigen::VectorXd ZR = ctr->Zw.transpose() * ctr->R;
-  ctr->gamma = ctr->Vg * ZR;
+  const VectorXd ZR = ctr->Zw.transpose() * ctr->R;
+  ctr->gamma =        ctr->Vg * ZR;
    
   // * Update sigma^2 and xi_sigma2
   if (!(ctr->binomial)) {
@@ -37,49 +41,26 @@ void tdlmModelEst(modelCtr *ctr)
   }
   
   // * Draw fixed effect coefficients
-  ctr->gamma.noalias() += ctr->VgChol *
-    as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2)));
+  ctr->gamma.noalias() += ctr->VgChol * 
+    as<VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2)));
     
   // * Update polya gamma vars
   if (ctr->binomial) {
-    Eigen::VectorXd psi = ctr->fhat;
+    VectorXd psi =   ctr->fhat;
     psi.noalias() += ctr->Z * ctr->gamma;
-    ctr->Omega = rcpp_pgdraw(ctr->binomialSize, psi);
-    
-    ctr->Zw = ctr->Omega.asDiagonal() * ctr->Z;
-    Eigen::MatrixXd VgInv(ctr->pZ, ctr->pZ);
-    VgInv.triangularView<Eigen::Lower>() = ctr->Z.transpose() * ctr->Zw;
-    VgInv.diagonal().array() += 1 / 100000.0;
-    VgInv.triangularView<Eigen::Upper>() = VgInv.transpose().eval();
-    ctr->Vg.triangularView<Eigen::Lower>() = VgInv.inverse();
-    ctr->Vg.triangularView<Eigen::Upper>() = ctr->Vg.transpose().eval();
+    ctr->Omega =     rcpp_pgdraw(ctr->binomialSize, psi);
+    ctr->Zw =        ctr->Omega.asDiagonal() * ctr->Z;
+    MatrixXd VgInv(ctr->pZ, ctr->pZ);
+    VgInv.triangularView<Lower>() =   ctr->Z.transpose() * ctr->Zw;
+    VgInv.diagonal().array() +=       1 / 100000.0;
+    VgInv.triangularView<Upper>() =   VgInv.transpose().eval();
+    ctr->Vg.triangularView<Lower>() = VgInv.inverse();
+    ctr->Vg.triangularView<Upper>() = ctr->Vg.transpose().eval();
     ctr->VgChol = ctr->Vg.llt().matrixL();
-    ctr->Y = (ctr->kappa).array() / ctr->Omega.array();
-    ctr->R = ctr->Y - ctr->fhat; // Recalc R using new Y
+    ctr->Y =      ctr->kappa.array() / ctr->Omega.array();
+    ctr->R =      ctr->Y - ctr->fhat; // Recalc R using new Y
   }
 } // end tdlmModelEst function
-
-
-// void tdlmModelEstBinomial(modelCtr *ctr)
-// {
-//   ctr->gamma = ctr->Vg.transpose() * ctr->Zw.transpose() * ctr->R;
-//   ctr->VgChol = ctr->Vg.llt().matrixL();
-//   ctr->gamma.noalias() += 
-//     ctr->VgChol * as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, 1));
-
-//   Eigen::VectorXd psi = ctr->fhat;
-//   psi.noalias() += ctr->Z * ctr->gamma;
-//   ctr->Omega = rcpp_pgdraw(ctr->binomialSize, psi);
-//   ctr->Zw = ctr->Omega.asDiagonal() * ctr->Z;
-  
-//   Eigen::MatrixXd VgInv(ctr->pZ, ctr->pZ);
-//   VgInv.triangularView<Eigen::Lower>() = ctr->Z.transpose() * ctr->Zw;
-//   VgInv.diagonal().array() += 1 / 100000.0;
-//   VgInv.triangularView<Eigen::Upper>() = VgInv.transpose().eval();
-//   ctr->Vg.triangularView<Eigen::Lower>() = VgInv.inverse();
-//   ctr->Vg.triangularView<Eigen::Upper>() = ctr->Vg.transpose().eval();
-//   ctr->Lambda = (ctr->kappa).array() / ctr->Omega.array();
-// }
 
 /**
  * @brief Construct a new progress Meter::progress Meter object
@@ -94,9 +75,11 @@ progressMeter::progressMeter(modelCtr* c)
     Rcout << "Burn-in % complete \n" <<
       "[0--------25--------50--------75--------100]\n '";
   burnProgInc = (ctr->burn / 42.0);
-  burnProgMark = burnProgInc;
+  // burnProgMark = burnProgInc;
   iterProgInc = (ctr->iter / 42.0);
-  iterProgMark = double(ctr->burn) + iterProgInc;
+  // iterProgMark = double(ctr->burn) + iterProgInc;
+  burnProgMark = 1.0;
+  iterProgMark = 1.0;
 }
 progressMeter::~progressMeter()
 {
@@ -108,15 +91,22 @@ progressMeter::~progressMeter()
 void progressMeter::printMark()
 {
   if (ctr->verbose) {
+    int completedMarks = 0.0;
     if (ctr->b > ctr->burn) {
-      if (ctr->b >= iterProgMark) {
-        Rcout << "'"; 
-        iterProgMark += iterProgInc;
+      completedMarks = floor(42 * (ctr->b - ctr->burn) / ctr->iter);
+      if (completedMarks > iterProgMark) {
+        do {
+          Rcout << "'";
+          ++iterProgMark;
+        } while (iterProgMark < completedMarks);
       }
     } else {
-      if (ctr->b >= burnProgMark) {
-        Rcout << "'"; 
-        burnProgMark += burnProgInc;
+      completedMarks = floor(42 * ctr->b / ctr->burn);
+      if (completedMarks > burnProgMark) {
+        do {
+          Rcout << "'";
+          ++burnProgMark;
+        } while (burnProgMark < completedMarks);
       }
       if (ctr->b == ctr->burn) {
         timediff = difftime(time(NULL), startTime);
@@ -133,12 +123,20 @@ void progressMeter::printMark()
         }
         Rcout << "[0--------25--------50--------75--------100]\n '";
       }
-    }
-  }
-}
+    } // end iter <= burn
+  } // end if verbose
+} // end progressMeter::printMark()
 
 
-
+/**
+ * @brief propose new treed DLM
+ * 
+ * @param tree pointer to current tree
+ * @param Exp pointer to exposureDat containing exposure data
+ * @param ctr pointer to model control
+ * @param step grow (0), prune (1), change (2)
+ * @return double MH ratio of current proposal
+ */
 double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step)
 {
   int no = 0;
@@ -162,12 +160,14 @@ double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step)
           ++nGen2;
         }
       }
+      
       stepMhr = log((double)tree->nTerminal()) - log(nGen2) +
         2 * logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], dlnmTerm[no]->depth + 1, 1) +
         logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], dlnmTerm[no]->depth, 0) -
         logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], dlnmTerm[no]->depth, 1);
 
       Exp->updateNodeVals((dlnmTerm[no]->proposed)->c1); // update node values
+      
       // newDlnmTerm = tree->listTerminal(1); // list proposed terminal nodes
     }
 
@@ -193,7 +193,7 @@ double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step)
     if (tempNodes[no]->change()) { // propose new split
       for (Node* tn : tempNodes[no]->proposed->listTerminal())
         Exp->updateNodeVals(tn);
-      // Rcout << "!";
+        
       if ((tempNodes[no]->c1)->c1 != 0) { // calculate mhr if splits on c1 nodes
         for (Node* tn : tempNodes[no]->c1->listInternal())
           stepMhr -= (tn->nodestruct)->logPRule();
@@ -214,7 +214,15 @@ double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step)
   return(stepMhr);
 } // end tdlmProposeTree function
 
-
+/**
+ * @brief propose new modifier tree
+ * 
+ * @param tree pointer to current tree
+ * @param Mod pointer to modDat, containing modifier functions
+ * @param ctr pointer to model control data
+ * @param step grow (0), prune (1), change (2), or swap (3)
+ * @return double MH ratio for current proposal
+ */
 double modProposeTree(Node* tree, modDat* Mod, dlmtreeCtr* ctr, int step)
 {
   int no = 0;
@@ -327,19 +335,25 @@ double modProposeTree(Node* tree, modDat* Mod, dlmtreeCtr* ctr, int step)
   return(stepMhr);
 } // end modProposeTree function
 
+// void dlmtreeRecDLM(dlmtreeCtr* ctr, dlmtreeLog* dgn)
+// {
+//   double sumDLM;
+//   for (int i = 0; i < ctr->n; ++i) {
+//     dgn->exDLM.col(i) += ctr->exDLM.col(i);
+//     dgn->ex2DLM.col(i) += ctr->exDLM.col(i).array().square().matrix();
+//     sumDLM = ctr->exDLM.col(i).sum();
+//     dgn->cumDLM(i) += sumDLM;
+//     dgn->cum2DLM(i) += pow(sumDLM, 2);
+//   }
+// } // end dlmtreeRecDLM function
 
-void dlmtreeRecDLM(dlmtreeCtr* ctr, dlmtreeLog* dgn)
-{
-  double sumDLM;
-  for (int i = 0; i < ctr->n; ++i) {
-    dgn->exDLM.col(i) += ctr->exDLM.col(i);
-    dgn->ex2DLM.col(i) += ctr->exDLM.col(i).array().square().matrix();
-    sumDLM = ctr->exDLM.col(i).sum();
-    dgn->cumDLM(i) += sumDLM;
-    dgn->cum2DLM(i) += pow(sumDLM, 2);
-  }
-} // end dlmtreeRecDLM function
-
+/**
+ * @brief return a string describing current series of modifier rules leading to terminal node
+ * 
+ * @param n pointer to node
+ * @param Mod pointer to modDat
+ * @return std::string 
+ */
 std::string modRuleStr(Node* n, modDat* Mod)
 {
   std::string rule = "";
@@ -373,11 +387,17 @@ std::string modRuleStr(Node* n, modDat* Mod)
   return(rule);
 } // end modRuleStr function
                  
-                 
-Eigen::VectorXd countMods(Node* tree, modDat* Mod)
+/**
+ * @brief count of modifier variables used in current tree
+ * 
+ * @param tree pointer to tree
+ * @param Mod pointer to modDat
+ * @return VectorXd 
+ */
+VectorXd countMods(Node* tree, modDat* Mod)
 {
-  Eigen::VectorXd modCount(Mod->nMods); modCount.setZero();
-  Eigen::VectorXd unavailProb(Mod->nMods); unavailProb.setZero();
+  VectorXd modCount(Mod->nMods); modCount.setZero();
+  VectorXd unavailProb(Mod->nMods); unavailProb.setZero();
   std::vector<int> unavail;  
   for (Node* tn : tree->listInternal()) {
     modCount(tn->nodestruct->get(1)) += 1.0;
@@ -410,6 +430,14 @@ Eigen::VectorXd countMods(Node* tree, modDat* Mod)
   return(modCount);
 } // end countMods function
 
+/**
+ * @brief draw tree structure from tree prior distribution
+ * 
+ * @param tree pointer to tree being grown
+ * @param n pointer to specific node in tree
+ * @param alpha alpha parameter (0 to 1)
+ * @param beta beta parameter (>0)
+ */
 void drawTree(Node* tree, Node* n, double alpha, double beta)
 {
   double logProb = log(alpha) - beta * log(1.0 + n->depth);
@@ -417,7 +445,6 @@ void drawTree(Node* tree, Node* n, double alpha, double beta)
     if (n->grow()) {
       if (n->depth > 0)
         n = n->proposed;
-        
       tree->accept();
       drawTree(tree, n->c1, alpha, beta);
       drawTree(tree, n->c2, alpha, beta);
@@ -426,6 +453,12 @@ void drawTree(Node* tree, Node* n, double alpha, double beta)
   return;
 } // end drawTree function
 
+/**
+ * @brief update design matrices for subgroup Gaussian process DLM
+ * 
+ * @param n pointer to node
+ * @param ctr pointer to model control
+ */
 void updateGPMats(Node* n, dlmtreeCtr* ctr)
 {
   if (n->nodevals->updateXmat == 0)
@@ -448,8 +481,8 @@ void updateGPMats(Node* n, dlmtreeCtr* ctr)
     idx = sib->nodevals->idx;
   }
   
-  Eigen::MatrixXd Xtemp(idx.size(), ctr->pX); Xtemp.setZero();
-  Eigen::MatrixXd Ztemp(idx.size(), ctr->pZ); Ztemp.setZero();
+  MatrixXd Xtemp(idx.size(), ctr->pX); Xtemp.setZero();
+  MatrixXd Ztemp(idx.size(), ctr->pZ); Ztemp.setZero();
   
   for (std::size_t i = 0; i < idx.size(); ++i) {
     Xtemp.row(i) = ctr->X.row(idx[i]);

@@ -87,12 +87,13 @@ treeMHR mixMHR(std::vector<Node*> nodes1, std::vector<Node*> nodes2,
   // calculate MHR
   const Eigen::MatrixXd VgZtX = ctr->Vg * ZtX;
   Eigen::MatrixXd tempV(pXd, pXd);
-  Eigen::VectorXd XtVzInvR(ctr->n);
+  Eigen::VectorXd XtVzInvR(pXd);
   if (ctr->binomial) {
-    const Eigen::MatrixXd Xdw = (ctr->Omega).asDiagonal() * out.Xd;
-    tempV = Xdw.transpose() * out.Xd;
+    tempV = out.Xd.transpose() * 
+      (out.Xd.array().colwise() * ctr->Omega.array()).matrix();
     tempV.noalias() -= ZtX.transpose() * VgZtX;
-    XtVzInvR = Xdw.transpose() * ctr->R;
+    XtVzInvR = (out.Xd.array().colwise() * 
+                ctr->Omega.array()).matrix().transpose() * ctr->R;
     
   } else {
     if (newTree) {

@@ -140,18 +140,19 @@ void exposureDat::updateNodeVals(Node *n)
     int tmax = (n->nodestruct)->get(4);
 
     // top of tree
-    if (n->depth == 0) {
-      // Rcout << "\nupdate depth 0\n";
-      (n->nodevals)->X = Tcalc.col(pX - 1);
-      if (preset) {
-        (n->nodevals)->ZtX = ZtTcalc.col(pX - 1);
-        (n->nodevals)->VgZtX = VgZtTcalc.col(pX - 1);
-      }
-      n->update = 0;
-      return;
+    // if (n->depth == 0) {
+    //   // Rcout << "\nupdate depth 0\n";
+    //   (n->nodevals)->X = Tcalc.col(pX - 1);
+    //   if (preset) {
+    //     (n->nodevals)->ZtX = ZtTcalc.col(pX - 1);
+    //     (n->nodevals)->VgZtX = VgZtTcalc.col(pX - 1);
+    //   }
+    //   n->update = 0;
+    //   return;
 
-      // starting at time 1
-    } else if (tmin == 1) {
+    //   // starting at time 1
+    // } else 
+    if (tmin == 1) {
       // Rcout << "\nupdate tmin 1\n";
       (n->nodevals)->X = Tcalc.col(tmax - 1);
       if (preset) {
@@ -192,18 +193,19 @@ void exposureDat::updateNodeVals(Node *n)
     // Rcout << xmin << " " << xmax << " " << tmin << " " << tmax << "\n";
 
     // top of tree
-    if (n->depth == 0) {
-      // Rcout << "update top";
-      (n->nodevals)->X = Tcalc.col(pX - 1);
-      if (preset) {
-        (n->nodevals)->ZtX = ZtTcalc.col(pX - 1);
-        (n->nodevals)->VgZtX = VgZtTcalc.col(pX - 1);
-      }
-      n->update = 0;
-      return;
+    // if (n->depth == 0) {
+    //   // Rcout << "update top";
+    //   (n->nodevals)->X = Tcalc.col(pX - 1);
+    //   if (preset) {
+    //     (n->nodevals)->ZtX = ZtTcalc.col(pX - 1);
+    //     (n->nodevals)->VgZtX = VgZtTcalc.col(pX - 1);
+    //   }
+    //   n->update = 0;
+    //   return;
 
-      // first split on time
-    } else if ((xmin == 0) && (xmax == nSplits + 1)) {
+    //   // first split on time
+    // } else 
+    if ((xmin == 0) && (xmax == nSplits + 1)) {
       // Rcout << "update time";
       int scale = tmax - tmin;
       (n->nodevals)->X = Tcalc.col(scale);
@@ -260,6 +262,10 @@ void exposureDat::updateNodeVals(Node *n)
     }
   }
 
+  if (parent == 0) {
+    n->update = 0;
+    return;
+  }
 
   // update sibling node
   if (sib->update) {
@@ -286,7 +292,7 @@ void nodeCount(Node* n, exposureDat* Exp,
   int i, j;
   // double inc = 1.0 / (sqrt(Exp->n)* double(Exp->pX));//
 
-  if (Exp->se) {
+  if (Exp->se) {      
     for (j = tmin - 1; j < tmax; ++j) {
       for (i = 0; i < Exp->n; ++i) {
         (n->nodevals)->X(i) +=
@@ -296,6 +302,10 @@ void nodeCount(Node* n, exposureDat* Exp,
     }
 
   } else {
+    // auto f = [&xmin, &xmax](double x) {
+    //   return double ((x >= xmin) && (x < xmax));
+    // };
+    // n->nodevals->X = Exp->X.block(0, tmin - 1, Exp->n, tmax - tmin + 1).unaryExpr(f).array().rowwise().sum();
     for (j = tmin - 1; j < tmax; ++j) {
       for (i = 0; i < Exp->n; ++i) {
         if ((Exp->X(i, j) >= xmin) && (Exp->X(i, j) < xmax))

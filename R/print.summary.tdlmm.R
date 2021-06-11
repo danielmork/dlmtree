@@ -53,9 +53,8 @@ print.summary.tdlmm <- function(object, digits = 4, cw.only = TRUE)
   cat("* = Exposure selected by Bayes Factor\n")
   cat("(x.xx) = Relative effect size\n")
   # cat("exposure name (signal): critical windows")
-  for (ex.name in object$expNames) {
-    if (length(which(object$DLM[[ex.name]]$marg.cw)) > 0 | !cw.only |
-        object$expSel[ex.name]) {
+  for (ex.name in names(object$DLM)) {
+    if (any(object$DLM[[ex.name]]$marg.cw) | !cw.only | object$expSel[ex.name]) {
       cat("\n",
           paste0(ifelse(object$expSel[ex.name], "*", " "), ex.name,
                  " (", round(object$expVar[2, ex.name], 2), "): ",

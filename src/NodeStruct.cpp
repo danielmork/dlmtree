@@ -4,6 +4,7 @@
 #include "Fncs.h"
 using namespace Rcpp;
 
+// Generic function placeholders
 NodeStruct::NodeStruct() {}
 NodeStruct::~NodeStruct() {}
 NodeStruct::NodeStruct(const NodeStruct&) {}
@@ -21,7 +22,18 @@ std::vector<int> NodeStruct::get2(int a)
 std::vector<std::vector<int> > NodeStruct::get3(int a)
   { std::vector<std::vector<int> > b; return(b); }
 bool NodeStruct::checkEqual(NodeStruct* n) {return(0);}
+void NodeStruct::setTimeRange(int lower, int upper) {}
 
+/**
+ * @brief Construct a new DLNMStruct::DLNMStruct object
+ * 
+ * @param xmin_in set to 0 for new tree
+ * @param xmax_in set to 1 for new DLM tree or larger for DLNM
+ * @param tmin_in set to 1 for new tree
+ * @param tmax_in set to number of exposure measurements
+ * @param Xp_in probability of selecting expsoure splitting locations
+ * @param Tp_in 
+ */
 DLNMStruct::DLNMStruct(int xmin_in, int xmax_in, int tmin_in, int tmax_in,
                        Eigen::VectorXd Xp_in, Eigen::VectorXd Tp_in)
 {
@@ -50,15 +62,16 @@ DLNMStruct::DLNMStruct(const DLNMStruct& ns)
 
 bool DLNMStruct::proposeSplit()
 {
-  if ((xmin >= xmax - 1) && (tmin >= tmax)) {
+  if (((xmin >= xmax - 1) && (tmin >= tmax)) ||
+      ((totXp <= 0.0) && (totTp <= 0.0))) {
     return(0);
   }
 
-  if ((xmin >= xmax - 1) || (totXp == 0)) { // sample T
+  if ((xmin >= xmax - 1) || (totXp <= 0.0)) { // sample T
     tsplit = sampleInt(Tp.segment(tmin - 1, tmax - tmin)) + tmin;
     xsplit = 0;
 
-  } else if ((tmin >= tmax) || (totTp == 0)) { // sample X
+  } else if ((tmin >= tmax) || (totTp <= 0.0)) { // sample X
     xsplit = sampleInt(Xp.segment(xmin, xmax - xmin - 1)) + xmin + 1;
     tsplit = 0;
 
@@ -122,15 +135,19 @@ void DLNMStruct::updateStruct(NodeStruct* parStruct, bool left)
       tmax = parStruct->get(4);
     }
   }
-  totXp = 0.0;
-  totTp = 0.0;
-  if (xmax > xmin)
+  totXp = -1.0;
+  totTp = -1.0;
+  if (xmax > xmin + 1)
     totXp = Xp.segment(xmin, xmax - xmin - 1).sum();
   if (tmax > tmin)
     totTp = Tp.segment(tmin - 1, tmax - tmin).sum();
 }
 
-
+void DLNMStruct::setTimeRange(int lower, int upper)
+{
+  tmin = lower;
+  tmax = upper;
+}
 
 
 
@@ -179,7 +196,7 @@ void DLNMStruct::printStruct()
   Rcout << "Struct:" << "x in [" << xmin << "," << xmax << "] split at " <<
     xsplit << ", t in [" <<
       tmin << "," << tmax << "] split at " << tsplit << ", logPRule = " <<
-        logPRule() << "\n";
+        logPRule() << ", totXp = " << totXp << ", totTp = " << totTp << "\n";
 }
 
 int DLNMStruct::get(int a)
@@ -268,7 +285,7 @@ bool ModStruct::proposeSplit()
         return(0);
       std::vector<int> unavailMod;
       std::size_t j = 0;
-      for (i = 0; i < modFncs->nModSplit[splitVar]; ++i) {
+      for (i = 0; i < (std::size_t) modFncs->nModSplit[splitVar]; ++i) {
         if (i != am[j]) {
           unavailMod.push_back(i);
         } else if (j < (am.size() - 1)) {
@@ -280,7 +297,7 @@ bool ModStruct::proposeSplit()
       splitVec.clear();
       int nCat = floor(R::runif(1.0, am.size()));
       std::random_shuffle(am.begin(), am.end());
-      for (i = 0; i < nCat; ++i) {
+      for (i = 0; i < (std::size_t) nCat; ++i) {
         splitVec.push_back(am[i]);
       }
 
@@ -289,7 +306,7 @@ bool ModStruct::proposeSplit()
         int nOther = floor(R::runif(0.0, unavailMod.size() + 1.0));
         if (nOther > 0) {
           std::random_shuffle(unavailMod.begin(), unavailMod.end());
-          for (i = 0; i < nOther; ++i) {
+          for (i = 0; i < (std::size_t) nOther; ++i) {
             splitVec.push_back(unavailMod[i]);
           }
         }
@@ -321,9 +338,15 @@ bool ModStruct::valid()
   if (availMod[splitVar].size() == 0)
     return(0);
   if (splitVal == -1) {
-    std::vector<std::vector<int> > iD =
-      intersectAndDiff(availMod[splitVar], splitVec);
-    if (iD[0].size() == 0)
+    // std::vector<std::vector<int> > 
+    std::sort(splitVec.begin(), splitVec.end());
+    std::vector<int> v_intersection;
+    std::set_intersection(availMod[splitVar].begin(), availMod[splitVar].end(),
+                          splitVec.begin(), splitVec.end(),
+                          std::back_inserter(v_intersection));
+    // std::pair<std::vector<int>, std::vector<int> > iD =
+    //   intersectAndDiff(availMod[splitVar], splitVec);
+    if (v_intersection.size() == 0)
       return(0);
   } else {
     for (int i : availMod[splitVar]) {

@@ -69,13 +69,14 @@ treeMHR dlnmMHR(std::vector<Node*> nodes, tdlmCtr *ctr,
 
     // * Calculate covariance matrix V_theta
     MatrixXd tempV(pX, pX);
-    VectorXd XtVzInvR(ctr->n);
+    VectorXd XtVzInvR(pX);
     
     if (ctr->binomial) {
-      const MatrixXd Xdw = (ctr->Omega).asDiagonal() * out.Xd;
-      tempV = Xdw.transpose() * out.Xd;
+      tempV = out.Xd.transpose() * 
+        (out.Xd.array().colwise() * ctr->Omega.array()).matrix();
       tempV.noalias() -= ZtX.transpose() * VgZtX;
-      XtVzInvR = Xdw.transpose() * ctr->R;
+      XtVzInvR = (out.Xd.array().colwise() * 
+                  ctr->Omega.array()).matrix().transpose() * ctr->R;
       
     } else {
       if (newTree) {
@@ -186,10 +187,10 @@ void tdlnmTreeMCMC(int t, Node *tree, tdlmCtr *ctr, tdlmLog *dgn,
   if ((ctr->tau)(t) != (ctr->tau)(t)) 
     stop("\nNaN values occured during model run, rerun model.\n");
 
-  ctr->nTerm(t) = mhr0.nTerm;
-  ctr->totTerm += mhr0.nTerm;
-  ctr->sumTermT2 += mhr0.termT2 / ((ctr->tau)(t));
-  ctr->Rmat.col(t) = mhr0.Xd * mhr0.draw;
+  ctr->nTerm(t) =     mhr0.nTerm;
+  ctr->totTerm +=     mhr0.nTerm;
+  ctr->sumTermT2 +=   mhr0.termT2 / ctr->tau(t);
+  ctr->Rmat.col(t) =  mhr0.Xd * mhr0.draw;
 
   // Record
   if (ctr->record > 0) {

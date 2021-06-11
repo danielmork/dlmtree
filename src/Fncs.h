@@ -6,13 +6,16 @@ using namespace Rcpp;
 // * densities
 // * sets
 
-int sampleInt(std::vector<double> probs, double totProb);
-int sampleInt(Eigen::VectorXd probs);
+int sampleInt(const std::vector<double> &probs, double totProb);
+int sampleInt(const Eigen::VectorXd &probs);
 double logPSplit(double alpha, double beta, int depth, bool terminal);
-double logDirichletDensity(Eigen::VectorXd x, Eigen::VectorXd alpha);
+double logDirichletDensity(const Eigen::VectorXd &x, 
+                           const Eigen::VectorXd &alpha);
 void rHalfCauchyFC(double* x2, double a, double b, double* yInv = 0);
-Eigen::VectorXd rDirichlet(Eigen::VectorXd alpha);
-std::vector<std::vector<int> > 
-  intersectAndDiff(std::vector<int> origVec, std::vector<int> newVec);
+Eigen::VectorXd rDirichlet(const Eigen::VectorXd &alpha);
+// std::vector<std::vector<int> > 
+std::pair<std::vector<int>, std::vector<int> >
+  intersectAndDiff(const std::vector<int> &origVec, 
+                   const std::vector<int> &newVec);
 std::vector<int> cppIntersection(const IntegerVector& A, 
                                  const IntegerVector& B);

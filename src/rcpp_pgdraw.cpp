@@ -53,7 +53,6 @@ double aterm(int, double, double);
  * @param c vector of parameters
  * @return Eigen::VectorXd 
  */
-// [[Rcpp::depends(RcppEigen)]]
 Eigen::VectorXd rcpp_pgdraw(Eigen::VectorXd b,
                             Eigen::VectorXd c)
 {

@@ -5,6 +5,30 @@ cppIntersection <- function(A, B) {
     .Call(`_dlmtree_cppIntersection`, A, B)
 }
 
+dlmtreeGPFixedGaussian <- function(model) {
+    .Call(`_dlmtree_dlmtreeGPFixedGaussian`, model)
+}
+
+dlmtreeGPGaussian <- function(model) {
+    .Call(`_dlmtree_dlmtreeGPGaussian`, model)
+}
+
+dlmtreeTDLMFixedGaussian <- function(model) {
+    .Call(`_dlmtree_dlmtreeTDLMFixedGaussian`, model)
+}
+
+dlmtreeTDLMGaussian <- function(model) {
+    .Call(`_dlmtree_dlmtreeTDLMGaussian`, model)
+}
+
+dlmtreeTDLMNestedGaussian <- function(model) {
+    .Call(`_dlmtree_dlmtreeTDLMNestedGaussian`, model)
+}
+
+dlmtreeTDLM_cpp <- function(model) {
+    .Call(`_dlmtree_dlmtreeTDLM_cpp`, model)
+}
+
 dlnmEst <- function(dlnm, predAt, nlags, nsamp, center, se) {
     .Call(`_dlmtree_dlnmEst`, dlnm, predAt, nlags, nsamp, center, se)
 }
