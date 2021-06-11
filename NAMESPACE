@@ -21,12 +21,18 @@ importFrom("utils", "combn", "data")
 
 export(tdlnm)
 export(tdlmm)
+export(dlmtree)
 
 export(sim.tdlnm)
+export(sim.tdlmm)
+export(sim.dlmtree)
 
 export(summary.tdlnm)
 export(summary.tdlm)
 export(summary.tdlmm)
+export(estDLM)
+
+export(predict.dlmtree)
 
 export(plot.summary.tdlnm)
 export(plot.summary.tdlmm)
