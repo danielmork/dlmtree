@@ -6,3 +6,5 @@ This package includes code to accompany the following paper:
 -Treed Distributed Lag Non-Linear Models ([code example](https://danielmork.github.io/dlmtree/TDLNM_Example.html))
 
 -Treed Distributed Lag Mixture Models ([code example](https://danielmork.github.io/dlmtree/TDLMM_Example.html))
+
+-Treed Distributed Lag Mixture Models ([adjusting for changes in co-exposures](https://danielmork.github.io/dlmtree/TDLMM_adj_coexp.html))
