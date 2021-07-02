@@ -182,7 +182,8 @@ tdlnm <- function(formula,
   if (!attr(tf, "response"))
     stop("no valid response in formula")
   model$intercept <- force(ifelse(attr(tf, "intercept"), TRUE, FALSE))
-  if (length(which(attr(tf, "term.labels") %in% colnames(data))) == 0)
+  if (length(which(attr(tf, "term.labels") %in% colnames(data))) == 0
+      & !model$intercept)
     stop("no valid variables in formula")
 
 
@@ -295,7 +296,8 @@ tdlnm <- function(formula,
   model$Y <- force(model.response(mf))
   model$Z <- force(model.matrix(model$formula, data = mf))
   QR <- qr(crossprod(model$Z))
-  model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)])]
+  model$Znames <- colnames(model$Z)[sort(QR$pivot[seq_len(QR$rank)])]
+  model$Z <- matrix(model$Z[,sort(QR$pivot[seq_len(QR$rank)])], nrow(model$Z), QR$rank)
   model$Z <- force(scaleModelMatrix(model$Z))
   rm(QR)
 
@@ -313,7 +315,6 @@ tdlnm <- function(formula,
   model$Y <- force(c(model$Y))
   model$Zscale <- attr(model$Z, "scaled:scale")
   model$Zmean <- attr(model$Z, "scaled:center")
-  model$Znames <- colnames(model$Z)
   model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
 
 
@@ -343,7 +344,7 @@ tdlnm <- function(formula,
   }
 
   # rescale fixed effect estimates
-  if (model$intercept) {
+  if (model$intercept & ncol(model$Z) > 1) {
     model$gamma[,-1] <- sapply(2:ncol(model$gamma), function(i) {
       model$gamma[,i] * model$Yscale / model$Zscale[i]})
   } else {
