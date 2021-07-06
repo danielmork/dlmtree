@@ -38,6 +38,7 @@
 #' @param shrinkage int, 1 (default) turn on tree-specific shrinkage priors,
 #' 0 turn off
 #' @param subset integer vector to analyze only a subset of data and exposures
+#' @param lowmem turn on memory saver for DLNM, slower computation time
 #' @param verbose true (default) or false: print output
 #' @param diagnostics true or false (default) keep model diagnostic such as
 #' terminal nodes, acceptance details, etc.
@@ -69,6 +70,7 @@ tdlnm <- function(formula,
                   tree.exp.params = c(.2, 2),
                   shrinkage = 1,
                   subset = NULL,
+                  lowmem = FALSE,
                   verbose = TRUE,
                   diagnostics = FALSE,
                   ...)
@@ -150,6 +152,7 @@ tdlnm <- function(formula,
   model$stepProb <- force(c(step.prob[1], step.prob[1], step.prob[2]))
   model$stepProb <- force(model$stepProb / sum(model$stepProb))
   model$shrinkage <- shrinkage
+  model$lowmem <- lowmem
   model$monotone <- monotone
   model$treePriorExp <- tree.exp.params
   model$treePriorTime <- tree.time.params
@@ -267,6 +270,12 @@ tdlnm <- function(formula,
       stop("no exposure splits specified, please check `exposure.splits` input")
 
     model$splitProb <- force(rep(1 / model$nSplits, model$nSplits))
+    
+    # memory warning
+    if (prod(dim(model$X)) * model$nSplits > 1073741824 & model$verbose)
+      warning(paste0("Model run will use over ", 
+                     round(prod(dim(model$X)) * model$nSplits / 1073741824, 1),
+                     " GB of memory. Use `lowmem = TRUE` option to reduce memory usage."))
   }
 
 
@@ -320,8 +329,6 @@ tdlnm <- function(formula,
 
 
   # ---- Run model ----
-  # model.list <- lapply(ls(envir = model), function(i) model[[i]])
-  # names(model.list) <- ls(envir = model)
   if (model$monotone)
     out <- monotdlnm_Cpp(model)
   else
@@ -344,12 +351,12 @@ tdlnm <- function(formula,
   }
 
   # rescale fixed effect estimates
-  if (model$intercept & ncol(model$Z) > 1) {
-    model$gamma[,-1] <- sapply(2:ncol(model$gamma), function(i) {
-      model$gamma[,i] * model$Yscale / model$Zscale[i]})
-  } else {
-    model$gamma <- sapply(1:ncol(model$gamma), function(i) {
-      model$gamma[,i] * model$Yscale / model$Zscale[i]})
+  model$gamma <- sapply(1:ncol(model$gamma), function(i) {
+    model$gamma[,i] * model$Yscale / model$Zscale[i] })
+  if (model$intercept) {
+    model$gamma[,1] <- model$gamma[,1] + model$Ymean
+    if (ncol(model$Z) > 1)
+      model$gamma[,1] <- model$gamma[,1] - model$gamma[,-1] %*% model$Zmean[-1]
   }
   colnames(model$gamma) <- model$Znames
 

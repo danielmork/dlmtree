@@ -371,11 +371,14 @@ dlmtree <- function(formula,
   model$sigma2 <- model$sigma2 * (model$Yscale ^ 2)
 
   # rescale fixed effect estimates
-  colnames(model$gamma) <- model$Znames
   model$gamma <- sapply(1:ncol(model$gamma), function(i) {
     model$gamma[,i] * model$Yscale / model$Zscale[i] })
-  if (model$intercept)
-    model$gamma[,1] <- model$gamma[,1] + model$Ymean - model$gamma[,-1] %*% model$Zmean[-1]
+  if (model$intercept) {
+    model$gamma[,1] <- model$gamma[,1] + model$Ymean
+    if (ncol(model$Z) > 1)
+      model$gmama[,1] <- model$gamma[,1] - model$gamma[,-1] %*% model$Zmean[-1]
+  }
+  colnames(model$gamma) <- model$Znames
 
   if (is.null(fixed.tree.idx))
     colnames(model$modProb) <- colnames(model$modCount) <-

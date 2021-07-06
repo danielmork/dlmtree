@@ -198,7 +198,8 @@ tdlmm <- function(formula,
   if (!attr(tf, "response"))
     stop("no valid response in formula")
   model$intercept <- force(ifelse(attr(tf, "intercept"), TRUE, FALSE))
-  if (length(which(attr(tf, "term.labels") %in% colnames(data))) == 0)
+  if (length(which(attr(tf, "term.labels") %in% colnames(data))) == 0
+      & !model$intercept)
     stop("no valid variables in formula")
 
 
@@ -234,7 +235,9 @@ tdlmm <- function(formula,
   model$Z <- force(model.matrix(model$formula, data = mf))
   QR <- qr(crossprod(model$Z))
   model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)])]
+  model$Znames <- colnames(model$Z)[sort(QR$pivot[seq_len(QR$rank)])]
   model$droppedCovar <- colnames(model$Z)[QR$pivot[-seq_len(QR$rank)]]
+  model$Z <- matrix(model$Z[,sort(QR$pivot[seq_len(QR$rank)])], nrow(model$Z), QR$rank)
   model$Z <- force(scaleModelMatrix(model$Z))
   rm(QR)
 
@@ -251,21 +254,12 @@ tdlmm <- function(formula,
   model$Y <- force(c(model$Y))
   model$Zscale <- attr(model$Z, "scaled:scale")
   model$Zmean <- attr(model$Z, "scaled:center")
-  model$Znames <- colnames(model$Z)
   model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
 
 
 
   # ---- Run model ----
-  # model.list <- lapply(ls(envir = model), function(i) model[[i]])
-  # names(model.list) <- ls(envir = model)
   out <- tdlmm_Cpp(model)
-  # if (model$family == "gaussian")
-  #   out <- tdlmmGaussian(model)
-  # else
-  #   out <- tdlmmBinomial(model)
-
-  # rm(model.list)
   if (verbose)
     cat("\nCompiling results...\n")
 
@@ -280,12 +274,12 @@ tdlmm <- function(formula,
   model$sigma2 <- model$sigma2 * (model$Yscale ^ 2)
 
   # rescale fixed effect estimates
+  model$gamma <- sapply(1:ncol(model$gamma), function(i) {
+    model$gamma[,i] * model$Yscale / model$Zscale[i] })
   if (model$intercept) {
-    model$gamma[,-1] <- sapply(2:ncol(model$gamma), function(i) {
-      model$gamma[,i] * model$Yscale / model$Zscale[i]})
-  } else {
-    model$gamma <- sapply(1:ncol(model$gamma), function(i) {
-      model$gamma[,i] * model$Yscale / model$Zscale[i]})
+    model$gamma[,1] <- model$gamma[,1] + model$Ymean
+    if (ncol(model$Z) > 1)
+      model$gmama[,1] <- model$gamma[,1] - model$gamma[,-1] %*% model$Zmean[-1]
   }
   colnames(model$gamma) <- model$Znames
 
