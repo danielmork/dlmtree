@@ -277,14 +277,16 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
                             as<MatrixXd>(model["SE"]),
                             as<VectorXd>(model["Xsplits"]),
                             as<MatrixXd>(model["Xcalc"]),
-                            as<MatrixXd>(model["Tcalc"]));
+                            as<MatrixXd>(model["Tcalc"]),
+                            as<bool>(model["lowmem"]));
     else
       Exp = new exposureDat(as<MatrixXd>(model["X"]),
                             as<MatrixXd>(model["SE"]),
                             as<VectorXd>(model["Xsplits"]),
                             as<MatrixXd>(model["Xcalc"]),
                             as<MatrixXd>(model["Tcalc"]),
-                            ctr->Z, ctr->Vg);
+                            ctr->Z, ctr->Vg,
+                            as<bool>(model["lowmem"]));
   }
   ctr->pX = Exp->pX;
   ctr->nSplits = Exp->nSplits;
