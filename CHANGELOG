@@ -1,8 +1,11 @@
 R package 'dlmtree' history of changes
 
+Version 0.8.1.0
+* fix to allow intercept only models
+* updated tdlnm algorithm for increased performance (memory restriction for large datasets)
 Version 0.8.0.0
 * add HDLM functionality (dlmtree)
-Version 0.7.1.1a
+Version 0.7.1.1
 * fix summary.tdlmm if nMix=1 or nExp=1
 Version 0.7.1.0
 * combined identity and logistic link into single c++ file
