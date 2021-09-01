@@ -7,6 +7,84 @@
 
 using namespace Rcpp;
 
+// cppIntersection
+std::vector<int> cppIntersection(const IntegerVector& A, const IntegerVector& B);
+RcppExport SEXP _dlmtree_cppIntersection(SEXP ASEXP, SEXP BSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerVector& >::type A(ASEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type B(BSEXP);
+    rcpp_result_gen = Rcpp::wrap(cppIntersection(A, B));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dlmtreeGPFixedGaussian
+Rcpp::List dlmtreeGPFixedGaussian(const Rcpp::List model);
+RcppExport SEXP _dlmtree_dlmtreeGPFixedGaussian(SEXP modelSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
+    rcpp_result_gen = Rcpp::wrap(dlmtreeGPFixedGaussian(model));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dlmtreeGPGaussian
+Rcpp::List dlmtreeGPGaussian(const Rcpp::List model);
+RcppExport SEXP _dlmtree_dlmtreeGPGaussian(SEXP modelSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
+    rcpp_result_gen = Rcpp::wrap(dlmtreeGPGaussian(model));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dlmtreeTDLMFixedGaussian
+Rcpp::List dlmtreeTDLMFixedGaussian(const Rcpp::List model);
+RcppExport SEXP _dlmtree_dlmtreeTDLMFixedGaussian(SEXP modelSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
+    rcpp_result_gen = Rcpp::wrap(dlmtreeTDLMFixedGaussian(model));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dlmtreeTDLMGaussian
+Rcpp::List dlmtreeTDLMGaussian(const Rcpp::List model);
+RcppExport SEXP _dlmtree_dlmtreeTDLMGaussian(SEXP modelSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
+    rcpp_result_gen = Rcpp::wrap(dlmtreeTDLMGaussian(model));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dlmtreeTDLMNestedGaussian
+Rcpp::List dlmtreeTDLMNestedGaussian(const Rcpp::List model);
+RcppExport SEXP _dlmtree_dlmtreeTDLMNestedGaussian(SEXP modelSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
+    rcpp_result_gen = Rcpp::wrap(dlmtreeTDLMNestedGaussian(model));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dlmtreeTDLM_cpp
+Rcpp::List dlmtreeTDLM_cpp(const Rcpp::List model);
+RcppExport SEXP _dlmtree_dlmtreeTDLM_cpp(SEXP modelSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
+    rcpp_result_gen = Rcpp::wrap(dlmtreeTDLM_cpp(model));
+    return rcpp_result_gen;
+END_RCPP
+}
 // dlnmEst
 SEXP dlnmEst(arma::dmat dlnm, arma::dvec predAt, int nlags, int nsamp, double center, double se);
 RcppExport SEXP _dlmtree_dlnmEst(SEXP dlnmSEXP, SEXP predAtSEXP, SEXP nlagsSEXP, SEXP nsampSEXP, SEXP centerSEXP, SEXP seSEXP) {
@@ -37,36 +115,54 @@ BEGIN_RCPP
 END_RCPP
 }
 // mixEst
-SEXP mixEst(arma::dmat dlm, int nlags, int nsamp, bool mirror);
-RcppExport SEXP _dlmtree_mixEst(SEXP dlmSEXP, SEXP nlagsSEXP, SEXP nsampSEXP, SEXP mirrorSEXP) {
+SEXP mixEst(arma::dmat dlm, int nlags, int nsamp);
+RcppExport SEXP _dlmtree_mixEst(SEXP dlmSEXP, SEXP nlagsSEXP, SEXP nsampSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::dmat >::type dlm(dlmSEXP);
     Rcpp::traits::input_parameter< int >::type nlags(nlagsSEXP);
     Rcpp::traits::input_parameter< int >::type nsamp(nsampSEXP);
-    Rcpp::traits::input_parameter< bool >::type mirror(mirrorSEXP);
-    rcpp_result_gen = Rcpp::wrap(mixEst(dlm, nlags, nsamp, mirror));
+    rcpp_result_gen = Rcpp::wrap(mixEst(dlm, nlags, nsamp));
     return rcpp_result_gen;
 END_RCPP
 }
-// tdlnmGaussian
-Rcpp::List tdlnmGaussian(const Rcpp::List model);
-RcppExport SEXP _dlmtree_tdlnmGaussian(SEXP modelSEXP) {
+// tdlmm_Cpp
+Rcpp::List tdlmm_Cpp(const Rcpp::List model);
+RcppExport SEXP _dlmtree_tdlmm_Cpp(SEXP modelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
-    rcpp_result_gen = Rcpp::wrap(tdlnmGaussian(model));
+    rcpp_result_gen = Rcpp::wrap(tdlmm_Cpp(model));
+    return rcpp_result_gen;
+END_RCPP
+}
+// tdlnm_Cpp
+Rcpp::List tdlnm_Cpp(const Rcpp::List model);
+RcppExport SEXP _dlmtree_tdlnm_Cpp(SEXP modelSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
+    rcpp_result_gen = Rcpp::wrap(tdlnm_Cpp(model));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_dlmtree_cppIntersection", (DL_FUNC) &_dlmtree_cppIntersection, 2},
+    {"_dlmtree_dlmtreeGPFixedGaussian", (DL_FUNC) &_dlmtree_dlmtreeGPFixedGaussian, 1},
+    {"_dlmtree_dlmtreeGPGaussian", (DL_FUNC) &_dlmtree_dlmtreeGPGaussian, 1},
+    {"_dlmtree_dlmtreeTDLMFixedGaussian", (DL_FUNC) &_dlmtree_dlmtreeTDLMFixedGaussian, 1},
+    {"_dlmtree_dlmtreeTDLMGaussian", (DL_FUNC) &_dlmtree_dlmtreeTDLMGaussian, 1},
+    {"_dlmtree_dlmtreeTDLMNestedGaussian", (DL_FUNC) &_dlmtree_dlmtreeTDLMNestedGaussian, 1},
+    {"_dlmtree_dlmtreeTDLM_cpp", (DL_FUNC) &_dlmtree_dlmtreeTDLM_cpp, 1},
     {"_dlmtree_dlnmEst", (DL_FUNC) &_dlmtree_dlnmEst, 6},
     {"_dlmtree_dlmEst", (DL_FUNC) &_dlmtree_dlmEst, 3},
-    {"_dlmtree_mixEst", (DL_FUNC) &_dlmtree_mixEst, 4},
-    {"_dlmtree_tdlnmGaussian", (DL_FUNC) &_dlmtree_tdlnmGaussian, 1},
+    {"_dlmtree_mixEst", (DL_FUNC) &_dlmtree_mixEst, 3},
+    {"_dlmtree_tdlmm_Cpp", (DL_FUNC) &_dlmtree_tdlmm_Cpp, 1},
+    {"_dlmtree_tdlnm_Cpp", (DL_FUNC) &_dlmtree_tdlnm_Cpp, 1},
     {NULL, NULL, 0}
 };
 

@@ -3,13 +3,40 @@ importFrom(Rcpp, evalCpp)
 exportPattern("^[[:alpha:]]+")
 
 S3method(summary, tdlnm)
-S3method(print, summary.tdlnm)
+S3method(summary, tdlm)
+S3method(summary, tdlmm)
 S3method(plot, summary.tdlnm)
+S3method(plot, summary.tdlmm)
+S3method(print, summary.tdlnm)
+S3method(print, summary.tdlmm)
+S3method(predict, dlmtree)
 
-export(tdlnm)
-export(summary.tdlnm)
-export(plot.summary.tdlnm)
-export(print.summary.tdlnm)
 
 import(ggplot2)
 import(viridis)
+
+importFrom("stats", "as.formula", "model.frame", "model.matrix",
+           "model.response", "pnorm", "quantile", "rbinom", "rnorm",
+           "sd", "terms.formula", "var", "IQR", "median", "runif", "toeplitz")
+importFrom("utils", "combn", "data")
+
+export(tdlnm)
+export(tdlmm)
+export(dlmtree)
+
+export(sim.tdlnm)
+export(sim.tdlmm)
+export(sim.dlmtree)
+
+export(summary.tdlnm)
+export(summary.tdlm)
+export(summary.tdlmm)
+export(estDLM)
+
+export(predict.dlmtree)
+
+export(plot.summary.tdlnm)
+export(plot.summary.tdlmm)
+
+export(print.summary.tdlnm)
+export(print.summary.tdlmm)

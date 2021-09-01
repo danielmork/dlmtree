@@ -12,10 +12,10 @@
 #' 'flab' which sets the effect label for surface plots,
 #' 'start.time' which sets the first time value
 #'
-#' @return
-#' @export
 #' @import ggplot2
 #' @import viridis
+#' @export plot.summary.tdlnm
+#' @export
 #'
 plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(), ...)
 {

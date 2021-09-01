@@ -4,6 +4,7 @@
 #' @param digits integer number of digits to round
 #'
 #' @return
+#' @export print.summary.tdlnm
 #' @export
 #'
 print.summary.tdlnm <- function(object, digits = 3)
@@ -43,7 +44,7 @@ print.summary.tdlnm <- function(object, digits = 3)
     cw <- which((colSums(object$cilower > 0) + colSums(object$ciupper < 0)) > 0)
   else
     cw <- which(object$cilower > 0 | object$ciupper < 0)
-  cat(cw, "\n")
+  cat(ppRange(cw), "\n")
   if (object$ctr$dl.function == "tdlm") {
     dlm.out <- data.frame("Mean" = round(object$matfit, digits),
                           "Lower Bound" = round(object$cilower, digits),

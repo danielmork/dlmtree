@@ -2,9 +2,12 @@
 #include <RcppArmadillo.h>
 using namespace Rcpp;
 
+#define MATH_SQRT1_2   0.707106781186547524400844362104849039284835937688474036588
+
+
 double phi2(double x1, double x2)
 {
-  return (erf(x2/sqrt(2)) - erf(x1/sqrt(2)))/2;
+  return (erf(x2 * MATH_SQRT1_2) - erf(x1 * MATH_SQRT1_2)) * 0.5;
 }
 
 // [[Rcpp::export]]
@@ -101,8 +104,7 @@ SEXP dlmEst(arma::dmat dlm,
 // [[Rcpp::export]]
 SEXP mixEst(arma::dmat dlm,
             int nlags,
-            int nsamp,
-            bool mirror)
+            int nsamp)
 {
   int rows = dlm.n_rows;
   arma::dcube C(nlags, nlags, nsamp); C.fill(0.0);
@@ -118,17 +120,7 @@ SEXP mixEst(arma::dmat dlm,
     double est = dlm(i, 8);
     for (t1 = tmin1; t1 < tmax1; t1++) {
       for (t2 = tmin2; t2 < tmax2; t2++) {
-        if (!mirror) {
-          C(t1, t2, iter) += est;
-        } else {
-          if ((t2 >= tmin1) && (t2 < tmax1) &&
-              (t1 >= tmin2) && (t1 < tmax2)) {
-            C(t1, t2, iter) += est;
-          } else {
-            C(t1, t2, iter) += est;
-            C(t2, t1, iter) += est;
-          }
-        }
+        C(t1, t2, iter) += est;
       }
     }
   }

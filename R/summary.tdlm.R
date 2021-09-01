@@ -5,6 +5,7 @@
 #' @param conf.level confidence level for computation of credible intervals
 #'
 #' @return
+#' @export summary.tdlm
 #' @export
 #'
 summary.tdlm <- function(object,
@@ -32,10 +33,11 @@ summary.tdlm <- function(object,
 
   # Return
   ret <- list("ctr" = list(dl.function = object$dlFunction,
+                           n.trees = object$nTrees,
                            n.iter = object$nIter,
                            n.thin = object$nThin,
                            n.burn = object$nBurn,
-                           response = object$response),
+                           response = object$family),
               "conf.level" = conf.level,
               "sig.to.noise" = ifelse(is.null(object$sigma2), NA,
                                       var(object$fhat) / mean(object$sigma2)),

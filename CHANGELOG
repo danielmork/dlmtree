@@ -1,0 +1,20 @@
+R package 'dlmtree' history of changes
+
+Version 0.8.1.0
+* fix to allow intercept only models
+* updated tdlnm algorithm for increased performance (memory restriction for large datasets)
+Version 0.8.0.0
+* add HDLM functionality (dlmtree)
+Version 0.7.1.1
+* fix summary.tdlmm if nMix=1 or nExp=1
+Version 0.7.1.0
+* combined identity and logistic link into single c++ file
+* several code efficiencies
+* updated print output of tdlmm summary
+* removed prior on dirichlet hyperparameter
+* exposure selection based on Beta-Binomial distribution
+* keep.mcmc in summary
+Version 0.6.2.0
+* separated tdlmm from tdlnm function
+* included exposure selection into summary
+* prior on dirichlet hyperparameter ~Gamma(1,nTrees/4)

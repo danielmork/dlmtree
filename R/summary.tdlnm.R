@@ -9,6 +9,7 @@
 #' @param exposure.se scalar smoothing factor, if different from model
 #'
 #' @return
+#' @export summary.tdlnm
 #' @export
 #'
 summary.tdlnm <- function(object,
@@ -64,13 +65,13 @@ summary.tdlnm <- function(object,
   for (i in 1:Lags) {
     for (j in 1:length(pred.at)) {
       coordest <- dlmest[i,j,]
-      m <- mean(coordest)
+      me <- mean(coordest)
       s <- sd(coordest)
       ci <- quantile(coordest, ci.lims)
       effect <- ifelse(min(ci) > 0, 1, ifelse(max(ci) < 0, -1, 0))
       plot.dat[(i - 1) * length(pred.at) + j, ] <-
         c(i - 1, i, edge.vals[j], edge.vals[j + 1], pred.at[j],
-          m, s, ci, effect)
+          me, s, ci, effect)
       matfit[j, i] <- mean(coordest)
       cilower[j, i] <- ci[1]
       ciupper[j, i] <- ci[2]
@@ -84,10 +85,11 @@ summary.tdlnm <- function(object,
 
   # Return
   ret <- list("ctr" = list(dl.function = object$dlFunction,
+                           n.trees = object$nTrees,
                            n.iter = object$nIter,
                            n.thin = object$nThin,
                            n.burn = object$nBurn,
-                           response = object$response),
+                           response = object$family),
               "conf.level" = conf.level,
               "sig.to.noise" = ifelse(is.null(object$sigma2), NA,
                                       var(object$fhat) / mean(object$sigma2)),
