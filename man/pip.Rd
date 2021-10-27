@@ -2,7 +2,7 @@
 % Please edit documentation in R/pip.R
 \name{pip}
 \alias{pip}
-\title{Poserior inclusion probabilities (PIPs) for modifiers in HDLM}
+\title{Posterior inclusion probabilities (PIPs) for modifiers in HDLM}
 \usage{
 pip(object, type = 1)
 }
@@ -15,5 +15,5 @@ pip(object, type = 1)
 A vector (type=1) or data.frame (type=2) of PIPs.
 }
 \description{
-Poserior inclusion probabilities (PIPs) for modifiers in HDLM
+Posterior inclusion probabilities (PIPs) for modifiers in HDLM
 }

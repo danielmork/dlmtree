@@ -1,4 +1,4 @@
-#' Poserior inclusion probabilities (PIPs) for modifiers in HDLM
+#' Posterior inclusion probabilities (PIPs) for modifiers in HDLM
 #'
 #' @param object An object of class dlmtree.
 #' @param type Type=1 indicates single modifier PIPs. Type=2 indicates joint modifier PIPs for two modifiers.
