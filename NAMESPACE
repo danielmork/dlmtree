@@ -34,6 +34,8 @@ export(summary.tdlmm)
 export(estDLM)
 
 export(predict.dlmtree)
+export(pip)
+export(splitpoints)
 
 export(plot.summary.tdlnm)
 export(plot.summary.tdlmm)
