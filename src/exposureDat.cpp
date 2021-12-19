@@ -12,19 +12,22 @@ using namespace Rcpp;
 void nodeCount(Node*, exposureDat*, double, double, int, int);
 double Phi(double, double);
 
+// exposureDat Case 1
 exposureDat::exposureDat(Eigen::MatrixXd Tcalc_in)
 {
-  n = Tcalc_in.rows();
-  pX = Tcalc_in.cols();
+  n = Tcalc_in.rows(); // Number of observations (row)
+  pX = Tcalc_in.cols(); // Number of time (col)
   pZ = 0;
-  nSplits = 0;
+  nSplits = 0; // Number of splits
 
   Tcalc = Tcalc_in;
   preset = 0;
 }
-exposureDat::exposureDat(Eigen::MatrixXd Tcalc_in,
-                         Eigen::MatrixXd Z_in,
-                         Eigen::MatrixXd Vg_in)
+
+// exposureDat Case 2
+exposureDat::exposureDat(Eigen::MatrixXd Tcalc_in, // 
+                         Eigen::MatrixXd Z_in, // Z inverse
+                         Eigen::MatrixXd Vg_in) // V_gamma inverse
 {
   n = Tcalc_in.rows();
   pX = Tcalc_in.cols();
@@ -39,6 +42,8 @@ exposureDat::exposureDat(Eigen::MatrixXd Tcalc_in,
   Z = Z_in;
   preset = 1;
 }
+
+// exposureDat Case 3
 exposureDat::exposureDat(Eigen::MatrixXd X_in,
                          Eigen::MatrixXd SE_in,
                          Eigen::VectorXd Xsplits_in,
@@ -62,6 +67,8 @@ exposureDat::exposureDat(Eigen::MatrixXd X_in,
   Tcalc = Tcalc_in;
   preset = 0;
 }
+
+// exposureDat Case 4
 exposureDat::exposureDat(Eigen::MatrixXd X_in,
                          Eigen::MatrixXd SE_in,
                          Eigen::VectorXd Xsplits_in,
@@ -277,7 +284,7 @@ void exposureDat::updateNodeVals(Node *n)
 
 double Phi(double x1, double x2)
 {
-  return (erf(x2 * MATH_SQRT1_2) - erf(x1 * MATH_SQRT1_2)) * 0.5;
+  return (erf(x2 * MATH_SQRT1_2) - erf(x1 * MATH_SQRT1_2)) * 0.5; // erf: Error function
 }
 
 void nodeCount(Node* n, exposureDat* Exp,

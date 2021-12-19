@@ -53,7 +53,7 @@ double logPSplit(double alpha, double beta, int depth, bool terminal)
 {
   double p = alpha * pow(1.0 + (double)depth, -beta);
   if (terminal) {
-    return(log1p(-p));
+    return(log1p(-p)); // log(1 + (-p))
   } else {
     return(log(p));
   }
@@ -109,6 +109,103 @@ void rHalfCauchyFC(double* x2, double a, double b, double* yInv)
   if (yInv != 0)
     *yInv = yi;
   *x2 = 1.0 / R::rgamma(0.5 * (a + 1.0), 2.0 / (b + 2.0 * yi));
+}
+
+/**
+ * @brief randomly draw a value from zero-truncated normal (Utilizes inverse transform method)
+ * 
+ * @param n desired number of draws
+ * @param mu mean of zero-truncated normal
+ * @param sigma standard deviation of zero-truncated normal
+ * @param lower lower bound of zero-truncated normal 
+ * @param upper upper bound of zero-truncated normal 
+ * @return a double vector from from zero-truncated normal
+ */
+std::vector<double> rtruncnorm(int n, double mu, double sigma, double lower, double upper){
+  if(n < 1){
+    stop("sampling size must be greater than 0");
+  }
+
+  if(sigma < 0){
+    stop("standard deviation must be positive");
+  }
+
+  if(lower > upper){
+    stop("lower bound value must be smaller than the upper bound value");
+  }
+
+  std::vector<double> sample;
+  for(int i = 0; i < n; i++){
+    double u = R::runif(0, 1); // Sample from a standard uniform
+    double transformed = (R::qnorm(R::pnorm(lower, 0, 1, 1, 0) + u*(R::pnorm(upper, 0, 1, 1, 0) - R::pnorm(lower, 0, 1, 1, 0)), 0, 1, 1, 0))*sigma + mu;
+    sample.push_back(transformed);
+  }
+
+  return sample;
+}
+
+/**
+ * @brief randomly draw a SINGLE value from zero-truncated normal (Utilizes inverse transform method)
+ * 
+ * @param mu mean of zero-truncated normal
+ * @param sigma standard deviation of zero-truncated normal
+ * @param lower lower bound of zero-truncated normal 
+ * @param upper upper bound of zero-truncated normal 
+ * @return a double vector from from zero-truncated normal
+ */
+double rtruncnorm(double mu, double sigma, double lower, double upper){
+  if(sigma < 0){
+    stop("standard deviation must be positive");
+  }
+
+  if(!(lower < upper)){
+    stop("lower bound value must be smaller than the upper bound value");
+  }
+
+  double u = R::runif(0, 1); // Sample from a standard uniform
+  double transformed = (R::qnorm(R::pnorm(lower, 0, 1, 1, 0) + u*(R::pnorm(upper, 0, 1, 1, 0) - R::pnorm(lower, 0, 1, 1, 0)), 0, 1, 1, 0))*sigma + mu;
+
+  if(transformed < lower || upper < transformed){
+    stop("The sampled value is not in the support");
+  }
+
+  return transformed;
+}
+
+
+/**
+ * @brief evaluates zero-truncated normal density
+ * 
+ * @param x a value to be evaluated
+ * @param mu mean of zero-truncated normal
+ * @param sigma standard deviation of zero-truncated normal
+ * @param lower lower bound of zero-truncated normal 
+ * @param upper upper bound of zero-truncated normal 
+ * @return a double value: probability
+ */
+double dtruncnorm(double x, double mu, double sigma,  double lower, double upper){
+  if(x < lower || upper < x){
+    stop("The value to be evaluated must be between the lower and the upper bound");
+  }
+
+  if(sigma < 0){
+    stop("standard deviation must be positive");
+  }
+
+  if(!(lower < upper)){
+    stop("lower bound value must be smaller than the upper bound value");
+  }
+
+  double xz = (x - mu)/sigma; // _z notation for "scaled"
+  double lowerz = (lower - mu)/sigma; // _z notation for "scaled"
+  double upperz = (upper - mu)/sigma; // _z notation for "scaled"
+
+  double numer = R::dnorm(xz, 0, 1, 0)/sigma;
+  double denom = R::pnorm(upperz, 0, 1, 1, 0) - R::pnorm(lowerz, 0, 1, 1, 0);
+
+  double prob = numer / denom;
+
+  return prob;
 }
 
 /**
@@ -187,4 +284,57 @@ std::vector<int> cppIntersection(const IntegerVector& A,
   std::set_intersection(A.begin(), A.end(), B.begin(), B.end(),
                         std::back_inserter(output));
   return output;
+}
+
+/**
+ * @brief Subset a vector only with given indices
+ * 
+ * @param original A vector to be subset
+ * @param indices A vector containing wanted indices
+ * @return A vector with values of given indices
+ */
+
+Eigen::VectorXd selectInd(Eigen::VectorXd original, std::vector<int> indices) {
+
+  int m = indices.size(); // Get the total number of index
+
+  Eigen::VectorXd subset; // define a subset
+  subset.resize(m);
+
+  // For loop to collect values with a corresponding index
+  for(int i = 0; i < m; i++){
+    int index = indices[i]; // Get an index from indices vector
+    double val = original(index); // Find the value corresponding to the index
+    subset(i) = val; // Save the value
+  }
+
+  return subset;
+}
+
+/**
+ * @brief Subset a matrix only with given indices (rows)
+ * 
+ * @param original A vector to be subset
+ * @param indices A vector containing wanted indices of row
+ * @return A vector with values of given indices
+ */
+
+Eigen::MatrixXd selectIndM(Eigen::MatrixXd original, std::vector<int> indices) {
+
+  int rownum = indices.size(); // row# of submat
+  int colnum = original.cols(); // col# of submat
+
+  Eigen::MatrixXd submat; // define a submat
+  submat.resize(rownum, colnum);
+
+  // For loop to collect values with a corresponding index
+  for(int i = 0; i < rownum; i++){
+    int index = indices[i]; // Get an index from indices vector
+    for(int j = 0; j < colnum; j++){
+      double val = original(index, j); // Find the value corresponding to the index
+      submat(i, j) = val;              // Save the value
+    }
+  }
+
+  return submat;
 }

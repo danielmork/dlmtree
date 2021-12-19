@@ -9,52 +9,92 @@ public:
   double sigma2, xiInvSigma2, nu, VTheta1Inv, totTerm, sumTermT2;
   double modKappa, modZeta;
   std::vector<double> stepProb, treePrior;
-  Eigen::VectorXd Y;
-  Eigen::MatrixXd Z;
-  Eigen::VectorXd R;
-  Eigen::MatrixXd Rmat;
-  Eigen::MatrixXd Vg;
-  Eigen::MatrixXd VgInv;
-  Eigen::MatrixXd VgChol;
-  Eigen::VectorXd X1;
-  Eigen::VectorXd ZtX1;
-  Eigen::VectorXd VgZtX1;
-  Eigen::VectorXd gamma;
-  Eigen::VectorXd fhat;
-  Eigen::VectorXd tau;
+  Eigen::VectorXd Y0; // Fixed response
+  Eigen::MatrixXd Z; // Design matrix for fixed effect
+  Eigen::VectorXd R; // Partial residual (Also, Y - fhat): Store the current one -> update the next one
+  Eigen::MatrixXd Rmat; // Each column is partial residual -> 
+  Eigen::MatrixXd Vg; // V_gamma
+  Eigen::MatrixXd VgInv; // V_gamma inverse
+  Eigen::MatrixXd VgChol; // V_gamma cholesky decomposition
+  Eigen::VectorXd X1; // X1? -> Maybe for tdlnm?
+  Eigen::VectorXd ZtX1; // Z transponse * X1
+  Eigen::VectorXd VgZtX1; // V_gamma * Z transpose * X1 -> Maybe for tdlnm?
+  Eigen::VectorXd gamma; // confounding coefficients
+  Eigen::VectorXd fhat; // fitted values
+  Eigen::VectorXd tau; // tau for IG
   
-  // Binomial
+  // Binomial ----------------------------------------------
   bool binomial;
-  Eigen::VectorXd Omega;
-  Eigen::MatrixXd Zw;
-  Eigen::VectorXd kappa;
-  Eigen::VectorXd binomialSize;
-  Eigen::VectorXd Lambda;
+  Eigen::VectorXd Omega; // The latent variable for Polya-Gamma
+  Eigen::MatrixXd Zw; // Z * Omega
+  Eigen::VectorXd kappa; // Kappa = y_i - n_i/2
+  Eigen::VectorXd Ystar; // Ystar which is updated every iteration of MCMC, also called z1 in ZINB
+  Eigen::VectorXd binomialSize; // n from Binomial (n, p)
+  Eigen::VectorXd Lambda; // Kappa / Omega
+
+  // ZINB & NB --------------------------------------------------
+  bool zinb; // Indicator boolean for ZINB
+
+  // Binary component of ZINB (labelled with 1)
+  Eigen::VectorXd b1;       // coefficients
+  Eigen::MatrixXd Vg1;       // V_gamma
+  Eigen::MatrixXd VgInv1;    // V_gamma inverse
+  Eigen::MatrixXd VgChol1;   // V_gamma cholesky decomposition
+  Eigen::VectorXd omega1;   // Polya-gamma latent variable (nx1)
+  Eigen::MatrixXd Omega1;   // diagonal matrix with omega1 (nxn)
+  Eigen::VectorXd z1;
+  Eigen::MatrixXd Sigma1;   // Var-Cov for MCMC update (nxn)
+  Eigen::VectorXd Mu1;      // Mean for MCMC update (nx1)
+
+  // Count component(Negative Binomial) of ZINB (labelled with 2)
+  int nStar;                  // Number of At-risk observations (w = 1)
+  int yZeroN;                 // Number of zeros in the data
+  Eigen::VectorXd b2;         // coefficients
+  std::vector<int> yZeroIdx;  // A vector of indices where y = 0
+  Eigen::VectorXd omega2;     // Polya-gamma latent variable (n x 1)
+  Eigen::VectorXd omega2star; // Polya-gamma latent variable (n* x 1)
+  Eigen::MatrixXd Omega2;     // diagonal matrix with omega2 (n* x n*)
+  Eigen::MatrixXd Sigma2;     // Var-Cov for MCMC update (nStar x nStar)
+  Eigen::VectorXd Mu2;        // Mean for MCMC update (nStar x 1)
+  Eigen::MatrixXd Zstar;      // Z with Z with non At-risk individuals zeroed out
+  Eigen::VectorXd z2;         // Ystar
+
+  // Dispersion parameter component of ZINB
+  int r;         // dispersion parameter of negative binomial
+  Eigen::VectorXd rVec; // a vector of dispersion parameter: rep(r, n)
+  double MHvar;     // variance for zero-truncated normal for MHR
+  double MHratio;    // Metropolis-Hasting ratio
+
+  // Updating at-risk component
+  Eigen::VectorXd w;            // At-risk latent variable
+  std::vector<int> atRiskIdx;   // Vector containing non-zero y indices
+
+  // Useful vector
+  Eigen::VectorXd ones;
 };
 
-struct tdlmCtr : modelCtr {
+struct tdlmCtr : modelCtr { // tdlmCtr: Child class of modelCtr
 public:
   Eigen::VectorXd nTerm;
 
   // Mixtures
   int interaction, nExp, nMix;
   double modZeta, modKappa;
-  Eigen::VectorXd expProb;
-  Eigen::VectorXd expCount;
-  Eigen::MatrixXd mixCount;
+  Eigen::VectorXd expProb; // Probability to choose exposure
+  Eigen::VectorXd expCount; // How many trees use a certain exposure: length of exposures we have
+  Eigen::MatrixXd mixCount; // Same thing with tree pairs (triangle)
   Eigen::VectorXd expInf;
   Eigen::MatrixXd mixInf;
   Eigen::VectorXd nTerm2;
-  Eigen::VectorXd tree1Exp;
-  Eigen::VectorXd tree2Exp;
-  Eigen::VectorXd totTermExp;
-  Eigen::MatrixXd totTermMix;
-  Eigen::VectorXd sumTermT2Exp;
-  Eigen::MatrixXd sumTermT2Mix;
-  Eigen::VectorXd muExp;
-  Eigen::MatrixXd muMix;
+  Eigen::VectorXd tree1Exp; // Exposure of tree1 of #A tree pairs
+  Eigen::VectorXd tree2Exp; // Exposure of tree2 of #A tree pairs
+  Eigen::VectorXd totTermExp; // tree terminal nodes related to exposure
+  Eigen::MatrixXd totTermMix; // tree1 with 3 x tree2 with 4 -> (1, 2) = 12: row, column represents exposures (triangle)
+  Eigen::VectorXd sumTermT2Exp; // Terminal node effect squared
+  Eigen::MatrixXd sumTermT2Mix; // Same with mixture
+  Eigen::VectorXd muExp; // Exposure specific-variance parameter
+  Eigen::MatrixXd muMix; // Same with mixture
 };
-
 
 struct tdlmLog {
 public:
@@ -80,6 +120,12 @@ public:
   Eigen::MatrixXd tree2Exp;
   Eigen::MatrixXd muExp;
   Eigen::MatrixXd muMix;
+
+  // ZINB
+  Eigen::MatrixXd b1;
+  Eigen::MatrixXd b2;
+  Eigen::VectorXd r;
+  Eigen::MatrixXd wMat;
 };
 
 struct dlmtreeCtr : modelCtr {
@@ -158,6 +204,12 @@ public:
   // GP
   Eigen::VectorXd phi;
 
+  // ZINB
+  Eigen::MatrixXd b1; // Binary coefficient
+  Eigen::MatrixXd b2; // Count coefficient
+  Eigen::VectorXd r; // dispersion parameter
+  Eigen::MatrixXd wMat;
+
   // Mixtures
   // std::vector<Eigen::VectorXd> MIXexp;
   // Eigen::VectorXd kappa;
@@ -173,9 +225,11 @@ public:
   // Eigen::MatrixXd muMix;
 };
 
+// ----- Binomial Model -----
 void tdlmModelEst(modelCtr *ctr);
 // Binomial model
-Eigen::VectorXd rcpp_pgdraw(Eigen::VectorXd, Eigen::VectorXd);
+Eigen::VectorXd rcpp_pgdraw(Eigen::VectorXd, Eigen::VectorXd); // Multiple Draw from Polya-Gamma (Vector)
+double rcpp_pgdraw(double, double); // Single Draw from Polya-Gamma
 // void tdlmModelEstBinomial(modelCtr *ctr);
 
 void dlmtreeRecDLM(dlmtreeCtr* ctr, dlmtreeLog* dgn);

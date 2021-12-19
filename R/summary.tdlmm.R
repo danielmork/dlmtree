@@ -267,9 +267,22 @@ summary.tdlmm <- function(object,
 
 
   # ---- Fixed effect estimates ----
+  # Logistic
   res$gamma.mean <- colMeans(object$gamma)
   res$gamma.ci <- apply(object$gamma, 2, quantile, probs = res$ci.lims)
+  
+  # ZINB
+  # binary
+  res$b1.mean <- colMeans(object$b1)
+  res$b1.ci <- apply(object$b1, 2, quantile, probs = res$ci.lims)
 
+  # count
+  res$b2.mean <- colMeans(object$b2)
+  res$b2.ci <- apply(object$b2, 2, quantile, probs = res$ci.lims)
+
+  # Dispersion parameter
+  res$r.mean <- mean(object$r)
+  res$r.ci <- quantile(object$r, probs = res$ci.lims)
 
   # ---- Return ----
   res$sig2noise <- ifelse(is.null(object$sigma2), NA,

@@ -19,8 +19,8 @@
 #' @param n.burn integer for length of burn-in
 #' @param n.iter integer for number of iterations to run model after burn-in
 #' @param n.thin integer thinning factor, i.e. keep every tenth iteration
-#' @param family 'gaussian' for continuous response, or 'logit' for binomial
-#' response with logit link
+#' @param family 'gaussian' for continuous response, 'logit' for binomial
+#' response with logit link, or 'zinb' for zero-inflated negative binomial model
 #' @param binomial.size integer type scalar (if all equal, default = 1) or
 #' vector defining binomial size for 'logit' family
 #' @param mixture.interactions 'noself' (default) which estimates interactions
@@ -40,6 +40,8 @@
 #' @param verbose true (default) or false: print output
 #' @param diagnostics true or false (default) keep model diagnostic such as
 #' terminal nodes, acceptance details, etc.
+#' @param MHvar (only applies for ZINB) a double value for the variance of zero truncated normal for
+#' Metropolis-Hasting algorithm which samples dispersion parameter of negative binomial
 #' @param ... NA
 #'
 #' @details Model is recommended to be run for at minimum 5000 burn-in
@@ -53,6 +55,7 @@
 tdlmm <- function(formula,
                   data,
                   exposure.data,
+                  #wTrue,
                   n.trees = 20,
                   n.burn = 2000,
                   n.iter = 5000,
@@ -67,6 +70,7 @@ tdlmm <- function(formula,
                   subset = NULL,
                   verbose = TRUE,
                   diagnostics = FALSE,
+                  MHvar = 0.025,
                   ...)
 {
   model <- list()
@@ -77,7 +81,7 @@ tdlmm <- function(formula,
   if (n.iter < n.thin * 10)
     stop("after thinning you will be left with less than 10 MCMC samples,
          increase the number of iterations!")
-
+  
   # data for formula
   if (!is.data.frame(data))
     stop("`data` must be a data.frame")
@@ -86,13 +90,13 @@ tdlmm <- function(formula,
   # exposure data
   if (!is.list(exposure.data))
     stop("`exposure.data` must be a list of named exposures")
-  model$nExp <- length(exposure.data)
-  model$expNames <- names(exposure.data)
+  model$nExp <- length(exposure.data)     # number of exposure
+  model$expNames <- names(exposure.data)  # names of exposures 
   if (is.null(model$expNames) || length(unique(model$expNames)) != model$nExp ||
       any(model$expNames == ""))
     stop("`exposure.data` must be a named list with unique, non-empty names")
-  model$pExp <- ncol(exposure.data[[1]])
-  for (i in 1:length(exposure.data)) {
+  model$pExp <- ncol(exposure.data[[1]])  # Number of time observations
+  for (i in 1:length(exposure.data)) {    # Sanity check for each exposure
     if (!is.numeric(exposure.data[[i]]))
       stop("each exposure in list `exposure.data` must be a numeric matrix")
     if (nrow(data) != nrow(exposure.data[[i]]))
@@ -110,8 +114,8 @@ tdlmm <- function(formula,
     stop("n.* must be integer and > 0")
 
   # response type
-  if (!(family %in% c("gaussian", "logit")))
-    stop("`family` must be one of `gaussian`, or `logit`")
+  if (!(family %in% c("gaussian", "logit", "zinb"))) # Updated
+    stop("`family` must be one of `gaussian`, `logit`, or 'zinb'")
 
   # binomial size
   model$binomial <- 0
@@ -125,18 +129,28 @@ tdlmm <- function(formula,
     model$binomial <- 1
   }
 
+  # ZINB
+  model$zinb <- 0
+  if(family == "zinb"){
+    model$zinb <- 1
+    #model$wTrue = wTrue
+  }
+
+  # zero-truncated normal variance for dispersion parameter
+  model$MHvar <- MHvar
+
   # mixture interactions
   if (!(mixture.interactions %in% c("noself", "all", "none")))
     stop("`mixture.interactions must be one of `noself`, `all`, `none`")
   if (mixture.interactions %in% c("marginal", "none")) {
-    model$interaction <- 0
-    model$nMix <- 0
+    model$interaction <- 0      # No interaction
+    model$nMix <- 0             # No interaction terms
   } else if (mixture.interactions == "noself") {
-    model$interaction <- 1
-    model$nMix <- model$nExp * (model$nExp - 1) / 2
+    model$interaction <- 1      # All interaction except oneself
+    model$nMix <- model$nExp * (model$nExp - 1) / 2 # (n choose 2) = (n^2 - n)/2
   } else {
-    model$interaction <- 2
-    model$nMix <- model$nExp * (model$nExp + 1) / 2
+    model$interaction <- 2      # All interaction including oneself
+    model$nMix <- model$nExp * (model$nExp + 1) / 2 # T^2 + T
   }
 
   # tree parameters
@@ -180,10 +194,10 @@ tdlmm <- function(formula,
 
   # ---- Create data subset ----
   if (!is.null(subset)) {
-    if (length(subset) > 1 & is.integer(subset) &
+    if (length(subset) > 1 & is.integer(subset) & # If subset index vector is not null, all the indices are proper,
         all(subset > 0) & all(subset <= nrow(data))) {
-      data <- data[subset,]
-      exposure.data <- lapply(exposure.data, function(i) i[subset,])
+      data <- data[subset,] # Subset the data
+      exposure.data <- lapply(exposure.data, function(i) i[subset,]) # Subset the rows of exposure data
       if (model$family == "logit")
         model$binomialSize <- model$binomialSize[subset]
     } else {
@@ -194,7 +208,7 @@ tdlmm <- function(formula,
 
   # ---- Setup control and response variables ----
   model$formula <- force(as.formula(formula))
-  tf <- terms.formula(model$formula, data = data)
+  tf <- terms.formula(model$formula, data = data) # Object with terms -> Can be extended to model.matrix
   if (!attr(tf, "response"))
     stop("no valid response in formula")
   model$intercept <- force(ifelse(attr(tf, "intercept"), TRUE, FALSE))
@@ -205,15 +219,15 @@ tdlmm <- function(formula,
 
   # ---- Exposure splits ----
   model$splitProb <- as.double(c())
-  model$timeProb <- force(rep(1 / (model$pExp - 1), model$pExp - 1))
+  model$timeProb <- force(rep(1 / (model$pExp - 1), model$pExp - 1)) # Uniform probability of time 
   model$X <- list()
-  for (i in 1:model$nExp) {
-    model$X[[i]] <- force(list(Xscale = sd(exposure.data[[i]]),
-                               X = exposure.data[[i]]))
-    model$X[[i]]$X <- force(model$X[[i]]$X / model$X[[i]]$Xscale)
-    model$X[[i]]$Xrange <- force(range(model$X[[i]]$X))
+  for (i in 1:model$nExp) { # For each exposure,
+    model$X[[i]] <- force(list(Xscale = sd(exposure.data[[i]]), # Store scale
+                               X = exposure.data[[i]]))         # Store exposure data
+    model$X[[i]]$X <- force(model$X[[i]]$X / model$X[[i]]$Xscale) # scaling
+    model$X[[i]]$Xrange <- force(range(model$X[[i]]$X)) # range
     model$X[[i]]$Xquant <- force(quantile(model$X[[i]]$X, 0:100/100) *  model$X[[i]]$Xscale)
-    model$X[[i]]$intX <- force(mean(model$X[[i]]$X))
+    model$X[[i]]$intX <- force(mean(model$X[[i]]$X)) # mean
     model$X[[i]]$Tcalc <-
       force(sapply(1:ncol(model$X[[i]]$X), function(j) {
         rowSums(model$X[[i]]$X[, 1:j, drop = F]) }))
@@ -224,26 +238,25 @@ tdlmm <- function(formula,
 
 
   # ---- Scale data and setup exposures ----
-  data <- droplevels(data)
+  data <- droplevels(data) # Drop all factor in the data.
   mf <- model.frame(model$formula, data = data,
                     drop.unused.levels = TRUE,
                     na.action = NULL)
   if (any(is.na(mf)))
     stop("missing values in model data, use `complete.cases()` to subset data")
-  model$Y <- force(model.response(mf))
-  model$Z <- force(model.matrix(model$formula, data = mf))
-  QR <- qr(crossprod(model$Z))
+  model$Y <- force(model.response(mf)) # Response Y
+  model$Z <- force(model.matrix(model$formula, data = mf)) # Model matrix, Z
+  QR <- qr(crossprod(model$Z)) # Cross product and QR decomposition
   model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)])]
   model$droppedCovar <- colnames(model$Z)[QR$pivot[-seq_len(QR$rank)]]
   model$Z <- force(scaleModelMatrix(model$Z))
   rm(QR)
 
-
   if (model$family == "gaussian") {
     model$Ymean <- sum(range(model$Y)) / 2
     model$Yscale <- diff(range(model$Y - model$Ymean))
     model$Y <- force((model$Y - model$Ymean) / model$Yscale)
-  } else {
+  } else { # For both logistic and zinb
     model$Yscale <- 1
     model$Ymean <- 0
     model$Y <- force(scale(model$Y, center = 0, scale = 1))
@@ -273,21 +286,56 @@ tdlmm <- function(formula,
     model[[n]] <- out[[n]]
 
 
-
   # ---- Prepare output ----
   model$Y <- model$Y * model$Yscale + model$Ymean
   model$fhat <- model$fhat * model$Yscale
   model$sigma2 <- model$sigma2 * (model$Yscale ^ 2)
+  
 
   # rescale fixed effect estimates
+  #if (model$intercept) {
+  #  model$gamma[,-1] <- sapply(2:ncol(model$gamma), function(i) { # Logistic
+  #    model$gamma[,i] * model$Yscale / model$Zscale[i]})
+  #  model$b1[,-1] <- sapply(2:ncol(model$b1), function(i) { # ZINB binary
+  #    model$b1[,i] * model$Yscale / model$Zscale[i]})
+  #  model$b2[,-1] <- sapply(2:ncol(model$b2), function(i) { # ZINB count
+  #    model$b2[,i] * model$Yscale / model$Zscale[i]})
+  #} else {
+  #  model$gamma <- sapply(1:ncol(model$gamma), function(i) { # Logistic
+  #    model$gamma[,i] * model$Yscale / model$Zscale[i]})
+  #  model$b1 <- sapply(1:ncol(model$b1), function(i) { # ZINB binary
+  #    model$b1[,i] * model$Yscale / model$Zscale[i]})
+  #  model$b2 <- sapply(1:ncol(model$b2), function(i) { # ZINB count
+  #    model$b2[,i] * model$Yscale / model$Zscale[i]})
+  #}
+
+  model$gamma <- sapply(1:ncol(model$gamma), function(i) {
+  model$gamma[,i] * model$Yscale / model$Zscale[i] })
+
+  model$b1 <- sapply(1:ncol(model$b1), function(i) {
+  model$b1[,i] * model$Yscale / model$Zscale[i] })
+
+  model$b2 <- sapply(1:ncol(model$b2), function(i) {
+  model$b2[,i] * model$Yscale / model$Zscale[i] })
+
   if (model$intercept) {
-    model$gamma[,-1] <- sapply(2:ncol(model$gamma), function(i) {
-      model$gamma[,i] * model$Yscale / model$Zscale[i]})
-  } else {
-    model$gamma <- sapply(1:ncol(model$gamma), function(i) {
-      model$gamma[,i] * model$Yscale / model$Zscale[i]})
+    model$gamma[,1] <- model$gamma[,1] + model$Ymean
+    if (ncol(model$Z) > 1)
+      model$gamma[,1] <- model$gamma[,1] - model$gamma[,-1] %*% model$Zmean[-1]
+
+    model$b1[,1] <- model$b1[,1] + model$Ymean
+    if (ncol(model$Z) > 1)
+      model$b1[,1] <- model$b1[,1] - model$b1[,-1] %*% model$Zmean[-1]
+
+    model$b2[,1] <- model$b2[,1] + model$Ymean
+    if (ncol(model$Z) > 1)
+      model$b2[,1] <- model$b2[,1] - model$b2[,-1] %*% model$Zmean[-1]
   }
+
   colnames(model$gamma) <- model$Znames
+  colnames(model$b1) <- model$Znames
+  colnames(model$b2) <- model$Znames
+
 
   # rescale DLM and Mixture estimates
   model$DLM <- as.data.frame(model$DLM)

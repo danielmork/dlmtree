@@ -120,6 +120,12 @@ tdlnm <- function(formula,
     model$binomial <- 1
   }
 
+  # ZINB
+  model$zinb <- 0
+  if(family == "zinb"){
+    model$zinb <- 1
+  }
+
   # tree parameters
   if (length(tree.params) != 2) {
     stop("tree.params must have length 2")

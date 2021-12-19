@@ -148,7 +148,7 @@ void tdlnmTreeMCMC(int t, Node *tree, tdlmCtr *ctr, tdlmLog *dgn,
     mhr = dlnmMHR(newDlnmTerm, ctr, ZtR, treevar, tree, 1);
 
     // combine mhr parts into log-MH ratio
-    if (ctr->binomial) {
+    if (ctr->binomial || ctr->zinb) {
       ratio = stepMhr + (mhr.logVThetaChol - mhr0.logVThetaChol) +
         0.5 * (mhr.beta - mhr0.beta) -
         (log(treevar) * 0.5 * (mhr.nTerm - mhr0.nTerm));
@@ -235,13 +235,14 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   ctr->verbose = as<bool>(model["verbose"]);
   ctr->diagnostics = as<bool>(model["diagnostics"]);
   ctr->binomial = as<bool>(model["binomial"]);
+  ctr->zinb = as<bool>(model["zinb"]);          // ZINB
   ctr->stepProb = as<std::vector<double> >(model["stepProb"]);
   ctr->treePrior = as<std::vector<double> >(model["treePrior"]);
   ctr->shrinkage = as<int>(model["shrinkage"]);
   
   // * Set up model data
-  ctr->Y = as<VectorXd>(model["Y"]);
-  ctr->n = (ctr->Y).size();
+  ctr->Y0 = as<VectorXd>(model["Y"]); // Change to Y0 later for the consistency later
+  ctr->n = (ctr->Y0).size(); // Change to Y0 later for the consistency later
   ctr->Z = as<MatrixXd>(model["Z"]);
   ctr->Zw = ctr->Z;
   ctr->pZ = (ctr->Z).cols();
@@ -257,8 +258,8 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   ctr->Omega.resize(ctr->n);                      ctr->Omega.setOnes();
   if (ctr->binomial) {
     ctr->binomialSize = as<VectorXd>(model["binomialSize"]);
-    ctr->kappa = ctr->Y - 0.5 * (ctr->binomialSize);
-    ctr->Y = ctr->kappa;
+    ctr->kappa = ctr->Y0 - 0.5 * (ctr->binomialSize); // Change to Y0 later for the consistency later
+    ctr->Ystar = ctr->kappa; // Change to Ystar later for the consistency later
     ctr->Omega.resize(ctr->n);                      ctr->Omega.setOnes();
   }
   
@@ -321,7 +322,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   
   // * Initial values and draws
   ctr->fhat.resize(ctr->n);                         (ctr->fhat).setZero();
-  ctr->R = ctr->Y;
+  ctr->R = ctr->Ystar; // Change to Y0 or Ystar later for the consistency later
   ctr->gamma.resize(ctr->pZ);
   ctr->totTerm = 0;
   ctr->sumTermT2 = 0;
@@ -359,7 +360,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     } // end update trees
 
     // * Update model
-    ctr->R = ctr->Y - ctr->fhat;
+    ctr->R = ctr->Ystar - ctr->fhat; // Change to Y0 or Ystar later for the consistency later
     tdlmModelEst(ctr);
     rHalfCauchyFC(&(ctr->nu), ctr->totTerm, ctr->sumTermT2 / ctr->sigma2);
     if ((ctr->sigma2 != ctr->sigma2) || (ctr->nu != ctr->nu))

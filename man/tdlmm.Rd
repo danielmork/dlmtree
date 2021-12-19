@@ -22,6 +22,7 @@ tdlmm(
   subset = NULL,
   verbose = TRUE,
   diagnostics = FALSE,
+  MHvar = 0.025,
   ...
 )
 }
@@ -42,8 +43,8 @@ of exposure data with same, having same length as data}
 
 \item{n.thin}{integer thinning factor, i.e. keep every tenth iteration}
 
-\item{family}{'gaussian' for continuous response, or 'logit' for binomial
-response with logit link}
+\item{family}{'gaussian' for continuous response, 'logit' for binomial
+response with logit link, or 'zinb' for zero-inflated negative binomial model}
 
 \item{binomial.size}{integer type scalar (if all equal, default = 1) or
 vector defining binomial size for 'logit' family}
@@ -72,6 +73,9 @@ turns on horseshoe-like shrinkage priors for different parts of model}
 
 \item{diagnostics}{true or false (default) keep model diagnostic such as
 terminal nodes, acceptance details, etc.}
+
+\item{MHvar}{(only applies for ZINB) a double value for the variance of zero truncated normal for
+Metropolis-Hasting algorithm which samples dispersion parameter of negative binomial}
 
 \item{...}{NA}
 }

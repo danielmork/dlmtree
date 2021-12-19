@@ -24,6 +24,7 @@
  */
 
 #include "RcppEigen.h"
+
 using namespace Rcpp;
 
 // Mathematical constants computed using Wolfram Alpha
@@ -47,7 +48,7 @@ double randinvg(double);
 double aterm(int, double, double);
 
 /**
- * @brief draw polya gamma latent variable for var c[i] with size b[i]
+ * @brief multiple draw polya gamma latent variable for var c[i] with size b[i]
  * 
  * @param b vector of binomial sizes
  * @param c vector of parameters
@@ -68,23 +69,51 @@ Eigen::VectorXd rcpp_pgdraw(Eigen::VectorXd b,
     bi = b[0];
   }
 
+  #pragma omp parallel
+  #pragma omp for
+  
   // Sample
   // TODO: add code for parallel draws: #pragma omp parallel for
-  for (i = 0; i < n; i++)
-  {
-    if (m > 1)
-    {
+  for (i = 0; i < n; i++){
+    // Rcout << i << "\n";
+    // Rcout << "First parameter: " << b[i] << "\n";
+    if (m > 1){
       bi = b[i];
     }
 
     // Sample
     y[i] = 0;
-    for (j = 0; j < (int)bi; j++)
-    {
+    for (j = 0; j < (int)bi; j++){
+      // Rcout << j << "\n";
+      // Rcout << "Second parameter: " << c[j] << "\n";
       y[i] += samplepg(c[i]);
     }
   }
 
+  return y;
+}
+
+
+/**
+ * @brief single draw polya gamma latent variable for var c with size b
+ * 
+ * @param b double value of binomial sizes
+ * @param c double value of parameter
+ * @return double
+ */
+// [[Rcpp::depends(RcppEigen)]]
+double rcpp_pgdraw(double b, double c){
+
+  double y = 0;
+
+  // Sample
+  // TODO: add code for parallel draws: #pragma omp parallel for
+  #pragma omp parallel
+  #pragma omp for
+  for (int i = 0; i < int(b); i++){
+    y += samplepg(c);
+  }
+  
   return y;
 }
 

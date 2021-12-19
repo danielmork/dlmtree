@@ -5,9 +5,9 @@
 class modDat;
 
 class NodeStruct {
-public:
+public: //virtual = override parent functions
   NodeStruct();
-  virtual ~NodeStruct();
+  virtual ~NodeStruct(); // Destructor
   NodeStruct(const NodeStruct&);
   virtual NodeStruct* clone();
   virtual NodeStruct* subStruct(bool);

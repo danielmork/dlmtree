@@ -15,6 +15,8 @@
 #include "Fncs.h"
 #include "Node.h"
 #include "NodeStruct.h"
+#include <random>
+#include <iostream>
 using namespace Rcpp;
 
 /**
@@ -23,41 +25,262 @@ using namespace Rcpp;
  * @param ctr model control data
  */
 void tdlmModelEst(modelCtr *ctr)
-{
-  const Eigen::VectorXd ZR = ctr->Zw.transpose() * ctr->R;
-  ctr->gamma = ctr->Vg * ZR;
-   
-  // * Update sigma^2 and xi_sigma2
-  if (!(ctr->binomial)) {
-    rHalfCauchyFC(&(ctr->sigma2), (double)ctr->n + (double)ctr->totTerm, 
-                  ctr->R.dot(ctr->R) - ZR.dot(ctr->gamma) + 
-                    ctr->sumTermT2 / ctr->nu, &(ctr->xiInvSigma2));
-    if ((ctr->sigma2 != ctr->sigma2)) // ! stop if infinte or nan variance
-      stop("\nNaN values (sigma) occured during model run, rerun model.\n");
-  }
-  
-  // * Draw fixed effect coefficients
-  ctr->gamma.noalias() += ctr->VgChol *
-    as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2)));
+{ 
+  if(!(ctr->zinb)){ // If not ZINB, go to either Gaussian approach or Binomial approach
+    // Update the fixed coefficient - Calculate the mean of the gamma full conditional 
+    //Rcout << "Line 31 \n";
+    //Rcout << (ctr->Zw).rows() << "\n";
+    //Rcout << (ctr->Zw).cols() << "\n";
+    //Rcout << (ctr->R).rows() << "\n";
+    //Rcout << (ctr->R).cols() << "\n";
+    const Eigen::VectorXd ZR = ctr->Zw.transpose() * ctr->R; // R = Y - f(DLM effects)
+    ctr->gamma = ctr->Vg * ZR; // For mean vector of gamma's normal distribution: V_gamma * Zt * (Y - f)
     
-  // * Update polya gamma vars
-  if (ctr->binomial) {
-    Eigen::VectorXd psi = ctr->fhat;
-    psi.noalias() += ctr->Z * ctr->gamma;
-    ctr->Omega = rcpp_pgdraw(ctr->binomialSize, psi);
-    
-    ctr->Zw = ctr->Omega.asDiagonal() * ctr->Z;
-    Eigen::MatrixXd VgInv(ctr->pZ, ctr->pZ);
-    VgInv.triangularView<Eigen::Lower>() = ctr->Z.transpose() * ctr->Zw;
-    VgInv.diagonal().array() += 1 / 100000.0;
-    VgInv.triangularView<Eigen::Upper>() = VgInv.transpose().eval();
+    // * Update sigma^2 and xi_sigma2
+    if (!(ctr->binomial)) {
+      //Rcout << "Gaussian Model Estimation \n";
+      rHalfCauchyFC(&(ctr->sigma2), (double)ctr->n + (double)ctr->totTerm, 
+                    ctr->R.dot(ctr->R) - ZR.dot(ctr->gamma) + 
+                      ctr->sumTermT2 / ctr->nu, &(ctr->xiInvSigma2));
+      if ((ctr->sigma2 != ctr->sigma2)) // ! stop if infinte or nan variance
+        stop("\nNaN values (sigma) occured during model run, rerun model.\n");
+    }
+
+    // * Draw fixed effect coefficients' variance
+    ctr->gamma.noalias() += ctr->VgChol * as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2))); 
+      // square-root of (V_gamma * N(0, sigma^2))
+      // -> chol(Vg) * sigma2 -> Covariance matrix -> Add to the fixed coefficient
+      // cholesky for inverse is more efficient than naive inverse functions
+      
+    // * Update polya gamma vars
+    if (ctr->binomial) {
+      // Rcout << "Logistic Model Estimation \n";
+      // DLM + Z * Gamma (Equation 24) for PG's second parameter
+      Eigen::VectorXd psi = ctr->fhat; // f part
+      psi.noalias() += ctr->Z * ctr->gamma; // Z_gamma + f
+      
+      // Latent variable, Omega
+      // Omega|psi ~ Polya-Gamma(n_i, psi_i) Appendix B.5 (Equation 26)
+      // -> returns a vector of omega
+      ctr->Omega = rcpp_pgdraw(ctr->binomialSize, psi); // Second line from the supplemental
+      
+      // asDiagonal() creates a Matrix with the input vector as diagonal elements
+      // Omega.asDiagonal() is the big Omega below equation 29
+      ctr->Zw = ctr->Omega.asDiagonal() * ctr->Z; // Zw = Omega * Z for binomial-specific
+
+      // Constructing V_gamma Inverse 
+      // Note V_gamma inverse and V_gamma are both symmetric
+      Eigen::MatrixXd VgInv(ctr->pZ, ctr->pZ); 
+      VgInv.triangularView<Eigen::Lower>() = ctr->Z.transpose() * ctr->Zw; // Lower triangle = Zt * Omega * Z 
+      VgInv.diagonal().array() += 1 / 100000.0; // ZT*Omega*Z  + c*I where c = 100000
+      VgInv.triangularView<Eigen::Upper>() = VgInv.transpose().eval(); // Upper triangle = transpose of the lower triangle
+
+      // Constructing V_gamma = Inverse of V_gamma Inverse
+      ctr->Vg.triangularView<Eigen::Lower>() = VgInv.inverse();
+      ctr->Vg.triangularView<Eigen::Upper>() = ctr->Vg.transpose().eval();
+      
+      // Update the V_gamma cholesky using LLT Decomposition, Lower triangular part of matrix L
+      ctr->VgChol = ctr->Vg.llt().matrixL(); 
+      ctr->Ystar = (ctr->kappa).array() / ctr->Omega.array(); 
+      // This is Y^* in the Dan's document and z in ZINB
+
+      ctr->R = ctr->Ystar - ctr->fhat; // Update Ystar - f
+    }
+
+  } else { // ZINB
+    // *** Step 1: Update the latent At-Risk Indicators ***
+    // Step 1-1: Calculate eta1 for logit1, eta2 for logit2 & nu2
+    // Rcout << "Step 1: Updating the latent indicator variable \n";
+    Eigen::VectorXd eta1 = (ctr->Z) * (ctr->b1);    // Z*\gamma
+    Eigen::VectorXd logit1 = 1 / (1 + exp(-(eta1).array()));
+
+    Eigen::VectorXd eta2 = (ctr->fhat);// .array(); // * (ctr->w).array();  // dlm effect
+    eta2.noalias() += ctr->Z * ctr->b2;                         // fixed effect : (nx1)
+    Eigen::VectorXd logit2 = 1 / (1 + exp(-(eta2).array())); // psi (dlm effect + fixed effect)
+    Eigen::VectorXd nu2 = 1 - logit2.array();
+
+    //Rcout << "eta2: "<< ctr->Z * ctr->b2 << "\n";
+    //Rcout << "------------------------------ \n";
+    //Rcout << "fhat: "<< ctr->fhat << "\n";
+
+    //Rcout << eta2 << "\n";
+
+    // Rcout << "Step 1: Updating the latent indicator variable \n";
+    ctr->w.setOnes(); // Reset w
+
+    for(int z = 0; z < (ctr->yZeroN); z++){ // For all y = 0,
+      // Find the index of y = 0,
+      int idx = (ctr->yZeroIdx)[z]; 
+
+      // Bernoulli probability
+      double prob = log(logit1[idx]) + (ctr->r) * log((nu2)[idx])
+                  - log(1 - logit1[idx] + logit1[idx] * pow((nu2)[idx], (ctr->r))); 
+      // Rcout << exp(prob) << "\n";
+      // Update the index with a probability with either 0 or 1
+      (ctr->w)[idx] = R::rbinom(1, exp(prob)); 
+    }
+
+    // Update the number of at-risk
+    ctr->nStar = (ctr->w).sum();
+
+    //Rcout << ctr->nStar << "\n";
+
+    // Update the indices of at-risk
+    ctr->atRiskIdx.clear();  // Clear the vector
+    for(int j = 0; j < (ctr->n); j++){
+      if((ctr->w)[j] == 1){
+        ctr->atRiskIdx.push_back(j); // Save the index if w = 1
+      }
+    }
+
+    // Check the atRiskIdx vector
+    if(ctr->atRiskIdx.size() != (ctr->nStar)){
+      stop("The number of at-risk observations don't match");
+    }
+
+    // Check for NaN of the latent variable w.
+    if(ctr->w != ctr->w){
+      stop("NaN value occured for the latent variable, w");
+    }
+
+    // *** Step 2: Binary component aka Update b1 ***
+    // 2-1: Update Omega1 ~ PG(1, eta1)
+    // Rcout << "Step 2-1: Sampling Omega1 \n";
+    ctr->omega1 = rcpp_pgdraw(ctr->ones, eta1);     // Sample PG
+    ctr->Omega1 = (ctr->omega1).asDiagonal();       // Omega1 matrix
+
+    // 2-2: Update Vg1 and z1
+    // Vg1
+    // Rcout << "Step 2-2: Updating Vg1 \n";
+    Eigen::MatrixXd VgInv1(ctr->pZ, ctr->pZ); 
+    VgInv1.triangularView<Eigen::Lower>() = ctr->Z.transpose() * (ctr->Omega1) * (ctr->Z); // Zt * Omega * Z : (pxp)
+    VgInv1.diagonal().array() += 1 / 100.0; // ZT*Omega*Z  + c*I where c = 100000
+    VgInv1.triangularView<Eigen::Upper>() = VgInv1.transpose().eval(); 
+    ctr->Vg1.triangularView<Eigen::Lower>() = VgInv1.inverse();
+    ctr->Vg1.triangularView<Eigen::Upper>() = ctr->Vg1.transpose().eval();   
+    ctr->VgChol1 = ctr->Vg1.llt().matrixL();
+
+    // z1
+    // Rcout << "Step 2-2: Updating z1 \n";
+    ctr->z1 = ((ctr->w).array() - 0.5).array() / ctr->omega1.array(); 
+
+    // 2-3: Sample b1
+    // Rcout << "Step 2-3: Sampling b1 \n";
+    // Mean of b1
+    const Eigen::VectorXd ZR1 = ctr->Z.transpose() * (ctr->Omega1) * (ctr->z1); // (px1)(nxn)(nx1) = (px1)(no DLM effects)
+    ctr->b1 = ctr->Vg1 * ZR1; // Mean (pxp)(px1)
+    // Variance of b1 using cholesky 
+    ctr->b1.noalias() += ctr->VgChol1 * as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2)));
+
+    // *** Step 3: Negative Binomial (count) component ***
+    // 3-1: Update Omega2 ~ PG(y + r, psi2) with dlm effect
+    // Rcout << "Step 3-1: Sampling Omega2 \n";
+    // Start omega2 vector with ones and sample only for the at-risk (No need to sample PG(y + r, 0))
+    (ctr->omega2).setOnes(); // Can set anything as it will be multiplied to zero
+    for(int k = 0; k < (ctr->nStar); k++){
+      int tmp = (ctr->atRiskIdx)[k];
+      (ctr->omega2)[tmp] = rcpp_pgdraw((ctr->Y0)[tmp] + ctr->r, eta2[tmp]);
+    }
+    ctr->Omega2 = (ctr->omega2).asDiagonal();                 // Omega2 matrix: (nxn)
+
+    // 3-2: Update Zstar, Zw, Vg, z2, R
+    // Compute Zstar (Z with non At-risk individuals zeroed out)
+    ctr->Zstar = (ctr->Z).array().colwise() * (ctr->w).array();
+
+    // Zw
+    // Rcout << "Step 3-2: Updating Zw \n";
+    ctr->Zw = ctr->Omega2 * ctr->Zstar;  // (nxn) x (nxp) = (nxp) with only with at-risk
+
+    // Vg (pxp)
+    // Rcout << "Step 3-2: Updating Vg \n";
+    Eigen::MatrixXd VgInv(ctr->pZ, ctr->pZ); // (pxp)
+    VgInv.triangularView<Eigen::Lower>() = ctr->Zstar.transpose() * (ctr->Zw); // Zt * Omega * Z: (pxn)(nxn)(nxp)
+    VgInv.diagonal().array() += 1 / 100.0; // Zt*Omega*Z  + c*I where c = 100000
+    VgInv.triangularView<Eigen::Upper>() = VgInv.transpose().eval(); 
     ctr->Vg.triangularView<Eigen::Lower>() = VgInv.inverse();
-    ctr->Vg.triangularView<Eigen::Upper>() = ctr->Vg.transpose().eval();
+    ctr->Vg.triangularView<Eigen::Upper>() = ctr->Vg.transpose().eval();   
     ctr->VgChol = ctr->Vg.llt().matrixL();
-    ctr->Y = (ctr->kappa).array() / ctr->Omega.array();
-    ctr->R = ctr->Y - ctr->fhat; // Recalc R using new Y
+
+    // z2 (= Ystar) (nx1)
+    // Rcout << "Step 3-2: Updating z2 \n";
+    ctr->z2 = (ctr->Y0 - ctr->rVec).array() / (2*(ctr->omega2).array()).array();
+    ctr->Ystar = (ctr->z2).array() * (ctr->w).array();
+
+    // R (partial residual) (nx1)
+    // Rcout << "Step 3-2: Updating R \n";
+    Eigen::VectorXd fhatStar = ctr->fhat.array() * ctr->w.array(); 
+    ctr->R = ctr->Ystar - fhatStar; // (nx1) - (nx1) = (nx1)
+
+    // 3-3: Sample b2
+    // Rcout << "Step 3-3: Sampling b2 \n";
+    const Eigen::VectorXd ZR = ctr->Zw.transpose() * (ctr->R); // R = Y - f(DLM effects) : (pxn) x (nx1) = (px1)
+    ctr->b2 = ctr->Vg * ZR; // Mean: (pxp) x (px1) = (px1)
+    ctr->b2.noalias() += ctr->VgChol * as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2))); // Variance
+
+    // *** Step 4: Update the dispersion parameter, r ***
+    // Rcout << "Step 4: Updating dispersion parameter, r \n";
+    // Propose a new r with a random walk
+    int rC = ctr->r;
+    int rP;
+    if(R::runif(0, 1) < 0.5){ // Walk to left
+      rP = rC - 1;
+      //Rcout << "Left \n";
+    } else { // Walk to right
+      rP = rC + 1;
+      //Rcout << "Right \n";
+    }
+
+    // Support range = 1 ~ 10
+    if(rP == 0){
+      rP++;
+    }
+
+    if(rP == 11){
+      rP--;
+    }
+
+    //double rP = rtruncnorm(rC, sqrt(ctr->MHvar), 0, 10); // rP: rProposed (draw#,  mu, sigma, lower bound, upper bound)
+
+    // Reset & Compute MH Ratio
+    // Rcout << "Step 3: Resetting MHratio \n";
+    ctr->MHratio = 0;
+
+    // Rcout << "Step 3: MHratio calculation \n";
+    for(int q = 0; q < (ctr->nStar); q++){
+      int index_aR = (ctr->atRiskIdx)[q];
+      (ctr->MHratio) += R::dnbinom((ctr->Y0)[index_aR], rP, nu2[index_aR], true);
+      (ctr->MHratio) -= R::dnbinom((ctr->Y0)[index_aR], rC, nu2[index_aR], true);
+    }
+
+    // Transition probability is the same for random walk
+    // (ctr->MHratio) += log(dtruncnorm(rC, rP, sqrt(ctr->MHvar), 0, 10));
+    // (ctr->MHratio) -= log(dtruncnorm(rP, rC, sqrt(ctr->MHvar), 0, 10));
+
+    //Rcout << "MH ratio: " << exp(ctr->MHratio) << "\n";
+    ctr->MHratio = std::min(1.0, exp(ctr->MHratio));
+    // Rcout << "MHratio for r: " << exp(ctr->MHratio) << "\n";
+    
+    // Accept/Reject 
+    // Rcout << "Accept/Reject Ratio \n";
+
+    if(R::runif(0, 1) < ctr->MHratio){
+      ctr->r = rP;
+      ctr->rVec = (ctr->ones).array() * (ctr->r);
+    }
+
+    // Temporary check
+    
+    //Rcout << "******* Binary Coef *******\n";
+    //Rcout << (ctr->b1) << "\n";
+    //Rcout << "******* NegBin Coef *******\n";
+    //Rcout << (ctr->b2) << "\n";
+    //Rcout << "******* Zw *******\n";
+    //Rcout << (ctr->Zw) << "\n";
+    //Rcout << "******* fhat *******\n";
+    //Rcout << (ctr->fhat)[0] << "\n";
+    // End ZINB
   }
-} // end tdlmModelEst function
+}   // end tdlmModelEst function
 
 
 // void tdlmModelEstBinomial(modelCtr *ctr)

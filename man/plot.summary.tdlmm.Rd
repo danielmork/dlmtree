@@ -13,6 +13,7 @@
   time2 = c(),
   show.cw = TRUE,
   cw.plots.only = TRUE,
+  trueDLM = NULL,
   ...
 )
 }
