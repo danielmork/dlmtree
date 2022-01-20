@@ -11,6 +11,7 @@ sim.tdlmm(
   n.exp = 25,
   prop.active = 0.05,
   n = 5000,
+  spatial = FALSE,
   expList = NULL
 )
 }

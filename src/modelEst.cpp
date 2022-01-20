@@ -26,19 +26,13 @@ using namespace Rcpp;
  */
 void tdlmModelEst(modelCtr *ctr)
 { 
-  if(!(ctr->zinb)){ // If not ZINB, go to either Gaussian approach or Binomial approach
+  if(!(ctr->zinb)){ // If not ZINB, go to either Binomial or Gaussian
     // Update the fixed coefficient - Calculate the mean of the gamma full conditional 
-    //Rcout << "Line 31 \n";
-    //Rcout << (ctr->Zw).rows() << "\n";
-    //Rcout << (ctr->Zw).cols() << "\n";
-    //Rcout << (ctr->R).rows() << "\n";
-    //Rcout << (ctr->R).cols() << "\n";
     const Eigen::VectorXd ZR = ctr->Zw.transpose() * ctr->R; // R = Y - f(DLM effects)
     ctr->gamma = ctr->Vg * ZR; // For mean vector of gamma's normal distribution: V_gamma * Zt * (Y - f)
     
     // * Update sigma^2 and xi_sigma2
     if (!(ctr->binomial)) {
-      //Rcout << "Gaussian Model Estimation \n";
       rHalfCauchyFC(&(ctr->sigma2), (double)ctr->n + (double)ctr->totTerm, 
                     ctr->R.dot(ctr->R) - ZR.dot(ctr->gamma) + 
                       ctr->sumTermT2 / ctr->nu, &(ctr->xiInvSigma2));
@@ -89,25 +83,29 @@ void tdlmModelEst(modelCtr *ctr)
 
   } else { // ZINB
     // *** Step 1: Update the latent At-Risk Indicators ***
-    // Step 1-1: Calculate eta1 for logit1, eta2 for logit2 & nu2
+    // Step 1-1: Calculate eta1 for logit1, eta2 (binary) & logit2 & nu2 (count)
     // Rcout << "Step 1: Updating the latent indicator variable \n";
-    Eigen::VectorXd eta1 = (ctr->Z) * (ctr->b1);    // Z*\gamma
-    Eigen::VectorXd logit1 = 1 / (1 + exp(-(eta1).array()));
+    Eigen::VectorXd eta1 = (ctr->Z) * (ctr->b1);    // Z * \gamma
+    Eigen::VectorXd eta2 = (ctr->fhat);                       // dlm effect
+    eta2.noalias() += ctr->Z * ctr->b2;                       // dlm effect + fixed effect
 
-    Eigen::VectorXd eta2 = (ctr->fhat);// .array(); // * (ctr->w).array();  // dlm effect
-    eta2.noalias() += ctr->Z * ctr->b2;                         // fixed effect : (nx1)
-    Eigen::VectorXd logit2 = 1 / (1 + exp(-(eta2).array())); // psi (dlm effect + fixed effect)
+    Eigen::VectorXd spatialPhi;
+    spatialPhi.resize(ctr->n); spatialPhi.setZero();
+
+    if(ctr->spatial){ // For spatial analysis, add a random effect
+      spatialPhi = (ctr->Qchol) * as<Eigen::VectorXd>(rnorm(ctr->n, 0, 1));
+      eta1.noalias() += spatialPhi;
+      eta2.noalias() += spatialPhi;
+    }
+
+    Eigen::VectorXd logit1 = 1 / (1 + exp(-(eta1).array()));
+    Eigen::VectorXd logit2 = 1 / (1 + exp(-(eta2).array()));  // psi 
     Eigen::VectorXd nu2 = 1 - logit2.array();
 
-    //Rcout << "eta2: "<< ctr->Z * ctr->b2 << "\n";
-    //Rcout << "------------------------------ \n";
-    //Rcout << "fhat: "<< ctr->fhat << "\n";
-
-    //Rcout << eta2 << "\n";
-
-    // Rcout << "Step 1: Updating the latent indicator variable \n";
+    // Rcout << "Step 1: Resetting the latent indicator variable \n";
     ctr->w.setOnes(); // Reset w
 
+    // Sampling w
     for(int z = 0; z < (ctr->yZeroN); z++){ // For all y = 0,
       // Find the index of y = 0,
       int idx = (ctr->yZeroIdx)[z]; 
@@ -115,15 +113,13 @@ void tdlmModelEst(modelCtr *ctr)
       // Bernoulli probability
       double prob = log(logit1[idx]) + (ctr->r) * log((nu2)[idx])
                   - log(1 - logit1[idx] + logit1[idx] * pow((nu2)[idx], (ctr->r))); 
-      // Rcout << exp(prob) << "\n";
+
       // Update the index with a probability with either 0 or 1
       (ctr->w)[idx] = R::rbinom(1, exp(prob)); 
     }
 
-    // Update the number of at-risk
+    // Update the number of at-risk individuals
     ctr->nStar = (ctr->w).sum();
-
-    //Rcout << ctr->nStar << "\n";
 
     // Update the indices of at-risk
     ctr->atRiskIdx.clear();  // Clear the vector
@@ -154,7 +150,7 @@ void tdlmModelEst(modelCtr *ctr)
     // Rcout << "Step 2-2: Updating Vg1 \n";
     Eigen::MatrixXd VgInv1(ctr->pZ, ctr->pZ); 
     VgInv1.triangularView<Eigen::Lower>() = ctr->Z.transpose() * (ctr->Omega1) * (ctr->Z); // Zt * Omega * Z : (pxp)
-    VgInv1.diagonal().array() += 1 / 100.0; // ZT*Omega*Z  + c*I where c = 100000
+    VgInv1.diagonal().array() += 1 / 100.0; // ZT*Omega*Z  + c*I where c = 100
     VgInv1.triangularView<Eigen::Upper>() = VgInv1.transpose().eval(); 
     ctr->Vg1.triangularView<Eigen::Lower>() = VgInv1.inverse();
     ctr->Vg1.triangularView<Eigen::Upper>() = ctr->Vg1.transpose().eval();   
@@ -167,9 +163,11 @@ void tdlmModelEst(modelCtr *ctr)
     // 2-3: Sample b1
     // Rcout << "Step 2-3: Sampling b1 \n";
     // Mean of b1
-    const Eigen::VectorXd ZR1 = ctr->Z.transpose() * (ctr->Omega1) * (ctr->z1); // (px1)(nxn)(nx1) = (px1)(no DLM effects)
+    Eigen::VectorXd R1 = ctr->z1.array() - spatialPhi.array();
+    const Eigen::VectorXd ZR1 = ctr->Z.transpose() * (ctr->Omega1) * (R1); // (px1)(nxn)(nx1) = (px1)(no DLM effects)
     ctr->b1 = ctr->Vg1 * ZR1; // Mean (pxp)(px1)
-    // Variance of b1 using cholesky 
+
+    // Variance of b1 using cholesky
     ctr->b1.noalias() += ctr->VgChol1 * as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2)));
 
     // *** Step 3: Negative Binomial (count) component ***
@@ -209,7 +207,9 @@ void tdlmModelEst(modelCtr *ctr)
     // R (partial residual) (nx1)
     // Rcout << "Step 3-2: Updating R \n";
     Eigen::VectorXd fhatStar = ctr->fhat.array() * ctr->w.array(); 
-    ctr->R = ctr->Ystar - fhatStar; // (nx1) - (nx1) = (nx1)
+    Eigen::VectorXd phiStar = spatialPhi.array() * ctr->w.array(); 
+
+    ctr->R = ctr->Ystar - fhatStar - phiStar; // (nx1) - (nx1) = (nx1)
 
     // 3-3: Sample b2
     // Rcout << "Step 3-3: Sampling b2 \n";
@@ -224,10 +224,8 @@ void tdlmModelEst(modelCtr *ctr)
     int rP;
     if(R::runif(0, 1) < 0.5){ // Walk to left
       rP = rC - 1;
-      //Rcout << "Left \n";
     } else { // Walk to right
       rP = rC + 1;
-      //Rcout << "Right \n";
     }
 
     // Support range = 1 ~ 10
@@ -238,8 +236,6 @@ void tdlmModelEst(modelCtr *ctr)
     if(rP == 11){
       rP--;
     }
-
-    //double rP = rtruncnorm(rC, sqrt(ctr->MHvar), 0, 10); // rP: rProposed (draw#,  mu, sigma, lower bound, upper bound)
 
     // Reset & Compute MH Ratio
     // Rcout << "Step 3: Resetting MHratio \n";
@@ -258,26 +254,13 @@ void tdlmModelEst(modelCtr *ctr)
 
     //Rcout << "MH ratio: " << exp(ctr->MHratio) << "\n";
     ctr->MHratio = std::min(1.0, exp(ctr->MHratio));
-    // Rcout << "MHratio for r: " << exp(ctr->MHratio) << "\n";
     
     // Accept/Reject 
-    // Rcout << "Accept/Reject Ratio \n";
-
     if(R::runif(0, 1) < ctr->MHratio){
       ctr->r = rP;
       ctr->rVec = (ctr->ones).array() * (ctr->r);
     }
-
-    // Temporary check
     
-    //Rcout << "******* Binary Coef *******\n";
-    //Rcout << (ctr->b1) << "\n";
-    //Rcout << "******* NegBin Coef *******\n";
-    //Rcout << (ctr->b2) << "\n";
-    //Rcout << "******* Zw *******\n";
-    //Rcout << (ctr->Zw) << "\n";
-    //Rcout << "******* fhat *******\n";
-    //Rcout << (ctr->fhat)[0] << "\n";
     // End ZINB
   }
 }   // end tdlmModelEst function

@@ -71,6 +71,7 @@ tdlmm <- function(formula,
                   verbose = TRUE,
                   diagnostics = FALSE,
                   MHvar = 0.025,
+                  geoid = NULL,
                   ...)
 {
   model <- list()
@@ -138,6 +139,18 @@ tdlmm <- function(formula,
 
   # zero-truncated normal variance for dispersion parameter
   model$MHvar <- MHvar
+
+  # geoid check
+  if(!is.null(geoid)){
+    if(nrow(data) != length(geoid)){
+      stop("every observation must have a geoid")
+    }
+
+    if(sum(nchar(geoid)) != nrow(data)*11){
+      stop("geoid must have 11 letters")
+    }
+  }
+
 
   # mixture interactions
   if (!(mixture.interactions %in% c("noself", "all", "none")))
@@ -268,6 +281,52 @@ tdlmm <- function(formula,
   model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
 
 
+
+
+  # ---- Spatial structure construction: Adjacency & Diagonal matrix for CAR model ----
+
+  # default setting for no spatial effect
+  model$spatial = FALSE
+  model$Q = diag(rep(1, nrow(data))) # Identity matrix
+
+  if(!is.null(geoid)){
+    if (model$verbose){
+      cat("Gathering spatial data...\n")
+    }
+
+    stateCode <- substr(geoid[1], 1, 2)          # Could be a vector but usually one number
+    countiesCode <- unique(substr(geoid, 3, 5))  # A vector
+
+    # With geoid, create a SpatialPolygonsDataFrame (SPDF) object
+    ctspatial <- tigris::tracts(state = stateCode, county = countiesCode, refresh = T, class = "sp") 
+
+    # geoid_df & sp_data
+    geoid_df = data.frame("geoid" = geoid)
+    geoid_df$state = substr(geoid_df$geoid, 1, 2)  
+    geoid_df$county = substr(geoid_df$geoid, 3, 5)  
+    geoid_df$tract = substr(geoid_df$geoid, 6, 11)  
+
+    sp_data = cbind(data, geoid_df)
+
+    # Merge the spatial information with the cityfile
+    spatial_data <- sp::merge(ctspatial, sp_data, by.y = "geoid", by.x = "GEOID", all.x = F, all.y = T, duplicateGeoms = TRUE)
+
+    # Get an adjacency matrix
+    adj <- poly2nb(spatial_data)
+
+    #adj <- poly2nb(spatial_data, row.names = spatial_data$GEOID)
+    coord_df = coordinates(spatial_data)
+    row.names(coord_df) = spatial_data$GEOID
+
+    W <- nb2mat(adj, style = "B") # Adjacency matrix
+    D <- diag(rowSums(W))         # Diagonal matrix
+
+    # Compute variance-covariance matrix for phi (CAR model)
+    alpha = 0.5 # alpha = 0 implies no spatial effect. Note that alpha = 1 makes Q non-invertible
+    Q <- chol2inv(chol(D - alpha*W))
+    model$Q = Q
+    model$spatial = TRUE
+  }
 
   # ---- Run model ----
   # model.list <- lapply(ls(envir = model), function(i) model[[i]])

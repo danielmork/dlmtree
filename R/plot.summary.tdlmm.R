@@ -103,7 +103,7 @@ plot.summary.tdlmm <- function(object,
         geom_hline(yintercept = 0, color = "red") +
         geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey") +
         geom_line(aes(x = `X`, y = `Est`)) +
-        geom_line(aes(x = `X`, y = `trueDLM`), col = "dodgerblue", linetype = "dashed") + # SI
+        geom_line(aes(x = `X`, y = `trueDLM`), col = "blue", linetype = "dashed") + # SI
         theme_bw(base_size = base_size) +
         scale_y_continuous(expand = c(0, 0)) +
         scale_x_continuous(expand = c(0, 0)) +

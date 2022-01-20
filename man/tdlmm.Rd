@@ -23,6 +23,7 @@ tdlmm(
   verbose = TRUE,
   diagnostics = FALSE,
   MHvar = 0.025,
+  geoid = NULL,
   ...
 )
 }

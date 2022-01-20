@@ -149,7 +149,7 @@ void exposureDat::updateNodeVals(Node *n)
     // top of tree
     if (n->depth == 0) {
       // Rcout << "\nupdate depth 0\n";
-      (n->nodevals)->X = Tcalc.col(pX - 1);
+      (n->nodevals)->X = Tcalc.col(pX - 1); // Tcalc = (n x T)
       if (preset) {
         (n->nodevals)->ZtX = ZtTcalc.col(pX - 1);
         (n->nodevals)->VgZtX = VgZtTcalc.col(pX - 1);

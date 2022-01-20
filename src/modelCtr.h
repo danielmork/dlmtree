@@ -65,6 +65,11 @@ public:
   double MHvar;     // variance for zero-truncated normal for MHR
   double MHratio;    // Metropolis-Hasting ratio
 
+  // Spatial component
+  bool spatial; 
+  Eigen::MatrixXd Q; // Spatial random effect
+  Eigen::MatrixXd Qchol;
+
   // Updating at-risk component
   Eigen::VectorXd w;            // At-risk latent variable
   std::vector<int> atRiskIdx;   // Vector containing non-zero y indices
