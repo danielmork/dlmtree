@@ -3,6 +3,7 @@ estDLM <- function(object,
                    group.index,
                    conf.level = 0.95,
                    cenval = 0,
+                   return.mcmc = FALSE,
                    mem.safe = FALSE,
                    verbose = TRUE)
 {
@@ -68,7 +69,8 @@ estDLM <- function(object,
   if (verbose)
     cat("Calcuating DLMs...")
   DLM <- merge.data.frame(object$TreeStructs, tempMod, by = "Rule")
-  # out$mcmc <- list()
+  if (return.mcmc)
+    out$mcmc <- list()
   out$dlmMean <- list()
   out$dlmCI <- list()
 
@@ -85,6 +87,8 @@ estDLM <- function(object,
             })
           )
         })
+      if (return.mcmc)
+        out$mcmc[[names(group.index)[i]]] <- mcmc
       out$dlmMean[[names(group.index)[i]]] <- rowMeans(mcmc)
       out$dlmCI[[names(group.index)[i]]] <- apply(mcmc, 1, quantile, probs = ci.lims)
     }
@@ -97,6 +101,8 @@ estDLM <- function(object,
       DLM$w.est <- DLM$est * DLM[[paste0("Weight", i)]]
       mcmc <- dlmEst(as.matrix(DLM[,c("Iter", "Tree", "tmin", "tmax", "w.est")]),
                      object$pExp, object$mcmcIter)
+      if (return.mcmc)
+        out$mcmc[[names(group.index)[i]]] <- mcmc
       out$dlmMean[[names(group.index)[i]]] <- rowMeans(mcmc)
       out$dlmCI[[names(group.index)[i]]] <- apply(mcmc, 1, quantile, probs = ci.lims)
     }
@@ -122,6 +128,11 @@ estDLM <- function(object,
   #   }
   #   out$dlFunction <- "dlnm"
   # }
+  lags <- length(out$dlmMean[[1]])
+  out$plotData <- do.call(rbind, lapply(names(group.index), function(n) {
+    data.frame(group = n, time = 1:lags, est = out$dlmMean[[n]], 
+               lower = out$dlmCI[[n]][1,], upper = out$dlmCI[[n]][2,])
+  }))
 
   return(out)
 }
