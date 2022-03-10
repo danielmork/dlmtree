@@ -1,6 +1,7 @@
 R package 'dlmtree' history of changes
 
 Version 0.8.1.1
+* fix to single covariate model
 * add functions for posterior analysis with dlmtree class (pip and splitpoints)
 Version 0.8.1.0
 * fix to allow intercept only models
