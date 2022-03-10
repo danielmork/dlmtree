@@ -376,7 +376,7 @@ dlmtree <- function(formula,
   if (model$intercept) {
     model$gamma[,1] <- model$gamma[,1] + model$Ymean
     if (ncol(model$Z) > 1)
-      model$gamma[,1] <- model$gamma[,1] - model$gamma[,-1] %*% model$Zmean[-1]
+      model$gamma[,1] <- model$gamma[,1] - model$gamma[,-1,drop=FALSE] %*% model$Zmean[-1]
   }
   colnames(model$gamma) <- model$Znames
 
