@@ -41,10 +41,10 @@ print.summary.tdlnm <- function(object, digits = 3)
     cat("\nsignal-to-noise =", round(object$sig.to.noise, digits))
   cat("\ncritical windows: ")
   if (object$ctr$dl.function == "tdlnm")
-    cw <- which((colSums(object$cilower > 0) + colSums(object$ciupper < 0)) > 0)
+    cw <- ppRange(which((colSums(object$cilower > 0) + colSums(object$ciupper < 0)) > 0))
   else
-    cw <- which(object$cilower > 0 | object$ciupper < 0)
-  cat(ppRange(cw), "\n")
+    cw <- ppRange(which(object$cilower > 0 | object$ciupper < 0))
+  cat(cw, "\n")
   if (object$ctr$dl.function == "tdlm") {
     dlm.out <- data.frame("Mean" = round(object$matfit, digits),
                           "Lower Bound" = round(object$cilower, digits),

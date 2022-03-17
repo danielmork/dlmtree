@@ -25,6 +25,18 @@
 
 #include "RcppEigen.h"
 using namespace Rcpp;
+#ifdef _OPENMP
+  #include <omp.h>
+  // [[Rcpp::plugins(openmp)]]
+#else
+  #define omp_get_num_threads()  1
+  #define omp_get_thread_num()   0
+  #define omp_get_max_threads()  1
+  #define omp_get_thread_limit() 1
+  #define omp_get_num_procs()    1
+  #define omp_set_nested(a)   // empty statement to remove the call
+  #define omp_get_wtime()        0
+#endif
 
 // Mathematical constants computed using Wolfram Alpha
 #define MATH_PI        3.141592653589793238462643383279502884197169399375105820974
@@ -56,34 +68,25 @@ double aterm(int, double, double);
 Eigen::VectorXd rcpp_pgdraw(Eigen::VectorXd b,
                             Eigen::VectorXd c)
 {
-  int m = b.size();
   int n = c.size();
   Eigen::VectorXd y(n); y.setZero();
 
   // Setup
-  int i, j, bi = 1;
-  if (m == 1)
-  {
-    bi = b[0];
-  }
+  int i, j;
 
   // Sample
+  #if defined(_OPENMP)
+    #pragma omp parallel for shared(y, b, c) private(i, j) schedule(static)
+  #endif
   // TODO: add code for parallel draws: #pragma omp parallel for
-  for (i = 0; i < n; i++)
-  {
-    if (m > 1)
-    {
-      bi = b[i];
-    }
-
-    // Sample
-    y[i] = 0;
-    for (j = 0; j < (int)bi; j++)
-    {
-      y[i] += samplepg(c[i]);
+  for (i = 0; i < n; ++i) {
+    y[i] = samplepg(c[i]);
+    if (b[i] > 1) {
+      for (j = 1; j < b[i]; ++j) {
+        y[i] += samplepg(c[i]);
+      }
     }
   }
-
   return y;
 }
 

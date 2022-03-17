@@ -78,6 +78,62 @@ SEXP dlnmEst(arma::dmat dlnm,
   return wrap(C);
 }
 
+// [[Rcpp::export]]
+SEXP dlnmPLEst(arma::dmat dlnm,
+               arma::dvec predAt,
+               int nlags,
+               int nsamp,
+               double center)
+{
+  int rows = dlnm.n_rows;
+  int nsplits;
+  bool smooth = 0;
+  nsplits = predAt.n_elem;
+  arma::dcube C(nlags, nsplits, nsamp); C.fill(0.0);
+  arma::dmat centerMat(nlags, nsamp);
+  center--;
+  double prevEst = 0.0;
+  int iter = dlnm(0, 0);
+  int tree = dlnm(0, 0);
+
+  // Fill in estimates
+  for (int i = 0; i < rows; i++) {
+    if ((int(dlnm(i, 0) - 1) != iter) || (int(dlnm(i, 1)) != tree)) {
+      prevEst = 0.0;
+    }
+    iter = dlnm(i, 0) - 1;
+    tree = dlnm(i, 1);
+    double xmin = dlnm(i, 2);
+    double xmax = dlnm(i, 3);
+    double den = xmax - xmin;
+    int tmin = dlnm(i, 4) - 1;
+    int tmax = dlnm(i, 5);
+    double est = dlnm(i, 6);
+
+    for (int t = tmin; t < tmax; t++) {
+      for (int x = 0; x < nsplits; x++) {
+        if ((xmin <= predAt[x]) && (xmax > predAt[x])) {
+          C(t, x, iter) += prevEst + (est - prevEst) * (predAt[x] - xmin) / den;
+        }
+      }
+    }
+    prevEst = est;
+  } // end loop over dlnm tree output
+
+  // Center
+  double cen = 0;
+  for (int i = 0; i < nsamp; i++) {
+    for (int t = 0; t < nlags; t++) {
+      cen = C(t, center, i);
+      for (int x = 0; x < nsplits; x++) {
+        C(t, x, i) -= cen;
+      }
+    }
+  }
+
+  return wrap(C);
+}
+
 
 // [[Rcpp::export]]
 SEXP dlmEst(arma::dmat dlm,

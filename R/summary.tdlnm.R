@@ -18,8 +18,8 @@ summary.tdlnm <- function(object,
                           conf.level = 0.95,
                           exposure.se = NULL)
 {
-  Iter <-  max(object$DLM$Iter)
-  Lags <- max(object$DLM$tmax)
+  Iter <- object$mcmcIter
+  Lags <- object$pExp
   ci.lims <- c((1 - conf.level) / 2, 1 - (1 - conf.level) / 2)
   if (is.null(exposure.se) && !is.na(object$SE[1]))
     exposure.se <- mean(as.matrix(object$SE))
@@ -39,8 +39,10 @@ summary.tdlnm <- function(object,
 
   # Calculate DLNM estimates for gridded values 'pred.at'
   cat("Centered DLNM at exposure value", cenval, "\n")
-  if (exposure.se == 0) {
-    cen.quant <- which.min(abs(pred.at - cenval))
+  cen.quant <- which.min(abs(pred.at - cenval))
+  if (object$shape == "Piecewise Linear") {
+    dlmest <- dlnmPLEst(as.matrix(object$DLM), pred.at, Lags, Iter, cen.quant)
+  } else if (exposure.se == 0) {
     dlmest <- dlnmEst(as.matrix(object$DLM), pred.at, Lags, Iter,
                       cen.quant, exposure.se)
   } else {
@@ -51,8 +53,9 @@ summary.tdlnm <- function(object,
   # Generate cumulative estimtes
   cumexp <- as.data.frame(t(sapply(1:length(pred.at), function(i) {
     cs <- colSums(dlmest[,i,])
-    c("mean" = mean(cs), quantile(cs, ci.lims))
+    c(pred.at[i], "mean" = mean(cs), quantile(cs, ci.lims))
   })))
+  colnames(cumexp) <- c("vals", "mean", "lower", "upper")
 
   # Matrix of DLNM surface means and CIs, and plot data
   plot.dat <- as.data.frame(matrix(0, (Lags * length(pred.at)), 10))
@@ -83,6 +86,17 @@ summary.tdlnm <- function(object,
   gamma.mean <- colMeans(object$gamma)
   gamma.ci <- apply(object$gamma, 2, quantile, probs = ci.lims)
 
+  # Bayes factor
+  logBF <- rep(0, object$pExp)
+  if (object$monotone) {
+    splitProb <- sapply(1:object$pExp, function(t) {
+      mean(sapply(1:object$mcmcIter, function(i) {
+        sum(object$DLM$est[which(object$DLM$Iter == i &
+                                   object$DLM$tmin <= t &
+                                   object$DLM$tmax >= t)]) }) > 0) })
+    logBF <- log10(splitProb) - log10(1 - splitProb) -
+      (log10(1 - (1 - object$p_t)^object$nTrees) - log10((1 - object$p_t)^object$nTrees))
+  }
   # Return
   ret <- list("ctr" = list(dl.function = object$dlFunction,
                            n.trees = object$nTrees,
@@ -101,7 +115,8 @@ summary.tdlnm <- function(object,
               "cumulative.effect" = cumexp,
               "pred.at" = pred.at,
               "gamma.mean" = gamma.mean,
-              "gamma.ci" = gamma.ci)
+              "gamma.ci" = gamma.ci,
+              "logBF" = logBF)
   class(ret) <- "summary.tdlnm"
   return(ret)
 }

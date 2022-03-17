@@ -683,16 +683,16 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
     }
 
     // * Update trees
-    ctr->R += (ctr->Rmat).col(0);
-    (ctr->fhat).setZero();
+    ctr->R += (ctr->Rmat).col(0); // Remove first tree est from R
+    ctr->fhat.setZero();
     ctr->totTerm = 0;
     ctr->sumTermT2 = 0;
-    (ctr->totTermExp).setZero();
-    (ctr->sumTermT2Exp).setZero();
-    (ctr->expCount).setZero();
-    (ctr->mixCount).setZero();
-    (ctr->expInf).setZero();
-    (ctr->mixInf).setZero();
+    ctr->totTermExp.setZero();
+    ctr->sumTermT2Exp.setZero();
+    ctr->expCount.setZero();
+    ctr->mixCount.setZero();
+    ctr->expInf.setZero();
+    ctr->mixInf.setZero();
     if (ctr->interaction > 0) {
       (ctr->totTermMix).setZero();                (ctr->sumTermT2Mix).setZero();
     }
@@ -744,24 +744,9 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
 
 
     // * Update exposure selection probability
-    if ((ctr->b > 1000) || (ctr->b > (0.5 * ctr->burn))) {
-      if (updateKappa) {
-        // double modKappaNew = exp(log(ctr->modKappa) + R::rnorm(0, 0.5));
-        double modKappaNew = R::rgamma(1.0, ctr->nTrees/4.0);
-        double mhrDir =
-          logDirichletDensity(ctr->expProb,
-                              ((ctr->expCount).array() + 
-                               modKappaNew).matrix()) -
-          logDirichletDensity(ctr->expProb,
-                              ((ctr->expCount).array() + 
-                               ctr->modKappa).matrix());
-
-        if (log(R::runif(0, 1)) < mhrDir)
-          ctr->modKappa = modKappaNew;
-      }
-      
-      ctr->expProb = rDirichlet(((ctr->expCount).array() + ctr->modKappa).matrix());
-    }
+    if ((ctr->b > 1000) || (ctr->b > (0.5 * ctr->burn)))
+      ctr->expProb = 
+        rDirichlet(((ctr->expCount).array() + ctr->modKappa).matrix());
       
     // * Record
     if (ctr->record > 0) {

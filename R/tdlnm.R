@@ -20,11 +20,11 @@
 #' model, which assumes a linear effect of exposure.
 #' @param exposure.se numerical matrix of exposure standard errors with same
 #' size as exposure.data or a scalar smoothing factor representing a uniform
-#' smoothing factor applied to each exposure measurement
-#' @param n.trees integer for number of trees in ensemble
-#' @param n.burn integer for length of burn-in
-#' @param n.iter integer for number of iterations to run model after burn-in
-#' @param n.thin integer thinning factor, i.e. keep every tenth iteration
+#' smoothing factor applied to each exposure measurement, defaults to sd(exposure.data)/2
+#' @param n.trees integer for number of trees in ensemble, default = 20
+#' @param n.burn integer for length of burn-in, >=2000 recommended
+#' @param n.iter integer for number of iterations to run model after burn-in >=5000 recommended
+#' @param n.thin integer thinning factor, i.e. keep every fifth iteration
 #' @param family 'gaussian' for continuous response, or 'logit' for binomial
 #' response with logit link
 #' @param binomial.size integer type scalar (if all equal, default = 1) or
@@ -35,13 +35,16 @@
 #' @param step.prob numerical vector for probability of 1) grow/prune, and
 #' 2) change, defaults to (0.25, 0.25) or equal
 #' probability of each step for tree updates
+#' @param monotone false (default) or true: estimate monotone effects
+#' @param zirt.p0 probability of effect at any given time t (monotone model only), default = 0.5
 #' @param shrinkage int, 1 (default) turn on tree-specific shrinkage priors,
 #' 0 turn off
 #' @param subset integer vector to analyze only a subset of data and exposures
-#' @param lowmem turn on memory saver for DLNM, slower computation time
-#' @param verbose true (default) or false: print output
+#' @param lowmem false (default) / true: turn on memory saver for DLNM, slower computation time
+#' @param verbose true (default) or false: print progress bar output
 #' @param diagnostics true or false (default) keep model diagnostic such as
 #' terminal nodes, acceptance details, etc.
+#' @param debug if true, outputs debugging messages
 #' @param ... NA
 #'
 #' @details Model is recommended to be run for at minimum 5000 burn-in iterations
@@ -49,30 +52,33 @@
 #' Convergence can be checked by re-running the model and validating consistency
 #' of results.
 #'
-#' @return obect of class 'tdlnm' or 'tdlm'
+#' @return object of class 'tdlnm' or 'tdlm'
 #' @export
 #'
 tdlnm <- function(formula,
                   data,
                   exposure.data,
                   exposure.splits = 50,
-                  exposure.se = NULL,
+                  exposure.se = sd(exposure.data) / 2,
                   n.trees = 20,
                   n.burn = 2000,
                   n.iter = 5000,
-                  n.thin = 10,
+                  n.thin = 5,
                   family = "gaussian",
                   binomial.size = 1,
                   tree.params = c(.95, 2),
                   step.prob = c(.25, .25),
                   monotone = FALSE,
-                  tree.time.params = c(.5, 2),
-                  tree.exp.params = c(.2, 2),
+                  zirt.p0 = 0.5,
+                  tree.time.params = c(.95, 2),
+                  tree.exp.params = c(.95, 2),
                   shrinkage = 1,
                   subset = NULL,
                   lowmem = FALSE,
+                  max.threads = 0,
                   verbose = TRUE,
                   diagnostics = FALSE,
+                  debug = FALSE,
                   ...)
 {
   model <- list()
@@ -140,23 +146,33 @@ tdlnm <- function(formula,
 
 
   # ---- Model control arguments ----
-  model$nTrees <- force(n.trees)
-  model$nBurn <- force(n.burn)
-  model$nIter <- force(n.iter)
-  model$nThin <- force(n.thin)
-  model$mcmcIter <- force(floor(n.iter / n.thin))
-  model$family <- force(family)
-  model$verbose <- force(verbose)
-  model$diagnostics <- force(diagnostics)
-  model$treePrior <- force(tree.params)
-  model$stepProb <- force(c(step.prob[1], step.prob[1], step.prob[2]))
-  model$stepProb <- force(model$stepProb / sum(model$stepProb))
+  model$nTrees <- n.trees
+  model$nBurn <- n.burn
+  model$nIter <- n.iter
+  model$nThin <- n.thin
+  model$mcmcIter <- floor(n.iter / n.thin)
+  model$family <- family
+  model$verbose <- verbose
+  model$diagnostics <- diagnostics
+  model$treePrior <- tree.params
+  model$stepProb <- c(step.prob[1], step.prob[1], step.prob[2])
+  model$stepProb <- model$stepProb / sum(model$stepProb)
   model$shrinkage <- shrinkage
   model$lowmem <- lowmem
   model$monotone <- monotone
   model$treePriorExp <- tree.exp.params
   model$treePriorTime <- tree.time.params
-  model$debug <- 0
+  model$maxThreads <- max.threads
+  model$debug <- debug
+  model$p_t <- 1 - (1 - zirt.p0) ^ (1 / model$nTrees)
+  model$zirtAlpha <- model$nTrees * model$p_t / (1 + model$p_t)
+  model$shape <- ifelse(!is.null(exposure.se), "Smooth",
+                        ifelse(exposure.splits == 0, "Linear",
+                               "Step Function"))
+  # model$shape <- ifelse(piecewise.linear, "Piecewise Linear",
+  #                       ifelse(!is.null(exposure.se), "Smooth",
+  #                              ifelse(exposure.splits == 0, "Linear",
+  #                                     "Step Function")))
 
   if (model$verbose)
     cat("Preparing data...\n")
@@ -273,7 +289,7 @@ tdlnm <- function(formula,
     
     # memory warning
     if (prod(dim(model$X)) * model$nSplits > 1073741824 & model$verbose)
-      warning(paste0("Model run will use over ", 
+      warning(paste0("Model run will require at least ", 
                      round(prod(dim(model$X)) * model$nSplits / 1073741824, 1),
                      " GB of memory. Use `lowmem = TRUE` option to reduce memory usage."))
   }
@@ -305,8 +321,9 @@ tdlnm <- function(formula,
   model$Y <- force(model.response(mf))
   model$Z <- force(model.matrix(model$formula, data = mf))
   QR <- qr(crossprod(model$Z))
-  model$Znames <- colnames(model$Z)[sort(QR$pivot[seq_len(QR$rank)])]
-  model$Z <- matrix(model$Z[,sort(QR$pivot[seq_len(QR$rank)])], nrow(model$Z), QR$rank)
+  model$Znames <- colnames(model$Z)[QR$pivot[seq_len(QR$rank)]]
+  model$droppedCovar <- colnames(model$Z)[QR$pivot[-seq_len(QR$rank)]]
+  model$Z <- matrix(model$Z[,QR$pivot[seq_len(QR$rank)]], nrow(model$Z), QR$rank)
   model$Z <- force(scaleModelMatrix(model$Z))
   rm(QR)
 
@@ -314,7 +331,7 @@ tdlnm <- function(formula,
 
   if (model$family == "gaussian") {
     model$Ymean <- sum(range(model$Y))/2
-    model$Yscale <- diff(range(model$Y - model$Ymean))
+    model$Yscale <- sd(model$Y - model$Ymean)
     model$Y <- force((model$Y - model$Ymean) / model$Yscale)
   } else {
     model$Yscale <- 1
@@ -329,9 +346,12 @@ tdlnm <- function(formula,
 
 
   # ---- Run model ----
-  if (model$monotone)
-    out <- monotdlnm_Cpp(model)
-  else
+  if (model$monotone) {
+    # if (piecewise.linear)
+    #   out <- monolintdlnm_Cpp(model)
+    # else
+      out <- monotdlnm_Cpp(model)
+  } else
     out <- tdlnm_Cpp(model)
 
   # rm(model.list)
@@ -364,15 +384,21 @@ tdlnm <- function(formula,
   # rescale DLM estimates
   model$DLM <- as.data.frame(model$DLM)
   colnames(model$DLM) <- c("Iter", "Tree", "xmin", "xmax", "tmin", "tmax",
-                           "est", "kappa")
+                           "est", "intcp")
   model$DLM$est <- model$DLM$est * model$Yscale / model$Xscale
   model$DLM$xmin <- sapply(model$DLM$xmin, function(i) {
-    if (i == 0) -Inf
-    else model$Xsplits[i]
+    if (i == 0) {
+      # if (piecewise.linear) min(model$X)
+      # else 
+      -Inf
+    } else model$Xsplits[i]
   })
   model$DLM$xmax <- sapply(model$DLM$xmax, function(i) {
-    if (i == (length(model$Xsplits) + 1)) Inf
-    else model$Xsplits[i]
+    if (i == (length(model$Xsplits) + 1)) {
+      # if (piecewise.linear) max(model$X)
+      # else 
+      Inf
+    } else model$Xsplits[i]
   })
 
   # Remove model and exposure data

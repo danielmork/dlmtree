@@ -33,12 +33,28 @@ dlnmEst <- function(dlnm, predAt, nlags, nsamp, center, se) {
     .Call(`_dlmtree_dlnmEst`, dlnm, predAt, nlags, nsamp, center, se)
 }
 
+dlnmPLEst <- function(dlnm, predAt, nlags, nsamp, center) {
+    .Call(`_dlmtree_dlnmPLEst`, dlnm, predAt, nlags, nsamp, center)
+}
+
 dlmEst <- function(dlm, nlags, nsamp) {
     .Call(`_dlmtree_dlmEst`, dlm, nlags, nsamp)
 }
 
 mixEst <- function(dlm, nlags, nsamp) {
     .Call(`_dlmtree_mixEst`, dlm, nlags, nsamp)
+}
+
+monotdlnm_Cpp <- function(model) {
+    .Call(`_dlmtree_monotdlnm_Cpp`, model)
+}
+
+zeroToInfNormCDF <- function(mu, sigma) {
+    .Call(`_dlmtree_zeroToInfNormCDF`, mu, sigma)
+}
+
+rtmvnorm <- function(mu, sigma, iter) {
+    .Call(`_dlmtree_rtmvnorm`, mu, sigma, iter)
 }
 
 tdlmm_Cpp <- function(model) {

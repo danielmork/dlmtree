@@ -246,22 +246,8 @@ void exposureDat::updateNodeVals(Node *n)
       }
       
     } else { // splits in both exposure and time, count manually
-      
-      if (lowmem) { // manually count exposures within range of node
-        double xmin2 = R_NegInf;
-        double xmax2 = R_PosInf;
-        if (xmin != 0)
-          xmin2 = Xsplits(xmin - 1);
-        if (xmax != nSplits + 1)
-          xmax2 = Xsplits(xmax - 1);
-
-        n->nodevals->X = nodeCount(this, xmin2, xmax2, tmin, tmax);
-        if (preset) {
-          n->nodevals->ZtX = Z.transpose() * n->nodevals->X;
-          n->nodevals->VgZtX = Vg * n->nodevals->ZtX;
-        }
         
-      } else { // if !lowmem use precalculated exposure counts
+      if (!lowmem) { // if !lowmem use precalculated exposure counts
         n->nodevals->X = Xsave[xmax-1].col(tmax-1);
         if (preset) {
           n->nodevals->ZtX = ZtXsave[xmax-1].col(tmax-1);
@@ -288,6 +274,19 @@ void exposureDat::updateNodeVals(Node *n)
             }
           }
         } // end if tmin != 1
+      } else {
+        double xmin2 = R_NegInf;
+        double xmax2 = R_PosInf;
+        if (xmin != 0)
+          xmin2 = Xsplits(xmin - 1);
+        if (xmax != nSplits + 1)
+          xmax2 = Xsplits(xmax - 1);
+
+        n->nodevals->X = nodeCount(this, xmin2, xmax2, tmin, tmax);
+        if (preset) {
+          n->nodevals->ZtX = Z.transpose() * n->nodevals->X;
+          n->nodevals->VgZtX = Vg * n->nodevals->ZtX;
+        }
       } // end if !lowmem
     }
   }

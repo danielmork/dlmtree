@@ -29,7 +29,7 @@ using Eigen::Upper;
 void tdlmModelEst(modelCtr *ctr)
 {
   const VectorXd ZR = ctr->Zw.transpose() * ctr->R;
-  ctr->gamma =        ctr->Vg * ZR;
+  ctr->gamma =        ctr->Vg * ZR; // gamma hat
    
   // * Update sigma^2 and xi_sigma2
   if (!(ctr->binomial)) {
@@ -40,14 +40,13 @@ void tdlmModelEst(modelCtr *ctr)
       stop("\nNaN values (sigma) occured during model run, rerun model.\n");
   }
   
-  // * Draw fixed effect coefficients
+  // * Draw fixed effect coefficients (add to gamma hat)
   ctr->gamma.noalias() += ctr->VgChol * 
     as<VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2)));
     
   // * Update polya gamma vars
   if (ctr->binomial) {
-    VectorXd psi =   ctr->fhat;
-    psi.noalias() += ctr->Z * ctr->gamma;
+    VectorXd psi =   ctr->fhat + ctr->Z * ctr->gamma;
     ctr->Omega =     rcpp_pgdraw(ctr->binomialSize, psi);
     ctr->Zw =        ctr->Omega.asDiagonal() * ctr->Z;
     MatrixXd VgInv(ctr->pZ, ctr->pZ);
@@ -57,8 +56,9 @@ void tdlmModelEst(modelCtr *ctr)
     ctr->Vg.triangularView<Lower>() = VgInv.inverse();
     ctr->Vg.triangularView<Upper>() = ctr->Vg.transpose().eval();
     ctr->VgChol = ctr->Vg.llt().matrixL();
+    // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
     ctr->Y =      ctr->kappa.array() / ctr->Omega.array();
-    ctr->R =      ctr->Y - ctr->fhat; // Recalc R using new Y
+    ctr->R = ctr->Y - ctr->fhat; // Recalc R using new Y
   }
 } // end tdlmModelEst function
 
@@ -137,7 +137,8 @@ void progressMeter::printMark()
  * @param step grow (0), prune (1), change (2)
  * @return double MH ratio of current proposal
  */
-double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step)
+double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step,
+                       double depth)
 {
   int no = 0;
   double stepMhr = 0;
@@ -162,11 +163,11 @@ double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step)
       }
       
       stepMhr = log((double)tree->nTerminal()) - log(nGen2) +
-        2 * logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], dlnmTerm[no]->depth + 1, 1) +
-        logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], dlnmTerm[no]->depth, 0) -
-        logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], dlnmTerm[no]->depth, 1);
-
-      Exp->updateNodeVals((dlnmTerm[no]->proposed)->c1); // update node values
+        2 * logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], dlnmTerm[no]->depth + depth + 1, 1) +
+        logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], dlnmTerm[no]->depth + depth, 0) -
+        logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], dlnmTerm[no]->depth + depth, 1);
+      if (Exp != 0)
+        Exp->updateNodeVals((dlnmTerm[no]->proposed)->c1); // update node values
       
       // newDlnmTerm = tree->listTerminal(1); // list proposed terminal nodes
     }
@@ -178,9 +179,9 @@ double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step)
     no = floor(R::runif(0, tempNodes.size())); // select gen2 node to prune
 
     stepMhr = log((double)tree->nGen2()) - log((double)tree->nTerminal() - 1.0) -
-      2 * logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], tempNodes[no]->depth + 1, 1) -
-      logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], tempNodes[no]->depth, 0) +
-      logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], tempNodes[no]->depth, 1);
+      2 * logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], tempNodes[no]->depth + depth + 1, 1) -
+      logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], tempNodes[no]->depth + depth, 0) +
+      logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], tempNodes[no]->depth + depth, 1);
 
     tempNodes[no]->prune(); // prune nodes
     // newDlnmTerm = tree->listTerminal(1); // list proposed terminal nodes
@@ -191,8 +192,10 @@ double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step)
     tempNodes = tree->listInternal();
     no = floor(R::runif(0, tempNodes.size())); // select internal nodes to change 
     if (tempNodes[no]->change()) { // propose new split
-      for (Node* tn : tempNodes[no]->proposed->listTerminal())
-        Exp->updateNodeVals(tn);
+      for (Node* tn : tempNodes[no]->proposed->listTerminal()) {
+        if (Exp != 0)
+          Exp->updateNodeVals(tn);
+      }
         
       if ((tempNodes[no]->c1)->c1 != 0) { // calculate mhr if splits on c1 nodes
         for (Node* tn : tempNodes[no]->c1->listInternal())
@@ -437,21 +440,83 @@ VectorXd countMods(Node* tree, modDat* Mod)
  * @param n pointer to specific node in tree
  * @param alpha alpha parameter (0 to 1)
  * @param beta beta parameter (>0)
+ * @param depth added to depth in p_split
  */
-void drawTree(Node* tree, Node* n, double alpha, double beta)
+void drawTree(Node* tree, Node* n, double alpha, double beta, 
+              double depth)
 {
-  double logProb = log(alpha) - beta * log(1.0 + n->depth);
+  double logProb = log(alpha) - beta * log(1.0 + depth + n->depth);
   if (log(R::runif(0, 1)) < logProb) {
     if (n->grow()) {
       if (n->depth > 0)
         n = n->proposed;
       tree->accept();
-      drawTree(tree, n->c1, alpha, beta);
-      drawTree(tree, n->c2, alpha, beta);
+      drawTree(tree, n->c1, alpha, beta, depth);
+      drawTree(tree, n->c2, alpha, beta, depth);
     }
   } // end grow tree
   return;
 } // end drawTree function
+
+/**
+ * @brief 
+ * 
+ * @param eta 
+ * @param ctr 
+ * @param nsX 
+ */
+void drawZirt(Node* eta, tdlmCtr* ctr, NodeStruct* nsX)
+{
+  int tmin = eta->nodestruct->get(3);
+  int tmax = eta->nodestruct->get(4);
+  eta->nodevals->nestedTree = new Node(0, 1);
+  eta->nodevals->nestedTree->nodestruct = nsX->clone();
+  eta->nodevals->nestedTree->nodestruct->setTimeRange(tmin, tmax);
+  
+  double logProb = logZIPSplit(ctr->zirtPsi0, tmin, tmax, 0);  
+  if (log(R::runif(0, 1)) < logProb) {
+    if (eta->nodevals->nestedTree->grow()) {
+      eta->nodevals->nestedTree->accept();
+      drawTree(eta->nodevals->nestedTree, eta->nodevals->nestedTree->c1, 
+               ctr->treePrior2[0], ctr->treePrior2[1], 1.0);
+      drawTree(eta->nodevals->nestedTree, eta->nodevals->nestedTree->c2, 
+               ctr->treePrior2[0], ctr->treePrior2[1], 1.0);
+    }
+  } // end grow tree
+  return;
+} // end drawTree function
+
+
+double zeroInflatedTreeMHR(VectorXd timeProbs, std::vector<Node*> trees,
+                           int t, double newProb)
+{
+  double mhr =          0.0;
+  double timeProbSum =  0.0;
+  double nTimes =       0.0;
+  int tmin, tmax;
+  VectorXd timeProbsNew = timeProbs;
+  timeProbsNew(t) = newProb;
+  
+  for (Node* tree : trees) { // loop over all trees
+    for (Node* eta : tree->listTerminal(0)) { // loop over tree terminal nodes
+      tmin = eta->nodestruct->get(3);
+      tmax = eta->nodestruct->get(4);
+      
+      if ((t >= tmin - 1) && (t < tmax)) { // check time within range        
+        if (eta->nodevals->nestedTree->c1 == 0) { // single node tree
+          mhr += logZIPSplit(timeProbsNew, tmin, tmax, 1) -
+            logZIPSplit(timeProbs, tmin, tmax, 1);
+            
+        } else {
+          mhr += logZIPSplit(timeProbsNew, tmin, tmax, 0) -
+            logZIPSplit(timeProbs, tmin, tmax, 0);
+            
+        } // end if single node tree
+      } // end time within range
+    } // end loop over terminal nodes
+  } // end loop over trees
+  return (mhr);
+} // end zeroInflatedTreeMHR function
 
 /**
  * @brief update design matrices for subgroup Gaussian process DLM

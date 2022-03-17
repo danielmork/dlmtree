@@ -19,7 +19,7 @@
 #'
 plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(), ...)
 {
-  if (summary$ctr$dl.function == "tdlm")
+  if (summary$ctr$dl.function == "tdlm" & plot.type == "mean")
     plot.type = "dlm"
   args <- list(...)
   main <- ifelse(!is.null(args$main), args$main, "")
@@ -69,22 +69,16 @@ plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(
       scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
       theme_bw() +
       labs(x = xlab, y = ylab, fill = flab, title = main)
-  # } else if (plot.type == "animate") {
-  #   if (!require(gganimate))
-  #     stop("Package gganimate required.")
-  #   if (!require(transformr))
-  #     stop("Package transformr required.")
-  #   summary$plot.dat$Xmin <- round(summary$plot.dat$Xmin, 2)
-  #   p <- ggplot(summary$plot.dat) +
-  #     geom_hline(yintercept = 0, color = "red") +
-  #     geom_ribbon(aes(x = Tmin + start.time, ymin = CIMin, ymax = CIMax), fill = "grey") +
-  #     geom_line(aes(x = Tmin + start.time, y = Est)) +
-  #     transition_states(Xmin, transition_length = 1, state_length = 0) +
-  #     theme_bw() +
-  #     scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
-  #     labs(x = xlab, y = ylab) +
-  #     ggtitle('Exposure {closest_state}')
-  #   return(animate(p, duration = 20, fps = 10))
+  } else if (plot.type == "cumulative") {
+    xlab <- ifelse(!is.null(args$xlab), args$xlab, "Exposure-concentration")
+    ylab <- ifelse(!is.null(args$ylab), args$ylab, "Cumulative effect")
+    p <- ggplot(summary$cumulative.effect, aes(x = vals, y = mean, ymin = lower, ymax = upper)) +
+      geom_hline(yintercept = 0, color = "red") +
+      geom_ribbon(fill = "grey") +
+      geom_line() +
+      theme_bw() +
+      scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
+      labs(x = xlab, y = ylab, title = main)
   } else if (plot.type == "effect") {
     flab <- ifelse(!is.null(args$flab), args$flab, "Effect")
     p <- ggplot(summary$plot.dat, aes(xmin = Tmin + start.time,

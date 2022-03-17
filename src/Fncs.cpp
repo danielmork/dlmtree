@@ -60,6 +60,22 @@ double logPSplit(double alpha, double beta, int depth, bool terminal)
 }
 
 /**
+ * @brief 
+ * 
+ * @param timeProbs 
+ * @param tmin 
+ * @param tmax 
+ * @param term 
+ * @return double 
+ */
+double logZIPSplit(Eigen::VectorXd timeProbs, int tmin, int tmax, bool term) {
+  if (term)
+    return log1p(-timeProbs.segment(tmin-1, tmax-tmin+1).minCoeff());
+  else 
+    return log(timeProbs.segment(tmin-1, tmax-tmin+1).minCoeff());
+}
+
+/**
  * logDirichletDensity
  * @brief log probability of Dirichlet with values x and parameters alpha
  * @param x vector of values

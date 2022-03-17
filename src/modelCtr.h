@@ -13,7 +13,7 @@ public:
   int n, pZ, pX, nRec, nSplits, nTrees;
   int b, iter, thin, burn, record, threads, shrinkage;
   double sigma2, xiInvSigma2, nu, VTheta1Inv, totTerm, sumTermT2;
-  double modKappa, modZeta;
+  double modKappa, modZeta, zirtAlpha, zirtP0;
   std::vector<double> stepProb, treePrior, treePrior2;
   VectorXd Y;
   MatrixXd Z;
@@ -41,6 +41,8 @@ public:
 struct tdlmCtr : modelCtr {
 public:
   VectorXd nTerm;
+  VectorXd zirtPsi0;
+  VectorXd zirtPsi1;
 
   // Mixtures
   int interaction, nExp, nMix;
@@ -73,6 +75,8 @@ public:
   VectorXd fhat;
   VectorXd fhat2;
   MatrixXd termNodes;
+  MatrixXd zirtPsi0;
+  MatrixXd zirtPsi1;
 
   // Mixtures
   std::vector<VectorXd> MIXexp;
@@ -185,13 +189,20 @@ public:
 class Node;
 class exposureDat;
 class modDat;
+class NodeStruct;
 void tdlmModelEst(modelCtr *ctr);
 VectorXd rcpp_pgdraw(VectorXd b, VectorXd c);
-double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step);
+double tdlmProposeTree(Node* tree, exposureDat* Exp = 0, 
+                       modelCtr* ctr = 0, int step = 0,
+                       double depth = 0.0);
 double modProposeTree(Node* tree, modDat* Mod, dlmtreeCtr* ctr, int step);
 std::string modRuleStr(Node* n, modDat* Mod);
 VectorXd countMods(Node* tree, modDat* Mod);
-void drawTree(Node* tree, Node* n, double alpha, double beta);
+void drawTree(Node* tree, Node* n, double alpha, double beta, 
+              double depth = 0.0);
+void drawZirt(Node* eta, tdlmCtr* ctr, NodeStruct* nsX);
+double zeroInflatedTreeMHR(VectorXd timeProbs, std::vector<Node*> trees,
+                           int t, double newProb);
 void updateGPMats(Node* n, dlmtreeCtr* ctr);
 // void dlmtreeRecDLM(dlmtreeCtr* ctr, dlmtreeLog* dgn);
 
@@ -221,5 +232,5 @@ public:
 };
 
 
-VectorXd rtmvnorm(VectorXd mu, MatrixXd sigma);
+VectorXd rtmvnorm(VectorXd mu, MatrixXd sigma, int iter = 3);
 double zeroToInfNormCDF(VectorXd mu, MatrixXd sigma);

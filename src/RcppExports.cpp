@@ -7,6 +7,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // cppIntersection
 std::vector<int> cppIntersection(const IntegerVector& A, const IntegerVector& B);
 RcppExport SEXP _dlmtree_cppIntersection(SEXP ASEXP, SEXP BSEXP) {
@@ -101,6 +106,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// dlnmPLEst
+SEXP dlnmPLEst(arma::dmat dlnm, arma::dvec predAt, int nlags, int nsamp, double center);
+RcppExport SEXP _dlmtree_dlnmPLEst(SEXP dlnmSEXP, SEXP predAtSEXP, SEXP nlagsSEXP, SEXP nsampSEXP, SEXP centerSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::dmat >::type dlnm(dlnmSEXP);
+    Rcpp::traits::input_parameter< arma::dvec >::type predAt(predAtSEXP);
+    Rcpp::traits::input_parameter< int >::type nlags(nlagsSEXP);
+    Rcpp::traits::input_parameter< int >::type nsamp(nsampSEXP);
+    Rcpp::traits::input_parameter< double >::type center(centerSEXP);
+    rcpp_result_gen = Rcpp::wrap(dlnmPLEst(dlnm, predAt, nlags, nsamp, center));
+    return rcpp_result_gen;
+END_RCPP
+}
 // dlmEst
 SEXP dlmEst(arma::dmat dlm, int nlags, int nsamp);
 RcppExport SEXP _dlmtree_dlmEst(SEXP dlmSEXP, SEXP nlagsSEXP, SEXP nsampSEXP) {
@@ -124,6 +144,42 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type nlags(nlagsSEXP);
     Rcpp::traits::input_parameter< int >::type nsamp(nsampSEXP);
     rcpp_result_gen = Rcpp::wrap(mixEst(dlm, nlags, nsamp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// monotdlnm_Cpp
+List monotdlnm_Cpp(const List model);
+RcppExport SEXP _dlmtree_monotdlnm_Cpp(SEXP modelSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const List >::type model(modelSEXP);
+    rcpp_result_gen = Rcpp::wrap(monotdlnm_Cpp(model));
+    return rcpp_result_gen;
+END_RCPP
+}
+// zeroToInfNormCDF
+double zeroToInfNormCDF(Eigen::VectorXd mu, Eigen::MatrixXd sigma);
+RcppExport SEXP _dlmtree_zeroToInfNormCDF(SEXP muSEXP, SEXP sigmaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Eigen::VectorXd >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< Eigen::MatrixXd >::type sigma(sigmaSEXP);
+    rcpp_result_gen = Rcpp::wrap(zeroToInfNormCDF(mu, sigma));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rtmvnorm
+Eigen::VectorXd rtmvnorm(Eigen::VectorXd mu, Eigen::MatrixXd sigma, int iter);
+RcppExport SEXP _dlmtree_rtmvnorm(SEXP muSEXP, SEXP sigmaSEXP, SEXP iterSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Eigen::VectorXd >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< Eigen::MatrixXd >::type sigma(sigmaSEXP);
+    Rcpp::traits::input_parameter< int >::type iter(iterSEXP);
+    rcpp_result_gen = Rcpp::wrap(rtmvnorm(mu, sigma, iter));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -159,8 +215,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dlmtree_dlmtreeTDLMNestedGaussian", (DL_FUNC) &_dlmtree_dlmtreeTDLMNestedGaussian, 1},
     {"_dlmtree_dlmtreeTDLM_cpp", (DL_FUNC) &_dlmtree_dlmtreeTDLM_cpp, 1},
     {"_dlmtree_dlnmEst", (DL_FUNC) &_dlmtree_dlnmEst, 6},
+    {"_dlmtree_dlnmPLEst", (DL_FUNC) &_dlmtree_dlnmPLEst, 5},
     {"_dlmtree_dlmEst", (DL_FUNC) &_dlmtree_dlmEst, 3},
     {"_dlmtree_mixEst", (DL_FUNC) &_dlmtree_mixEst, 3},
+    {"_dlmtree_monotdlnm_Cpp", (DL_FUNC) &_dlmtree_monotdlnm_Cpp, 1},
+    {"_dlmtree_zeroToInfNormCDF", (DL_FUNC) &_dlmtree_zeroToInfNormCDF, 2},
+    {"_dlmtree_rtmvnorm", (DL_FUNC) &_dlmtree_rtmvnorm, 3},
     {"_dlmtree_tdlmm_Cpp", (DL_FUNC) &_dlmtree_tdlmm_Cpp, 1},
     {"_dlmtree_tdlnm_Cpp", (DL_FUNC) &_dlmtree_tdlnm_Cpp, 1},
     {NULL, NULL, 0}
