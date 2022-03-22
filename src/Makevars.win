@@ -12,5 +12,5 @@
 CXX_STD = CXX11
 CC=ccache gcc
 CXX=ccache g++
-PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) -Wno-deprecated-declarations -Wno-parentheses -Wno-ignored-attributes -Wno-unused-function -UNDEBUG
+PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) -Wno-deprecated-declarations -Wno-parentheses -Wno-ignored-attributes -Wno-unused-function
 PKG_LIBS = $(SHLIB_OPENMP_CFLAGS) $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
