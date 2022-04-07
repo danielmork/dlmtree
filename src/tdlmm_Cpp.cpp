@@ -644,6 +644,18 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   (ctr->fhat).resize(ctr->n);                     (ctr->fhat).setZero();
   ctr->R = ctr->Y;
   (ctr->gamma).resize(ctr->pZ);
+  // Load initial params for faster convergence in binomial model
+  if (ctr->binomial) {
+    ctr->gamma = as<VectorXd>(model["initParams"]);
+    ctr->Omega =rcpp_pgdraw(ctr->binomialSize, ctr->fhat + ctr->Z * ctr->gamma);
+    ctr->Zw = ctr->Omega.asDiagonal() * ctr->Z;
+    ctr->VgInv =   ctr->Z.transpose() * ctr->Zw;
+    ctr->VgInv.diagonal().array() += 1 / 100000.0;
+    ctr->Vg = ctr->VgInv.inverse();
+    ctr->VgChol = ctr->Vg.llt().matrixL();
+    // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
+    ctr->Y = ctr->kappa.array() / ctr->Omega.array();
+  }
   (ctr->totTermExp).resize(ctr->nExp);            (ctr->totTermExp).setZero();
   (ctr->sumTermT2Exp).resize(ctr->nExp);          (ctr->sumTermT2Exp).setZero();
   (ctr->muExp).resize(ctr->nExp); (ctr->muExp).setOnes();

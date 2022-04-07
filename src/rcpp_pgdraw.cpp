@@ -51,7 +51,8 @@ using namespace Rcpp;
 #define MATH_LOG_PI_2  0.451582705289454864726195229894882143571794678555056317392
 
 // FCN prototypes
-double samplepg(double);
+double samplepg(double, double, double);
+double ratio(double);
 double exprnd(double);
 double tinvgauss(double, double);
 double truncgamma();
@@ -66,54 +67,73 @@ double aterm(int, double, double);
  * @return Eigen::VectorXd 
  */
 Eigen::VectorXd rcpp_pgdraw(Eigen::VectorXd b,
-                            Eigen::VectorXd c)
+                            Eigen::VectorXd z)
 {
-  int n = c.size();
-  Eigen::VectorXd y(n); y.setZero();
-
-  // Setup
-  int i, j;
-
-  // Sample
-  #if defined(_OPENMP)
-    #pragma omp parallel for shared(y, b, c) private(i, j) schedule(static)
-  #endif
-  // TODO: add code for parallel draws: #pragma omp parallel for
-  for (i = 0; i < n; ++i) {
-    y[i] = samplepg(c[i]);
-    if (b[i] > 1) {
-      for (j = 1; j < b[i]; ++j) {
-        y[i] += samplepg(c[i]);
-      }
+  int n = z.size();
+  
+  Eigen::VectorXd y(n);
+  // #if defined(_OPENMP)
+  // #pragma omp parallel for shared(y)
+  // #endif
+  for (int i = 0; i < n; ++i) {
+    double c = (double)std::fabs((double)z[i]) * 0.5;
+    double r = ratio(c);
+    double K = c*c/2.0 + MATH_PI2/8.0;
+    y(i) = 0.0;
+    for (int j = 0; j < b(i); ++j) {
+      y(i) += samplepg(c,r,K);
     }
   }
   return y;
+}
+
+double ratio(double z)
+{
+  //  PG(b, z) = 0.25 * J*(b, z/2)
+  // z = (double)std::fabs((double)z) * 0.5;
+  
+  // Point on the intersection IL = [0, 4/ log 3] and IR = [(log 3)/pi^2, \infty)
+  double t = MATH_2_PI;
+  
+  // Compute p, q and the ratio q / (q + p)
+  // (derived from scratch; derivation is not in the original paper)
+  double K = z*z/2.0 + MATH_PI2/8.0;
+  double logA = (double)std::log(4.0) - MATH_LOG_PI - z;
+  double logK = (double)std::log(K);
+  double Kt = K * t;
+  double w = (double)std::sqrt(MATH_PI_2);
+  
+  double logf1 = logA + R::pnorm(w*(t*z - 1),0.0,1.0,1,1) + logK + Kt;
+  double logf2 = logA + 2*z + R::pnorm(-w*(t*z+1),0.0,1.0,1,1) + logK + Kt;
+  double p_over_q = (double)std::exp(logf1) + (double)std::exp(logf2);
+  double ratio = 1.0 / (1.0 + p_over_q); 
+  return ratio;
 }
 
 
 // Sample PG(1,z)
 // Based on Algorithm 6 in PhD thesis of Jesse Bennett Windle, 2013
 // URL: https://repositories.lib.utexas.edu/bitstream/handle/2152/21842/WINDLE-DISSERTATION-2013.pdf?sequence=1
-double samplepg(double z)
+double samplepg(double z, double ratio, double K)
 {
   //  PG(b, z) = 0.25 * J*(b, z/2)
-  z = fabs(z) * 0.5;
-
-  // Point on the intersection IL = [0, 4/ log 3] and IR = [(log 3)/pi^2, \infty)
+  // z = fabs(z) * 0.5;
+  // 
+  // // Point on the intersection IL = [0, 4/ log 3] and IR = [(log 3)/pi^2, \infty)
   double t = MATH_2_PI;
-
-  // Compute p, q and the ratio q / (q + p)
-  // (derived from scratch; derivation is not in the original paper)
-  double K = z*z/2.0 + MATH_PI2/8.0;
-  double logA = log(4) - MATH_LOG_PI - z;
-  double logK = log(K);
-  double Kt = K * t;
-  double w = sqrt(MATH_PI_2);
-
-  double logf1 = logA + R::pnorm(w*(t*z - 1),0.0,1.0,1,1) + logK + Kt;
-  double logf2 = logA + 2*z + R::pnorm(-w*(t*z+1),0.0,1.0,1,1) + logK + Kt;
-  double p_over_q = exp(logf1) + exp(logf2);
-  double ratio = 1.0 / (1.0 + p_over_q);
+  // 
+  // // Compute p, q and the ratio q / (q + p)
+  // // (derived from scratch; derivation is not in the original paper)
+  // double K = z*z/2.0 + MATH_PI2/8.0;
+  // double logA = log(4) - MATH_LOG_PI - z;
+  // double logK = log(K);
+  // double Kt = K * t;
+  // double w = sqrt(MATH_PI_2);
+  // 
+  // double logf1 = logA + R::pnorm(w*(t*z - 1),0.0,1.0,1,1) + logK + Kt;
+  // double logf2 = logA + 2*z + R::pnorm(-w*(t*z+1),0.0,1.0,1,1) + logK + Kt;
+  // double p_over_q = exp(logf1) + exp(logf2);
+  // double ratio = 1.0 / (1.0 + p_over_q);
 
   double u, X;
 

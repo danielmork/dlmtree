@@ -239,16 +239,16 @@ void tdlnmTreeMCMC(int t, Node *tree, tdlmCtr *ctr, tdlmLog *dgn,
 Rcpp::List tdlnm_Cpp(const Rcpp::List model)
 {
 
-  #if defined(_OPENMP)
-    if (as<int>(model["maxThreads"]) > 0) {
-      omp_set_num_threads(as<int>(model["maxThreads"]));
-      Eigen::setNbThreads(as<int>(model["maxThreads"]));
-    } else {
-      omp_set_num_threads(int(double(omp_get_max_threads()) / 2.0));
-      Eigen::setNbThreads(int(double(omp_get_max_threads()) / 2.0));
-    }
-    
-  #endif
+  // #if defined(_OPENMP)
+  //   if (as<int>(model["maxThreads"]) > 0) {
+  //     omp_set_num_threads(as<int>(model["maxThreads"]));
+  //     Eigen::setNbThreads(as<int>(model["maxThreads"]));
+  //   } else {
+  //     omp_set_num_threads(int(double(omp_get_max_threads()) / 2.0));
+  //     Eigen::setNbThreads(int(double(omp_get_max_threads()) / 2.0));
+  //   }
+  //   
+  // #endif
   // * Set up model control
   tdlmCtr *ctr = new tdlmCtr;
   ctr->iter = as<int>(model["nIter"]);
@@ -349,6 +349,18 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   ctr->fhat.resize(ctr->n);                         (ctr->fhat).setZero();
   ctr->R = ctr->Y;
   ctr->gamma.resize(ctr->pZ);
+  // Load initial params for faster convergence in binomial model
+  if (ctr->binomial) {
+    ctr->gamma = as<VectorXd>(model["initParams"]);
+    ctr->Omega =rcpp_pgdraw(ctr->binomialSize, ctr->fhat + ctr->Z * ctr->gamma);
+    ctr->Zw = ctr->Omega.asDiagonal() * ctr->Z;
+    ctr->VgInv =   ctr->Z.transpose() * ctr->Zw;
+    ctr->VgInv.diagonal().array() += 1 / 100000.0;
+    ctr->Vg = ctr->VgInv.inverse();
+    ctr->VgChol = ctr->Vg.llt().matrixL();
+    // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
+    ctr->Y = ctr->kappa.array() / ctr->Omega.array();
+  }
   ctr->totTerm = 0;
   ctr->sumTermT2 = 0;
   ctr->nu = 1.0; // ! Need to define nu and sigma2 prior to ModelEst

@@ -343,6 +343,11 @@ tdlnm <- function(formula,
   model$Zmean <- attr(model$Z, "scaled:center")
   model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
 
+  if (model$family == "gaussian") {
+    model$initParams <- lm(model$Y ~ -1 + model$Z)$coef
+  } else {
+    model$initParams <- glm(model$Y ~ -1 + model$Z, family = binomial)$coef
+  }
 
 
   # ---- Run model ----
