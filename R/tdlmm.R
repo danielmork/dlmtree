@@ -40,6 +40,7 @@
 #' @param verbose true (default) or false: print output
 #' @param diagnostics true or false (default) keep model diagnostic such as
 #' terminal nodes, acceptance details, etc.
+#' @param initial.params initial parameters for fixed effects model, FALSE = none (default), "glm" = generate using GLM, or user defined, length must equal number of parameters in fixed effects model
 #' @param ... NA
 #'
 #' @details Model is recommended to be run for at minimum 5000 burn-in
@@ -67,6 +68,7 @@ tdlmm <- function(formula,
                   subset = NULL,
                   verbose = TRUE,
                   diagnostics = FALSE,
+                  initial.params = FALSE,
                   ...)
 {
   model <- list()
@@ -256,10 +258,19 @@ tdlmm <- function(formula,
   model$Zmean <- attr(model$Z, "scaled:center")
   model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
 
-  if (model$family == "gaussian") {
-    model$initParams <- lm(model$Y ~ -1 + model$Z)$coef
+  if (initial.params == "glm") {
+    if (model$family == "gaussian") {
+      model$initParams <- lm(model$Y ~ -1 + model$Z)$coef
+    } else {
+      model$initParams <- glm(model$Y ~ -1 + model$Z, family = binomial)$coef
+    }
+  } else if (initial.params == FALSE) {
+    model$initParams <- rep(0, ncol(model$Z))
+  } else if (length(initial.params) == ncol(model$Z)) {
+    model$initParams <- initial.params
   } else {
-    model$initParams <- glm(model$Y ~ -1 + model$Z, family = binomial)$coef
+    warning("invalid input for `initial.params`, using zero")
+    model$initParams <- rep(0, ncol(model$Z))
   }
 
 
