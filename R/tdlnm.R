@@ -290,9 +290,9 @@ tdlnm <- function(formula,
     model$splitProb <- force(rep(1 / model$nSplits, model$nSplits))
     
     # memory warning
-    if (prod(dim(model$X)) * model$nSplits > 1073741824 & model$verbose)
+    if (prod(dim(model$X)) * model$nSplits * 8 > 1024^3 & model$verbose)
       warning(paste0("Model run will require at least ", 
-                     round(prod(dim(model$X)) * model$nSplits / 1073741824, 1),
+                     round(prod(dim(model$X)) * model$nSplits * 8 / 1024^3, 1),
                      " GB of memory. Use `lowmem = TRUE` option to reduce memory usage."))
   }
 
@@ -345,7 +345,9 @@ tdlnm <- function(formula,
   model$Zmean <- attr(model$Z, "scaled:center")
   model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
 
-  if (initial.params == "glm") {
+  if (length(initial.params) == ncol(model$Z)) {
+    model$initParams <- initial.params
+  } else if (initial.params == "glm") {
     if (model$family == "gaussian") {
       model$initParams <- lm(model$Y ~ -1 + model$Z)$coef
     } else {
@@ -353,8 +355,6 @@ tdlnm <- function(formula,
     }
   } else if (initial.params == FALSE) {
     model$initParams <- rep(0, ncol(model$Z))
-  } else if (length(initial.params) == ncol(model$Z)) {
-    model$initParams <- initial.params
   } else {
     warning("invalid input for `initial.params`, using zero")
     model$initParams <- rep(0, ncol(model$Z))

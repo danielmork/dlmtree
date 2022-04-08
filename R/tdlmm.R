@@ -258,7 +258,9 @@ tdlmm <- function(formula,
   model$Zmean <- attr(model$Z, "scaled:center")
   model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
 
-  if (initial.params == "glm") {
+  if (length(initial.params) == ncol(model$Z)) {
+    model$initParams <- initial.params
+  } else if (initial.params == "glm") {
     if (model$family == "gaussian") {
       model$initParams <- lm(model$Y ~ -1 + model$Z)$coef
     } else {
@@ -266,8 +268,6 @@ tdlmm <- function(formula,
     }
   } else if (initial.params == FALSE) {
     model$initParams <- rep(0, ncol(model$Z))
-  } else if (length(initial.params) == ncol(model$Z)) {
-    model$initParams <- initial.params
   } else {
     warning("invalid input for `initial.params`, using zero")
     model$initParams <- rep(0, ncol(model$Z))
