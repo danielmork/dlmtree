@@ -8,7 +8,7 @@ scaleModelMatrix <- function(M)
   }
 
   M.center <- sapply(1:ncol(M), function(j) ifelse(diff(range(M[,j])) > 0 & length(unique(M[,j])) > 2, mean(M[,j]), 0))
-  M.scale <- sapply(1:ncol(M), function(j) ifelse(M.center[j] != 0, sqrt(sum((M[,j] - M.center[j])^2)), 1))
+  M.scale <- sapply(1:ncol(M), function(j) sqrt(sum((M[,j] - M.center[j])^2)))
   M <- scale(M, center = M.center, scale = M.scale)
 
   if (vec) {
