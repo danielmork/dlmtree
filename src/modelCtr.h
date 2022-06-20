@@ -13,7 +13,7 @@ public:
   int n, pZ, pX, nRec, nSplits, nTrees;
   int b, iter, thin, burn, record, threads, shrinkage;
   double sigma2, xiInvSigma2, nu, VTheta1Inv, totTerm, sumTermT2;
-  double modKappa, modZeta, zirtAlpha, zirtP0;
+  double modKappa, modZeta;
   std::vector<double> stepProb, treePrior, treePrior2;
   VectorXd Y;
   MatrixXd Z;
@@ -28,6 +28,8 @@ public:
   VectorXd gamma;
   VectorXd fhat;
   VectorXd tau;
+  VectorXd zirtP0;
+  VectorXd zirtAlpha;
   
   // Binomial
   bool binomial;

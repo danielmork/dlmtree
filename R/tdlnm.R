@@ -256,11 +256,13 @@ tdlnm <- function(formula,
     # if exposure.splits entered incorrectly, infer user input and inform
     if (!is.list(exposure.splits)) {
       if (any(exposure.splits > 1 | exposure.splits < 0)) {
-        cat("exposure.splits entered as numeric vector, assuming values are exposure splitting points\n")
+        if (verbose)
+          cat("exposure.splits entered as numeric vector, assuming values are exposure splitting points\n")
         exposure.splits <- list("type" = "values",
                                 "split.vals" = exposure.splits)
       } else {
-        cat("exposure.splits entered as numeric vector, assuming values are exposure splitting quantiles\n")
+         if (verbose)
+          cat("exposure.splits entered as numeric vector, assuming values are exposure splitting quantiles\n")
         exposure.splits <- list("type" = "quantiles", "split.vals" = exposure.splits)
       }
     }
@@ -311,6 +313,15 @@ tdlnm <- function(formula,
     }
   }
 
+  if (length(model$p_t) != ncol(model$X)) {
+    if (length(model$p_t) == 1) {
+      model$p_t = rep(model$p_t, ncol(model$X))
+      model$zirtAlpha = rep(model$zirtAlpha, ncol(model$X))
+    } else {
+      stop("zirt.p0 must be of length 1 or number of columns in exposure.data")
+    }
+  }
+
 
 
   # ---- Scale data and setup exposures ----
@@ -345,18 +356,9 @@ tdlnm <- function(formula,
   model$Zmean <- attr(model$Z, "scaled:center")
   model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
 
-  if (length(initial.params) == ncol(model$Z)) {
+  if (all.equal(names(initial.params), names(model$Z))) {
     model$initParams <- initial.params
-  } else if (initial.params == "glm") {
-    if (model$family == "gaussian") {
-      model$initParams <- lm(model$Y ~ -1 + model$Z)$coef
-    } else {
-      model$initParams <- glm(model$Y ~ -1 + model$Z, family = binomial)$coef
-    }
-  } else if (initial.params == FALSE) {
-    model$initParams <- rep(0, ncol(model$Z))
   } else {
-    warning("invalid input for `initial.params`, using zero")
     model$initParams <- rep(0, ncol(model$Z))
   }
 

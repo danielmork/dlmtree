@@ -87,13 +87,14 @@ summary.tdlnm <- function(object,
   gamma.ci <- apply(object$gamma, 2, quantile, probs = ci.lims)
 
   # Bayes factor
-  logBF <- rep(0, object$pExp)
+  splitProb <- logBF <- rep(0, Lags)
   if (object$monotone) {
-    splitProb <- sapply(1:object$pExp, function(t) {
-      mean(sapply(1:object$mcmcIter, function(i) {
-        sum(object$DLM$est[which(object$DLM$Iter == i &
-                                   object$DLM$tmin <= t &
-                                   object$DLM$tmax >= t)]) }) > 0) })
+    splitProb <- c(splitPIP(as.matrix(object$DLM[is.infinite(object$DLM$xmax) & object$DLM$est > 0,]), Lags)) / Iter
+    # splitProb <- sapply(1:object$pExp, function(t) {
+    #   mean(sapply(1:object$mcmcIter, function(i) {
+    #     sum(object$DLM$est[which(object$DLM$Iter == i &
+    #                                object$DLM$tmin <= t &
+    #                                object$DLM$tmax >= t)]) }) > 0) })
     logBF <- log10(splitProb) - log10(1 - splitProb) -
       (log10(1 - (1 - object$p_t)^object$nTrees) - log10((1 - object$p_t)^object$nTrees))
   }
@@ -116,7 +117,8 @@ summary.tdlnm <- function(object,
               "pred.at" = pred.at,
               "gamma.mean" = gamma.mean,
               "gamma.ci" = gamma.ci,
-              "logBF" = logBF)
+              "logBF" = logBF,
+              "splitProb" = splitProb)
   class(ret) <- "summary.tdlnm"
   return(ret)
 }

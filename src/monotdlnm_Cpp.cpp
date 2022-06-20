@@ -378,7 +378,7 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn,
   * @return Rcpp::List 
   */
  // [[Rcpp::export]]
- List monotdlnm_Cpp(const List model)
+ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
  {
    // * Set up model control
   tdlmCtr *ctr =      new tdlmCtr;
@@ -393,8 +393,8 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn,
   ctr->stepProb =     as<std::vector<double> >(model["stepProb"]);
   ctr->treePrior =    as<std::vector<double> >(model["treePriorTime"]);
   ctr->treePrior2 =   as<std::vector<double> >(model["treePriorExp"]);
-  ctr->zirtAlpha =    as<double>(model["zirtAlpha"]);
-  ctr->zirtP0 =       as<double>(model["p_t"]);
+  ctr->zirtAlpha =    as<VectorXd>(model["zirtAlpha"]);
+  ctr->zirtP0 =       as<VectorXd>(model["p_t"]);
   ctr->binomial =     as<bool>(model["binomial"]);
   ctr->shrinkage =    as<int>(model["shrinkage"]);
   ctr->verbose =      as<bool>(model["verbose"]);
@@ -440,8 +440,7 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn,
                           as<bool>(model["lowmem"]));
   ctr->pX =         Exp->pX;
   ctr->nSplits =    Exp->nSplits;
-  ctr->zirtPsi0.resize(ctr->pX);
-  ctr->zirtPsi0.array() = ctr->zirtP0;
+  ctr->zirtPsi0 =   ctr->zirtP0;
   
   // * Calculations used in special case: single-node trees
   ctr->X1 =         Exp->Tcalc.col(ctr->pX - 1);
@@ -470,12 +469,6 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn,
     trees[t]->nodestruct = nsT->clone();
     trees[t]->nodevals = new NodeVals(ctr->n, ctr->pZ);
     drawZirt(trees[t], ctr, nsX);
-    // trees[t]->nodevals->nestedTree = new Node(0, 1);
-    // trees[t]->nodevals->nestedTree->nodestruct = nsX->clone();
-    // drawZeroInflatedTree(trees[t]->nodevals->nestedTree, 
-    //                      trees[t]->nodevals->nestedTree,
-    //                      1, ctr->pX, ctr->zirtPsi0,
-    //                      ctr->treePrior[0], ctr->treePrior[1], 1.0);
     for (Node* lambda : trees[t]->nodevals->nestedTree->listTerminal())
       Exp->updateNodeVals(lambda); 
   }
@@ -549,12 +542,32 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn,
       
     // * Update zirt time split probabilities
     if ((ctr->b > 1000) || (ctr->b > (0.5 * ctr->burn))) {
-      for (int i = 0; i < ctr->pX; ++i) {
-        double newProb = R::rbeta(ctr->zirtAlpha, ctr->nTrees);
-        if (log(R::runif(0, 1)) <
-            zeroInflatedTreeMHR(ctr->zirtPsi0, trees, i, newProb))
-          ctr->zirtPsi0(i) = newProb;
+      VectorXd sumSplits(ctr->pX); sumSplits.setZero();
+      for (Node* tree : trees) { // loop over all trees
+        for (Node* eta : tree->listTerminal(0)) { 
+          int tmin = eta->nodestruct->get(3);
+          int tmax = eta->nodestruct->get(4);       
+          if (eta->nodevals->nestedTree->c1 != 0) { // single node tree
+            sumSplits.array().segment(tmin - 1, tmax - tmin + 1) += 1.0;
+          }
+        }
       }
+      // ctr->zirtPsi0 = rDirichlet(sumSplits);
+      for (int i = 0; i < ctr->pX; ++i) {
+        ctr->zirtPsi0(i) = R::rbeta(1.0 + sumSplits(i), 1.0 + ctr->nTrees - sumSplits(i));
+      }
+
+      if (ctr->debug)
+        Rcout << "\nsumSplits" << sumSplits << "\nzirtPsi0" << ctr->zirtPsi0;
+      // for (int i = 0; i < ctr->pX; ++i) {
+      //   double newProb = R::rbeta(ctr->zirtAlpha(i), ctr->nTrees);
+      //   // double newProb = R::runif(0.0, 1.0);
+      //   if (log(R::runif(0, 1)) <
+      //       zeroInflatedTreeMHR(ctr->zirtPsi0, trees, i, newProb) +
+      //       R::dbeta(newProb, ctr->zirtAlpha(i), ctr->nTrees, 1) -
+      //       R::dbeta(ctr->zirtPsi0(i), ctr->zirtAlpha(i), ctr->nTrees, 1))
+      //     ctr->zirtPsi0(i) = newProb;
+      // }
     }
     
     if (ctr->debug)

@@ -106,6 +106,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// splitPIP
+SEXP splitPIP(arma::dmat dlnm, int nlags);
+RcppExport SEXP _dlmtree_splitPIP(SEXP dlnmSEXP, SEXP nlagsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::dmat >::type dlnm(dlnmSEXP);
+    Rcpp::traits::input_parameter< int >::type nlags(nlagsSEXP);
+    rcpp_result_gen = Rcpp::wrap(splitPIP(dlnm, nlags));
+    return rcpp_result_gen;
+END_RCPP
+}
 // dlnmPLEst
 SEXP dlnmPLEst(arma::dmat dlnm, arma::dvec predAt, int nlags, int nsamp, double center);
 RcppExport SEXP _dlmtree_dlnmPLEst(SEXP dlnmSEXP, SEXP predAtSEXP, SEXP nlagsSEXP, SEXP nsampSEXP, SEXP centerSEXP) {
@@ -148,12 +160,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // monotdlnm_Cpp
-List monotdlnm_Cpp(const List model);
+Rcpp::List monotdlnm_Cpp(const Rcpp::List model);
 RcppExport SEXP _dlmtree_monotdlnm_Cpp(SEXP modelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const List >::type model(modelSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
     rcpp_result_gen = Rcpp::wrap(monotdlnm_Cpp(model));
     return rcpp_result_gen;
 END_RCPP
@@ -215,6 +227,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dlmtree_dlmtreeTDLMNestedGaussian", (DL_FUNC) &_dlmtree_dlmtreeTDLMNestedGaussian, 1},
     {"_dlmtree_dlmtreeTDLM_cpp", (DL_FUNC) &_dlmtree_dlmtreeTDLM_cpp, 1},
     {"_dlmtree_dlnmEst", (DL_FUNC) &_dlmtree_dlnmEst, 6},
+    {"_dlmtree_splitPIP", (DL_FUNC) &_dlmtree_splitPIP, 2},
     {"_dlmtree_dlnmPLEst", (DL_FUNC) &_dlmtree_dlnmPLEst, 5},
     {"_dlmtree_dlmEst", (DL_FUNC) &_dlmtree_dlmEst, 3},
     {"_dlmtree_mixEst", (DL_FUNC) &_dlmtree_mixEst, 3},

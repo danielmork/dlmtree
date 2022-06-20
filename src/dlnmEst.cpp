@@ -79,6 +79,31 @@ SEXP dlnmEst(arma::dmat dlnm,
 }
 
 // [[Rcpp::export]]
+SEXP splitPIP(arma::dmat dlnm,
+              int nlags)
+{
+  int rows = dlnm.n_rows;
+  int tree = 0;
+  int iter = 0;
+  arma::vec splitCount(nlags);
+  arma::vec splitIter(nlags);
+
+  for (int i = 0; i < rows; ++i) {
+    if (dlnm(i, 0) > iter) {
+      splitCount += splitIter;
+      splitIter.zeros();
+      iter = dlnm(i, 0);
+    }
+    for (int t = dlnm(i, 4) - 1; t < dlnm(i, 5); ++t) {
+      if (splitIter(t) == 0)
+        splitIter(t) = 1.0;
+    }
+  }
+  
+  return wrap(splitCount);
+}
+
+// [[Rcpp::export]]
 SEXP dlnmPLEst(arma::dmat dlnm,
                arma::dvec predAt,
                int nlags,
