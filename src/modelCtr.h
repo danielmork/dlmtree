@@ -79,6 +79,8 @@ public:
   MatrixXd termNodes;
   MatrixXd zirtPsi0;
   MatrixXd zirtPsi1;
+  MatrixXd timeProbs;
+  MatrixXd timeCounts;
 
   // Mixtures
   std::vector<VectorXd> MIXexp;
@@ -200,6 +202,7 @@ double tdlmProposeTree(Node* tree, exposureDat* Exp = 0,
 double modProposeTree(Node* tree, modDat* Mod, dlmtreeCtr* ctr, int step);
 std::string modRuleStr(Node* n, modDat* Mod);
 VectorXd countMods(Node* tree, modDat* Mod);
+VectorXd countTimeSplits(Node* tree, modelCtr* ctr);
 void drawTree(Node* tree, Node* n, double alpha, double beta, 
               double depth = 0.0);
 void drawZirt(Node* eta, tdlmCtr* ctr, NodeStruct* nsX);

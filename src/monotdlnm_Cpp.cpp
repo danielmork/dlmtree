@@ -201,9 +201,9 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn,
         int tmin = eta->nodestruct->get(3);
         int tmax = eta->nodestruct->get(4);
         if (eta->nodevals->nestedTree->c1 == 0) {
-          stepMhr -= logZIPSplit(ctr->zirtPsi0, tmin, tmax, 1);
+          stepMhr -= logZIPSplit(ctr->zirtPsi0, tmin, tmax, ctr->nTrees, 1);
         } else {
-          stepMhr -= logZIPSplit(ctr->zirtPsi0, tmin, tmax, 0);
+          stepMhr -= logZIPSplit(ctr->zirtPsi0, tmin, tmax, ctr->nTrees, 0);
         }
       }
       for (Node* eta : newDlnmTerm) { // update time range for nested nodes
@@ -227,9 +227,9 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn,
           }
         }
         if (eta->nodevals->nestedTree->c1 == 0) {
-          stepMhr += logZIPSplit(ctr->zirtPsi0, tmin, tmax, 1);
+          stepMhr += logZIPSplit(ctr->zirtPsi0, tmin, tmax, ctr->nTrees, 1);
         } else {
-          stepMhr += logZIPSplit(ctr->zirtPsi0, tmin, tmax, 0);
+          stepMhr += logZIPSplit(ctr->zirtPsi0, tmin, tmax, ctr->nTrees, 0);
         }
       }
     }
@@ -289,13 +289,13 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn,
     if (success && (stepMhr == stepMhr)) {
       // grow from depth 0
       if ((step == 0) && (nestedTerm.size() == 1)) {
-        stepMhr = logZIPSplit(ctr->zirtPsi0, tmin, tmax, 0) -
-          logZIPSplit(ctr->zirtPsi0, tmin, tmax, 1) + 
+        stepMhr = logZIPSplit(ctr->zirtPsi0, tmin, tmax, ctr->nTrees, 0) -
+          logZIPSplit(ctr->zirtPsi0, tmin, tmax, ctr->nTrees, 1) + 
           2 * logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], 2.0, 1);
       // prune from depth 1
       } else if ((step == 1) && (nestedTerm.size() == 2)) {
-        stepMhr = logZIPSplit(ctr->zirtPsi0, tmin, tmax, 1) -
-          logZIPSplit(ctr->zirtPsi0, tmin, tmax, 0) -
+        stepMhr = logZIPSplit(ctr->zirtPsi0, tmin, tmax, ctr->nTrees, 1) -
+          logZIPSplit(ctr->zirtPsi0, tmin, tmax, ctr->nTrees, 0) -
           2 * logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], 2.0, 1);
       }
       
@@ -399,6 +399,7 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn,
   ctr->shrinkage =    as<int>(model["shrinkage"]);
   ctr->verbose =      as<bool>(model["verbose"]);
   ctr->diagnostics =  as<bool>(model["diagnostics"]);
+  ctr->modKappa = 1.0;
   
   // * Set up model data
   ctr->Y =            as<VectorXd>(model["Y"]);
@@ -486,6 +487,8 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn,
   dgn->fhat2.resize(ctr->n);                        dgn->fhat2.setZero();
   dgn->termNodes.resize(ctr->nTrees, ctr->nRec);    dgn->termNodes.setZero();
   dgn->zirtPsi0.resize(ctr->pX, ctr->nRec);         dgn->zirtPsi0.setZero();
+  dgn->timeProbs.resize(ctr->pX - 1, ctr->nRec);   dgn->timeProbs.setZero();
+  dgn->timeCounts.resize(ctr->pX - 1, ctr->nRec);   dgn->timeCounts.setZero();
   
   // * Initial values and draws
   if (ctr->debug)
@@ -540,32 +543,86 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn,
     if ((ctr->sigma2 != ctr->sigma2) || (ctr->nu != ctr->nu))
       stop("\nNaN values (sigma2, nu) occured during model run, rerun model.");
       
+
     // * Update zirt time split probabilities
+    VectorXd timeCounts(ctr->pX - 1); timeCounts.setZero();
     if ((ctr->b > 1000) || (ctr->b > (0.5 * ctr->burn))) {
+
+
+      // Count number of trees splitting on time t
       VectorXd sumSplits(ctr->pX); sumSplits.setZero();
       for (Node* tree : trees) { // loop over all trees
         for (Node* eta : tree->listTerminal(0)) { 
           int tmin = eta->nodestruct->get(3);
           int tmax = eta->nodestruct->get(4);       
           if (eta->nodevals->nestedTree->c1 != 0) { // single node tree
-            sumSplits.array().segment(tmin - 1, tmax - tmin + 1) += 1.0;
+            sumSplits.segment(tmin - 1, tmax - tmin + 1).array() += 1.0;
           }
         }
-      }
-      // ctr->zirtPsi0 = rDirichlet(sumSplits);
-      for (int i = 0; i < ctr->pX; ++i) {
-        ctr->zirtPsi0(i) = R::rbeta(1.0 + sumSplits(i), 1.0 + ctr->nTrees - sumSplits(i));
+        timeCounts += countTimeSplits(tree, ctr);
       }
 
-      if (ctr->debug)
-        Rcout << "\nsumSplits" << sumSplits << "\nzirtPsi0" << ctr->zirtPsi0;
+      VectorXd timeProbs = trees[1]->nodestruct->getTimeProbs();
+      double beta = R::rbeta(1.0, 1.0);
+      double modKappaNew = beta * ctr->pX / (1 - beta);
+      double mhrDir =
+        logDirichletDensity(timeProbs, (timeCounts.array() + modKappaNew / ctr->pX).matrix()) -
+        logDirichletDensity(timeProbs, (timeCounts.array() + ctr->modKappa / ctr->pX).matrix());
+      if (log(R::runif(0, 1) < mhrDir))
+        ctr->modKappa = modKappaNew;
+
+      VectorXd newTimeProbs = rDirichlet((timeCounts.array() + ctr->modKappa / ctr->pX).matrix());
+
+      for (Node* tree : trees) { // loop over all trees
+        tree->nodestruct->setTimeProbs(newTimeProbs);
+        tree->updateStruct();
+      }
+
+
+      VectorXd newProb = rDirichlet(sumSplits + ctr->zirtP0 / ctr->zirtP0.sum());
+      double zmhr = logDirichletDensity(ctr->zirtPsi0, sumSplits + ctr->zirtP0 / ctr->zirtP0.sum()) - logDirichletDensity(newProb, sumSplits + ctr->zirtP0 / ctr->zirtP0.sum()) + logDirichletDensity(newProb, ctr->zirtP0 / ctr->zirtP0.sum()) - logDirichletDensity(ctr->zirtPsi0, ctr->zirtP0 / ctr->zirtP0.sum());
       // for (int i = 0; i < ctr->pX; ++i) {
-      //   double newProb = R::rbeta(ctr->zirtAlpha(i), ctr->nTrees);
-      //   // double newProb = R::runif(0.0, 1.0);
-      //   if (log(R::runif(0, 1)) <
-      //       zeroInflatedTreeMHR(ctr->zirtPsi0, trees, i, newProb) +
-      //       R::dbeta(newProb, ctr->zirtAlpha(i), ctr->nTrees, 1) -
-      //       R::dbeta(ctr->zirtPsi0(i), ctr->zirtAlpha(i), ctr->nTrees, 1))
+      //   double za = ctr->zirtP0(i) * ctr->zirtAlpha(i);
+      //   double zb = (1.0 - ctr->zirtP0(i)) * ctr->zirtAlpha(i);
+      //   zmhr += R::dbeta(newProb(i), za, zb, 1) - R::dbeta(ctr->zirtPsi0(i), za, zb, 1);
+      // }
+
+      for (Node* tree : trees) { // loop over all trees
+        for (Node* eta : tree->listTerminal(0)) { // loop over tree terminal nodes
+          int tmin = eta->nodestruct->get(3);
+          int tmax = eta->nodestruct->get(4);
+          
+          if ((t >= tmin - 1) && (t < tmax)) { // check time within range        
+            if (eta->nodevals->nestedTree->c1 == 0) { // single node tree
+              zmhr += logZIPSplit(newProb, tmin, tmax, ctr->nTrees, 1) -
+                logZIPSplit(ctr->zirtPsi0, tmin, tmax, ctr->nTrees, 1);
+                
+            } else {
+              zmhr += logZIPSplit(newProb, tmin, tmax, ctr->nTrees, 0) -
+                logZIPSplit(ctr->zirtPsi0, tmin, tmax, ctr->nTrees, 0);
+                
+            } // end if single node tree
+          } // end time within range
+        } // end loop over terminal nodes
+      } // end loop over trees
+      if (log(R::runif(0, 1)) < zmhr)
+        ctr->zirtPsi0 = newProb;
+
+
+
+      // for (int i = 0; i < ctr->pX; ++i) {
+      //   double za = ctr->zirtP0(i) * ctr->zirtAlpha(i);
+      //   double zb = (1.0 - ctr->zirtP0(i)) * ctr->zirtAlpha(i);
+
+      //   // ctr->zirtPsi0(i) = R::rbeta(za + sumSplits(i), zb + ctr->nTrees - sumSplits(i));
+      //   double newProb = R::rbeta(sumSplits(i), (ctr->nTrees - sumSplits(i)));
+
+      //   double zmhr = zeroInflatedTreeMHR(ctr->zirtPsi0, trees, i, newProb) + 
+      //     R::dbeta(newProb, za, zb, 1) - 
+      //     R::dbeta(ctr->zirtPsi0(i), za, zb, 1) + 
+      //     R::dbeta(ctr->zirtPsi0(i), sumSplits(i), ctr->nTrees - sumSplits(i), 1) - 
+      //     R::dbeta(newProb, sumSplits(i), ctr->nTrees - sumSplits(i), 1);
+      //   if (log(R::runif(0, 1)) < zmhr)
       //     ctr->zirtPsi0(i) = newProb;
       // }
     }
@@ -584,6 +641,8 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn,
       dgn->fhat +=                          ctr->fhat;
       dgn->fhat2 +=                         ctr->fhat.array().square().matrix();
       dgn->zirtPsi0.col(ctr->record - 1) =  ctr->zirtPsi0;
+      dgn->timeProbs.col(ctr->record -1) = trees[0]->nodestruct->getTimeProbs();
+      dgn->timeCounts.col(ctr->record -1) = timeCounts;
     }
     
     // * Update progress
@@ -611,13 +670,16 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn,
   for (s = 0; s < trees.size(); ++s)
     delete trees[s];
 
-  return(Rcpp::List::create(Named("DLM")    = wrap(DLM),
-                            Named("fhat")   = wrap(fhat),
-                            Named("sigma2") = wrap(sigma2),
-                            Named("nu")     = wrap(nu),
-                            Named("tau")    = wrap(tau),
-                            Named("termNodes")  = wrap(termNodes),
-                            Named("gamma")  = wrap(gamma),
-                            Named("zirt") = wrap(zirtPsi0),
-                            Named("treeAccept") = wrap(Accept)));
+  return(Rcpp::List::create(
+    Named("DLM")    = wrap(DLM),
+    Named("fhat")   = wrap(fhat),
+    Named("sigma2") = wrap(sigma2),
+    Named("nu")     = wrap(nu),
+    Named("tau")    = wrap(tau),
+    Named("termNodes")  = wrap(termNodes),
+    Named("gamma")  = wrap(gamma),
+    Named("zirt") = wrap(zirtPsi0),
+    Named("timeProbs") = wrap(dgn->timeProbs.transpose()),
+    Named("timeCounts") = wrap(dgn->timeCounts.transpose()),
+    Named("treeAccept") = wrap(Accept)));
 } // end function monotdlnm_Cppa

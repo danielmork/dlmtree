@@ -49,6 +49,10 @@ mixEst <- function(dlm, nlags, nsamp) {
     .Call(`_dlmtree_mixEst`, dlm, nlags, nsamp)
 }
 
+monolintdlnm_Cpp <- function(model) {
+    .Call(`_dlmtree_monolintdlnm_Cpp`, model)
+}
+
 monotdlnm_Cpp <- function(model) {
     .Call(`_dlmtree_monotdlnm_Cpp`, model)
 }

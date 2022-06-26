@@ -17,6 +17,8 @@ public:
   virtual void dropSplit();
   virtual void printStruct();
   virtual int get(int);
+  virtual Eigen::VectorXd getTimeProbs();
+  virtual void setTimeProbs(Eigen::VectorXd);
   virtual std::vector<int> get2(int);
   virtual std::vector<std::vector<int> > get3(int);
   virtual void updateStruct(NodeStruct*, bool);
@@ -43,6 +45,7 @@ public:
   bool checkEqual(NodeStruct* n);
   void printStruct();
   int get(int a);
+  Eigen::VectorXd getTimeProbs();
   
   // proposal functions
   bool proposeSplit();
@@ -50,6 +53,7 @@ public:
   void dropSplit();
   void updateStruct(NodeStruct* parStruct, bool left);
   void setTimeRange(int lower, int upper);
+  void setTimeProbs(Eigen::VectorXd newProbs);
 };
 
 class ModStruct: public NodeStruct {

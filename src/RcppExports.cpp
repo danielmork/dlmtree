@@ -159,6 +159,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// monolintdlnm_Cpp
+List monolintdlnm_Cpp(const List model);
+RcppExport SEXP _dlmtree_monolintdlnm_Cpp(SEXP modelSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const List >::type model(modelSEXP);
+    rcpp_result_gen = Rcpp::wrap(monolintdlnm_Cpp(model));
+    return rcpp_result_gen;
+END_RCPP
+}
 // monotdlnm_Cpp
 Rcpp::List monotdlnm_Cpp(const Rcpp::List model);
 RcppExport SEXP _dlmtree_monotdlnm_Cpp(SEXP modelSEXP) {
@@ -231,6 +242,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dlmtree_dlnmPLEst", (DL_FUNC) &_dlmtree_dlnmPLEst, 5},
     {"_dlmtree_dlmEst", (DL_FUNC) &_dlmtree_dlmEst, 3},
     {"_dlmtree_mixEst", (DL_FUNC) &_dlmtree_mixEst, 3},
+    {"_dlmtree_monolintdlnm_Cpp", (DL_FUNC) &_dlmtree_monolintdlnm_Cpp, 1},
     {"_dlmtree_monotdlnm_Cpp", (DL_FUNC) &_dlmtree_monotdlnm_Cpp, 1},
     {"_dlmtree_zeroToInfNormCDF", (DL_FUNC) &_dlmtree_zeroToInfNormCDF, 2},
     {"_dlmtree_rtmvnorm", (DL_FUNC) &_dlmtree_rtmvnorm, 3},

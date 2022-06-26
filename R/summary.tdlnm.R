@@ -16,7 +16,8 @@ summary.tdlnm <- function(object,
                           pred.at = NULL,
                           cenval = 0,
                           conf.level = 0.95,
-                          exposure.se = NULL)
+                          exposure.se = NULL,
+                          verbose = TRUE)
 {
   Iter <- object$mcmcIter
   Lags <- object$pExp
@@ -38,7 +39,8 @@ summary.tdlnm <- function(object,
 
 
   # Calculate DLNM estimates for gridded values 'pred.at'
-  cat("Centered DLNM at exposure value", cenval, "\n")
+  if (verbose)
+    cat("Centered DLNM at exposure value", cenval, "\n")
   cen.quant <- which.min(abs(pred.at - cenval))
   if (object$shape == "Piecewise Linear") {
     dlmest <- dlnmPLEst(as.matrix(object$DLM), pred.at, Lags, Iter, cen.quant)
@@ -89,7 +91,7 @@ summary.tdlnm <- function(object,
   # Bayes factor
   splitProb <- logBF <- rep(0, Lags)
   if (object$monotone) {
-    splitProb <- c(splitPIP(as.matrix(object$DLM[is.infinite(object$DLM$xmax) & object$DLM$est > 0,]), Lags)) / Iter
+    splitProb <- c(splitPIP(as.matrix(object$DLM[object$DLM$est > 0,]), Lags)) / Iter
     # splitProb <- sapply(1:object$pExp, function(t) {
     #   mean(sapply(1:object$mcmcIter, function(i) {
     #     sum(object$DLM$est[which(object$DLM$Iter == i &

@@ -70,6 +70,7 @@ tdlnm <- function(formula,
                   tree.params = c(.95, 2),
                   step.prob = c(.25, .25),
                   monotone = FALSE,
+                  piecewise.linear = FALSE,
                   zirt.p0 = 0.5,
                   tree.time.params = c(.95, 2),
                   tree.exp.params = c(.95, 2),
@@ -166,15 +167,15 @@ tdlnm <- function(formula,
   model$treePriorTime <- tree.time.params
   model$maxThreads <- max.threads
   model$debug <- debug
-  model$p_t <- 1 - (1 - zirt.p0) ^ (1 / model$nTrees)
-  model$zirtAlpha <- model$nTrees * model$p_t / (1 + model$p_t)
+  model$p_t <- zirt.p0#1 - (1 - zirt.p0) ^ (1 / model$nTrees)
+  model$zirtAlpha <- rep(1, length(model$p_t))#model$nTrees * model$p_t / (1 + model$p_t)
   model$shape <- ifelse(!is.null(exposure.se), "Smooth",
                         ifelse(exposure.splits == 0, "Linear",
                                "Step Function"))
-  # model$shape <- ifelse(piecewise.linear, "Piecewise Linear",
-  #                       ifelse(!is.null(exposure.se), "Smooth",
-  #                              ifelse(exposure.splits == 0, "Linear",
-  #                                     "Step Function")))
+  model$shape <- ifelse(piecewise.linear, "Piecewise Linear",
+                        ifelse(!is.null(exposure.se), "Smooth",
+                               ifelse(exposure.splits == 0, "Linear",
+                                      "Step Function")))
 
   if (model$verbose)
     cat("Preparing data...\n")
@@ -365,9 +366,9 @@ tdlnm <- function(formula,
 
   # ---- Run model ----
   if (model$monotone) {
-    # if (piecewise.linear)
-    #   out <- monolintdlnm_Cpp(model)
-    # else
+    if (piecewise.linear)
+      out <- monolintdlnm_Cpp(model)
+    else
       out <- monotdlnm_Cpp(model)
   } else
     out <- tdlnm_Cpp(model)
@@ -406,16 +407,14 @@ tdlnm <- function(formula,
   model$DLM$est <- model$DLM$est * model$Yscale / model$Xscale
   model$DLM$xmin <- sapply(model$DLM$xmin, function(i) {
     if (i == 0) {
-      # if (piecewise.linear) min(model$X)
-      # else 
-      -Inf
+      if (piecewise.linear) min(model$X)
+      else -Inf
     } else model$Xsplits[i]
   })
   model$DLM$xmax <- sapply(model$DLM$xmax, function(i) {
     if (i == (length(model$Xsplits) + 1)) {
-      # if (piecewise.linear) max(model$X)
-      # else 
-      Inf
+      if (piecewise.linear) max(model$X)
+      else Inf
     } else model$Xsplits[i]
   })
 
@@ -424,6 +423,8 @@ tdlnm <- function(formula,
   model$Tcalc <- NULL
   model$Xcalc <- NULL
   model$Z <- NULL
+
+  model$p_t <- 1 - (1 - model$p_t) ^ (1 / model$nTrees)
 
   # Change env to list
   model.out <- lapply(names(model), function(i) model[[i]])

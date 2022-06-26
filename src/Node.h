@@ -20,6 +20,11 @@ public:
   bool updateXmat;
   std::vector<int> idx;
   Node* nestedTree;
+  
+  Eigen::MatrixXd XplProposed;
+  Eigen::MatrixXd ZtXmatProposed;
+  Eigen::MatrixXd VgZtXmatProposed;
+  Eigen::MatrixXd Xpl;
 };
 
 class Node {

@@ -68,16 +68,13 @@ double logPSplit(double alpha, double beta, int depth, bool terminal)
  * @param term 
  * @return double 
  */
-double logZIPSplit(Eigen::VectorXd timeProbs, int tmin, int tmax, bool term) {
-  double timeprob = 1.0 - pow(1 - timeProbs.segment(tmin - 1, tmax - tmin + 1).minCoeff(), 0.05);
+double logZIPSplit(Eigen::VectorXd timeProbs, int tmin, int tmax, int nTrees, bool term) {
+  double timeprob = 1.0 - pow(1 - timeProbs.segment(tmin - 1, tmax - tmin + 1).maxCoeff(), 1.0 / nTrees);
+  // double timeprob = timeProbs.segment(tmin - 1, tmax - tmin + 1).maxCoeff();
   if (term)
     return log1p(-timeprob);
   else
     return log(timeprob);
-  // if (term)
-  //   return log1p(-timeProbs.segment(tmin - 1, tmax - tmin + 1).maxCoeff());
-  // else 
-  //   return log(timeProbs.segment(tmin - 1, tmax - tmin + 1).maxCoeff());
 }
 
 /**

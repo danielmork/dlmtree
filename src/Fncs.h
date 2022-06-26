@@ -9,7 +9,7 @@ using namespace Rcpp;
 int sampleInt(const std::vector<double> &probs, double totProb);
 int sampleInt(const Eigen::VectorXd &probs);
 double logPSplit(double alpha, double beta, int depth, bool terminal);
-double logZIPSplit(Eigen::VectorXd timeProbs, int tmin, int tmax, bool term);
+double logZIPSplit(Eigen::VectorXd timeProbs, int tmin, int tmax, int nTrees, bool term);
 double logDirichletDensity(const Eigen::VectorXd &x, 
                            const Eigen::VectorXd &alpha);
 void rHalfCauchyFC(double* x2, double a, double b, double* yInv = 0);

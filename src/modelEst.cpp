@@ -433,6 +433,43 @@ VectorXd countMods(Node* tree, modDat* Mod)
   return(modCount);
 } // end countMods function
 
+
+VectorXd countTimeSplits(Node* tree, modelCtr* ctr)
+{
+  VectorXd timeCount(ctr->pX - 1); timeCount.setZero();
+  VectorXd unavailProb(ctr->pX - 1); unavailProb.setZero();
+  std::vector<int> unavail;  
+  for (Node* tn : tree->listInternal()) {
+    timeCount(tn->nodestruct->get(6) - 1) += 1.0;
+    unavail.clear();
+    unavailProb.setZero();
+    for (int i = 0; i < ctr->pX - 1; ++i) {
+      if ((tn->nodestruct->get(3) - 1 > i) || (tn->nodestruct->get(4) - 1 < i)) {
+        unavail.push_back(i);
+        unavailProb(i) = tree->nodestruct->getTimeProbs()(i);
+      }
+    }
+    if (unavail.size() > 0) {
+      std::random_shuffle(unavail.begin(), unavail.end());
+      double totProb = unavailProb.sum();
+      int pseudoDraw = R::rgeom(std::max(0.00000001, 1 - totProb));
+      int binomDraw = 0;
+      if (pseudoDraw > 0) {
+        for (int i : unavail) {
+          binomDraw = R::rbinom(pseudoDraw, unavailProb(i) / totProb);
+          if (binomDraw > 0)
+            timeCount(i) += binomDraw * 1.0;
+          totProb -= unavailProb(i);
+          pseudoDraw -= binomDraw;
+          if (pseudoDraw < 1)
+            break;
+        } // end multinom
+      } // end pseudoDraw
+    } // end unavail
+  } // end timeCount
+  return(timeCount);
+} // end countMods function
+
 /**
  * @brief draw tree structure from tree prior distribution
  * 
@@ -473,7 +510,7 @@ void drawZirt(Node* eta, tdlmCtr* ctr, NodeStruct* nsX)
   eta->nodevals->nestedTree->nodestruct = nsX->clone();
   eta->nodevals->nestedTree->nodestruct->setTimeRange(tmin, tmax);
   
-  double logProb = logZIPSplit(ctr->zirtPsi0, tmin, tmax, 0);  
+  double logProb = logZIPSplit(ctr->zirtPsi0, tmin, tmax, ctr->nTrees, 0);  
   if (log(R::runif(0, 1)) < logProb) {
     if (eta->nodevals->nestedTree->grow()) {
       eta->nodevals->nestedTree->accept();
@@ -504,12 +541,12 @@ double zeroInflatedTreeMHR(VectorXd timeProbs, std::vector<Node*> trees,
       
       if ((t >= tmin - 1) && (t < tmax)) { // check time within range        
         if (eta->nodevals->nestedTree->c1 == 0) { // single node tree
-          mhr += logZIPSplit(timeProbsNew, tmin, tmax, 1) -
-            logZIPSplit(timeProbs, tmin, tmax, 1);
+          mhr += logZIPSplit(timeProbsNew, tmin, tmax, trees.size(), 1) -
+            logZIPSplit(timeProbs, tmin, tmax, trees.size(), 1);
             
         } else {
-          mhr += logZIPSplit(timeProbsNew, tmin, tmax, 0) -
-            logZIPSplit(timeProbs, tmin, tmax, 0);
+          mhr += logZIPSplit(timeProbsNew, tmin, tmax, trees.size(), 0) -
+            logZIPSplit(timeProbs, tmin, tmax, trees.size(), 0);
             
         } // end if single node tree
       } // end time within range

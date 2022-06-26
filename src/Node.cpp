@@ -36,15 +36,15 @@ NodeVals::~NodeVals()
 NodeVals::NodeVals(const NodeVals& x)
 {
   X = x.X;
-  // Xpl = x.Xpl;
-  // XplProposed = x.XplProposed;
+  Xpl = x.Xpl;
+  XplProposed = x.XplProposed;
   XtX = x.XtX;
   ZtX = x.ZtX;
   ZtXmat = x.ZtXmat;
-  // ZtXmatProposed = x.ZtXmatProposed;
+  ZtXmatProposed = x.ZtXmatProposed;
   VgZtX = x.VgZtX;
   VgZtXmat = x.VgZtXmat;
-  // VgZtXmatProposed = x.VgZtXmatProposed;
+  VgZtXmatProposed = x.VgZtXmatProposed;
   tempV = x.tempV;
   idx = x.idx;
   updateXmat = x.updateXmat;
