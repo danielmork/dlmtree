@@ -17,6 +17,7 @@ summary.tdlnm <- function(object,
                           cenval = 0,
                           conf.level = 0.95,
                           exposure.se = NULL,
+                          zirt.cond = FALSE,
                           verbose = TRUE)
 {
   Iter <- object$mcmcIter
@@ -31,8 +32,7 @@ summary.tdlnm <- function(object,
   if (is.null(pred.at)) {
     pred.at <- object$Xsplits
   } else {
-    pred.at <- sort(unique(pred.at[which(pred.at >= object$Xrange[1] &
-                                           pred.at <= object$Xrange[2])]))
+    pred.at <- sort(unique(pred.at[which(pred.at >= object$Xrange[1] & pred.at <= object$Xrange[2])]))
   }
   edge.vals <- sort(c(object$Xrange, rowMeans(cbind(pred.at[-1], pred.at[-length(pred.at)]))))
 
@@ -52,6 +52,17 @@ summary.tdlnm <- function(object,
                       cenval, exposure.se)
   }
 
+  # Bayes factor
+  splitIter <- matrix(1, Lags, Iter)
+  splitProb <- logBF <- rep(0, Lags)
+  if (object$monotone) {
+    # splitIter <- object$timeCounts#
+    splitIter <- splitPIP(as.matrix(object$DLM[object$DLM$est > 0,]), Lags, Iter)
+    splitProb <- apply(splitIter, 1, mean)
+    logBF <- log10(splitProb) - log10(1 - splitProb) -
+      (log10(1 - (1 - object$p_t)^object$nTrees) - log10((1 - object$p_t)^object$nTrees))
+  }
+
   # Generate cumulative estimtes
   cumexp <- as.data.frame(t(sapply(1:length(pred.at), function(i) {
     cs <- colSums(dlmest[,i,])
@@ -65,11 +76,20 @@ summary.tdlnm <- function(object,
   cilower <- matrix(0, length(pred.at), Lags)
   ciupper <- matrix(0, length(pred.at), Lags)
   rownames(matfit) <- rownames(cilower) <- rownames(ciupper) <- pred.at
-  colnames(plot.dat) <-  c("Tmin", "Tmax", "Xmin", "Xmax", "PredVal",
-                           "Est", "SD", "CIMin", "CIMax", "Effect")
+  colnames(plot.dat) <-  c("Tmin", "Tmax", "Xmin", "Xmax", "PredVal", "Est", "SD", "CIMin", "CIMax", "Effect")
   for (i in 1:Lags) {
     for (j in 1:length(pred.at)) {
-      coordest <- dlmest[i,j,]
+      if (object$monotone & zirt.cond) {
+        if (sum(splitIter[,i]) == 0 | splitProb[i] < 0.5) {
+          plot.dat[(i - 1) * length(pred.at) + j, ] <-
+            c(i - 1, i, edge.vals[j], edge.vals[j + 1], pred.at[j],
+              0, 0, 0, 0, 0)
+          next;
+        }
+        coordest <- dlmest[i,j,which(splitIter[,i] == 1)]
+      } else {
+        coordest <- dlmest[i,j,]  
+      }
       me <- mean(coordest)
       s <- sd(coordest)
       ci <- quantile(coordest, ci.lims)
@@ -88,25 +108,13 @@ summary.tdlnm <- function(object,
   gamma.mean <- colMeans(object$gamma)
   gamma.ci <- apply(object$gamma, 2, quantile, probs = ci.lims)
 
-  # Bayes factor
-  splitProb <- logBF <- rep(0, Lags)
-  if (object$monotone) {
-    splitProb <- c(splitPIP(as.matrix(object$DLM[object$DLM$est > 0,]), Lags)) / Iter
-    # splitProb <- sapply(1:object$pExp, function(t) {
-    #   mean(sapply(1:object$mcmcIter, function(i) {
-    #     sum(object$DLM$est[which(object$DLM$Iter == i &
-    #                                object$DLM$tmin <= t &
-    #                                object$DLM$tmax >= t)]) }) > 0) })
-    logBF <- log10(splitProb) - log10(1 - splitProb) -
-      (log10(1 - (1 - object$p_t)^object$nTrees) - log10((1 - object$p_t)^object$nTrees))
-  }
   # Return
   ret <- list("ctr" = list(dl.function = object$dlFunction,
-                           n.trees = object$nTrees,
-                           n.iter = object$nIter,
-                           n.thin = object$nThin,
-                           n.burn = object$nBurn,
-                           response = object$family),
+                            n.trees = object$nTrees,
+                            n.iter = object$nIter,
+                            n.thin = object$nThin,
+                            n.burn = object$nBurn,
+                            response = object$family),
               "conf.level" = conf.level,
               "sig.to.noise" = ifelse(is.null(object$sigma2), NA,
                                       var(object$fhat) / mean(object$sigma2)),
@@ -120,7 +128,8 @@ summary.tdlnm <- function(object,
               "gamma.mean" = gamma.mean,
               "gamma.ci" = gamma.ci,
               "logBF" = logBF,
-              "splitProb" = splitProb)
+              "splitProb" = splitProb,
+              "splitIter" = splitIter)
   class(ret) <- "summary.tdlnm"
   return(ret)
 }

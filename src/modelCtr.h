@@ -29,7 +29,9 @@ public:
   VectorXd fhat;
   VectorXd tau;
   VectorXd zirtP0;
-  VectorXd zirtAlpha;
+  double zirtAlpha;
+  MatrixXd zirtCov;
+  VectorXd timeCounts;
   
   // Binomial
   bool binomial;

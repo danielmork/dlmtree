@@ -72,8 +72,9 @@ tdlnm <- function(formula,
                   monotone = FALSE,
                   piecewise.linear = FALSE,
                   zirt.p0 = 0.5,
+                  zirt.cor = 0.75,
                   tree.time.params = c(.95, 2),
-                  tree.exp.params = c(.95, 2),
+                  tree.exp.params = c(.5, 2),
                   shrinkage = 1,
                   subset = NULL,
                   lowmem = FALSE,
@@ -167,8 +168,8 @@ tdlnm <- function(formula,
   model$treePriorTime <- tree.time.params
   model$maxThreads <- max.threads
   model$debug <- debug
-  model$p_t <- zirt.p0#1 - (1 - zirt.p0) ^ (1 / model$nTrees)
-  model$zirtAlpha <- rep(1, length(model$p_t))#model$nTrees * model$p_t / (1 + model$p_t)
+  model$p_t <- 1 - (1 - zirt.p0) ^ (1 / model$nTrees)
+  model$zirtAlpha <- zirt.cor
   model$shape <- ifelse(!is.null(exposure.se), "Smooth",
                         ifelse(exposure.splits == 0, "Linear",
                                "Step Function"))
@@ -317,7 +318,6 @@ tdlnm <- function(formula,
   if (length(model$p_t) != ncol(model$X)) {
     if (length(model$p_t) == 1) {
       model$p_t = rep(model$p_t, ncol(model$X))
-      model$zirtAlpha = rep(model$zirtAlpha, ncol(model$X))
     } else {
       stop("zirt.p0 must be of length 1 or number of columns in exposure.data")
     }
@@ -424,7 +424,7 @@ tdlnm <- function(formula,
   model$Xcalc <- NULL
   model$Z <- NULL
 
-  model$p_t <- 1 - (1 - model$p_t) ^ (1 / model$nTrees)
+  # model$p_t <- 1 - (1 - model$p_t) ^ (1 / model$nTrees)
 
   # Change env to list
   model.out <- lapply(names(model), function(i) model[[i]])

@@ -33,8 +33,8 @@ dlnmEst <- function(dlnm, predAt, nlags, nsamp, center, se) {
     .Call(`_dlmtree_dlnmEst`, dlnm, predAt, nlags, nsamp, center, se)
 }
 
-splitPIP <- function(dlnm, nlags) {
-    .Call(`_dlmtree_splitPIP`, dlnm, nlags)
+splitPIP <- function(dlnm, nlags, niter) {
+    .Call(`_dlmtree_splitPIP`, dlnm, nlags, niter)
 }
 
 dlnmPLEst <- function(dlnm, predAt, nlags, nsamp, center) {
@@ -47,10 +47,6 @@ dlmEst <- function(dlm, nlags, nsamp) {
 
 mixEst <- function(dlm, nlags, nsamp) {
     .Call(`_dlmtree_mixEst`, dlm, nlags, nsamp)
-}
-
-monolintdlnm_Cpp <- function(model) {
-    .Call(`_dlmtree_monolintdlnm_Cpp`, model)
 }
 
 monotdlnm_Cpp <- function(model) {

@@ -22,6 +22,7 @@ tdlmm(
   subset = NULL,
   verbose = TRUE,
   diagnostics = FALSE,
+  initial.params = FALSE,
   ...
 )
 }
@@ -72,6 +73,8 @@ turns on horseshoe-like shrinkage priors for different parts of model}
 
 \item{diagnostics}{true or false (default) keep model diagnostic such as
 terminal nodes, acceptance details, etc.}
+
+\item{initial.params}{initial parameters for fixed effects model, FALSE = none (default), "glm" = generate using GLM, or user defined, length must equal number of parameters in fixed effects model}
 
 \item{...}{NA}
 }

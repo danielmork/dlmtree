@@ -514,18 +514,15 @@ void drawZirt(Node* eta, tdlmCtr* ctr, NodeStruct* nsX)
   if (log(R::runif(0, 1)) < logProb) {
     if (eta->nodevals->nestedTree->grow()) {
       eta->nodevals->nestedTree->accept();
-      drawTree(eta->nodevals->nestedTree, eta->nodevals->nestedTree->c1, 
-               ctr->treePrior2[0], ctr->treePrior2[1], 1.0);
-      drawTree(eta->nodevals->nestedTree, eta->nodevals->nestedTree->c2, 
-               ctr->treePrior2[0], ctr->treePrior2[1], 1.0);
+      drawTree(eta->nodevals->nestedTree, eta->nodevals->nestedTree->c1, ctr->treePrior2[0], ctr->treePrior2[1], 0.0);
+      drawTree(eta->nodevals->nestedTree, eta->nodevals->nestedTree->c2,   ctr->treePrior2[0], ctr->treePrior2[1], 0.0);
     }
   } // end grow tree
   return;
 } // end drawTree function
 
 
-double zeroInflatedTreeMHR(VectorXd timeProbs, std::vector<Node*> trees,
-                           int t, double newProb)
+double zeroInflatedTreeMHR(VectorXd timeProbs, std::vector<Node*> trees, int t, double newProb)
 {
   double mhr =          0.0;
   double timeProbSum =  0.0;

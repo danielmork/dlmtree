@@ -107,14 +107,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // splitPIP
-SEXP splitPIP(arma::dmat dlnm, int nlags);
-RcppExport SEXP _dlmtree_splitPIP(SEXP dlnmSEXP, SEXP nlagsSEXP) {
+arma::mat splitPIP(arma::dmat dlnm, int nlags, int niter);
+RcppExport SEXP _dlmtree_splitPIP(SEXP dlnmSEXP, SEXP nlagsSEXP, SEXP niterSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::dmat >::type dlnm(dlnmSEXP);
     Rcpp::traits::input_parameter< int >::type nlags(nlagsSEXP);
-    rcpp_result_gen = Rcpp::wrap(splitPIP(dlnm, nlags));
+    Rcpp::traits::input_parameter< int >::type niter(niterSEXP);
+    rcpp_result_gen = Rcpp::wrap(splitPIP(dlnm, nlags, niter));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -156,17 +157,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type nlags(nlagsSEXP);
     Rcpp::traits::input_parameter< int >::type nsamp(nsampSEXP);
     rcpp_result_gen = Rcpp::wrap(mixEst(dlm, nlags, nsamp));
-    return rcpp_result_gen;
-END_RCPP
-}
-// monolintdlnm_Cpp
-List monolintdlnm_Cpp(const List model);
-RcppExport SEXP _dlmtree_monolintdlnm_Cpp(SEXP modelSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const List >::type model(modelSEXP);
-    rcpp_result_gen = Rcpp::wrap(monolintdlnm_Cpp(model));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -238,11 +228,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dlmtree_dlmtreeTDLMNestedGaussian", (DL_FUNC) &_dlmtree_dlmtreeTDLMNestedGaussian, 1},
     {"_dlmtree_dlmtreeTDLM_cpp", (DL_FUNC) &_dlmtree_dlmtreeTDLM_cpp, 1},
     {"_dlmtree_dlnmEst", (DL_FUNC) &_dlmtree_dlnmEst, 6},
-    {"_dlmtree_splitPIP", (DL_FUNC) &_dlmtree_splitPIP, 2},
+    {"_dlmtree_splitPIP", (DL_FUNC) &_dlmtree_splitPIP, 3},
     {"_dlmtree_dlnmPLEst", (DL_FUNC) &_dlmtree_dlnmPLEst, 5},
     {"_dlmtree_dlmEst", (DL_FUNC) &_dlmtree_dlmEst, 3},
     {"_dlmtree_mixEst", (DL_FUNC) &_dlmtree_mixEst, 3},
-    {"_dlmtree_monolintdlnm_Cpp", (DL_FUNC) &_dlmtree_monolintdlnm_Cpp, 1},
     {"_dlmtree_monotdlnm_Cpp", (DL_FUNC) &_dlmtree_monotdlnm_Cpp, 1},
     {"_dlmtree_zeroToInfNormCDF", (DL_FUNC) &_dlmtree_zeroToInfNormCDF, 2},
     {"_dlmtree_rtmvnorm", (DL_FUNC) &_dlmtree_rtmvnorm, 3},

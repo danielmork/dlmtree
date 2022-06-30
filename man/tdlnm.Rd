@@ -9,22 +9,29 @@ tdlnm(
   data,
   exposure.data,
   exposure.splits = 50,
-  exposure.se = NULL,
+  exposure.se = sd(exposure.data)/2,
   n.trees = 20,
   n.burn = 2000,
   n.iter = 5000,
-  n.thin = 10,
+  n.thin = 5,
   family = "gaussian",
   binomial.size = 1,
   tree.params = c(0.95, 2),
   step.prob = c(0.25, 0.25),
   monotone = FALSE,
-  tree.time.params = c(0.5, 2),
-  tree.exp.params = c(0.2, 2),
+  piecewise.linear = FALSE,
+  zirt.p0 = 0.5,
+  zirt.cor = 0.75,
+  tree.time.params = c(0.95, 2),
+  tree.exp.params = c(0.5, 2),
   shrinkage = 1,
   subset = NULL,
+  lowmem = FALSE,
+  max.threads = 0,
   verbose = TRUE,
   diagnostics = FALSE,
+  initial.params = FALSE,
+  debug = FALSE,
   ...
 )
 }
@@ -46,15 +53,15 @@ model, which assumes a linear effect of exposure.}
 
 \item{exposure.se}{numerical matrix of exposure standard errors with same
 size as exposure.data or a scalar smoothing factor representing a uniform
-smoothing factor applied to each exposure measurement}
+smoothing factor applied to each exposure measurement, defaults to sd(exposure.data)/2}
 
-\item{n.trees}{integer for number of trees in ensemble}
+\item{n.trees}{integer for number of trees in ensemble, default = 20}
 
-\item{n.burn}{integer for length of burn-in}
+\item{n.burn}{integer for length of burn-in, >=2000 recommended}
 
-\item{n.iter}{integer for number of iterations to run model after burn-in}
+\item{n.iter}{integer for number of iterations to run model after burn-in >=5000 recommended}
 
-\item{n.thin}{integer thinning factor, i.e. keep every tenth iteration}
+\item{n.thin}{integer thinning factor, i.e. keep every fifth iteration}
 
 \item{family}{'gaussian' for continuous response, or 'logit' for binomial
 response with logit link}
@@ -70,20 +77,30 @@ beta = 2}
 2) change, defaults to (0.25, 0.25) or equal
 probability of each step for tree updates}
 
+\item{monotone}{false (default) or true: estimate monotone effects}
+
+\item{zirt.p0}{probability of effect at any given time t (monotone model only), default = 0.5}
+
 \item{shrinkage}{int, 1 (default) turn on tree-specific shrinkage priors,
 0 turn off}
 
 \item{subset}{integer vector to analyze only a subset of data and exposures}
 
-\item{verbose}{true (default) or false: print output}
+\item{lowmem}{false (default) / true: turn on memory saver for DLNM, slower computation time}
+
+\item{verbose}{true (default) or false: print progress bar output}
 
 \item{diagnostics}{true or false (default) keep model diagnostic such as
 terminal nodes, acceptance details, etc.}
 
+\item{initial.params}{initial parameters for fixed effects model, FALSE = none (default), "glm" = generate using GLM, or user defined, length must equal number of parameters in fixed effects model}
+
+\item{debug}{if true, outputs debugging messages}
+
 \item{...}{NA}
 }
 \value{
-obect of class 'tdlnm' or 'tdlm'
+object of class 'tdlnm' or 'tdlm'
 }
 \description{
 TDLNM is a method for estimating Distributed Lag
