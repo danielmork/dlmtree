@@ -195,7 +195,7 @@ Rcpp::List dlmtreeGPGaussian(const Rcpp::List model)
         logDirichletDensity(Mod->modProb,
                             (ctr->modCount.array() +
                              ctr->modKappa / ctr->pM).matrix());
-      if (log(R::runif(0, 1) < mhrDir)) {
+      if (log(R::runif(0, 1)) < mhrDir) {
         ctr->modKappa = modKappaNew;
       }
 

@@ -71,10 +71,10 @@ tdlnm <- function(formula,
                   step.prob = c(.25, .25),
                   monotone = FALSE,
                   piecewise.linear = FALSE,
-                  zirt.p0 = 0.9,
-                  zirt.cor = 0.9,
+                  zirt.p0 = 0.5,
+                  zirt.cor = 0.5,
                   tree.time.params = c(.95, 2),
-                  tree.exp.params = c(.5, 2),
+                  tree.exp.params = c(.95, 2),
                   shrinkage = 1,
                   subset = NULL,
                   lowmem = FALSE,
@@ -168,7 +168,7 @@ tdlnm <- function(formula,
   model$treePriorTime <- tree.time.params
   model$maxThreads <- max.threads
   model$debug <- debug
-  model$p_t <- 1 - (1 - zirt.p0) ^ (1 / model$nTrees)
+  model$p_t <- zirt.p0#1 - (1 - zirt.p0) ^ (1 / model$nTrees)
   model$zirtAlpha <- zirt.cor
   model$shape <- ifelse(!is.null(exposure.se), "Smooth",
                         ifelse(exposure.splits == 0, "Linear",

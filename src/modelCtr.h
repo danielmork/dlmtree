@@ -81,6 +81,7 @@ public:
   MatrixXd termNodes;
   MatrixXd zirtPsi0;
   MatrixXd zirtPsi1;
+  VectorXd zirtCov;
   MatrixXd timeProbs;
   MatrixXd timeCounts;
 

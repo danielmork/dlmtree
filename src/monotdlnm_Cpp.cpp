@@ -195,15 +195,6 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn, exposure
         }
       }
     } else { // end draw nested trees if grow/prune
-      // for (Node* eta : dlnmTerm) {
-      //   int tmin = eta->nodestruct->get(3);
-      //   int tmax = eta->nodestruct->get(4);
-      //   if (eta->nodevals->nestedTree->c1 == 0) {
-      //     stepMhr -= logZIPSplit(ctr->zirtPsi0, tmin, tmax, ctr->nTrees, 1);
-      //   } else {
-      //     stepMhr -= logZIPSplit(ctr->zirtPsi0, tmin, tmax, ctr->nTrees, 0);
-      //   }
-      // }
       for (Node* eta : newDlnmTerm) { // update time range for nested nodes
         int tmin = eta->nodestruct->get(3);
         int tmax = eta->nodestruct->get(4);
@@ -224,11 +215,6 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn, exposure
             Exp->updateNodeVals(lambda);
           }
         }
-        // if (eta->nodevals->nestedTree->c1 == 0) {
-        //   stepMhr += logZIPSplit(ctr->zirtPsi0, tmin, tmax, ctr->nTrees, 1);
-        // } else {
-        //   stepMhr += logZIPSplit(ctr->zirtPsi0, tmin, tmax, ctr->nTrees, 0);
-        // }
       }
     }
     
@@ -442,16 +428,35 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   ctr->nSplits =    Exp->nSplits;
   ctr->timeCounts.resize(ctr->pX); ctr->timeCounts.setZero();
   ctr->zirtPsi0 =   ctr->zirtP0;
-  ctr->zirtCov.resize(ctr->pX, ctr->pX); ctr->zirtCov.setZero();
-  // ctr->zirtCov.diagonal().array() = 1.0;
-  for (int i = 1; i < ctr->pX; ++i) {
-    ctr->zirtCov.diagonal(i).array() = i;
-    ctr->zirtCov.diagonal(-i).array() = i;
+
+  std::vector<MatrixXd> zirtCovInv;
+  std::vector<double> zirtCovDet;
+  for (int i = 1; i < 20; ++i) {
+    MatrixXd covMat(ctr->pX, ctr->pX); covMat.setZero();
+    for (int j = 1; j < ctr->pX; ++j) {
+      covMat.diagonal(j).array() = j;
+      covMat.diagonal(-j).array() = j;
+    }
+    // covMat = covMat.array().square();
+    covMat *= log(i * 0.05);
+    covMat = covMat.array().exp();
+    MatrixXd covDet = covMat.llt().matrixL();
+    zirtCovInv.push_back(covMat.inverse());
+    zirtCovDet.push_back(covDet.diagonal().array().log().sum());
   }
-  ctr->zirtCov *= log(ctr->zirtAlpha);
-  ctr->zirtCov = ctr->zirtCov.array().exp();
-  // ctr->zirtCov /= ctr->zirtAlpha; 
-  ctr->zirtCov = ctr->zirtCov.inverse();
+  int curCov = 9;
+  ctr->zirtCov = zirtCovInv[9];
+
+  // ctr->zirtCov.resize(ctr->pX, ctr->pX); ctr->zirtCov.setZero();
+  // // ctr->zirtCov.diagonal().array() = 1.0;
+  // for (int i = 1; i < ctr->pX; ++i) {
+  //   ctr->zirtCov.diagonal(i).array() = i;
+  //   ctr->zirtCov.diagonal(-i).array() = i;
+  // }
+  // ctr->zirtCov = ctr->zirtCov.array().square();
+  // ctr->zirtCov *= log(ctr->zirtAlpha);
+  // ctr->zirtCov = ctr->zirtCov.array().exp();
+  // ctr->zirtCov = ctr->zirtCov.inverse();
   
   // * Calculations used in special case: single-node trees
   ctr->X1 =         Exp->Tcalc.col(ctr->pX - 1);
@@ -497,6 +502,8 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   dgn->fhat2.resize(ctr->n);                        dgn->fhat2.setZero();
   dgn->termNodes.resize(ctr->nTrees, ctr->nRec);    dgn->termNodes.setZero();
   dgn->zirtPsi0.resize(ctr->pX, ctr->nRec);         dgn->zirtPsi0.setZero();
+  dgn->zirtCov.resize(ctr->nRec);                   dgn->zirtCov.setZero();
+  dgn->kappa.resize(ctr->nRec);                   dgn->kappa.setZero();
   dgn->timeProbs.resize(ctr->pX - 1, ctr->nRec);   dgn->timeProbs.setZero();
   dgn->timeCounts.resize(ctr->pX, ctr->nRec);   dgn->timeCounts.setZero();
   
@@ -603,19 +610,40 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
         zirtProb += cwV.inverse().llt().matrixL() * as<VectorXd>(rnorm(ctr->pX, 0, 1));
       }
       ctr->zirtPsi0 = zirtProb;
-      // if (ctr->debug)
-        // Rcout << "\nzirtPsi0: " << cwY.sum() << " " << cwX.sum() << " " << ctr->zirtPsi0.sum() << " " << cwV.diagonal().mean();
+      
+
+      // update CW var selection covariance matrix
+      double covMHR = 0.0;
+      int newCov = curCov;
+      if (curCov == 0) {
+        newCov = 1;
+        covMHR += log(0.5);
+      } else if (curCov == 18) {
+        newCov = 17;
+        covMHR += log(0.5);
+      } else {
+        if (R::runif(0.0, 1.0) < 0.5) {
+          ++newCov;
+        } else {
+          --newCov;
+        }
+      }
+      covMHR += -zirtCovDet[newCov] - (ctr->zirtPsi0 - ctr->zirtP0).dot(zirtCovInv[newCov] * (ctr->zirtPsi0 - ctr->zirtP0)) + zirtCovDet[curCov] + (ctr->zirtPsi0 - ctr->zirtP0).dot(zirtCovInv[curCov] * (ctr->zirtPsi0 - ctr->zirtP0));
+      if (log(R::runif(0.0, 1.0)) < covMHR) {
+        curCov = newCov;
+        ctr->zirtCov = zirtCovInv[curCov];
+      }
 
 
       // tree splitting probabilities
       VectorXd timeProbs = trees[1]->nodestruct->getTimeProbs();
       double beta = R::rbeta(1.0, 1.0);
-      double modKappaNew = beta * ctr->pX / (1 - beta);
-      double mhrDir = logDirichletDensity(timeProbs, (timeSplits.array() + modKappaNew / ctr->pX).matrix()) - logDirichletDensity(timeProbs, (timeSplits.array() + ctr->modKappa / ctr->pX).matrix());
-      if (log(R::runif(0, 1) < mhrDir))
+      double modKappaNew = beta * (ctr->pX - 1.0)/ (1 - beta);
+      double mhrDir = logDirichletDensity(timeProbs, (timeSplits.array() + modKappaNew / (ctr->pX - 1.0)).matrix()) - logDirichletDensity(timeProbs, (timeSplits.array() + ctr->modKappa / (ctr->pX - 1.0)).matrix());
+      if (log(R::runif(0, 1)) < mhrDir)
         ctr->modKappa = modKappaNew;
 
-      VectorXd newTimeProbs = rDirichlet((timeSplits.array() + ctr->modKappa / ctr->pX).matrix());
+      VectorXd newTimeProbs = rDirichlet((timeSplits.array() + ctr->modKappa / (ctr->pX - 1.0)).matrix());
 
 
       // update tree time split probabilities
@@ -638,6 +666,8 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
       dgn->fhat +=                          ctr->fhat;
       dgn->fhat2 +=                         ctr->fhat.array().square().matrix();
       dgn->zirtPsi0.col(ctr->record - 1) =  ctr->zirtPsi0;
+      dgn->zirtCov(ctr->record - 1) =            curCov;
+      dgn->kappa(ctr->record - 1) =            ctr->modKappa;
       dgn->timeProbs.col(ctr->record -1) = trees[0]->nodestruct->getTimeProbs();
       dgn->timeCounts.col(ctr->record - 1) = ctr->timeCounts;
     }
@@ -655,8 +685,12 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   Eigen::VectorXd fhat = (dgn->fhat).array() / ctr->nRec;
   Eigen::MatrixXd gamma = (dgn->gamma).transpose();
   Eigen::MatrixXd zirtPsi0 = dgn->zirtPsi0.transpose();
+  Eigen::VectorXd kappa = dgn->kappa;
+  Eigen::VectorXd zirtCov = dgn->zirtCov;
   Eigen::MatrixXd tau = (dgn->tau).transpose();
   Eigen::MatrixXd termNodes = (dgn->termNodes).transpose();
+  Eigen::MatrixXd timeProbs = (dgn->timeProbs).transpose();
+  Eigen::MatrixXd timeCounts = (dgn->timeCounts).transpose();
   Eigen::MatrixXd Accept((dgn->TreeAccept).size(), 5);
   for (s = 0; s < (dgn->TreeAccept).size(); ++s)
     Accept.row(s) = dgn->TreeAccept[s];
@@ -672,11 +706,13 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
     Named("fhat")   = wrap(fhat),
     Named("sigma2") = wrap(sigma2),
     Named("nu")     = wrap(nu),
+    Named("kappa")     = wrap(kappa),
+    Named("zirtCov")     = wrap(zirtCov),
     Named("tau")    = wrap(tau),
     Named("termNodes")  = wrap(termNodes),
     Named("gamma")  = wrap(gamma),
     Named("zirt") = wrap(zirtPsi0),
-    Named("timeProbs") = wrap(dgn->timeProbs.transpose()),
-    Named("timeCounts") = wrap(dgn->timeCounts.transpose()),
+    Named("timeProbs") = wrap(timeProbs),
+    Named("timeCounts") = wrap(timeCounts),
     Named("treeAccept") = wrap(Accept)));
 } // end function monotdlnm_Cppa
