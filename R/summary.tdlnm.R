@@ -22,11 +22,11 @@ summary.tdlnm <- function(object,
 {
   Iter <- object$mcmcIter
   Lags <- object$pExp
-  # if (object$monotone) {
-  #   ci.lims <- c((1 - conf.level), 1)
-  # } else {
+  if (object$monotone) {
+    ci.lims <- c((1 - conf.level), 1)
+  } else {
     ci.lims <- c((1 - conf.level) / 2, 1 - (1 - conf.level) / 2)
-  # }
+  }
   if (is.null(exposure.se) && !is.na(object$SE[1]))
     exposure.se <- mean(as.matrix(object$SE))
   else if (is.null(exposure.se))
