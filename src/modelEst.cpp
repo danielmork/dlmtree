@@ -85,39 +85,42 @@ void tdlmModelEst(modelCtr *ctr)
     // *** Step 1: Update the latent At-Risk Indicators ***
     // Step 1-1: Calculate eta1 for logit1, eta2 (binary) & logit2 & nu2 (count)
     // Rcout << "Step 1: Updating the latent indicator variable \n";
-    Eigen::VectorXd eta1 = (ctr->Z) * (ctr->b1);    // Z * \gamma
+    Eigen::VectorXd eta1 = (ctr->Z) * (ctr->b1);              // Z * \gamma
+    eta1.noalias() += ctr->areaA * ctr->spPhi;                // Z * \gamma + spatial random effect
     Eigen::VectorXd eta2 = (ctr->fhat);                       // dlm effect
     eta2.noalias() += ctr->Z * ctr->b2;                       // dlm effect + fixed effect
 
-    Eigen::VectorXd spatialPhi;
-    spatialPhi.resize(ctr->n); spatialPhi.setZero();
-
-    if(ctr->spatial){ // For spatial analysis, add a random effect
-      spatialPhi = (ctr->Qchol) * as<Eigen::VectorXd>(rnorm(ctr->n, 0, 1));
-      eta1.noalias() += spatialPhi;
-      eta2.noalias() += spatialPhi;
-    }
-
+    // Rcout << "here2 \n";
     Eigen::VectorXd logit1 = 1 / (1 + exp(-(eta1).array()));
     Eigen::VectorXd logit2 = 1 / (1 + exp(-(eta2).array()));  // psi 
     Eigen::VectorXd nu2 = 1 - logit2.array();
 
     // Rcout << "Step 1: Resetting the latent indicator variable \n";
     ctr->w.setOnes(); // Reset w
-
+    // Rcout << "here3 \n";
     // Sampling w
     for(int z = 0; z < (ctr->yZeroN); z++){ // For all y = 0,
       // Find the index of y = 0,
       int idx = (ctr->yZeroIdx)[z]; 
 
       // Bernoulli probability
-      double prob = log(logit1[idx]) + (ctr->r) * log((nu2)[idx])
-                  - log(1 - logit1[idx] + logit1[idx] * pow((nu2)[idx], (ctr->r))); 
+      long double prob = log(logit1[idx]) + (ctr->r) * log((nu2)[idx])
+                        - log(1 - logit1[idx] + logit1[idx] * pow((nu2)[idx], (ctr->r))); 
 
       // Update the index with a probability with either 0 or 1
       (ctr->w)[idx] = R::rbinom(1, exp(prob)); 
-    }
 
+      // Rcout << (ctr->w)[idx];
+      // Rcout << "\n";
+      // Rcout << "---------- \n";
+
+      if(isnan(ctr->w[idx])){
+        (ctr->w)[idx] = 0;
+      }
+    }
+    // Rcout << "here4 \n";
+    //ctr->w.setOnes(); // Reset w (### Comment this or not to determine ZINB and NB)
+    
     // Update the number of at-risk individuals
     ctr->nStar = (ctr->w).sum();
 
@@ -128,6 +131,11 @@ void tdlmModelEst(modelCtr *ctr)
         ctr->atRiskIdx.push_back(j); // Save the index if w = 1
       }
     }
+    
+    // Rcout << ctr->atRiskIdx.size();
+    // Rcout << " vs ";
+    // Rcout << ctr->nStar;
+    // Rcout << "\n";
 
     // Check the atRiskIdx vector
     if(ctr->atRiskIdx.size() != (ctr->nStar)){
@@ -163,12 +171,122 @@ void tdlmModelEst(modelCtr *ctr)
     // 2-3: Sample b1
     // Rcout << "Step 2-3: Sampling b1 \n";
     // Mean of b1
-    Eigen::VectorXd R1 = ctr->z1.array() - spatialPhi.array();
+    Eigen::VectorXd R1 = ctr->z1 - (ctr->areaA * ctr->spPhi);
     const Eigen::VectorXd ZR1 = ctr->Z.transpose() * (ctr->Omega1) * (R1); // (px1)(nxn)(nx1) = (px1)(no DLM effects)
     ctr->b1 = ctr->Vg1 * ZR1; // Mean (pxp)(px1)
 
     // Variance of b1 using cholesky
     ctr->b1.noalias() += ctr->VgChol1 * as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2)));
+
+    // *** Extra Step 2: Spatial random effect ***
+    if(ctr->spatial){ // For spatial analysis, add a random effect
+      // [Update spTau with full conditional (Strictly positive)] --------------------------------------------------------
+      double spTauP = ctr->spTau + R::rnorm(0, 1);
+      while(spTauP < 0){
+        spTauP = ctr->spTau + R::rnorm(0, 1);
+      }
+
+      // 2. Calcuate the full conditional of spTau : p(spTau) * p(spPhi|spTau) 
+      double spTauMHratio = 0;
+
+      // Add prior probability: Prior is set as Gamma(3, 3)
+      spTauMHratio += R::dgamma(spTauP, 3, 3, true);      // Proposed (Numerator)
+      spTauMHratio -= R::dgamma(ctr->spTau, 3, 3, true);  // Current (Denominator)
+
+      for (int spNodeIndex = 0; spNodeIndex < (ctr->spNodes1).size(); spNodeIndex++){
+        // Converting from R indexing to C++ index
+        int spNode1 = (ctr->spNodes1)[spNodeIndex] - 1;
+        int spNode2 = (ctr->spNodes2)[spNodeIndex] - 1;
+
+        // Numerator (Proposed)
+        spTauMHratio += - (spTauP) * 0.5 * (pow((ctr->spPhi)[spNode1], 2) - 2 * (ctr->rho) * (ctr->spPhi)[spNode1] * (ctr->spPhi)[spNode2] + pow((ctr->spPhi)[spNode2], 2)); 
+        // Denominator (Current)
+        spTauMHratio -= - (ctr->spTau) * 0.5 * (pow((ctr->spPhi)[spNode1], 2) - 2 * (ctr->rho) * (ctr->spPhi)[spNode1] * (ctr->spPhi)[spNode2] + pow((ctr->spPhi)[spNode2], 2));
+      }
+
+      spTauMHratio = std::min(1.0, exp(spTauMHratio));
+
+      // 3. Accept/Reject
+      // Proposed probability is higher -> accept with 1
+      if(R::runif(0, 1) < spTauMHratio){
+        ctr->spTau = spTauP;
+      } // spTau update end
+
+      ctr->spTau = 1; // Fix spTau as 1 for now.
+
+      // [Update rho with full conditional] ----------------------------------------------------------------
+      // Metropolis Hasting for rho 
+      double rhoP = ctr->rho + R::rnorm(0, 0.1); // Proposal: q(rho*|rho) ~ N(rho, 0.1) -> Transition in MH ratio cancels out
+      while(rhoP < 0 || rhoP > 1){               // rho must be between 0 and 1
+        rhoP = ctr->rho + R::rnorm(0, 0.1);
+      }
+      
+      // 2. Calcuate the full conditional of rho : p(rho) * p(spPhi|rho)
+      // FC of rho = log(dnorm(0, 0.2)) + log(prob of phi1^2 - 2 * rho * phi1 * phi2 + phi2^2)
+      double rhoMHratio = 0;
+
+      // Add prior probability in log: Prior is set as Unif(-1, 1) = Beta(1, 1) as rho is between -1 and 1
+      rhoMHratio += log(0.5);        // Proposed
+      rhoMHratio -= log(0.5);        // Current
+
+      for (int spNodeIndex = 0; spNodeIndex < (ctr->spNodes1).size(); spNodeIndex++){
+        // Converting from R indexing to C++ index
+        int spNode1 = (ctr->spNodes1)[spNodeIndex] - 1;
+        int spNode2 = (ctr->spNodes2)[spNodeIndex] - 1;
+
+        // Proposed
+        rhoMHratio += - (ctr->spTau) * 0.5 * (pow(ctr->spPhi[spNode1], 2) - 2 * (rhoP) * ctr->spPhi[spNode1] * ctr->spPhi[spNode2] + pow(ctr->spPhi[spNode2], 2));
+        // Current
+        rhoMHratio -= - (ctr->spTau) * 0.5 * (pow(ctr->spPhi[spNode1], 2) - 2 * (ctr->rho) * ctr->spPhi[spNode1] * ctr->spPhi[spNode2] + pow(ctr->spPhi[spNode2], 2));
+      }
+
+      rhoMHratio = std::min(1.0, exp(rhoMHratio));
+
+      // 3. Accept/Reject
+      // Proposed probability is higher -> accept with 1
+      if(R::runif(0, 1) < rhoMHratio){
+        ctr->rho = rhoP;
+      } // rho update end
+
+      // [With updated rho and spTau, update Qinv] ------------------------------------------------
+      ctr->areaQ = (ctr->spTau) * (ctr->areaD - (ctr->rho) * ctr->areaW);
+      //ctr->areaQinv = (ctr->areaQ).inverse();
+
+      // Rcout << "Vp and zPhi \n";
+      // 2-2: Update Vp and zPhi
+      // Vp
+      // Rcout << "Step 2-2: Updating Vg1 \n";
+      Eigen::MatrixXd VpInv(ctr->spN, ctr->spN); 
+      // At * Omega * A : (spN x spN)
+      VpInv.triangularView<Eigen::Lower>() = ctr->areaA.transpose() * (ctr->Omega1) * (ctr->areaA);
+      VpInv += ctr->areaQ; // AT*Omega1*A  + CAR prior inverse
+      VpInv.triangularView<Eigen::Upper>() = VpInv.transpose().eval(); 
+      ctr->Vp.triangularView<Eigen::Lower>() = VpInv.inverse();
+      ctr->Vp.triangularView<Eigen::Upper>() = ctr->Vp.transpose().eval();   
+      ctr->VpChol = ctr->Vp.llt().matrixL();
+
+      // zPhi
+      // Rcout << "Step 2-2: Updating z1 \n";
+      // Recalculate eta1 with the updated b1
+      eta1.setZero();
+      eta1 = (ctr->Z) * (ctr->b1);                        // Z * \gamma
+      eta1.noalias() += ctr->areaA * ctr->spPhi;          // Z * \gamma + spatial random effect
+
+      // Resample PG variable with the updated eta1
+      ctr->omegaPhi = rcpp_pgdraw(ctr->ones, eta1);       // Sample PG
+      ctr->OmegaPhi = (ctr->omegaPhi).asDiagonal();       // OmegaPhi matrix
+      ctr->zPhi = ((ctr->w).array() - 0.5).array() / ctr->omegaPhi.array(); 
+
+      // 2-3: Sample phi
+      //Rcout << "Step 2-3: Sampling spPhi \n";
+      // Mean of spPhi
+      Eigen::VectorXd Rphi = ctr->zPhi - ((ctr->Z) * (ctr->b1));
+      const Eigen::VectorXd ARphi = ctr->areaA.transpose() * (ctr->OmegaPhi) * (Rphi); // (px1)(nxn)(nx1) = (px1)(no DLM effects)
+      ctr->spPhi = ctr->Vp * ARphi; // Mean (spN x spN)(spN x 1)
+
+      // Variance of spPhi using cholesky
+      ctr->spPhi.noalias() += ctr->VpChol * as<Eigen::VectorXd>(rnorm(ctr->spN, 0, sqrt(ctr->sigma2)));
+    }
 
     // *** Step 3: Negative Binomial (count) component ***
     // 3-1: Update Omega2 ~ PG(y + r, psi2) with dlm effect
@@ -207,9 +325,8 @@ void tdlmModelEst(modelCtr *ctr)
     // R (partial residual) (nx1)
     // Rcout << "Step 3-2: Updating R \n";
     Eigen::VectorXd fhatStar = ctr->fhat.array() * ctr->w.array(); 
-    Eigen::VectorXd phiStar = spatialPhi.array() * ctr->w.array(); 
 
-    ctr->R = ctr->Ystar - fhatStar - phiStar; // (nx1) - (nx1) = (nx1)
+    ctr->R = ctr->Ystar - fhatStar; // (nx1) - (nx1) = (nx1)
 
     // 3-3: Sample b2
     // Rcout << "Step 3-3: Sampling b2 \n";
@@ -247,10 +364,6 @@ void tdlmModelEst(modelCtr *ctr)
       (ctr->MHratio) += R::dnbinom((ctr->Y0)[index_aR], rP, nu2[index_aR], true);
       (ctr->MHratio) -= R::dnbinom((ctr->Y0)[index_aR], rC, nu2[index_aR], true);
     }
-
-    // Transition probability is the same for random walk
-    // (ctr->MHratio) += log(dtruncnorm(rC, rP, sqrt(ctr->MHvar), 0, 10));
-    // (ctr->MHratio) -= log(dtruncnorm(rP, rC, sqrt(ctr->MHvar), 0, 10));
 
     //Rcout << "MH ratio: " << exp(ctr->MHratio) << "\n";
     ctr->MHratio = std::min(1.0, exp(ctr->MHratio));
@@ -357,17 +470,19 @@ double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step)
   // Grow
   if (step == 0) {
     // select node to grow
-    no = (std::size_t) floor(R::runif(0, dlnmTerm.size())); 
+    no = (std::size_t) floor(R::runif(0, dlnmTerm.size())); // Uniform selection among terminal nodes
 
     if (dlnmTerm[no]->grow()) { // propose new split
       double nGen2 = double(tree->nGen2());
-      if (dlnmTerm[no]->depth == 0) { // depth == 0
+      if (dlnmTerm[no]->depth == 0) { // If selected terminal node is the root node,
         ++nGen2;
       } else {
         if (!(dlnmTerm[no]->parent->isGen2())) {
           ++nGen2;
         }
       }
+
+      // Compute MH ratio for growing
       stepMhr = log((double)tree->nTerminal()) - log(nGen2) +
         2 * logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], dlnmTerm[no]->depth + 1, 1) +
         logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], dlnmTerm[no]->depth, 0) -
@@ -378,7 +493,7 @@ double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step)
     }
 
 
-    // Prune
+  // Prune
   } else if (step == 1) {
     tempNodes = tree->listGen2();
     no = floor(R::runif(0, tempNodes.size())); // select gen2 node to prune
@@ -392,7 +507,7 @@ double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step)
     // newDlnmTerm = tree->listTerminal(1); // list proposed terminal nodes
 
 
-    // Change
+  // Change
   } else {
     tempNodes = tree->listInternal();
     no = floor(R::runif(0, tempNodes.size())); // select internal nodes to change 

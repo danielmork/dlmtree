@@ -20,17 +20,65 @@ print.summary.tdlnm <- function(object, digits = 3)
   cat("-", object$ctr$n.iter, "post-burn iterations\n")
   cat("-", object$ctr$n.thin, "thinning factor\n")
   cat("-", object$conf.level, "confidence level\n")
+  if(object$ctr$response != "zinb"){
+    cat("\nFixed effect coefficients:\n")
+    gamma.out <- data.frame("Mean" = round(object$gamma.mean, digits),
+                            "Lower Bound" = round(object$gamma.ci[1,], digits),
+                            "Upper Bound" = round(object$gamma.ci[2,], digits))
+    row.names(gamma.out) <- ifelse(object$gamma.ci[1,] > 0 | object$gamma.ci[2,] < 0,
+                                  paste0("*", names(object$gamma.mean)),
+                                  names(object$gamma.mean))
+    print(gamma.out)
+    cat("---\n")
+    cat("* = CI does not contain zero\n")
+  }
 
-  cat("\nFixed effect coefficients:\n")
-  gamma.out <- data.frame("Mean" = round(object$gamma.mean, digits),
-                          "Lower Bound" = round(object$gamma.ci[1,], digits),
-                          "Upper Bound" = round(object$gamma.ci[2,], digits))
-  row.names(gamma.out) <- ifelse(object$gamma.ci[1,] > 0 | object$gamma.ci[2,] < 0,
-                                 paste0("*", names(object$gamma.mean)),
-                                 names(object$gamma.mean))
-  print(gamma.out)
-  cat("---\n")
-  cat("* = CI does not contain zero\n")
+  # Print fixed effect coefficient results (ZINB - Binary)
+  if(object$ctr$response == "zinb"){
+    cat("\nFixed effects (Binary):\n")
+    if (length(object$droppedCovar) > 0)
+      cat("dropped collinear covariates:", paste(object$droppedCovar, collapse = ", "),"\n")
+      
+    b1.out <- data.frame("Mean" = round(object$b1.mean, digits),
+                         "Lower" = round(object$b1.ci[1,], digits),
+                          "Upper" = round(object$b1.ci[2,], digits))
+    row.names(b1.out) <-
+      ifelse(object$b1.ci[1,] > 0 | object$b1.ci[2,] < 0,
+            paste0("*", names(object$b1.mean)),
+            paste0(" ", names(object$b1.mean)))
+    print(b1.out)
+    cat("---\n")
+
+    # Print fixed effect coefficient results (ZINB - Count)
+    cat("\nFixed effects (Count):\n")
+    if (length(object$droppedCovar) > 0)
+      cat("dropped collinear covariates:", paste(object$droppedCovar, collapse = ", "),"\n")
+    b2.out <- data.frame("Mean" = round(object$b2.mean, digits),
+                          "Lower" = round(object$b2.ci[1,], digits),
+                          "Upper" = round(object$b2.ci[2,], digits))
+    row.names(b2.out) <-
+      ifelse(object$b2.ci[1,] > 0 | object$b2.ci[2,] < 0,
+            paste0("*", names(object$b2.mean)),
+            paste0(" ", names(object$b2.mean)))
+    print(b2.out)
+    cat("---\n")
+    cat("* = CI does not contain zero\n")
+
+    # Print dispersion parameter, r
+    cat("\nFixed effects (Dispersion):\n")
+    if (length(object$droppedCovar) > 0)
+      cat("dropped collinear covariates:", paste(object$droppedCovar, collapse = ", "),"\n")
+    r.out <- data.frame("Mean" = round(object$r.mean, digits),
+                          "Lower" = round(object$r.ci[1], digits),
+                          "Upper" = round(object$r.ci[2], digits))
+    row.names(r.out) <- "Dispersion"
+      #ifelse(object$r.ci[1,] > 0 | object$b2.ci[2,] < 0,
+      #      paste0("*", names(object$b2.mean)),
+      #      paste0(" ", names(object$b2.mean)))
+    print(r.out)
+    cat("---\n")
+  }
+  
 
   if (object$ctr$dl.function == "tdlnm")
     cat("\nDLNM effect:")

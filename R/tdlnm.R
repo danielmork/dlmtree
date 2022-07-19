@@ -25,8 +25,8 @@
 #' @param n.burn integer for length of burn-in
 #' @param n.iter integer for number of iterations to run model after burn-in
 #' @param n.thin integer thinning factor, i.e. keep every tenth iteration
-#' @param family 'gaussian' for continuous response, or 'logit' for binomial
-#' response with logit link
+#' @param family 'gaussian' for continuous response, 'logit' for binomial
+#' response with logit link, 'zinb' for zero-inflated negative binomial model
 #' @param binomial.size integer type scalar (if all equal, default = 1) or
 #' vector defining binomial size for 'logit' family
 #' @param tree.params numerical vector of alpha and beta hyperparameters
@@ -68,6 +68,9 @@ tdlnm <- function(formula,
                   subset = NULL,
                   verbose = TRUE,
                   diagnostics = FALSE,
+                  spNodes = NULL,
+                  areaW = NULL,
+                  areaA = NULL,
                   ...)
 {
   model <- list()
@@ -105,8 +108,8 @@ tdlnm <- function(formula,
     stop("n.* must be integer and > 0")
 
   # response type
-  if (!(family %in% c("gaussian", "logit")))
-    stop("`family` must be one of `gaussian`, or `logit`")
+  if (!(family %in% c("gaussian", "logit", "zinb")))
+    stop("`family` must be one of `gaussian`, `logit`, or `zinb`")
 
   # binomial size
   model$binomial <- 0
@@ -120,10 +123,12 @@ tdlnm <- function(formula,
     model$binomial <- 1
   }
 
-  # ZINB
+  # If not ZINB, set a flag to false (0)
   model$zinb <- 0
+  # If ZINB is called, set the flag to true
   if(family == "zinb"){
     model$zinb <- 1
+    #model$wTrue = wTrue
   }
 
   # tree parameters
@@ -147,7 +152,7 @@ tdlnm <- function(formula,
   model$nIter <- force(n.iter)
   model$nThin <- force(n.thin)
   model$mcmcIter <- force(floor(n.iter / n.thin))
-  model$family <- force(family)
+  model$family <- force(family) 
   model$verbose <- force(verbose)
   model$diagnostics <- force(diagnostics)
   model$treePrior <- force(tree.params)
@@ -309,7 +314,7 @@ tdlnm <- function(formula,
     model$Ymean <- sum(range(model$Y))/2
     model$Yscale <- diff(range(model$Y - model$Ymean))
     model$Y <- force((model$Y - model$Ymean) / model$Yscale)
-  } else {
+  } else { # logistic & Gaussian
     model$Yscale <- 1
     model$Ymean <- 0
     model$Y <- force(scale(model$Y, center = 0, scale = 1))
@@ -320,7 +325,26 @@ tdlnm <- function(formula,
   model$Znames <- colnames(model$Z)
   model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
 
+  # ---- [Spatial structure construction: Adjacency & Diagonal matrix for CAR model] ----
+  # default setting for no spatial effect
+  model$spatial = FALSE
 
+  #if(!is.null(spNodes) && !is.null(areaA)){
+  if(!is.null(spNodes) && !is.null(areaW) && !is.null(areaA)){
+    # For now, we just feed the cov-var matrix of phi for the compuation issue with spatial packages in HPC
+    model$spNodes1 = spNodes[[1]]
+    model$spNodes2 = spNodes[[2]]
+    model$areaW = areaW        
+    model$areaD = diag(rowSums(areaW))
+
+    model$areaA = force(scaleModelMatrix(areaA))      # Assignment matrix A so that A*phi is n x 1
+    model$areaA = force(matrix(model$areaA, nrow(model$areaA), ncol(model$areaA)))
+    model$Ascale <- attr(model$areaA, "scaled:scale")
+    model$Amean <- attr(model$areaA, "scaled:center")
+
+    model$spN = ncol(areaA)                           # Number of unique areas
+    model$spatial = TRUE                              # Set the spatial flag to be true
+  }
 
   # ---- Run model ----
   # model.list <- lapply(ls(envir = model), function(i) model[[i]])
@@ -344,14 +368,35 @@ tdlnm <- function(formula,
   }
 
   # rescale fixed effect estimates
+  # Gaussian & Logistic fixed effect
+  model$gamma <- sapply(1:ncol(model$gamma), function(i) {
+  model$gamma[,i] * model$Yscale / model$Zscale[i] })
+
+  # ZINB fixed effect (binary)
+  model$b1 <- sapply(1:ncol(model$b1), function(i) {
+  model$b1[,i] * model$Yscale / model$Zscale[i] })
+
+  # ZINB fixed effect (NegBin)
+  model$b2 <- sapply(1:ncol(model$b2), function(i) {
+  model$b2[,i] * model$Yscale / model$Zscale[i] })
+
   if (model$intercept) {
-    model$gamma[,-1] <- sapply(2:ncol(model$gamma), function(i) {
-      model$gamma[,i] * model$Yscale / model$Zscale[i]})
-  } else {
-    model$gamma <- sapply(1:ncol(model$gamma), function(i) {
-      model$gamma[,i] * model$Yscale / model$Zscale[i]})
+    model$gamma[,1] <- model$gamma[,1] + model$Ymean
+    if (ncol(model$Z) > 1)
+      model$gamma[,1] <- model$gamma[,1] - model$gamma[,-1, drop=FALSE] %*% model$Zmean[-1]
+
+    model$b1[,1] <- model$b1[,1] + model$Ymean
+    if (ncol(model$Z) > 1)
+      model$b1[,1] <- model$b1[,1] - model$b1[,-1] %*% model$Zmean[-1]
+
+    model$b2[,1] <- model$b2[,1] + model$Ymean
+    if (ncol(model$Z) > 1)
+      model$b2[,1] <- model$b2[,1] - model$b2[,-1] %*% model$Zmean[-1]
   }
+
   colnames(model$gamma) <- model$Znames
+  colnames(model$b1) <- model$Znames
+  colnames(model$b2) <- model$Znames
 
 
   # rescale DLM estimates

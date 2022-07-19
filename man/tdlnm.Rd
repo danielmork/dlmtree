@@ -22,6 +22,9 @@ tdlnm(
   subset = NULL,
   verbose = TRUE,
   diagnostics = FALSE,
+  spNodes = NULL,
+  areaW = NULL,
+  areaA = NULL,
   ...
 )
 }
@@ -53,8 +56,8 @@ smoothing factor applied to each exposure measurement}
 
 \item{n.thin}{integer thinning factor, i.e. keep every tenth iteration}
 
-\item{family}{'gaussian' for continuous response, or 'logit' for binomial
-response with logit link}
+\item{family}{'gaussian' for continuous response, 'logit' for binomial
+response with logit link, 'zinb' for zero-inflated negative binomial model}
 
 \item{binomial.size}{integer type scalar (if all equal, default = 1) or
 vector defining binomial size for 'logit' family}

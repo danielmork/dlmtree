@@ -101,7 +101,7 @@ summary.tdlmm <- function(object,
   res$expInc <- apply(object$expCount > 0, 2, mean)
   if (res$nExp == 1) {
     res$expVar <- apply(object$mixCount > 0, 2, mean)
-    names(res$expVar) <- names(res$expInc)
+    #names(res$expVar) <- names(res$expInc)
   } else {
     res$expVar <- apply((apply(object$muExp * object$expInf, 1, rank) - 1),
                         1, iqr_plus_mean) / (res$nExp - 1)

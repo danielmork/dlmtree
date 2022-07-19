@@ -17,7 +17,7 @@
 #' @export plot.summary.tdlnm
 #' @export
 #'
-plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(), ...)
+plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(), trueDLM = NULL, ...)
 {
   if (summary$ctr$dl.function == "tdlm")
     plot.type = "dlm"
@@ -130,16 +130,38 @@ plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(
     main <- ifelse(!is.null(args$main), args$main, "DLM")
     xlab <- ifelse(!is.null(args$xlab), args$xlab, "Time")
     ylab <- ifelse(!is.null(args$ylab), args$ylab, "Effect")
-    d <- data.frame("Est" = summary$matfit, "CIMin" = summary$cilower,
+    if(!is.null(trueDLM)){
+      d <- data.frame("Est" = summary$matfit, 
+                    "CIMin" = summary$cilower,
+                    "CIMax" = summary$ciupper,
+                    "X" = start.time:(start.time + length(summary$matfit) - 1),
+                    "trueDLM" = trueDLM)
+    } else {
+      d <- data.frame("Est" = summary$matfit, 
+                    "CIMin" = summary$cilower,
                     "CIMax" = summary$ciupper,
                     "X" = start.time:(start.time + length(summary$matfit) - 1))
-    p <- ggplot(d) +
-      geom_hline(yintercept = 0, color = "red") +
-      geom_ribbon(aes(x = X, ymin = CIMin, ymax = CIMax), fill = "grey") +
-      geom_line(aes(x = X, y = Est)) +
-      theme_bw() +
-      scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
-      labs(x = xlab, y = ylab, title = main)
+    }
+    
+    if(!is.null(trueDLM)){
+      p <- ggplot(d) +
+            geom_hline(yintercept = 0, color = "red") +
+            geom_ribbon(aes(x = X, ymin = CIMin, ymax = CIMax), fill = "grey") +
+            geom_line(aes(x = X, y = Est)) +
+            geom_line(aes(x = X, y = trueDLM), col = "blue", linetype = "dashed") + # SI
+            theme_bw() +
+            scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
+            labs(x = xlab, y = ylab, title = main)
+    } else {
+      p <- ggplot(d) +
+            geom_hline(yintercept = 0, color = "red") +
+            geom_ribbon(aes(x = X, ymin = CIMin, ymax = CIMax), fill = "grey") +
+            geom_line(aes(x = X, y = Est)) +
+            theme_bw() +
+            scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
+            labs(x = xlab, y = ylab, title = main)
+    }
+    
   }
   return(p)
 }

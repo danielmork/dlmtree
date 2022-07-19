@@ -22,8 +22,9 @@ tdlmm(
   subset = NULL,
   verbose = TRUE,
   diagnostics = FALSE,
-  MHvar = 0.025,
-  geoid = NULL,
+  spNodes = NULL,
+  areaW = NULL,
+  areaA = NULL,
   ...
 )
 }
@@ -31,7 +32,7 @@ tdlmm(
 \item{formula}{object of class formula, a symbolic description of the fixed
 effect model to be fitted, e.g. y ~ a + b}
 
-\item{data}{data frome containing variables used in the formula}
+\item{data}{data frame containing variables used in the formula}
 
 \item{exposure.data}{named list containing equally sized numerical matrices
 of exposure data with same, having same length as data}
@@ -74,9 +75,6 @@ turns on horseshoe-like shrinkage priors for different parts of model}
 
 \item{diagnostics}{true or false (default) keep model diagnostic such as
 terminal nodes, acceptance details, etc.}
-
-\item{MHvar}{(only applies for ZINB) a double value for the variance of zero truncated normal for
-Metropolis-Hasting algorithm which samples dispersion parameter of negative binomial}
 
 \item{...}{NA}
 }

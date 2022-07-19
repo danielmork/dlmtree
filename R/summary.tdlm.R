@@ -31,6 +31,19 @@ summary.tdlm <- function(object,
   gamma.mean <- colMeans(object$gamma)
   gamma.ci <- apply(object$gamma, 2, quantile, probs = ci.lims)
 
+  # ZINB
+  # binary
+  b1.mean <- colMeans(object$b1)
+  b1.ci <- apply(object$b1, 2, quantile, probs = ci.lims)
+
+  # count
+  b2.mean <- colMeans(object$b2)
+  b2.ci <- apply(object$b2, 2, quantile, probs = ci.lims)
+
+  # Dispersion parameter
+  r.mean <- mean(object$r)
+  r.ci <- quantile(object$r, probs = ci.lims)
+
   # Return
   ret <- list("ctr" = list(dl.function = object$dlFunction,
                            n.trees = object$nTrees,
@@ -46,7 +59,13 @@ summary.tdlm <- function(object,
               "ciupper" = ciupper,
               "cumulative.effect" = cumulative.effect,
               "gamma.mean" = gamma.mean,
-              "gamma.ci" = gamma.ci)
+              "gamma.ci" = gamma.ci,
+              "b1.mean" = b1.mean,
+              "b1.ci" = b1.ci,
+              "b2.mean" = b2.mean,
+              "b2.ci" = b2.ci,
+              "r.mean" = r.mean,
+              "r.ci" = r.ci)
   class(ret) <- "summary.tdlnm"
   return(ret)
 }
