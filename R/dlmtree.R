@@ -429,7 +429,7 @@ dlmtree <- function(formula,
       if (length(m) < 2)
         return(modNames[m + 1])
       c <- combn(length(m), 2)
-      return(sapply(1:ncol(c), function(i) paste0(modNames[sort(m[c[,i]]) + 1], collapse = "-")))
+      return(unique(sapply(1:ncol(c), function(i) paste0(modNames[sort(m[c[,i]]) + 1], collapse = "-"))))
     })))) / (model$nTrees * model$mcmcIter)
 
     model$TreeStructs <- cbind.data.frame(rule, model$TreeStructs)
