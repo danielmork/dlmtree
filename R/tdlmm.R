@@ -312,6 +312,7 @@ tdlmm <- function(formula,
 
   #if(!is.null(spNodes) && !is.null(areaA)){
   if(!is.null(spNodes) && !is.null(areaW) && !is.null(areaA)){
+    print("Entering a spatial model...")
     # For now, we just feed the cov-var matrix of phi for the compuation issue with spatial packages in HPC
     model$spNodes1 = spNodes[[1]]
     model$spNodes2 = spNodes[[2]]
@@ -420,8 +421,10 @@ tdlmm <- function(formula,
   model$b2[,i] * model$Yscale / model$Zscale[i] })
 
   # ZINB + Spatial random effect
-  model$spPhi <- sapply(1:ncol(model$spPhi), function(i) {
-  model$spPhi[,i] * model$Yscale / model$Ascale[i] })
+  if(model$spatial){
+    model$spPhi <- sapply(1:ncol(model$spPhi), function(i) {
+    model$spPhi[,i] * model$Yscale / model$Ascale[i] })
+  }
 
   if (model$intercept) {
     model$gamma[,1] <- model$gamma[,1] + model$Ymean

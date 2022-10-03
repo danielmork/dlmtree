@@ -1,5 +1,6 @@
 #include <RcppEigen.h>
 using namespace Rcpp;
+using namespace Eigen;
 
 struct modelCtr {
 public:
@@ -82,7 +83,6 @@ public:
   Eigen::MatrixXd areaD;
   Eigen::MatrixXd areaW;
   Eigen::MatrixXd areaQ;
-  Eigen::MatrixXd areaQinv;
   Eigen::MatrixXd areaA;
   Eigen::VectorXd spPhi;
   double rho;                 // Spatial correlation

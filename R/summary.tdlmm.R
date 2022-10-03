@@ -83,7 +83,6 @@ summary.tdlmm <- function(object,
     res$expSel <- (BF > log10BF.crit)
   }
 
-
   # ---- Main effect MCMC samples ----
   if (verbose)
     cat("Reconstructing main effects...\n")

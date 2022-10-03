@@ -68,7 +68,6 @@ sim.tdlmm <- function(sim = 1,
     Q = diag(rep(1, areaN)) # Identity matrix
     A = matrix(0, nrow = n, ncol = areaN)
 
-
     if(n < areaN){
       stop("Sample size cannot be less than the total number of areal units")
     }
@@ -93,7 +92,7 @@ sim.tdlmm <- function(sim = 1,
     # Now that we have created a lower matrix of adjacency, generate W, D, Q
     D <- diag(rowSums(W))
 
-    # ICAR var-cov
+    # CAR var-cov matrix
     Qsim <- spTau * (D - rho*W)
     Qsiminv <- chol2inv(chol(Qsim))
 
@@ -337,9 +336,7 @@ sim.tdlmm <- function(sim = 1,
     # D <- diag(rowSums(W))         # Diagonal matrix
 
     # Compute variance-covariance matrix for phi (CAR model)
-    #alpha = 0.5 # alpha = 0 implies no spatial effect. Note that alpha = 1 makes Q non-invertible
-    #Q <- chol2inv(chol(D - alpha*W))
-    spatial_phi = c(mvrnorm(n = 1, rep(0, areaN), Qsiminv)) # Simulate spatial effect -> need MASS package
+    sp_phi = c(mvrnorm(n = 1, rep(0, areaN), Qsiminv)) # Simulate spatial effect -> need MASS package
 
     # DLM Structure: Choose critical windows for PM2.5 and NO2
     exposures <- lapply(expList, function(i) (i[idx,] - mean(i[idx,])) / sd(i[idx,]))
@@ -356,9 +353,8 @@ sim.tdlmm <- function(sim = 1,
     # Need to redefine c (renamed to eta1 & eta2) as we have beta1 for binary component and beta2 for negbin component
     beta1 <- rnorm(10) # Sample true beta1 from a standard normal
     eta1 <- c(data[, 1:10] %*% beta1)     # Compute eta1: xT * beta1 (n x 10)x(10 x 1) = (nx1)   
-    eta1_sp <- eta1 + A%*%spatial_phi
-    #eta1_sp <- A%*%spatial_phi
-    spRatio <- eta1 / A%*%spatial_phi
+    eta1_sp <- eta1 + A%*%sp_phi
+    spRatio <- eta1 / A%*%sp_phi
 
     phi <- 1 / (1 + exp(-eta1_sp))        # 1 - P(structural zero)
     w <- rbinom(n.samp, 1, phi)           # "At-risk" indicator variable
@@ -421,8 +417,8 @@ sim.tdlmm <- function(sim = 1,
                 "D" = D, "W" = W,
                 "spNodes" = spNodes,
                 "spN" = areaN,
-                "spPhi" = spatial_phi,
-                "spPhiN" = A%*%spatial_phi,
+                "spPhi" = sp_phi,
+                "spPhiN" = A%*%sp_phi,
                 "eta1sp" = eta1_sp))
   }
 

@@ -34,8 +34,7 @@ void tdlmModelEst(modelCtr *ctr)
     // * Update sigma^2 and xi_sigma2
     if (!(ctr->binomial)) {
       rHalfCauchyFC(&(ctr->sigma2), (double)ctr->n + (double)ctr->totTerm, 
-                    ctr->R.dot(ctr->R) - ZR.dot(ctr->gamma) + 
-                      ctr->sumTermT2 / ctr->nu, &(ctr->xiInvSigma2));
+                    ctr->R.dot(ctr->R) - ZR.dot(ctr->gamma) + ctr->sumTermT2 / ctr->nu, &(ctr->xiInvSigma2));
       if ((ctr->sigma2 != ctr->sigma2)) // ! stop if infinte or nan variance
         stop("\nNaN values (sigma) occured during model run, rerun model.\n");
     }
@@ -131,11 +130,6 @@ void tdlmModelEst(modelCtr *ctr)
         ctr->atRiskIdx.push_back(j); // Save the index if w = 1
       }
     }
-    
-    // Rcout << ctr->atRiskIdx.size();
-    // Rcout << " vs ";
-    // Rcout << ctr->nStar;
-    // Rcout << "\n";
 
     // Check the atRiskIdx vector
     if(ctr->atRiskIdx.size() != (ctr->nStar)){
@@ -148,6 +142,8 @@ void tdlmModelEst(modelCtr *ctr)
     }
 
     // *** Step 2: Binary component aka Update b1 ***
+    // 2-0: Store the previous b1 before update
+    Eigen::VectorXd b1Prev = ctr->b1;
     // 2-1: Update Omega1 ~ PG(1, eta1)
     // Rcout << "Step 2-1: Sampling Omega1 \n";
     ctr->omega1 = rcpp_pgdraw(ctr->ones, eta1);     // Sample PG
@@ -158,7 +154,7 @@ void tdlmModelEst(modelCtr *ctr)
     // Rcout << "Step 2-2: Updating Vg1 \n";
     Eigen::MatrixXd VgInv1(ctr->pZ, ctr->pZ); 
     VgInv1.triangularView<Eigen::Lower>() = ctr->Z.transpose() * (ctr->Omega1) * (ctr->Z); // Zt * Omega * Z : (pxp)
-    VgInv1.diagonal().array() += 1 / 100.0; // ZT*Omega*Z  + c*I where c = 100
+    VgInv1.diagonal().array() += 1 / 100.0; // ZT*Omega*Z  + c*I(prior) where c = 100
     VgInv1.triangularView<Eigen::Upper>() = VgInv1.transpose().eval(); 
     ctr->Vg1.triangularView<Eigen::Lower>() = VgInv1.inverse();
     ctr->Vg1.triangularView<Eigen::Upper>() = ctr->Vg1.transpose().eval();   
@@ -182,7 +178,7 @@ void tdlmModelEst(modelCtr *ctr)
     if(ctr->spatial){ // For spatial analysis, add a random effect
       // [Update spTau with full conditional (Strictly positive)] --------------------------------------------------------
       double spTauP = ctr->spTau + R::rnorm(0, 1);
-      while(spTauP < 0){
+      while(spTauP < 0){ // If negative, re-sample
         spTauP = ctr->spTau + R::rnorm(0, 1);
       }
 
@@ -212,7 +208,7 @@ void tdlmModelEst(modelCtr *ctr)
         ctr->spTau = spTauP;
       } // spTau update end
 
-      ctr->spTau = 1; // Fix spTau as 1 for now.
+      // ctr->spTau = 1; // Fix spTau as 1 for now.
 
       // [Update rho with full conditional] ----------------------------------------------------------------
       // Metropolis Hasting for rho 
@@ -225,7 +221,7 @@ void tdlmModelEst(modelCtr *ctr)
       // FC of rho = log(dnorm(0, 0.2)) + log(prob of phi1^2 - 2 * rho * phi1 * phi2 + phi2^2)
       double rhoMHratio = 0;
 
-      // Add prior probability in log: Prior is set as Unif(-1, 1) = Beta(1, 1) as rho is between -1 and 1
+      // Add prior probability in log: Prior is set as Unif(0, 1) = Beta(1, 1) as rho is between -1 and 1
       rhoMHratio += log(0.5);        // Proposed
       rhoMHratio -= log(0.5);        // Current
 
@@ -254,39 +250,46 @@ void tdlmModelEst(modelCtr *ctr)
 
       // Rcout << "Vp and zPhi \n";
       // 2-2: Update Vp and zPhi
+
+      // zPhi
+      // Rcout << "Step 2-2: Updating z1 \n";
+      // Recalculate eta1 with the updated b1
+      // eta1.setZero();
+      // eta1 = (ctr->Z) * (ctr->b1);                        // Z * \gamma(updated)
+      // eta1.noalias() += ctr->areaA * ctr->spPhi;          // Z * \gamma(updated) + spatial random effect
+
+      // Resample PG variable with the updated eta1
+      ctr->omegaPhi = ctr->omega1;
+      // ctr->omegaPhi = rcpp_pgdraw(ctr->ones, eta1);       // Sample PG
+      ctr->OmegaPhi = (ctr->omegaPhi).asDiagonal();       // OmegaPhi matrix
+      ctr->zPhi = ((ctr->w).array() - 0.5).array() / ctr->omegaPhi.array(); 
+
       // Vp
       // Rcout << "Step 2-2: Updating Vg1 \n";
       Eigen::MatrixXd VpInv(ctr->spN, ctr->spN); 
       // At * Omega * A : (spN x spN)
-      VpInv.triangularView<Eigen::Lower>() = ctr->areaA.transpose() * (ctr->Omega1) * (ctr->areaA);
-      VpInv += ctr->areaQ; // AT*Omega1*A  + CAR prior inverse
+      VpInv.triangularView<Eigen::Lower>() = ctr->areaA.transpose() * (ctr->OmegaPhi) * (ctr->areaA);
+      VpInv += ctr->areaQ; // AT*OmegaPhi*A  + CAR prior inverse
       VpInv.triangularView<Eigen::Upper>() = VpInv.transpose().eval(); 
       ctr->Vp.triangularView<Eigen::Lower>() = VpInv.inverse();
       ctr->Vp.triangularView<Eigen::Upper>() = ctr->Vp.transpose().eval();   
       ctr->VpChol = ctr->Vp.llt().matrixL();
 
-      // zPhi
-      // Rcout << "Step 2-2: Updating z1 \n";
-      // Recalculate eta1 with the updated b1
-      eta1.setZero();
-      eta1 = (ctr->Z) * (ctr->b1);                        // Z * \gamma
-      eta1.noalias() += ctr->areaA * ctr->spPhi;          // Z * \gamma + spatial random effect
-
-      // Resample PG variable with the updated eta1
-      ctr->omegaPhi = rcpp_pgdraw(ctr->ones, eta1);       // Sample PG
-      ctr->OmegaPhi = (ctr->omegaPhi).asDiagonal();       // OmegaPhi matrix
-      ctr->zPhi = ((ctr->w).array() - 0.5).array() / ctr->omegaPhi.array(); 
-
       // 2-3: Sample phi
       //Rcout << "Step 2-3: Sampling spPhi \n";
       // Mean of spPhi
-      Eigen::VectorXd Rphi = ctr->zPhi - ((ctr->Z) * (ctr->b1));
+      Eigen::VectorXd Rphi = ctr->zPhi - ((ctr->Z) * (b1Prev));
       const Eigen::VectorXd ARphi = ctr->areaA.transpose() * (ctr->OmegaPhi) * (Rphi); // (px1)(nxn)(nx1) = (px1)(no DLM effects)
       ctr->spPhi = ctr->Vp * ARphi; // Mean (spN x spN)(spN x 1)
 
       // Variance of spPhi using cholesky
       ctr->spPhi.noalias() += ctr->VpChol * as<Eigen::VectorXd>(rnorm(ctr->spN, 0, sqrt(ctr->sigma2)));
-    }
+    } // Spatial finish
+
+    // Rcout << ctr->rho;
+    // Rcout << "\n";
+    // Rcout << ctr->spatial;
+    // Rcout << "\n";
 
     // *** Step 3: Negative Binomial (count) component ***
     // 3-1: Update Omega2 ~ PG(y + r, psi2) with dlm effect

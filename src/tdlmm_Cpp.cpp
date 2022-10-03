@@ -15,6 +15,8 @@
 #include "NodeStruct.h"
 #include "Fncs.h" // Helpful functions
 #include <random>
+#include <iostream>
+#include <Eigen/Dense>
 using namespace Rcpp;
 
 /**
@@ -51,6 +53,7 @@ treeMHR mixMHR(std::vector<Node*> nodes1, std::vector<Node*> nodes2,
     pXd += pX1 * pX2; // Add (nodes x nodes) to the parameter # (the rectangle figure)
     interaction = 1;  // Interaction flag
   }
+  
   // Rcout << ".";
   out.Xd.resize(ctr->n, pXd);         out.Xd.setZero();   // This is X*delta vector for mean in Eq(8)
   Eigen::MatrixXd ZtX(ctr->pZ, pXd);  ZtX.setZero();      // Create a matrix of (predictor# x (total terminal node#))
@@ -111,10 +114,10 @@ treeMHR mixMHR(std::vector<Node*> nodes1, std::vector<Node*> nodes2,
 
   } else if (ctr->zinb){ // ZINB (subsetting at-risk observations)
     Eigen::MatrixXd outXdstar = selectIndM(out.Xd, ctr->atRiskIdx);        // At-risk observations only
-    const Eigen::MatrixXd Xdw = (selectIndM(ctr->omega2, ctr->atRiskIdx)).asDiagonal() * outXdstar; // (n*xn*) x (n*x2) = (n*x2) 
+    const Eigen::MatrixXd Xdw = (selectInd(ctr->omega2, ctr->atRiskIdx)).asDiagonal() * outXdstar; // (n*xn*) x (n*x2) = (n*x2) 
     tempV = Xdw.transpose() * outXdstar;                                   // (2xn*) x (n*x2) = (2x2)
     tempV.noalias() -= ZtX.transpose() * VgZtX;                            // (2x2) - (2x5) x (5x2)
-    XtVzInvR = Xdw.transpose() * selectIndM(ctr->R, ctr->atRiskIdx);       // (2xn*) x (n*x1) = (2x1)
+    XtVzInvR = Xdw.transpose() * selectInd(ctr->R, ctr->atRiskIdx);       // (2xn*) x (n*x1) = (2x1)
 
   } else {
     if (newTree) { // V_theta = V_delta_a from eq(11) & Xd = X_a in paper
@@ -143,7 +146,7 @@ treeMHR mixMHR(std::vector<Node*> nodes1, std::vector<Node*> nodes2,
   // This part is sampling from Supplemental Eq(11) & (12) (Theta = Delta_a)
   // Mean
   const Eigen::VectorXd ThetaHat =
-    VTheta.selfadjointView<Eigen::Lower>() * XtVzInvR; // Eq. (11)
+    VTheta.selfadjointView<Eigen::Lower>() * XtVzInvR; // Eq. (11) mean
   Eigen::VectorXd ThetaDraw = ThetaHat;
 
   // Add variance
@@ -158,8 +161,8 @@ treeMHR mixMHR(std::vector<Node*> nodes1, std::vector<Node*> nodes2,
   out.nTerm2 = double(pX2);
 
   if (interaction) {
-    out.drawMix = ThetaDraw.tail(pXd - pX1 - pX2);
-    out.mixT2 = (out.drawMix).dot(out.drawMix);
+    out.drawMix = ThetaDraw.tail(pXd - pX1 - pX2);  // Extract last pX1 x pX2 element for mixture
+    out.mixT2 = (out.drawMix).dot(out.drawMix);     // dot product
   }
 
   out.beta = ThetaHat.dot(XtVzInvR);
@@ -194,14 +197,14 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
   // Rcout << "Mixture calculation \n";
   term1 = tree1->listTerminal();        // List the terminal nodes of tree 1
   term2 = tree2->listTerminal();        // List the terminal nodes of tree 2
-  treeVar = (ctr->nu) * (ctr->tau[t]);  // nu x tau[t]
-  m1 = ctr->tree1Exp[t];                // Exposure m1 of tree 1 of t th tree pair
+  treeVar = (ctr->nu) * (ctr->tau[t]);  // Global shrinkage x Local Shrinkage
+  m1 = ctr->tree1Exp[t];                // Exposure m1 of tree 1 of t th tree pair // Note that tree1Exp is a vector of exposures with a designated number
   m2 = ctr->tree2Exp[t];                // Exposure m2 of tree 2 of t th tree pair
   m1Var = ctr->muExp(m1);               // Exposure-specific variance
   m2Var = ctr->muExp(m2);               // Exposure-specific variance
   mixVar = 0;                           // No interaction variance for now
 
-  // If there is an interaction i.e., TDLMMns or TDLMMall with two different exposures assigned,
+  // If there is an interaction, extract mixture variance value from the muMix matrix
   if ((ctr->interaction) && ((ctr->interaction == 2) || (m1 != m2))) { 
     if (m1 <= m2)
       mixVar = ctr->muMix(m2, m1); // Interaction rectangles
@@ -265,6 +268,7 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
   // * Tree 1 MHR
   // StepMHR: Transition ratio
   // mhr0 & mhr: Likelihood of R
+  // mhr0: Current MHR
   // Rcout << "a";
   if ((tree1->nodevals->tempV).rows() == 0)
     mhr0 = mixMHR(term1, term2, ctr, ZtR, treeVar,  // 0 = denominator(old state)
@@ -275,40 +279,44 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
 
   //Rcout << "Tree 1 MHR: if success\n";
   if (success) {
-    // calculate new tree part of MHR and draw node effects
+    // New tree terminal -> newTerm & newExpVar
     mhr = mixMHR(newTerm, term2, ctr, ZtR, treeVar,  // numerator(new or updated state)
                  newExpVar, m2Var, newMixVar, tree1, 1);
     // combine mhr parts into log-MH ratio
     //Rcout << "Tree 1 MHR: log-MH ratio\n";
     if (ctr->binomial || ctr->zinb) {
-      ratio = stepMhr + mhr.logVThetaChol - mhr0.logVThetaChol + // Combine mhr and mhr0 to obtain Eq (10)
-        0.5 * (mhr.beta - mhr0.beta) -
-        (0.5 * ((log(treeVar * newExpVar) * mhr.nTerm1) -
-         (log(treeVar * m1Var) * mhr0.nTerm1)));
+      ratio = stepMhr +                                 
+              mhr.logVThetaChol - mhr0.logVThetaChol +  // Combine mhr and mhr0 to obtain Eq (10)
+              0.5 * (mhr.beta - mhr0.beta) -
+              (0.5 * ((log(treeVar * newExpVar) * mhr.nTerm1) -
+              (log(treeVar * m1Var) * mhr0.nTerm1)));
     } else { // Gaussian
       // Rcout << "Tree 1 MHR: Gaussian\n";
+      // Equation (9)
       if (RtR < 0) {
-        RtR = (ctr->R).dot(ctr->R);
-        RtZVgZtR = ZtR.dot((ctr->Vg).selfadjointView<Eigen::Lower>() * ZtR);
+        RtR = (ctr->R).dot(ctr->R);                                             // Rt * I * R
+        RtZVgZtR = ZtR.dot((ctr->Vg).selfadjointView<Eigen::Lower>() * ZtR);    // Rt * (-ZtVgZ) * R
       }
-      ratio = stepMhr + mhr.logVThetaChol - mhr0.logVThetaChol -
-        (0.5 * (ctr->n + 1.0) *
-         (log(0.5 * (RtR - RtZVgZtR - mhr.beta) + ctr->xiInvSigma2) -
-          log(0.5 * (RtR - RtZVgZtR - mhr0.beta) + ctr->xiInvSigma2))) -
-        (0.5 * ((log(treeVar * newExpVar) * mhr.nTerm1) -
-         (log(treeVar * m1Var) * mhr0.nTerm1)));
+      ratio = stepMhr +                                           // stepMhr = p(T|T*) / p(T*|T)
+                mhr.logVThetaChol - mhr0.logVThetaChol -          // |V_delta_a|, 1/2 canceled out in Eq(10)
+                (0.5 * (ctr->n + 1.0) *                           // RtVinvXVXtVintR + 1/xi in Eq.(9) & Eq.(10)
+                (log(0.5 * (RtR - RtZVgZtR - mhr.beta) + ctr->xiInvSigma2) -
+                log(0.5 * (RtR - RtZVgZtR - mhr0.beta) + ctr->xiInvSigma2))) -
+                (0.5 * ((log(treeVar * newExpVar) * mhr.nTerm1) - // -0.5 * (B1 * (log(nu) + log(mu of new Exposure)))
+                (log(treeVar * m1Var) * mhr0.nTerm1)));           // -0.5 * (B1 * (log(nu) + log(mu1)))
     }
-    //Rcout << "c";
+    // Mixture
     if (newMixVar != 0)
-      ratio -= 0.5 * log(treeVar * newMixVar) * mhr.nTerm1 * mhr0.nTerm2;
+      ratio -= 0.5 * log(treeVar * newMixVar) * mhr.nTerm1 * mhr0.nTerm2; // new mu1 (new B1 x old B2) - Mixture update with switch exposure
     if (mixVar != 0)
-      ratio += 0.5 * log(treeVar * mixVar) * mhr0.nTerm1 * mhr0.nTerm2;
+      ratio += 0.5 * log(treeVar * mixVar) * mhr0.nTerm1 * mhr0.nTerm2;   // old mu1 (old B1 x old B2) - Mixture
 
     if (log(R::runif(0, 1)) < ratio) { // Evaluate the ratio
       mhr0 = mhr; // Update the MHR
       success = 2;
 
-      if (step1 == 3) { // If step is switch-exposure,
+      // If accepted with switch-exposure transition, update a tree more
+      if (step1 == 3) { 
         m1      = newExp;
         m1Var   = newExpVar;
         mixVar  = newMixVar;
@@ -712,11 +720,10 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
     // Compute the prior
     ctr->rho = 0.5;
     ctr->areaQ = (ctr->spTau) * (ctr->areaD - (ctr->rho) * ctr->areaW);
-    ctr->areaQinv = (ctr->areaQ).inverse();
 
     Eigen::MatrixXd VpInv(ctr->spN, ctr->spN);        // Vp (spN x spN)
     VpInv = (ctr->areaA).transpose() * (ctr->areaA);  // At*A
-    VpInv += ctr->areaQinv;                           // At*A + CAR prior (Qinv)
+    VpInv += ctr->areaQ;                           // At*A + CAR prior (Qinv)
     ctr->Vp = VpInv.inverse();
     VpInv.resize(0,0);                                // Clear VpInv now that we obtained Vp
     ctr->VpChol = (ctr->Vp).llt().matrixL();          // Compute the cholesky of Vp: V_phi = L*Lt = VpChol * t(VpChol)
@@ -821,9 +828,9 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   (ctr->fhat).resize(ctr->n);                         (ctr->fhat).setZero();          // fhat: A vector of zeros
   ctr->R = ctr->Ystar;                                                                // Partial residual
   (ctr->gamma).resize(ctr->pZ);                                                       // Logistic model coefficient
-  (ctr->totTermExp).resize(ctr->nExp);                (ctr->totTermExp).setZero();    // Total number of parameters
-  (ctr->sumTermT2Exp).resize(ctr->nExp);              (ctr->sumTermT2Exp).setZero();  //
-  (ctr->muExp).resize(ctr->nExp); (ctr->muExp).setOnes();                             // Exposure-specific variance
+  (ctr->totTermExp).resize(ctr->nExp);                (ctr->totTermExp).setZero();    
+  (ctr->sumTermT2Exp).resize(ctr->nExp);              (ctr->sumTermT2Exp).setZero();  
+  (ctr->muExp).resize(ctr->nExp);                     (ctr->muExp).setOnes();                             // Exposure-specific variance
 
   // If there is an interaction, define more parameters
   if (ctr->interaction) { 
@@ -835,7 +842,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   }
 
   // Hyperparameter initial values
-  ctr->totTerm = 0;
+  ctr->totTerm = 0;       // This is represented by "b" in the paper
   ctr->sumTermT2 = 0;
   ctr->nu = 1.0; 
   ctr->sigma2 = 1.0;
@@ -843,7 +850,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   // model estimation with the initial values
   tdlmModelEst(ctr); 
 
-  // node-specific priors with half-Cauchy: C+(0, 1)
+  // node-specific full-conditional with half-Cauchy: C+(0, 1)
   rHalfCauchyFC(&(ctr->nu), ctr->nTrees, 0.0);
   (ctr->tau).resize(ctr->nTrees);                 (ctr->tau).setOnes();
   for (t = 0; t < ctr->nTrees; ++t) {
@@ -913,8 +920,8 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
     // * Update model (Binomial model should go through MCMC as well)
     tdlmModelEst(ctr); // Go to modelEst.cpp::tdlmModelEst
     
-    // * Update variance parameters from supplemental material
-    rHalfCauchyFC(&(ctr->nu), ctr->totTerm, ctr->sumTermT2 / ctr->sigma2);
+    // * Update variance parameters from supplemental material -> Horseshoe sampling with IG & Half-cauchy relationship
+    rHalfCauchyFC(&(ctr->nu), ctr->totTerm, ctr->sumTermT2 / ctr->sigma2);  
     // if ((ctr->nu) != (ctr->nu)) 
     //   stop("\nNaN values (nu) occured during model run, rerun model.\n");
     sigmanu = ctr->sigma2 * ctr->nu;
@@ -1078,11 +1085,11 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
                             //Named("treeAccept") = wrap(Accept),
                             Named("b1") = wrap(b1),
                             Named("b2") = wrap(b2),
-                            Named("r") = wrap(r),
-                            Named("wMat") = wrap(wMat),
-                            Named("spPhi") = wrap(spPhi),
-                            Named("spTau") = wrap(spTau),
-                            Named("rho") = wrap(rho)));
+                            Named("r") = wrap(r)));//,
+                            //Named("wMat") = wrap(wMat),
+                            //Named("spPhi") = wrap(spPhi),
+                            //Named("spTau") = wrap(spTau),
+                            //Named("rho") = wrap(rho)));
 } // end tdlmm_Cpp
 
 

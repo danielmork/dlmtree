@@ -366,11 +366,10 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     // Compute the prior
     ctr->rho = 0.5;
     ctr->areaQ = (ctr->spTau) * (ctr->areaD - (ctr->rho) * ctr->areaW);
-    ctr->areaQinv = (ctr->areaQ).inverse();
 
     Eigen::MatrixXd VpInv(ctr->spN, ctr->spN);        // Vp (spN x spN)
     VpInv = (ctr->areaA).transpose() * (ctr->areaA);  // At*A
-    VpInv += ctr->areaQinv;                           // At*A + CAR prior (Qinv)
+    VpInv += ctr->areaQ;                           // At*A + CAR prior (Qinv)
     ctr->Vp = VpInv.inverse();
     VpInv.resize(0,0);                                // Clear VpInv now that we obtained Vp
     ctr->VpChol = (ctr->Vp).llt().matrixL();          // Compute the cholesky of Vp: V_phi = L*Lt = VpChol * t(VpChol)
