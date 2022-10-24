@@ -283,7 +283,6 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
 
   // Useful vectors for PG variable sampling 
   ctr->ones.resize(ctr->n);   ctr->ones.setOnes();  // Vector of ones
-  ctr->rVec = (ctr->r) * (ctr->ones).array();       // Dispersion parameter as a vector: rep(r, n)
 
   // If ZINB, calculate the fixed values
   if(ctr->zinb){                                      
@@ -295,10 +294,8 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   ctr->b1 = as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(100)));   // Prior sampling of coefficients for binary component (p x 1)
   ctr->b2 = as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(100)));   // Prior sampling of coefficients for NegBin component (p x 1)
 
-  ctr->omega1.resize(ctr->n);        ctr->omega1.setOnes();      // Initiate with Omega1(binary) as an identity matrix
-  ctr->Omega1 = ctr->omega1.asDiagonal();        
-  ctr->omega2.resize(ctr->n);        ctr->omega2.setOnes();      // Initiate with Omega2(NegBin) as an identity matrix
-  ctr->Omega2 = ctr->omega2.asDiagonal();
+  ctr->omega1.resize(ctr->n);        ctr->omega1.setOnes();      // Initiate with omega1(binary) as an identity matrix
+  ctr->omega2.resize(ctr->n);        ctr->omega2.setOnes();      // Initiate with omega2(NegBin) as an identity matrix
   
   ctr->z1.resize(ctr->n);            ctr->z1.setZero();          // z1 for binary component
   ctr->Zstar = (ctr->Z).array().colwise() * (ctr->w).array();    // Fixed effect matrix with [w == 0] zeroed out.

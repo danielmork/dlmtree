@@ -135,7 +135,7 @@ sim.tdlmm <- function(sim = 1,
   # Sim 5: Zero-inflated negative binomial with single exposure DLM (temporarily here as "p" is not defined)
   if (sim == 5) {
     data <- cbind(matrix(rnorm(5 * n.samp), n.samp, 5),         # 5 guassian predictors (n.samp x 2)
-                matrix(rbinom(5 * n.samp, 1, .5), n.samp, 5))   # 5 binary predictors (n.samp x 2)                                                               # => data: (n.samp x 10)
+                matrix(rbinom(5 * n.samp, 1, .5), n.samp, 5))   # 5 binary predictors (n.samp x 2)            # => data: (n.samp x 10)
     colnames(data) <- c(paste0("c", 1:5), paste0("b", 1:5))     # Name the columns with c1 - c2 and b1 - b2
                                                                 # c for continuous, b for binary
     #params <- rnorm(10)                                          # Sample true beta from a standard normal
@@ -296,7 +296,7 @@ sim.tdlmm <- function(sim = 1,
                 "truthInt" = truthInt,
                 "start.time1" = start.time1, "start.time2" = start.time2,
                 "margDLM1" = margDLM1, "margDLM2" = margDLM2,
-                "c" = c, "f" = f, "w" = w, "mu" = mu, "phi" = phi, "eta1" = eta1,
+                "c" = c, "f" = f, "w" = w, "mu" = mu, "phi" = phi, "eta1" = eta1, "r" = r,
                 "b1" = beta1,
                 "b2" = beta2,
                 "zeroStr" = zeroStr,

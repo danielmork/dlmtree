@@ -80,85 +80,67 @@ void tdlmModelEst(modelCtr *ctr)
       ctr->R = ctr->Ystar - ctr->fhat; // Update Ystar - f
     }
 
+
   } else { // ZINB
     // *** Step 1: Update the latent At-Risk Indicators ***
-    // Step 1-1: Calculate eta1 for logit1, eta2 (binary) & logit2 & nu2 (count)
+    // Step 1-1: Calculate eta1 for logit1, eta2 (binary) & logit2 (count)
     // Rcout << "Step 1: Updating the latent indicator variable \n";
     Eigen::VectorXd eta1 = (ctr->Z) * (ctr->b1);              // Z * \gamma
-    eta1.noalias() += ctr->areaA * ctr->spPhi;                // Z * \gamma + spatial random effect
-    Eigen::VectorXd eta2 = (ctr->fhat);                       // dlm effect
-    eta2.noalias() += ctr->Z * ctr->b2;                       // dlm effect + fixed effect
+    Eigen::VectorXd eta2 = (ctr->Z * ctr->b2) + (ctr->fhat);    // Fixed effect +  dlm effect
+    if(ctr->spatial){
+      eta1.noalias() += ctr->areaA * ctr->spPhi;                // Z * \gamma + spatial random effect (spPhi = 0 as default)
+    }
 
-    // Rcout << "here2 \n";
     Eigen::VectorXd logit1 = 1 / (1 + exp(-(eta1).array()));
     Eigen::VectorXd logit2 = 1 / (1 + exp(-(eta2).array()));  // psi 
-    Eigen::VectorXd nu2 = 1 - logit2.array();
 
-    // Rcout << "Step 1: Resetting the latent indicator variable \n";
-    ctr->w.setOnes(); // Reset w
-    // Rcout << "here3 \n";
+    // Rcout << "Step 1: Resetting the latent indicator variable, w \n";
+    ctr->w.setOnes(); 
+    
     // Sampling w
-    for(int z = 0; z < (ctr->yZeroN); z++){ // For all y = 0,
+    for (int z = 0; z < (ctr->yZeroN); z++){ // For all y = 0,
       // Find the index of y = 0,
       int idx = (ctr->yZeroIdx)[z]; 
 
       // Bernoulli probability
-      long double prob = log(logit1[idx]) + (ctr->r) * log((nu2)[idx])
-                        - log(1 - logit1[idx] + logit1[idx] * pow((nu2)[idx], (ctr->r))); 
+      double prob = log(logit1[idx]) + ctr->r * log((1 - logit2.array())[idx])
+                    - log(1 - logit1[idx] + logit1[idx] * pow((1 - logit2.array())[idx], ctr->r)); 
 
       // Update the index with a probability with either 0 or 1
       (ctr->w)[idx] = R::rbinom(1, exp(prob)); 
-
-      // Rcout << (ctr->w)[idx];
-      // Rcout << "\n";
-      // Rcout << "---------- \n";
-
-      if(isnan(ctr->w[idx])){
-        (ctr->w)[idx] = 0;
-      }
     }
-    // Rcout << "here4 \n";
-    //ctr->w.setOnes(); // Reset w (### Comment this or not to determine ZINB and NB)
     
     // Update the number of at-risk individuals
     ctr->nStar = (ctr->w).sum();
 
     // Update the indices of at-risk
     ctr->atRiskIdx.clear();  // Clear the vector
-    for(int j = 0; j < (ctr->n); j++){
+    for (int j = 0; j < (ctr->n); j++){
       if((ctr->w)[j] == 1){
         ctr->atRiskIdx.push_back(j); // Save the index if w = 1
       }
     }
 
-    // Check the atRiskIdx vector
-    if(ctr->atRiskIdx.size() != (ctr->nStar)){
-      stop("The number of at-risk observations don't match");
-    }
-
-    // Check for NaN of the latent variable w.
-    if(ctr->w != ctr->w){
-      stop("NaN value occured for the latent variable, w");
-    }
-
     // *** Step 2: Binary component aka Update b1 ***
-    // 2-0: Store the previous b1 before update
+    // 2-0: Store the previous b1 before update for spatial update
     Eigen::VectorXd b1Prev = ctr->b1;
+
     // 2-1: Update Omega1 ~ PG(1, eta1)
     // Rcout << "Step 2-1: Sampling Omega1 \n";
     ctr->omega1 = rcpp_pgdraw(ctr->ones, eta1);     // Sample PG
-    ctr->Omega1 = (ctr->omega1).asDiagonal();       // Omega1 matrix
+    ctr->Zw1 = ctr->omega1.asDiagonal() * ctr->Z;   
 
-    // 2-2: Update Vg1 and z1
-    // Vg1
-    // Rcout << "Step 2-2: Updating Vg1 \n";
-    Eigen::MatrixXd VgInv1(ctr->pZ, ctr->pZ); 
-    VgInv1.triangularView<Eigen::Lower>() = ctr->Z.transpose() * (ctr->Omega1) * (ctr->Z); // Zt * Omega * Z : (pxp)
-    VgInv1.diagonal().array() += 1 / 100.0; // ZT*Omega*Z  + c*I(prior) where c = 100
-    VgInv1.triangularView<Eigen::Upper>() = VgInv1.transpose().eval(); 
-    ctr->Vg1.triangularView<Eigen::Lower>() = VgInv1.inverse();
-    ctr->Vg1.triangularView<Eigen::Upper>() = ctr->Vg1.transpose().eval();   
-    ctr->VgChol1 = ctr->Vg1.llt().matrixL();
+    // 2-2: Update Vg and z1
+    // Vg
+    // Rcout << "Step 2-2: Updating Vg \n";
+    Eigen::MatrixXd VgInv(ctr->pZ, ctr->pZ); 
+    VgInv.triangularView<Eigen::Lower>() = ctr->Z.transpose() * ctr->Zw1; // Zt * Omega * Z : (pxp)
+    VgInv.diagonal().array() += 1 / 100.0; // Zt*Omega*Z  + c*I(prior) where c = 100
+    VgInv.triangularView<Eigen::Upper>() = VgInv.transpose().eval(); 
+
+    ctr->Vg.triangularView<Eigen::Lower>() = VgInv.inverse();
+    ctr->Vg.triangularView<Eigen::Upper>() = ctr->Vg.transpose().eval();   
+    ctr->VgChol = ctr->Vg.llt().matrixL();
 
     // z1
     // Rcout << "Step 2-2: Updating z1 \n";
@@ -166,17 +148,18 @@ void tdlmModelEst(modelCtr *ctr)
 
     // 2-3: Sample b1
     // Rcout << "Step 2-3: Sampling b1 \n";
-    // Mean of b1
-    Eigen::VectorXd R1 = ctr->z1 - (ctr->areaA * ctr->spPhi);
-    const Eigen::VectorXd ZR1 = ctr->Z.transpose() * (ctr->Omega1) * (R1); // (px1)(nxn)(nx1) = (px1)(no DLM effects)
-    ctr->b1 = ctr->Vg1 * ZR1; // Mean (pxp)(px1)
+    // Mean of b1 & Variance of b1 with cholesky
+    if(ctr->spatial){
+      ctr->z1 -= (ctr->areaA * ctr->spPhi);
+    }
 
-    // Variance of b1 using cholesky
-    ctr->b1.noalias() += ctr->VgChol1 * as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2)));
+    const Eigen::VectorXd ZR1 = ctr->Zw1.transpose() * (ctr->z1); // (px1)(nxn)(nx1) = (px1)(no DLM effects)
+    ctr->b1 = ctr->Vg * ZR1; // Mean (pxp)(px1)              // b1 has prior with mean 0
+    ctr->b1.noalias() += ctr->VgChol * as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2)));
 
     // *** Extra Step 2: Spatial random effect ***
     if(ctr->spatial){ // For spatial analysis, add a random effect
-      // [Update spTau with full conditional (Strictly positive)] --------------------------------------------------------
+      // [Update spTau with full conditional (Strictly positive)] 
       double spTauP = ctr->spTau + R::rnorm(0, 1);
       while(spTauP < 0){ // If negative, re-sample
         spTauP = ctr->spTau + R::rnorm(0, 1);
@@ -207,8 +190,6 @@ void tdlmModelEst(modelCtr *ctr)
       if(R::runif(0, 1) < spTauMHratio){
         ctr->spTau = spTauP;
       } // spTau update end
-
-      // ctr->spTau = 1; // Fix spTau as 1 for now.
 
       // [Update rho with full conditional] ----------------------------------------------------------------
       // Metropolis Hasting for rho 
@@ -248,28 +229,15 @@ void tdlmModelEst(modelCtr *ctr)
       ctr->areaQ = (ctr->spTau) * (ctr->areaD - (ctr->rho) * ctr->areaW);
       //ctr->areaQinv = (ctr->areaQ).inverse();
 
-      // Rcout << "Vp and zPhi \n";
-      // 2-2: Update Vp and zPhi
-
-      // zPhi
-      // Rcout << "Step 2-2: Updating z1 \n";
-      // Recalculate eta1 with the updated b1
-      // eta1.setZero();
-      // eta1 = (ctr->Z) * (ctr->b1);                        // Z * \gamma(updated)
-      // eta1.noalias() += ctr->areaA * ctr->spPhi;          // Z * \gamma(updated) + spatial random effect
-
       // Resample PG variable with the updated eta1
-      ctr->omegaPhi = ctr->omega1;
-      // ctr->omegaPhi = rcpp_pgdraw(ctr->ones, eta1);       // Sample PG
-      ctr->OmegaPhi = (ctr->omegaPhi).asDiagonal();       // OmegaPhi matrix
-      ctr->zPhi = ((ctr->w).array() - 0.5).array() / ctr->omegaPhi.array(); 
+      ctr->zPhi = ((ctr->w).array() - 0.5).array() / ctr->omega1.array(); 
 
       // Vp
-      // Rcout << "Step 2-2: Updating Vg1 \n";
+      // Rcout << "Step 2-2: Updating Vg \n";
       Eigen::MatrixXd VpInv(ctr->spN, ctr->spN); 
       // At * Omega * A : (spN x spN)
-      VpInv.triangularView<Eigen::Lower>() = ctr->areaA.transpose() * (ctr->OmegaPhi) * (ctr->areaA);
-      VpInv += ctr->areaQ; // AT*OmegaPhi*A  + CAR prior inverse
+      VpInv.triangularView<Eigen::Lower>() = ctr->areaA.transpose() * ((ctr->omega1).asDiagonal()) * (ctr->areaA);
+      VpInv += ctr->areaQ; // AT*omega1*A  + CAR prior inverse
       VpInv.triangularView<Eigen::Upper>() = VpInv.transpose().eval(); 
       ctr->Vp.triangularView<Eigen::Lower>() = VpInv.inverse();
       ctr->Vp.triangularView<Eigen::Upper>() = ctr->Vp.transpose().eval();   
@@ -279,43 +247,38 @@ void tdlmModelEst(modelCtr *ctr)
       //Rcout << "Step 2-3: Sampling spPhi \n";
       // Mean of spPhi
       Eigen::VectorXd Rphi = ctr->zPhi - ((ctr->Z) * (b1Prev));
-      const Eigen::VectorXd ARphi = ctr->areaA.transpose() * (ctr->OmegaPhi) * (Rphi); // (px1)(nxn)(nx1) = (px1)(no DLM effects)
+      const Eigen::VectorXd ARphi = ctr->areaA.transpose() * ((ctr->omega1).asDiagonal()) * (Rphi); // (px1)(nxn)(nx1) = (px1)(no DLM effects)
       ctr->spPhi = ctr->Vp * ARphi; // Mean (spN x spN)(spN x 1)
 
       // Variance of spPhi using cholesky
       ctr->spPhi.noalias() += ctr->VpChol * as<Eigen::VectorXd>(rnorm(ctr->spN, 0, sqrt(ctr->sigma2)));
     } // Spatial finish
 
-    // Rcout << ctr->rho;
-    // Rcout << "\n";
-    // Rcout << ctr->spatial;
-    // Rcout << "\n";
-
     // *** Step 3: Negative Binomial (count) component ***
-    // 3-1: Update Omega2 ~ PG(y + r, psi2) with dlm effect
-    // Rcout << "Step 3-1: Sampling Omega2 \n";
+    // 3-1: Update omega2 ~ PG(y + r, psi2) with dlm effect
+    // Rcout << "Step 3-1: Sampling omega2 \n";
     // Start omega2 vector with ones and sample only for the at-risk (No need to sample PG(y + r, 0))
     (ctr->omega2).setOnes(); // Can set anything as it will be multiplied to zero
     for(int k = 0; k < (ctr->nStar); k++){
       int tmp = (ctr->atRiskIdx)[k];
       (ctr->omega2)[tmp] = rcpp_pgdraw((ctr->Y0)[tmp] + ctr->r, eta2[tmp]);
     }
-    ctr->Omega2 = (ctr->omega2).asDiagonal();                 // Omega2 matrix: (nxn)
 
     // 3-2: Update Zstar, Zw, Vg, z2, R
-    // Compute Zstar (Z with non At-risk individuals zeroed out)
+    // Zstar (Z with non At-risk individuals zeroed out)
     ctr->Zstar = (ctr->Z).array().colwise() * (ctr->w).array();
 
     // Zw
     // Rcout << "Step 3-2: Updating Zw \n";
-    ctr->Zw = ctr->Omega2 * ctr->Zstar;  // (nxn) x (nxp) = (nxp) with only with at-risk
+    ctr->Zw = (ctr->omega2).asDiagonal() * ctr->Zstar;  // (nxn) x (nxp) = (nxp) with only with at-risk
 
     // Vg (pxp)
     // Rcout << "Step 3-2: Updating Vg \n";
-    Eigen::MatrixXd VgInv(ctr->pZ, ctr->pZ); // (pxp)
+    VgInv.setZero(); 
     VgInv.triangularView<Eigen::Lower>() = ctr->Zstar.transpose() * (ctr->Zw); // Zt * Omega * Z: (pxn)(nxn)(nxp)
     VgInv.diagonal().array() += 1 / 100.0; // Zt*Omega*Z  + c*I where c = 100000
     VgInv.triangularView<Eigen::Upper>() = VgInv.transpose().eval(); 
+
     ctr->Vg.triangularView<Eigen::Lower>() = VgInv.inverse();
     ctr->Vg.triangularView<Eigen::Upper>() = ctr->Vg.transpose().eval();   
     ctr->VgChol = ctr->Vg.llt().matrixL();
@@ -328,7 +291,6 @@ void tdlmModelEst(modelCtr *ctr)
     // R (partial residual) (nx1)
     // Rcout << "Step 3-2: Updating R \n";
     Eigen::VectorXd fhatStar = ctr->fhat.array() * ctr->w.array(); 
-
     ctr->R = ctr->Ystar - fhatStar; // (nx1) - (nx1) = (nx1)
 
     // 3-3: Sample b2
@@ -340,47 +302,37 @@ void tdlmModelEst(modelCtr *ctr)
     // *** Step 4: Update the dispersion parameter, r ***
     // Rcout << "Step 4: Updating dispersion parameter, r \n";
     // Propose a new r with a random walk
-    int rC = ctr->r;
     int rP;
     if(R::runif(0, 1) < 0.5){ // Walk to left
-      rP = rC - 1;
+      rP = ctr->r - 1;
     } else { // Walk to right
-      rP = rC + 1;
+      rP = ctr->r + 1;
     }
 
-    // Support range = 1 ~ 10
-    if(rP == 0){
-      rP++;
-    }
-
-    if(rP == 11){
-      rP--;
-    }
-
-    // Reset & Compute MH Ratio
-    // Rcout << "Step 3: Resetting MHratio \n";
+    // Reset MH ratio
     ctr->MHratio = 0;
 
-    // Rcout << "Step 3: MHratio calculation \n";
-    for(int q = 0; q < (ctr->nStar); q++){
-      int index_aR = (ctr->atRiskIdx)[q];
-      (ctr->MHratio) += R::dnbinom((ctr->Y0)[index_aR], rP, nu2[index_aR], true);
-      (ctr->MHratio) -= R::dnbinom((ctr->Y0)[index_aR], rC, nu2[index_aR], true);
+    // Support range = 1 ~ 10
+    // MH ratio is zero (always rejected) if 0 and 11 is proposed.
+    // Otherwise, compute MH ratio.
+    if(rP != 0 && rP != 11){ // Out of support -> reject
+      for(int q = 0; q < (ctr->nStar); q++){
+        int idx_aR = (ctr->atRiskIdx)[q];
+        (ctr->MHratio) += R::dnbinom((ctr->Y0)[idx_aR], rP, (1 - logit2.array())[idx_aR], true);
+        (ctr->MHratio) -= R::dnbinom((ctr->Y0)[idx_aR], ctr->r, (1 - logit2.array())[idx_aR], true);
+      }
+
+      // MH ratio
+      ctr->MHratio = std::min(1.0, exp(ctr->MHratio));
     }
 
-    //Rcout << "MH ratio: " << exp(ctr->MHratio) << "\n";
-    ctr->MHratio = std::min(1.0, exp(ctr->MHratio));
-    
     // Accept/Reject 
     if(R::runif(0, 1) < ctr->MHratio){
       ctr->r = rP;
       ctr->rVec = (ctr->ones).array() * (ctr->r);
-    }
-    
-    // End ZINB
-  }
-}   // end tdlmModelEst function
-
+    }    
+  } // End ZINB
+} // end tdlmModelEst function
 
 // void tdlmModelEstBinomial(modelCtr *ctr)
 // {

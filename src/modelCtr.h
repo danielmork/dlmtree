@@ -13,7 +13,7 @@ public:
   Eigen::VectorXd Y0; // Fixed response
   Eigen::MatrixXd Z; // Design matrix for fixed effect
   Eigen::VectorXd R; // Partial residual (Also, Y - fhat): Store the current one -> update the next one
-  Eigen::MatrixXd Rmat; // Each column is partial residual -> 
+  Eigen::MatrixXd Rmat; // Each column is partial residual
   Eigen::MatrixXd Vg; // V_gamma
   Eigen::MatrixXd VgInv; // V_gamma inverse
   Eigen::MatrixXd VgChol; // V_gamma cholesky decomposition
@@ -28,6 +28,7 @@ public:
   bool binomial;
   Eigen::VectorXd Omega; // The latent variable for Polya-Gamma
   Eigen::MatrixXd Zw; // Z * Omega
+  Eigen::MatrixXd Zw1; // Z * Omega1 (binom for Zinb)
   Eigen::VectorXd kappa; // Kappa = y_i - n_i/2
   Eigen::VectorXd Ystar; // Ystar which is updated every iteration of MCMC, also called z1 in ZINB
   Eigen::VectorXd binomialSize; // n from Binomial (n, p)
@@ -42,7 +43,6 @@ public:
   Eigen::MatrixXd VgInv1;    // V_gamma inverse
   Eigen::MatrixXd VgChol1;   // V_gamma cholesky decomposition
   Eigen::VectorXd omega1;   // Polya-gamma latent variable (nx1)
-  Eigen::MatrixXd Omega1;   // diagonal matrix with omega1 (nxn)
   Eigen::VectorXd z1;
   Eigen::MatrixXd Sigma1;   // Var-Cov for MCMC update (nxn)
   Eigen::VectorXd Mu1;      // Mean for MCMC update (nx1)
@@ -51,8 +51,6 @@ public:
   Eigen::MatrixXd Vp;       // V_gamma
   Eigen::MatrixXd VpInv;    // V_spPhi inverse
   Eigen::MatrixXd VpChol;   // V_spPhi cholesky decomposition
-  Eigen::VectorXd omegaPhi;
-  Eigen::MatrixXd OmegaPhi;
   Eigen::VectorXd zPhi;
 
   // Count component(Negative Binomial) of ZINB (labelled with 2)
@@ -61,8 +59,6 @@ public:
   Eigen::VectorXd b2;         // coefficients
   std::vector<int> yZeroIdx;  // A vector of indices where y = 0
   Eigen::VectorXd omega2;     // Polya-gamma latent variable (n x 1)
-  Eigen::VectorXd omega2star; // Polya-gamma latent variable (n* x 1)
-  Eigen::MatrixXd Omega2;     // diagonal matrix with omega2 (n* x n*)
   Eigen::MatrixXd Sigma2;     // Var-Cov for MCMC update (nStar x nStar)
   Eigen::VectorXd Mu2;        // Mean for MCMC update (nStar x 1)
   Eigen::MatrixXd Zstar;      // Z with Z with non At-risk individuals zeroed out
@@ -91,6 +87,12 @@ public:
   // Updating at-risk component
   Eigen::VectorXd w;            // At-risk latent variable
   std::vector<int> atRiskIdx;   // Vector containing non-zero y indices
+  // Subsetting parameters
+  Eigen::VectorXd Ytemp; // Fixed response
+  Eigen::MatrixXd Ztemp; // Design matrix for fixed effect
+  Eigen::VectorXd Rtemp; // Partial residual (Also, Y - fhat): Store the current one -> update the next one
+  Eigen::MatrixXd Rmat_temp; // Each column is partial residual
+
 
   // Useful vector
   Eigen::VectorXd ones;
@@ -260,6 +262,8 @@ void tdlmModelEst(modelCtr *ctr);
 Eigen::VectorXd rcpp_pgdraw(Eigen::VectorXd, Eigen::VectorXd); // Multiple Draw from Polya-Gamma (Vector)
 double rcpp_pgdraw(double, double); // Single Draw from Polya-Gamma
 // void tdlmModelEstBinomial(modelCtr *ctr);
+// ----- ZINB Model -----
+double pgdraw_sp(double, double);
 
 void dlmtreeRecDLM(dlmtreeCtr* ctr, dlmtreeLog* dgn);
 class Node;

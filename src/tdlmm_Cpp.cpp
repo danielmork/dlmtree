@@ -16,8 +16,8 @@
 #include "Fncs.h" // Helpful functions
 #include <random>
 #include <iostream>
-#include <Eigen/Dense>
 using namespace Rcpp;
+using namespace Eigen;
 
 /**
  * @brief 
@@ -119,6 +119,11 @@ treeMHR mixMHR(std::vector<Node*> nodes1, std::vector<Node*> nodes2,
     tempV.noalias() -= ZtX.transpose() * VgZtX;                            // (2x2) - (2x5) x (5x2)
     XtVzInvR = Xdw.transpose() * selectInd(ctr->R, ctr->atRiskIdx);       // (2xn*) x (n*x1) = (2x1)
 
+    // Eigen::MatrixXd outXdstar = out.Xd.array().colwise() * (ctr->w).array();        // At-risk observations only
+    // const Eigen::MatrixXd Xdw = ctr->omega2.asDiagonal() * outXdstar; // (n*xn*) x (n*x2) = (n*x2) 
+    // tempV = Xdw.transpose() * outXdstar;                                   // (2xn*) x (n*x2) = (2x2)
+    // tempV.noalias() -= ZtX.transpose() * VgZtX;                            // (2x2) - (2x5) x (5x2)
+    // XtVzInvR = Xdw.transpose() * ctr->R;       // (2xn*) x (n*x1) = (2x1)
   } else {
     if (newTree) { // V_theta = V_delta_a from eq(11) & Xd = X_a in paper
       tempV.triangularView<Eigen::Lower>() = out.Xd.transpose() * out.Xd;
@@ -649,10 +654,8 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   ctr->b1 = as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(100)));   // Prior sampling of coefficients for binary component (p x 1)
   ctr->b2 = as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(100)));   // Prior sampling of coefficients for NegBin component (p x 1)
 
-  ctr->omega1.resize(ctr->n);        ctr->omega1.setOnes();      // Initiate with Omega1(binary) as an identity matrix
-  ctr->Omega1 = ctr->omega1.asDiagonal();        
-  ctr->omega2.resize(ctr->n);        ctr->omega2.setOnes();      // Initiate with Omega2(NegBin) as an identity matrix
-  ctr->Omega2 = ctr->omega2.asDiagonal();
+  ctr->omega1.resize(ctr->n);        ctr->omega1.setOnes();      // Initiate with omega1(binary) as an identity matrix
+  ctr->omega2.resize(ctr->n);        ctr->omega2.setOnes();      // Initiate with omega2(NegBin) as an identity matrix
   
   ctr->z1.resize(ctr->n);            ctr->z1.setZero();          // z1 for binary component
   ctr->Zstar = (ctr->Z).array().colwise() * (ctr->w).array();    // Fixed effect matrix with [w == 0] zeroed out.
@@ -1085,8 +1088,8 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
                             //Named("treeAccept") = wrap(Accept),
                             Named("b1") = wrap(b1),
                             Named("b2") = wrap(b2),
-                            Named("r") = wrap(r)));//,
-                            //Named("wMat") = wrap(wMat),
+                            Named("r") = wrap(r),
+                            Named("wMat") = wrap(wMat)));
                             //Named("spPhi") = wrap(spPhi),
                             //Named("spTau") = wrap(spTau),
                             //Named("rho") = wrap(rho)));

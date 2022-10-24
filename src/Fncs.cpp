@@ -327,7 +327,7 @@ Eigen::MatrixXd selectIndM(Eigen::MatrixXd original, std::vector<int> indices) {
   Eigen::MatrixXd submat; // define a submat
   submat.resize(rownum, colnum);
 
-  // For loop to collect values with a corresponding index
+  // Match indices
   for(int i = 0; i < rownum; i++){
     int index = indices[i]; // Get an index from indices vector
     for(int j = 0; j < colnum; j++){
