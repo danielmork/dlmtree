@@ -377,9 +377,9 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   ctr->stepProb =     as<std::vector<double> >(model["stepProb"]);
   ctr->treePrior =    as<std::vector<double> >(model["treePriorTime"]);
   ctr->treePrior2 =   as<std::vector<double> >(model["treePriorExp"]);
-  ctr->zirtAlpha =    as<double>(model["zirtAlpha"]);
-  ctr->zirtP0 =       as<VectorXd>(model["p_t"]);
+  ctr->zirtP0 =       as<VectorXd>(model["zirtp0"]);
   ctr->zirtP0 = (ctr->zirtP0.array() / (1.0 - ctr->zirtP0.array())).log();
+  ctr->zirtAlpha =       as<double>(model["zirtAlpha"]);
   ctr->binomial =     as<bool>(model["binomial"]);
   ctr->shrinkage =    as<int>(model["shrinkage"]);
   ctr->verbose =      as<bool>(model["verbose"]);
@@ -393,7 +393,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   ctr->pZ =           ctr->Z.cols();
   ctr->Zw =           ctr->Z;
   MatrixXd VgInv =    ctr->Z.transpose() * ctr->Z;
-  VgInv.diagonal().array() += 1.0 / 100000.0;
+  VgInv.diagonal().array() += 1.0 / 1000.0;
   ctr->Vg =           VgInv.inverse();
   ctr->VgChol =       ctr->Vg.llt().matrixL();
   VgInv.resize(0,0);
@@ -440,23 +440,13 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
     // covMat = covMat.array().square();
     covMat *= log(i * 0.05);
     covMat = covMat.array().exp();
+    covMat *= 1 / ctr->zirtAlpha;
     MatrixXd covDet = covMat.llt().matrixL();
     zirtCovInv.push_back(covMat.inverse());
     zirtCovDet.push_back(covDet.diagonal().array().log().sum());
   }
   int curCov = 9;
   ctr->zirtCov = zirtCovInv[9];
-
-  // ctr->zirtCov.resize(ctr->pX, ctr->pX); ctr->zirtCov.setZero();
-  // // ctr->zirtCov.diagonal().array() = 1.0;
-  // for (int i = 1; i < ctr->pX; ++i) {
-  //   ctr->zirtCov.diagonal(i).array() = i;
-  //   ctr->zirtCov.diagonal(-i).array() = i;
-  // }
-  // ctr->zirtCov = ctr->zirtCov.array().square();
-  // ctr->zirtCov *= log(ctr->zirtAlpha);
-  // ctr->zirtCov = ctr->zirtCov.array().exp();
-  // ctr->zirtCov = ctr->zirtCov.inverse();
   
   // * Calculations used in special case: single-node trees
   ctr->X1 =         Exp->Tcalc.col(ctr->pX - 1);
@@ -471,12 +461,14 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   std::vector<Node*> trees;
   NodeStruct *nsT;
   NodeStruct *nsX;
+  bool updateTimeProb = as<bool>(model["updateTimeProb"]);
+  VectorXd timeProbs0 = as<VectorXd>(model["timeProb"]);
   nsT = new DLNMStruct(0, ctr->nSplits + 1, 1, int (ctr->pX),
                       0.0 * as<VectorXd>(model["splitProb"]), 
-                      as<VectorXd>(model["timeProb"]));
+                      timeProbs0);
   nsX = new DLNMStruct(0, ctr->nSplits + 1, 1, int (ctr->pX),
                       as<VectorXd>(model["splitProb"]), 
-                      0.0 * as<VectorXd>(model["timeProb"]));
+                      0.0 * timeProbs0);
   
   if (ctr->debug)
     Rcout << "Create trees\n";
@@ -531,6 +523,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   std::size_t s;
   // * Begin MCMC run
   for (ctr->b = 1; ctr->b <= (ctr->iter + ctr->burn); (ctr->b)++) {
+    Rcpp::checkUserInterrupt();
     if ((ctr->b > ctr->burn) && (((ctr->b - ctr->burn) % ctr->thin) == 0)) {
       ctr->record = floor((ctr->b - ctr->burn) / ctr->thin);
     } else {
@@ -596,12 +589,12 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
           ++termIt;
         }
       }
-
+      
       // draw polya-gamma for CW var selection, repeat 10x to help convergence
       VectorXd cwOnes(nTerm); cwOnes.setOnes();
       VectorXd zirtProb = ctr->zirtPsi0;
       MatrixXd cwV = cwX.transpose() * cwX;
-      for (int i = 0; i < 20; ++i) {
+      for (int i = 0; i < 10; ++i) {
         VectorXd psi = cwX * zirtProb;
         VectorXd cwPG = rcpp_pgdraw(cwOnes, psi);
         cwV = cwX.transpose() * cwPG.asDiagonal() * cwX;
@@ -628,29 +621,32 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
           --newCov;
         }
       }
-      covMHR += -zirtCovDet[newCov] - (ctr->zirtPsi0 - ctr->zirtP0).dot(zirtCovInv[newCov] * (ctr->zirtPsi0 - ctr->zirtP0)) + zirtCovDet[curCov] + (ctr->zirtPsi0 - ctr->zirtP0).dot(zirtCovInv[curCov] * (ctr->zirtPsi0 - ctr->zirtP0));
+      covMHR += -zirtCovDet[newCov] - 
+        (ctr->zirtPsi0 - ctr->zirtP0).dot(zirtCovInv[newCov] * (ctr->zirtPsi0 - ctr->zirtP0)) + 
+        zirtCovDet[curCov] + (ctr->zirtPsi0 - ctr->zirtP0).dot(zirtCovInv[curCov] * (ctr->zirtPsi0 - ctr->zirtP0));
       if (log(R::runif(0.0, 1.0)) < covMHR) {
         curCov = newCov;
         ctr->zirtCov = zirtCovInv[curCov];
       }
 
+      // if (updateTimeProb) { // update time splitting probabilities
+        VectorXd timeProbs = trees[0]->nodestruct->getTimeProbs();
+        double beta = R::rbeta(1.0, 1.0);
+        double modKappaNew = beta * (ctr->pX - 1.0)/ (1 - beta);
+        double mhrDir = logDirichletDensity(timeProbs, timeSplits + modKappaNew * timeProbs0) - 
+          logDirichletDensity(timeProbs, timeSplits + ctr->modKappa * timeProbs0);
+        if (log(R::runif(0, 1)) < mhrDir)
+          ctr->modKappa = modKappaNew;
 
-      // tree splitting probabilities
-      VectorXd timeProbs = trees[1]->nodestruct->getTimeProbs();
-      double beta = R::rbeta(1.0, 1.0);
-      double modKappaNew = beta * (ctr->pX - 1.0)/ (1 - beta);
-      double mhrDir = logDirichletDensity(timeProbs, (timeSplits.array() + modKappaNew / (ctr->pX - 1.0)).matrix()) - logDirichletDensity(timeProbs, (timeSplits.array() + ctr->modKappa / (ctr->pX - 1.0)).matrix());
-      if (log(R::runif(0, 1)) < mhrDir)
-        ctr->modKappa = modKappaNew;
-
-      VectorXd newTimeProbs = rDirichlet((timeSplits.array() + ctr->modKappa / (ctr->pX - 1.0)).matrix());
+        VectorXd newTimeProbs = rDirichlet(timeSplits + ctr->modKappa * timeProbs0);
 
 
-      // update tree time split probabilities
-      for (Node* tree : trees) {
-        tree->nodestruct->setTimeProbs(newTimeProbs);
-        tree->updateStruct();
-      }
+        // update tree time split probabilities
+        for (Node* tree : trees) {
+          tree->nodestruct->setTimeProbs(newTimeProbs);
+          tree->updateStruct();
+        }
+      // }
     } // end update of split and zero-inflated probabilities
     
     if (ctr->debug)

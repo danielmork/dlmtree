@@ -36,8 +36,12 @@ void tdlmModelEst(modelCtr *ctr)
     rHalfCauchyFC(&(ctr->sigma2), (double)ctr->n + (double)ctr->totTerm, 
                   ctr->R.dot(ctr->R) - ZR.dot(ctr->gamma) + 
                     ctr->sumTermT2 / ctr->nu, &(ctr->xiInvSigma2));
-    if ((ctr->sigma2 != ctr->sigma2)) // ! stop if infinte or nan variance
+    if ((ctr->sigma2 != ctr->sigma2)) {// ! stop if infinte or nan variance
+      Rcout << ctr->sigma2 << " " << ctr->totTerm << " " << 
+        ctr->R.dot(ctr->R) << " " << ZR.dot(ctr->gamma) << " " <<
+        ctr->sumTermT2 / ctr->nu << " " << ctr->xiInvSigma2;
       stop("\nNaN values (sigma) occured during model run, rerun model.\n");
+    }
   }
   
   // * Draw fixed effect coefficients (add to gamma hat)
@@ -51,7 +55,7 @@ void tdlmModelEst(modelCtr *ctr)
     ctr->Zw =        ctr->Omega.asDiagonal() * ctr->Z;
     MatrixXd VgInv(ctr->pZ, ctr->pZ);
     VgInv.triangularView<Lower>() =   ctr->Z.transpose() * ctr->Zw;
-    VgInv.diagonal().array() +=       1 / 100000.0;
+    VgInv.diagonal().array() +=       1 / 1000.0;
     VgInv.triangularView<Upper>() =   VgInv.transpose().eval();
     ctr->Vg.triangularView<Lower>() = VgInv.inverse();
     ctr->Vg.triangularView<Upper>() = ctr->Vg.transpose().eval();
@@ -440,6 +444,8 @@ VectorXd countTimeSplits(Node* tree, modelCtr* ctr)
   VectorXd unavailProb(ctr->pX - 1); unavailProb.setZero();
   std::vector<int> unavail;  
   for (Node* tn : tree->listInternal()) {
+    if (tn->nodestruct->get(6) == 0)
+      continue;
     timeCount(tn->nodestruct->get(6) - 1) += 1.0;
     unavail.clear();
     unavailProb.setZero();

@@ -69,7 +69,6 @@ bool DLNMStruct::proposeSplit()
       ((totXp <= 0.0) && (totTp <= 0.0))) {
     return(0);
   }
-
   if ((xmin >= xmax - 1) || (totXp <= 0.0)) { // sample T
     tsplit = sampleInt(Tp.segment(tmin - 1, tmax - tmin)) + tmin;
     xsplit = 0;
