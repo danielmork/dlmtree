@@ -23,6 +23,7 @@ importFrom("utils", "combn", "data")
 export(tdlnm)
 export(tdlmm)
 export(dlmtree)
+export(combine.models)
 
 export(sim.tdlnm)
 export(sim.tdlmm)

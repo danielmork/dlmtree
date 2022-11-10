@@ -13,7 +13,7 @@ public:
   int n, pZ, pX, nRec, nSplits, nTrees;
   int b, iter, thin, burn, record, threads, shrinkage;
   double sigma2, xiInvSigma2, nu, VTheta1Inv, totTerm, sumTermT2;
-  double modKappa, modZeta, zirtAlpha, zirtP0;
+  double modKappa, modZeta;
   std::vector<double> stepProb, treePrior, treePrior2;
   VectorXd Y;
   MatrixXd Z;
@@ -28,6 +28,10 @@ public:
   VectorXd gamma;
   VectorXd fhat;
   VectorXd tau;
+  VectorXd zirtP0;
+  double zirtAlpha;
+  MatrixXd zirtCov;
+  VectorXd timeCounts;
   
   // Binomial
   bool binomial;
@@ -77,6 +81,9 @@ public:
   MatrixXd termNodes;
   MatrixXd zirtPsi0;
   MatrixXd zirtPsi1;
+  VectorXd zirtCov;
+  MatrixXd timeProbs;
+  MatrixXd timeCounts;
 
   // Mixtures
   std::vector<VectorXd> MIXexp;
@@ -198,6 +205,7 @@ double tdlmProposeTree(Node* tree, exposureDat* Exp = 0,
 double modProposeTree(Node* tree, modDat* Mod, dlmtreeCtr* ctr, int step);
 std::string modRuleStr(Node* n, modDat* Mod);
 VectorXd countMods(Node* tree, modDat* Mod);
+VectorXd countTimeSplits(Node* tree, modelCtr* ctr);
 void drawTree(Node* tree, Node* n, double alpha, double beta, 
               double depth = 0.0);
 void drawZirt(Node* eta, tdlmCtr* ctr, NodeStruct* nsX);

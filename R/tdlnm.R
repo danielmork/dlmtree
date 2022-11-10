@@ -59,7 +59,7 @@
 tdlnm <- function(formula,
                   data,
                   exposure.data,
-                  exposure.splits = 50,
+                  exposure.splits = 20,
                   exposure.se = sd(exposure.data) / 2,
                   n.trees = 20,
                   n.burn = 2000,
@@ -70,10 +70,13 @@ tdlnm <- function(formula,
                   tree.params = c(.95, 2),
                   step.prob = c(.25, .25),
                   monotone = FALSE,
+                  piecewise.linear = FALSE,
                   zirt.p0 = 0.5,
+                  zirt.p0.strength = 1,
                   tree.time.params = c(.95, 2),
+                  tree.time.split.params = NULL,
                   tree.exp.params = c(.95, 2),
-                  shrinkage = 1,
+                  shrinkage = ifelse(monotone, F, T),
                   subset = NULL,
                   lowmem = FALSE,
                   max.threads = 0,
@@ -166,15 +169,15 @@ tdlnm <- function(formula,
   model$treePriorTime <- tree.time.params
   model$maxThreads <- max.threads
   model$debug <- debug
-  model$p_t <- 1 - (1 - zirt.p0) ^ (1 / model$nTrees)
-  model$zirtAlpha <- model$nTrees * model$p_t / (1 + model$p_t)
+  model$zirtp0 <- zirt.p0
+  model$zirtAlpha <- zirt.p0.strength
   model$shape <- ifelse(!is.null(exposure.se), "Smooth",
                         ifelse(exposure.splits == 0, "Linear",
                                "Step Function"))
-  # model$shape <- ifelse(piecewise.linear, "Piecewise Linear",
-  #                       ifelse(!is.null(exposure.se), "Smooth",
-  #                              ifelse(exposure.splits == 0, "Linear",
-  #                                     "Step Function")))
+  model$shape <- ifelse(piecewise.linear, "Piecewise Linear",
+                        ifelse(!is.null(exposure.se), "Smooth",
+                               ifelse(exposure.splits == 0, "Linear",
+                                      "Step Function")))
 
   if (model$verbose)
     cat("Preparing data...\n")
@@ -210,7 +213,14 @@ tdlnm <- function(formula,
 
   # ---- Exposure splits ----
   model$pExp <- ncol(exposure.data)
-  model$timeProb <- force(rep(1 / (model$pExp - 1), model$pExp - 1))
+  if (!is.null(tree.time.split.params) && 
+  length(tree.time.split.params) == (model$pExp - 1)) {
+    model$timeProb <- tree.time.split.params / sum(tree.time.split.params)
+    model$updateTimeProb <- 0
+  } else {
+    model$timeProb <- rep(1 / (model$pExp - 1), model$pExp - 1)
+    model$updateTimeProb <- 1
+  }
   model$X <- force(exposure.data)
   model$Xrange <- force(range(exposure.data))
   if (is.null(exposure.se)) {
@@ -256,11 +266,13 @@ tdlnm <- function(formula,
     # if exposure.splits entered incorrectly, infer user input and inform
     if (!is.list(exposure.splits)) {
       if (any(exposure.splits > 1 | exposure.splits < 0)) {
-        cat("exposure.splits entered as numeric vector, assuming values are exposure splitting points\n")
+        if (verbose)
+          cat("exposure.splits entered as numeric vector, assuming values are exposure splitting points\n")
         exposure.splits <- list("type" = "values",
                                 "split.vals" = exposure.splits)
       } else {
-        cat("exposure.splits entered as numeric vector, assuming values are exposure splitting quantiles\n")
+         if (verbose)
+          cat("exposure.splits entered as numeric vector, assuming values are exposure splitting quantiles\n")
         exposure.splits <- list("type" = "quantiles", "split.vals" = exposure.splits)
       }
     }
@@ -311,6 +323,14 @@ tdlnm <- function(formula,
     }
   }
 
+  if (length(model$zirtp0) != ncol(model$X)) {
+    if (length(model$zirtp0) == 1) {
+      model$zirtp0 = rep(model$zirtp0, ncol(model$X))
+    } else {
+      stop("zirt.p0 must be of length 1 or number of columns in exposure.data")
+    }
+  }
+
 
 
   # ---- Scale data and setup exposures ----
@@ -345,27 +365,18 @@ tdlnm <- function(formula,
   model$Zmean <- attr(model$Z, "scaled:center")
   model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
 
-  if (length(initial.params) == ncol(model$Z)) {
+  if (all.equal(names(initial.params), names(model$Z))) {
     model$initParams <- initial.params
-  } else if (initial.params == "glm") {
-    if (model$family == "gaussian") {
-      model$initParams <- lm(model$Y ~ -1 + model$Z)$coef
-    } else {
-      model$initParams <- glm(model$Y ~ -1 + model$Z, family = binomial)$coef
-    }
-  } else if (initial.params == FALSE) {
-    model$initParams <- rep(0, ncol(model$Z))
   } else {
-    warning("invalid input for `initial.params`, using zero")
     model$initParams <- rep(0, ncol(model$Z))
   }
 
 
   # ---- Run model ----
   if (model$monotone) {
-    # if (piecewise.linear)
-    #   out <- monolintdlnm_Cpp(model)
-    # else
+    if (piecewise.linear)
+      out <- monolintdlnm_Cpp(model)
+    else
       out <- monotdlnm_Cpp(model)
   } else
     out <- tdlnm_Cpp(model)
@@ -404,16 +415,14 @@ tdlnm <- function(formula,
   model$DLM$est <- model$DLM$est * model$Yscale / model$Xscale
   model$DLM$xmin <- sapply(model$DLM$xmin, function(i) {
     if (i == 0) {
-      # if (piecewise.linear) min(model$X)
-      # else 
-      -Inf
+      if (piecewise.linear) min(model$X)
+      else -Inf
     } else model$Xsplits[i]
   })
   model$DLM$xmax <- sapply(model$DLM$xmax, function(i) {
     if (i == (length(model$Xsplits) + 1)) {
-      # if (piecewise.linear) max(model$X)
-      # else 
-      Inf
+      if (piecewise.linear) max(model$X)
+      else Inf
     } else model$Xsplits[i]
   })
 

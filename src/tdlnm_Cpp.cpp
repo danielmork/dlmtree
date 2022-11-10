@@ -18,18 +18,18 @@ using namespace Rcpp;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using Eigen::Lower;
-#ifdef _OPENMP
-  #include <omp.h>
-  // [[Rcpp::plugins(openmp)]]
-#else
-  #define omp_get_num_threads()  1
-  #define omp_get_thread_num()   0
-  #define omp_get_max_threads()  1
-  #define omp_get_thread_limit() 1
-  #define omp_get_num_procs()    1
-  #define omp_set_nested(a)   // empty statement to remove the call
-  #define omp_get_wtime()        0
-#endif
+// #ifdef _OPENMP
+//   #include <omp.h>
+//   // [[Rcpp::plugins(openmp)]]
+// #else
+//   #define omp_get_num_threads()  1
+//   #define omp_get_thread_num()   0
+//   #define omp_get_max_threads()  1
+//   #define omp_get_thread_limit() 1
+//   #define omp_get_num_procs()    1
+//   #define omp_set_nested(a)   // empty statement to remove the call
+//   #define omp_get_wtime()        0
+// #endif
 
 /**
  * @brief calculate half of metropolis-hastings ratio for given tree
@@ -151,7 +151,6 @@ void tdlnmTreeMCMC(int t, Node *tree, tdlmCtr *ctr, tdlmLog *dgn,
   } else { // if single terminal node, grow is only option
     step = 0;
   }
-
   // propose update
   stepMhr = tdlmProposeTree(tree, Exp, ctr, step);
   success = tree->isProposed();
@@ -262,6 +261,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   ctr->stepProb = as<std::vector<double> >(model["stepProb"]);
   ctr->treePrior = as<std::vector<double> >(model["treePrior"]);
   ctr->shrinkage = as<int>(model["shrinkage"]);
+  ctr->modKappa = 1.0;
   
   // * Set up model data
   ctr->Y = as<VectorXd>(model["Y"]);
@@ -324,9 +324,10 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   int t;
   std::vector<Node*> trees;
   NodeStruct *ns;
+  VectorXd timeProbs0 = as<VectorXd>(model["timeProb"]);
   ns = new DLNMStruct(0, ctr->nSplits + 1, 1, int (ctr->pX),
                       as<VectorXd>(model["splitProb"]),
-                      as<VectorXd>(model["timeProb"]));
+                      timeProbs0);
   for (t = 0; t < ctr->nTrees; t++) {
     trees.push_back(new Node(0, 1));
     trees[t]->nodestruct = ns->clone();
@@ -344,6 +345,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   (dgn->tau).resize(ctr->nTrees, ctr->nRec);        (dgn->tau).setZero();
   (dgn->fhat).resize(ctr->n);                       (dgn->fhat).setZero();
   (dgn->termNodes).resize(ctr->nTrees, ctr->nRec);  (dgn->termNodes).setZero();
+  dgn->timeProbs.resize(ctr->pX - 1, ctr->nRec);   dgn->timeProbs.setZero();
   
   // * Initial values and draws
   ctr->fhat.resize(ctr->n);                         (ctr->fhat).setZero();
@@ -379,6 +381,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   // * Beginning of MCMC
   std::size_t s;
   for (ctr->b = 1; ctr->b <= (ctr->iter + ctr->burn); (ctr->b)++) {
+    Rcpp::checkUserInterrupt();
     if ((ctr->b > ctr->burn) && (((ctr->b - ctr->burn) % ctr->thin) == 0)) {
       ctr->record = floor((ctr->b - ctr->burn) / ctr->thin);
     } else {
@@ -403,6 +406,38 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     if ((ctr->sigma2 != ctr->sigma2) || (ctr->nu != ctr->nu))
       stop("\nNaN values occured during model run, rerun model.\n");
 
+// 
+//     if ((ctr->b > 1000) || (ctr->b > (0.5 * ctr->burn))) {
+//       // if (updateTimeProb) { // update time splitting probabilities
+//       Rcout << "1";
+//       VectorXd timeSplits(ctr->pX - 1); timeSplits.setZero();
+
+//       // Count time-tree terminal nodes for logistic model estimation
+//       for (Node* tree : trees) {
+//         timeSplits += countTimeSplits(tree, ctr);
+//       }
+//       Rcout << timeSplits;
+
+//       VectorXd timeProbs = trees[0]->nodestruct->getTimeProbs();
+//       double beta = R::rbeta(1.0, 1.0);
+//       double modKappaNew = beta * (ctr->pX - 1.0)/ (1 - beta);
+//       double mhrDir = logDirichletDensity(timeProbs, timeSplits + modKappaNew * timeProbs0) - logDirichletDensity(timeProbs, timeSplits + ctr->modKappa * timeProbs0);
+//       if (log(R::runif(0, 1)) < mhrDir)
+//         ctr->modKappa = modKappaNew;
+
+//       Rcout << "2";
+//       VectorXd newTimeProbs = rDirichlet(timeSplits + ctr->modKappa * timeProbs0);
+
+//       // Rcout << newTimeProbs << "--3--" << newTimeProbs.sum();
+
+//       // update tree time split probabilities
+//       for (Node* tree : trees) {
+//         tree->nodestruct->setTimeProbs(newTimeProbs);
+//         tree->updateStruct();
+//       }
+//       // Rcout << "44";
+//     }
+
     // * Record
     if (ctr->record > 0) {
       (dgn->gamma).col(ctr->record - 1) = ctr->gamma;
@@ -410,6 +445,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
       (dgn->nu)(ctr->record - 1) = ctr->nu;
       (dgn->tau).col(ctr->record - 1) = ctr->tau;
       (dgn->termNodes).col(ctr->record - 1) = ctr->nTerm;
+      dgn->timeProbs.col(ctr->record -1) = trees[0]->nodestruct->getTimeProbs();
       dgn->fhat += ctr->fhat;
     }
 
@@ -427,6 +463,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   MatrixXd gamma = (dgn->gamma).transpose();
   MatrixXd tau = (dgn->tau).transpose();
   MatrixXd termNodes = (dgn->termNodes).transpose();
+  MatrixXd timeProbs = (dgn->timeProbs).transpose();
   MatrixXd Accept((dgn->TreeAccept).size(), 5);
   for (s = 0; s < (dgn->TreeAccept).size(); ++s)
     Accept.row(s) = dgn->TreeAccept[s];
@@ -442,6 +479,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
                             Named("sigma2") = wrap(sigma2),
                             Named("nu")     = wrap(nu),
                             Named("tau")    = wrap(tau),
+                            Named("timeProbs") = wrap(timeProbs),
                             Named("termNodes")  = wrap(termNodes),
                             Named("gamma")  = wrap(gamma),
                             Named("treeAccept") = wrap(Accept)));

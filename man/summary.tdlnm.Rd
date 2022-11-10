@@ -9,7 +9,9 @@
   pred.at = NULL,
   cenval = 0,
   conf.level = 0.95,
-  exposure.se = NULL
+  exposure.se = NULL,
+  zirt.cond = FALSE,
+  verbose = TRUE
 )
 }
 \arguments{

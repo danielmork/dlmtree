@@ -23,6 +23,8 @@ std::vector<std::vector<int> > NodeStruct::get3(int a)
   { std::vector<std::vector<int> > b; return(b); }
 bool NodeStruct::checkEqual(NodeStruct* n) {return(0);}
 void NodeStruct::setTimeRange(int lower, int upper) {}
+void NodeStruct::setTimeProbs(Eigen::VectorXd newProbs) {}
+Eigen::VectorXd NodeStruct::getTimeProbs() {}
 
 /**
  * @brief Construct a new DLNMStruct::DLNMStruct object
@@ -55,7 +57,8 @@ DLNMStruct::DLNMStruct(const DLNMStruct& ns)
 }
 
 
-
+Eigen::VectorXd DLNMStruct::getTimeProbs()  { return(this->Tp); }
+void DLNMStruct::setTimeProbs(Eigen::VectorXd newProbs) { Tp = newProbs; }
 
 
 
@@ -66,7 +69,6 @@ bool DLNMStruct::proposeSplit()
       ((totXp <= 0.0) && (totTp <= 0.0))) {
     return(0);
   }
-
   if ((xmin >= xmax - 1) || (totXp <= 0.0)) { // sample T
     tsplit = sampleInt(Tp.segment(tmin - 1, tmax - tmin)) + tmin;
     xsplit = 0;
@@ -108,6 +110,7 @@ bool DLNMStruct::checkEqual(NodeStruct* n) {return(0);}
 
 void DLNMStruct::updateStruct(NodeStruct* parStruct, bool left)
 {
+  Tp = parStruct->getTimeProbs();
   int xs = parStruct->get(5);
   int ts = parStruct->get(6);
   if (left) {

@@ -33,6 +33,10 @@ dlnmEst <- function(dlnm, predAt, nlags, nsamp, center, se) {
     .Call(`_dlmtree_dlnmEst`, dlnm, predAt, nlags, nsamp, center, se)
 }
 
+splitPIP <- function(dlnm, nlags, niter) {
+    .Call(`_dlmtree_splitPIP`, dlnm, nlags, niter)
+}
+
 dlnmPLEst <- function(dlnm, predAt, nlags, nsamp, center) {
     .Call(`_dlmtree_dlnmPLEst`, dlnm, predAt, nlags, nsamp, center)
 }
