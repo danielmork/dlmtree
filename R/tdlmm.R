@@ -68,7 +68,7 @@ tdlmm <- function(formula,
                   subset = NULL,
                   verbose = TRUE,
                   diagnostics = FALSE,
-                  initial.params = FALSE,
+                  initial.params = NULL,
                   ...)
 {
   model <- list()
@@ -235,13 +235,13 @@ tdlmm <- function(formula,
     stop("missing values in model data, use `complete.cases()` to subset data")
   model$Y <- force(model.response(mf))
   model$Z <- force(model.matrix(model$formula, data = mf))
-  QR <- qr(crossprod(model$Z))
-  model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)])]
-  model$Znames <- colnames(model$Z)[sort(QR$pivot[seq_len(QR$rank)])]
-  model$droppedCovar <- colnames(model$Z)[QR$pivot[-seq_len(QR$rank)]]
-  model$Z <- matrix(model$Z[,sort(QR$pivot[seq_len(QR$rank)])], nrow(model$Z), QR$rank)
+  # QR <- qr(crossprod(model$Z))
+  # model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)])]
+  model$Znames <- colnames(model$Z)#[sort(QR$pivot[seq_len(QR$rank)])]
+  model$droppedCovar <- c()#colnames(model$Z)[QR$pivot[-seq_len(QR$rank)]]
+  # model$Z <- matrix(model$Z[,sort(QR$pivot[seq_len(QR$rank)])], nrow(model$Z), QR$rank)
   model$Z <- force(scaleModelMatrix(model$Z))
-  rm(QR)
+  # rm(QR)
 
 
   if (model$family == "gaussian") {
@@ -256,21 +256,18 @@ tdlmm <- function(formula,
   model$Y <- force(c(model$Y))
   model$Zscale <- attr(model$Z, "scaled:scale")
   model$Zmean <- attr(model$Z, "scaled:center")
-  model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
+  # model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
 
-  if (length(initial.params) == ncol(model$Z)) {
-    model$initParams <- initial.params
-  } else if (initial.params == "glm") {
-    if (model$family == "gaussian") {
-      model$initParams <- lm(model$Y ~ -1 + model$Z)$coef
-    } else {
-      model$initParams <- glm(model$Y ~ -1 + model$Z, family = binomial)$coef
+  
+
+  if (!is.null(initial.params)) {
+    model$initParams <- rep(0, ncol(model$Z))
+    names(model$initParams) <- colnames(model$Z)
+    if (sum(names(initial.params) %in% colnames(model$Z)) > 0) {
+      na <- names(initial.params[ # get matching names 
+        which(names(initial.params) %in% colnames(model$Z))])
+      model$initParams[na] <- initial.params[na]
     }
-  } else if (initial.params == FALSE) {
-    model$initParams <- rep(0, ncol(model$Z))
-  } else {
-    warning("invalid input for `initial.params`, using zero")
-    model$initParams <- rep(0, ncol(model$Z))
   }
 
 

@@ -504,6 +504,18 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
     Rcout << "Initial draws\n";
   ctr->fhat.resize(ctr->n);                         ctr->fhat.setZero();
   ctr->gamma.resize(ctr->pZ);                       ctr->gamma.setZero();
+  // Load initial params for faster convergence in binomial model
+  if (ctr->binomial) {
+    ctr->gamma = as<VectorXd>(model["initParams"]);
+    ctr->Omega =rcpp_pgdraw(ctr->binomialSize, ctr->fhat + ctr->Z * ctr->gamma);
+    ctr->Zw = ctr->Omega.asDiagonal() * ctr->Z;
+    ctr->VgInv =   ctr->Z.transpose() * ctr->Zw;
+    ctr->VgInv.diagonal().array() += 1 / 100000.0;
+    ctr->Vg = ctr->VgInv.inverse();
+    ctr->VgChol = ctr->Vg.llt().matrixL();
+    // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
+    ctr->Y = ctr->kappa.array() / ctr->Omega.array();
+  }
   ctr->tau.resize(ctr->nTrees);                     ctr->tau.setOnes();
   ctr->R =          ctr->Y;
   ctr->totTerm =    0;
