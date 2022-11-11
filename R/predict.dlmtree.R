@@ -1,5 +1,5 @@
 predict.dlmtree <- function(object, new.data, new.exposure.data, ...,
-                            ci.level = 0.95,
+                            ci.level = 0.95, type = "response", outcome = NULL,
                             fixed.idx = list(), est.dlm = FALSE, verbose = TRUE)
 {
   `%notin%` <- Negate(`%in%`)
@@ -119,10 +119,19 @@ predict.dlmtree <- function(object, new.data, new.exposure.data, ...,
   out$fhat.lims <- apply(fhat.draws, 1, quantile, probs = ci.lims)
 
   # ---- Outcome predictions ----
-  y.draws <- ztg.draws + fhat.draws +
-    sapply(1:object$mcmcIter, function(i) rnorm(nrow(ztg.draws), 0, sqrt(object$sigma2[i])))
-  out$y <- rowMeans(y.draws)
-  out$y.lims <- apply(y.draws, 1, quantile, probs = ci.lims)
+  if (type == "response") {
+    y.draws <- ztg.draws + fhat.draws +
+      sapply(1:object$mcmcIter, function(i) rnorm(nrow(ztg.draws), 0, sqrt(object$sigma2[i])))
+    out$y <- rowMeans(y.draws)
+    out$y.lims <- apply(y.draws, 1, quantile, probs = ci.lims)
 
-  return(out)
+    return(out)
+  } else if (type == "waic") {
+    if (length(outcome) != nrow(ztg.draws))
+      stop("must provide compplete data outcome to calculate WAIC")
+    probs <- sapply(1:object$mcmcIter, function(i) dnorm(outcome, ztg.draws[,i] + fhat.draws[,i], sqrt(object$sigma2[i])))
+    LPD <- sum(log(rowMeans(probs)))
+    pwaic <- sum(apply(log(probs), 1, var))
+    return(list(waic = -2 * (LPD - pwaic), LPD = LPD, pwaic = pwaic))
+  }
 }

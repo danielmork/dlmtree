@@ -154,6 +154,7 @@ Rcpp::List dlmtreeGPGaussian(const Rcpp::List model)
   std::size_t s;
   // ---- MCMC ----
   for (ctr->b = 1; ctr->b <= (ctr->iter + ctr->burn); (ctr->b)++) {
+    Rcpp::checkUserInterrupt();
     if ((ctr->b > ctr->burn) && (((ctr->b - ctr->burn) % ctr->thin) == 0)) {
       ctr->record = floor((ctr->b - ctr->burn) / ctr->thin);
     } else {

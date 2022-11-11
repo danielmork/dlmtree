@@ -26,7 +26,8 @@ dlmtree <- function(formula,
                     subset = 1:nrow(data),
                     save.data = TRUE,
                     verbose = TRUE,
-                    diagnostics = FALSE)
+                    diagnostics = FALSE,
+                    initial.params = FALSE)
 {
   options(stringsAsFactors = FALSE)
   model <- list()

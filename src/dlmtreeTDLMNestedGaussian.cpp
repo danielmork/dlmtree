@@ -419,6 +419,7 @@ Rcpp::List dlmtreeTDLMNestedGaussian(const Rcpp::List model)
   std::size_t s;
   // * Begin MCMC
   for (ctr->b = 1; ctr->b <= (ctr->iter + ctr->burn); (ctr->b)++) {
+    Rcpp::checkUserInterrupt();
     ctr->record = 0;
     if ((ctr->b > ctr->burn) && (((ctr->b - ctr->burn) % ctr->thin) == 0))
       ctr->record = floor((ctr->b - ctr->burn) / ctr->thin);

@@ -688,6 +688,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   double sigmanu;
   std::size_t s;
   for (ctr->b = 1; ctr->b <= (ctr->iter + ctr->burn); (ctr->b)++) {
+    Rcpp::checkUserInterrupt();
     if ((ctr->b > ctr->burn) && (((ctr->b - ctr->burn) % ctr->thin) == 0)) {
       ctr->record = floor((ctr->b - ctr->burn) / ctr->thin);
     } else {

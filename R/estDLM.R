@@ -73,6 +73,7 @@ estDLM <- function(object,
     out$mcmc <- list()
   out$dlmMean <- list()
   out$dlmCI <- list()
+  out$dlmCum <- list()
 
 
   # ---- dlmType: GP ----
@@ -91,6 +92,7 @@ estDLM <- function(object,
         out$mcmc[[names(group.index)[i]]] <- mcmc
       out$dlmMean[[names(group.index)[i]]] <- rowMeans(mcmc)
       out$dlmCI[[names(group.index)[i]]] <- apply(mcmc, 1, quantile, probs = ci.lims)
+      out$dlmCum[[names(group.index)[i]]] <- c(mean = mean(rowMeans(mcmc)), quantile(colSums(mcmc), probs = ci.lims))
     }
     out$dlFunction <- "dlm"
 
@@ -105,6 +107,7 @@ estDLM <- function(object,
         out$mcmc[[names(group.index)[i]]] <- mcmc
       out$dlmMean[[names(group.index)[i]]] <- rowMeans(mcmc)
       out$dlmCI[[names(group.index)[i]]] <- apply(mcmc, 1, quantile, probs = ci.lims)
+      out$dlmCum[[names(group.index)[i]]] <- c(mean = mean(rowMeans(mcmc)), quantile(colSums(mcmc), probs = ci.lims))
     }
     out$dlFunction <- "dlm"
 
