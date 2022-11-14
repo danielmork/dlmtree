@@ -240,7 +240,7 @@ tdlmm <- function(formula,
   model$Znames <- colnames(model$Z)#[sort(QR$pivot[seq_len(QR$rank)])]
   model$droppedCovar <- c()#colnames(model$Z)[QR$pivot[-seq_len(QR$rank)]]
   # model$Z <- matrix(model$Z[,sort(QR$pivot[seq_len(QR$rank)])], nrow(model$Z), QR$rank)
-  model$Z <- force(scaleModelMatrix(model$Z))
+  # model$Z <- force(scaleModelMatrix(model$Z))
   # rm(QR)
 
 
@@ -254,14 +254,14 @@ tdlmm <- function(formula,
     model$Y <- force(scale(model$Y, center = 0, scale = 1))
   }
   model$Y <- force(c(model$Y))
-  model$Zscale <- attr(model$Z, "scaled:scale")
-  model$Zmean <- attr(model$Z, "scaled:center")
+  model$Zscale <- rep(1, ncol(model$Z))#attr(model$Z, "scaled:scale")
+  model$Zmean <- rep(0, ncol(model$Z))#attr(model$Z, "scaled:center")
   # model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
 
   
 
+  model$initParams <- rep(0, ncol(model$Z))
   if (!is.null(initial.params)) {
-    model$initParams <- rep(0, ncol(model$Z))
     names(model$initParams) <- colnames(model$Z)
     if (sum(names(initial.params) %in% colnames(model$Z)) > 0) {
       na <- names(initial.params[ # get matching names 

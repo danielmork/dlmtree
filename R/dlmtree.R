@@ -140,7 +140,7 @@ dlmtree <- function(formula,
   model$Znames <- colnames(model$Z)#[sort(QR$pivot[seq_len(QR$rank)])]
   model$droppedCovar <- c()#colnames(model$Z)[ model$QR$pivot[ -seq_len(model$QR$rank) ] ]
   # model$Z <-   model$Z[, sort(model$QR$pivot[ seq_len(model$QR$rank) ]) ]
-  model$Z <-   scaleModelMatrix(model$Z)
+  # model$Z <-   scaleModelMatrix(model$Z)
   # if (length(model$droppedCovar) > 0 & model$verbose)
   #   warning("variables {", paste0(model$droppedCovar, collapse = ", "),
   #           "} dropped due to perfect collinearity\n")
@@ -156,13 +156,13 @@ dlmtree <- function(formula,
     model$Y <-      scale(model$Y, center = 0, scale = 1)
   }
   model$Y <-       c(model$Y)
-  model$Zscale <-  attr(model$Z, "scaled:scale")
-  model$Zmean <-   attr(model$Z, "scaled:center")
+  model$Zscale <-  rep(1, ncol(model$Z))#attr(model$Z, "scaled:scale")
+  model$Zmean <-   rep(0, ncol(model$Z))#attr(model$Z, "scaled:center")
   model$Z <-       matrix(model$Z, nrow(model$Z), ncol(model$Z))
 
 
+  model$initParams <- rep(0, ncol(model$Z))
   if (!is.null(initial.params)) {
-    model$initParams <- rep(0, ncol(model$Z))
     names(model$initParams) <- colnames(model$Z)
     if (sum(names(initial.params) %in% colnames(model$Z)) > 0) {
       na <- names(initial.params[ # get matching names 
