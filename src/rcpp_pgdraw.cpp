@@ -72,9 +72,9 @@ Eigen::VectorXd rcpp_pgdraw(Eigen::VectorXd b,
   int n = z.size();
   
   Eigen::VectorXd y(n);
-  // #if defined(_OPENMP)
-  // #pragma omp parallel for shared(y)
-  // #endif
+  #if defined(_OPENMP)
+  #pragma omp parallel for shared(y)
+  #endif
   for (int i = 0; i < n; ++i) {
     double c = (double)std::fabs((double)z[i]) * 0.5;
     double r = ratio(c);

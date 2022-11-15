@@ -18,18 +18,18 @@ using namespace Rcpp;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using Eigen::Lower;
-// #ifdef _OPENMP
-//   #include <omp.h>
-//   // [[Rcpp::plugins(openmp)]]
-// #else
-//   #define omp_get_num_threads()  1
-//   #define omp_get_thread_num()   0
-//   #define omp_get_max_threads()  1
-//   #define omp_get_thread_limit() 1
-//   #define omp_get_num_procs()    1
-//   #define omp_set_nested(a)   // empty statement to remove the call
-//   #define omp_get_wtime()        0
-// #endif
+#ifdef _OPENMP
+  #include <omp.h>
+  // [[Rcpp::plugins(openmp)]]
+#else
+  #define omp_get_num_threads()  1
+  #define omp_get_thread_num()   0
+  #define omp_get_max_threads()  1
+  #define omp_get_thread_limit() 1
+  #define omp_get_num_procs()    1
+  #define omp_set_nested(a)   // empty statement to remove the call
+  #define omp_get_wtime()        0
+#endif
 
 /**
  * @brief calculate half of metropolis-hastings ratio for given tree
@@ -238,16 +238,16 @@ void tdlnmTreeMCMC(int t, Node *tree, tdlmCtr *ctr, tdlmLog *dgn,
 Rcpp::List tdlnm_Cpp(const Rcpp::List model)
 {
 
-  // #if defined(_OPENMP)
-  //   if (as<int>(model["maxThreads"]) > 0) {
-  //     omp_set_num_threads(as<int>(model["maxThreads"]));
-  //     Eigen::setNbThreads(as<int>(model["maxThreads"]));
-  //   } else {
-  //     omp_set_num_threads(int(double(omp_get_max_threads()) / 2.0));
-  //     Eigen::setNbThreads(int(double(omp_get_max_threads()) / 2.0));
-  //   }
-  //   
-  // #endif
+  #if defined(_OPENMP)
+    if (as<int>(model["maxThreads"]) > 0) {
+      omp_set_num_threads(as<int>(model["maxThreads"]));
+      Eigen::setNbThreads(as<int>(model["maxThreads"]));
+    } else {
+      omp_set_num_threads(int(double(omp_get_max_threads()) / 2.0));
+      Eigen::setNbThreads(int(double(omp_get_max_threads()) / 2.0));
+    }
+    
+  #endif
   // * Set up model control
   tdlmCtr *ctr = new tdlmCtr;
   ctr->iter = as<int>(model["nIter"]);
