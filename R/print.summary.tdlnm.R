@@ -40,9 +40,12 @@ print.summary.tdlnm <- function(object, digits = 3)
   if (!is.na(object$sig.to.noise))
     cat("\nsignal-to-noise =", round(object$sig.to.noise, digits))
   cat("\ncritical windows: ")
-  if (object$ctr$dl.function == "tdlnm")
-    cw <- ppRange(which((colSums(object$cilower > 0) + colSums(object$ciupper < 0)) > 0))
-  else
+  if (object$ctr$dl.function == "tdlnm") {
+    if (object$ctr$monotone)
+      cw <- ppRange(which(object$splitProb >= object$conf.level))
+    else
+      cw <- ppRange(which((colSums(object$cilower > 0) + colSums(object$ciupper < 0)) > 0))
+  } else
     cw <- ppRange(which(object$cilower > 0 | object$ciupper < 0))
   cat(cw, "\n")
   if (object$ctr$dl.function == "tdlm") {

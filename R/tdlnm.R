@@ -72,7 +72,8 @@ tdlnm <- function(formula,
                   monotone = FALSE,
                   piecewise.linear = FALSE,
                   zirt.p0 = 0.5,
-                  zirt.p0.strength = 1,
+                  # zirt.p0.strength = 1,
+                  zirt.priors = list(),
                   tree.time.params = c(.95, 2),
                   tree.time.split.params = NULL,
                   tree.exp.params = c(.95, 2),
@@ -170,7 +171,7 @@ tdlnm <- function(formula,
   model$maxThreads <- max.threads
   model$debug <- debug
   model$zirtp0 <- zirt.p0
-  model$zirtAlpha <- zirt.p0.strength
+  # model$zirtAlpha <- zirt.p0.strength
   model$shape <- ifelse(!is.null(exposure.se), "Smooth",
                         ifelse(exposure.splits == 0, "Linear",
                                "Step Function"))
@@ -181,6 +182,7 @@ tdlnm <- function(formula,
 
   if (model$verbose)
     cat("Preparing data...\n")
+
 
 
 
@@ -329,6 +331,40 @@ tdlnm <- function(formula,
     } else {
       stop("zirt.p0 must be of length 1 or number of columns in exposure.data")
     }
+  }
+
+
+  # create informative priors for zirt
+  model$zirtPseudoX <- matrix(0, 0, 0)
+  model$zirtPseudoY <- c()
+  model$zirtPseudoTerm <- 0
+  model$timeSplits0 <- rep(0, model$pExp)
+  if (length(zirt.priors) > 0) {
+    zirtPseudoX <- NULL
+    zirtPseudoY <- c()
+    zirtPseudoTerm <- 0
+    timeSplits0 <- 0
+    for (i in 1:length(zirt.priors)) {
+      cw <- zirt.priors[[i]]
+      if (!all(cw == 1 | cw == 0))
+        stop("zirt.priors must contain only zeros or ones representing periods of susceptibility") 
+      splits <- abs(diff(cw))
+      cwX <- matrix(0, sum(splits) + 1, length(cw))
+      cwY <- rep(0, sum(splits) + 1)
+      s <- c(0, which(splits == 1), length(cw))
+      for (j in 2:length(s)) {
+        cwX[j - 1, (s[j - 1] + 1):s[j]] <- 1
+        cwY[j - 1] <- all(cw[(s[j - 1] + 1):s[j]] == 1)
+      }
+      zirtPseudoX <- rbind(zirtPseudoX, cwX)
+      zirtPseudoY <- c(zirtPseudoY, cwY)
+      timeSplits0 <- timeSplits0 * rep(1, length(splits)) + splits
+      zirtPseudoTerm <- zirtPseudoTerm + sum(splits) + 1
+    }
+    model$zirtPseudoX <- zirtPseudoX
+    model$zirtPseudoY <- zirtPseudoY
+    model$zirtPseudoTerm <- zirtPseudoTerm
+    model$timeSplits0 <- timeSplits0
   }
 
 

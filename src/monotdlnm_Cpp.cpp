@@ -325,7 +325,7 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn, exposure
   
   // Record
   if (ctr->record > 0) {
-    Eigen::VectorXd rec(8);
+    VectorXd rec(8);
     rec << ctr->record, t, 0, 0, 0, 0, 0, 0;
     
     int k = 0;
@@ -378,8 +378,16 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   ctr->treePrior =    as<std::vector<double> >(model["treePriorTime"]);
   ctr->treePrior2 =   as<std::vector<double> >(model["treePriorExp"]);
   ctr->zirtP0 =       as<VectorXd>(model["zirtp0"]);
+  int zirtPseudoTerm = as<int>(model["zirtPseudoTerm"]);
+  VectorXd timeSplits0 = as<VectorXd>(model["timeSplits0"]);
+  VectorXd zirtPseudoY;
+  MatrixXd zirtPseudoX;
+  if (zirtPseudoTerm > 0) { 
+    zirtPseudoY = as<VectorXd>(model["zirtPseudoY"]);
+    zirtPseudoX = as<MatrixXd>(model["zirtPseudoX"]);
+  }
   ctr->zirtP0 = (ctr->zirtP0.array() / (1.0 - ctr->zirtP0.array())).log();
-  ctr->zirtAlpha =       as<double>(model["zirtAlpha"]);
+  // ctr->zirtAlpha =       as<double>(model["zirtAlpha"]);
   ctr->binomial =     as<bool>(model["binomial"]);
   ctr->shrinkage =    as<int>(model["shrinkage"]);
   ctr->verbose =      as<bool>(model["verbose"]);
@@ -440,13 +448,14 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
     // covMat = covMat.array().square();
     covMat *= log(i * 0.05);
     covMat = covMat.array().exp();
-    covMat *= 1 / ctr->zirtAlpha;
+    // covMat *= 1 / ctr->zirtAlpha;
     MatrixXd covDet = covMat.llt().matrixL();
     zirtCovInv.push_back(covMat.inverse());
     zirtCovDet.push_back(covDet.diagonal().array().log().sum());
   }
   int curCov = 9;
   ctr->zirtCov = zirtCovInv[9];
+  VectorXd timeSplits(ctr->pX - 1);
   
   // * Calculations used in special case: single-node trees
   ctr->X1 =         Exp->Tcalc.col(ctr->pX - 1);
@@ -570,7 +579,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
 
 
     // Update zero-inflated tree split probabilities
-    VectorXd timeSplits(ctr->pX - 1); timeSplits.setZero();
+    timeSplits = timeSplits0;
     ctr->timeCounts.setZero();
     if ((ctr->b > 1000) || (ctr->b > (0.5 * ctr->burn))) {
 
@@ -582,8 +591,9 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
       }
 
       // Create split outcome (cwY) and design matrix (cwX)
-      VectorXd cwY(nTerm); cwY.array() = -0.5;// polya-gamma: y=y-1/2
-      MatrixXd cwX(nTerm, ctr->pX); cwX.setZero();
+      VectorXd cwY(nTerm + zirtPseudoTerm); 
+      cwY.array() = -0.5;// polya-gamma: y=y-1/2
+      MatrixXd cwX(nTerm + zirtPseudoTerm, ctr->pX); cwX.setZero();
       Eigen::Index termIt = 0;
 
       for (Node* tree : trees) { // loop over all trees
@@ -601,9 +611,14 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
           ++termIt;
         }
       }
+      // add pseudo data for informative prior
+      if (zirtPseudoTerm > 0) {
+        cwY.segment(termIt, zirtPseudoTerm) = zirtPseudoY;
+        cwX.block(termIt, 0, zirtPseudoTerm, ctr->pX) = zirtPseudoX;
+      }
       
       // draw polya-gamma for CW var selection, repeat 10x to help convergence
-      VectorXd cwOnes(nTerm); cwOnes.setOnes();
+      VectorXd cwOnes(nTerm + zirtPseudoTerm); cwOnes.setOnes();
       VectorXd zirtProb = ctr->zirtPsi0;
       MatrixXd cwV = cwX.transpose() * cwX;
       for (int i = 0; i < 10; ++i) {
@@ -611,8 +626,10 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
         VectorXd cwPG = rcpp_pgdraw(cwOnes, psi);
         cwV = cwX.transpose() * cwPG.asDiagonal() * cwX;
         cwV += ctr->zirtCov;
-        zirtProb = cwV.inverse() * (cwX.transpose() * cwY + ctr->zirtCov * ctr->zirtP0);
-        zirtProb += cwV.inverse().llt().matrixL() * as<VectorXd>(rnorm(ctr->pX, 0, 1));
+        zirtProb = cwV.inverse() * 
+          (cwX.transpose() * cwY + ctr->zirtCov * ctr->zirtP0);
+        zirtProb += cwV.inverse().llt().matrixL() * 
+          as<VectorXd>(rnorm(ctr->pX, 0, 1));
       }
       ctr->zirtPsi0 = zirtProb;
       
@@ -643,7 +660,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
 
       // if (updateTimeProb) { // update time splitting probabilities
         VectorXd timeProbs = trees[0]->nodestruct->getTimeProbs();
-        double beta = R::rbeta(1.0, 1.0);
+        double beta = R::rbeta(0.5, 1.0);
         double modKappaNew = beta * (ctr->pX - 1.0)/ (1 - beta);
         double mhrDir = logDirichletDensity(timeProbs, timeSplits + modKappaNew * timeProbs0) - 
           logDirichletDensity(timeProbs, timeSplits + ctr->modKappa * timeProbs0);
@@ -685,21 +702,21 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   } // end MCMC
   
   // * Setup data for return
-  Eigen::MatrixXd DLM((dgn->DLMexp).size(), 8);
+  MatrixXd DLM((dgn->DLMexp).size(), 8);
   for (s = 0; s < (dgn->DLMexp).size(); ++s)
     DLM.row(s) = dgn->DLMexp[s];
-  Eigen::VectorXd sigma2 = dgn->sigma2;
-  Eigen::VectorXd nu = dgn->nu;
-  Eigen::VectorXd fhat = (dgn->fhat).array() / ctr->nRec;
-  Eigen::MatrixXd gamma = (dgn->gamma).transpose();
-  Eigen::MatrixXd zirtPsi0 = dgn->zirtPsi0.transpose();
-  Eigen::VectorXd kappa = dgn->kappa;
-  Eigen::VectorXd zirtCov = dgn->zirtCov;
-  Eigen::MatrixXd tau = (dgn->tau).transpose();
-  Eigen::MatrixXd termNodes = (dgn->termNodes).transpose();
-  Eigen::MatrixXd timeProbs = (dgn->timeProbs).transpose();
-  Eigen::MatrixXd timeCounts = (dgn->timeCounts).transpose();
-  Eigen::MatrixXd Accept((dgn->TreeAccept).size(), 5);
+  VectorXd sigma2 = dgn->sigma2;
+  VectorXd nu = dgn->nu;
+  VectorXd fhat = (dgn->fhat).array() / ctr->nRec;
+  MatrixXd gamma = (dgn->gamma).transpose();
+  MatrixXd zirtPsi0 = dgn->zirtPsi0.transpose();
+  VectorXd kappa = dgn->kappa;
+  VectorXd zirtCov = dgn->zirtCov;
+  MatrixXd tau = (dgn->tau).transpose();
+  MatrixXd termNodes = (dgn->termNodes).transpose();
+  MatrixXd timeProbs = (dgn->timeProbs).transpose();
+  MatrixXd timeCounts = (dgn->timeCounts).transpose();
+  MatrixXd Accept((dgn->TreeAccept).size(), 5);
   for (s = 0; s < (dgn->TreeAccept).size(); ++s)
     Accept.row(s) = dgn->TreeAccept[s];
   delete prog;
