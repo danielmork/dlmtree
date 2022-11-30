@@ -120,46 +120,87 @@ dlmtree <- function(formula,
 
   # ---- Setup fixed effect model ----
   model$formula <-    as.formula(formula)
-  model$terms <-      terms.formula(model$formula, data = data)
-  if (!attr(model$terms, "response"))
+  tf <- terms.formula(model$formula, data = data)
+  if (!attr(tf, "response"))
     stop("no valid response in formula")
-  if (length(which(attr(model$terms, "term.labels") %in% colnames(data))) == 0)
+  model$intercept <- force(ifelse(attr(tf, "intercept"), TRUE, FALSE))
+  if (length(which(attr(tf, "term.labels") %in% colnames(data))) == 0
+      & !model$intercept)
     stop("no valid variables in formula")
-  mf <-               model.frame(model$terms, data = data,
-                                  na.action = NULL,
-                                  drop.unused.levels = TRUE)
-  model$termLevels <- .getXlevels(delete.response(model$terms), mf)
-  model$intercept <-  ifelse(attr(model$terms, "intercept"), TRUE, FALSE)
+
+  # if (!attr(model$terms, "response"))
+  #   stop("no valid response in formula")
+  # if (length(which(attr(model$terms, "term.labels") %in% colnames(data))) == 0)
+  #   stop("no valid variables in formula")
+  # mf <-               model.frame(model$terms, data = data,
+  #                                 na.action = NULL,
+  #                                 drop.unused.levels = TRUE)
+  # model$termLevels <- .getXlevels(delete.response(model$terms), mf)
+  # model$intercept <-  ifelse(attr(model$terms, "intercept"), TRUE, FALSE)
+  # if (any(is.na(mf)))
+  #   stop("missing values in model data, use `complete.cases()` to subset data")
+
+
+
+
+  # ---- Scale data and setup exposures ----
+  data <- droplevels(data)
+  mf <- model.frame(model$formula, data = data,
+                    drop.unused.levels = TRUE,
+                    na.action = NULL)
   if (any(is.na(mf)))
     stop("missing values in model data, use `complete.cases()` to subset data")
+  model$Y <- force(model.response(mf))
+  model$Z <- force(model.matrix(model$formula, data = mf))
+  # QR <- qr(crossprod(model$Z))
+  model$Znames <- colnames(model$Z)#[QR$pivot[seq_len(QR$rank)]]
+  model$droppedCovar <- c()#colnames(model$Z)[QR$pivot[-seq_len(QR$rank)]]
+  # model$Z <- matrix(model$Z[,QR$pivot[seq_len(QR$rank)]], nrow(model$Z), QR$rank)
+  # model$Z <- force(scaleModelMatrix(model$Z))
+  # rm(QR)
 
   # ---- Drop collinear variables ----
-  model$Y <-   model.response(mf)
-  model$Z <-   model.matrix(model$terms, data = mf)
-  # model$QR <-        qr(crossprod(model$Z))
-  model$Znames <- colnames(model$Z)#[sort(QR$pivot[seq_len(QR$rank)])]
-  model$droppedCovar <- c()#colnames(model$Z)[ model$QR$pivot[ -seq_len(model$QR$rank) ] ]
+  # model$Y <-   model.response(mf)
+  # model$Z <-   model.matrix(model$terms, data = mf)
+  # # model$QR <-        qr(crossprod(model$Z))
+  # model$Znames <- colnames(model$Z)#[sort(QR$pivot[seq_len(QR$rank)])]
+  # model$droppedCovar <- c()#colnames(model$Z)[ model$QR$pivot[ -seq_len(model$QR$rank) ] ]
   # model$Z <-   model$Z[, sort(model$QR$pivot[ seq_len(model$QR$rank) ]) ]
   # model$Z <-   scaleModelMatrix(model$Z)
   # if (length(model$droppedCovar) > 0 & model$verbose)
   #   warning("variables {", paste0(model$droppedCovar, collapse = ", "),
   #           "} dropped due to perfect collinearity\n")
 
+
+
   # ---- Scale data ----
   if (model$family == "gaussian") {
-    model$Ymean <-  sum(range(model$Y))/2
-    model$Yscale <- diff(range(model$Y - model$Ymean))
-    model$Y <-      (model$Y - model$Ymean) / model$Yscale
+    model$Ymean <- sum(range(model$Y))/2
+    model$Yscale <- sd(model$Y - model$Ymean)
+    model$Y <- force((model$Y - model$Ymean) / model$Yscale)
   } else {
     model$Yscale <- 1
-    model$Ymean <-  0
-    model$Y <-      scale(model$Y, center = 0, scale = 1)
+    model$Ymean <- 0
+    model$Y <- force(scale(model$Y, center = 0, scale = 1))
   }
-  model$Y <-       c(model$Y)
-  model$Zscale <-  rep(1, ncol(model$Z))#attr(model$Z, "scaled:scale")
-  model$Zmean <-   rep(0, ncol(model$Z))#attr(model$Z, "scaled:center")
-  model$Z <-       matrix(model$Z, nrow(model$Z), ncol(model$Z))
+  model$Y <- force(c(model$Y))
+  model$Zscale <- rep(1, ncol(model$Z))#attr(model$Z, "scaled:scale")
+  model$Zmean <- rep(0, ncol(model$Z))#attr(model$Z, "scaled:center")
+  # model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
 
+  # if (model$family == "gaussian") {
+  #   model$Ymean <-  sum(range(model$Y))/2
+  #   model$Yscale <- diff(range(model$Y - model$Ymean))
+  #   model$Y <-      (model$Y - model$Ymean) / model$Yscale
+  # } else {
+  #   model$Yscale <- 1
+  #   model$Ymean <-  0
+  #   model$Y <-      scale(model$Y, center = 0, scale = 1)
+  # }
+  # model$Y <-       c(model$Y)
+  # model$Zscale <-  rep(1, ncol(model$Z))#attr(model$Z, "scaled:scale")
+  # model$Zmean <-   rep(0, ncol(model$Z))#attr(model$Z, "scaled:center")
+  # model$Z <-       matrix(model$Z, nrow(model$Z), ncol(model$Z))
 
   model$initParams <- rep(0, ncol(model$Z))
   if (!is.null(initial.params)) {
@@ -170,6 +211,7 @@ dlmtree <- function(formula,
       model$initParams[na] <- initial.params[na]
     }
   }
+
 
 
   # ---- Exposure splits ----
