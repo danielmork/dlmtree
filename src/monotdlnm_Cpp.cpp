@@ -387,7 +387,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
     zirtPseudoX = as<MatrixXd>(model["zirtPseudoX"]);
   }
   ctr->zirtP0 = (ctr->zirtP0.array() / (1.0 - ctr->zirtP0.array())).log();
-  // ctr->zirtAlpha =       as<double>(model["zirtAlpha"]);
+  ctr->zirtAlpha =       as<double>(model["zirtAlpha"]);
   ctr->binomial =     as<bool>(model["binomial"]);
   ctr->shrinkage =    as<int>(model["shrinkage"]);
   ctr->verbose =      as<bool>(model["verbose"]);
@@ -448,13 +448,15 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
     // covMat = covMat.array().square();
     covMat *= log(i * 0.05);
     covMat = covMat.array().exp();
-    // covMat *= 1 / ctr->zirtAlpha;
+    covMat *= 1 / ctr->zirtAlpha;
     MatrixXd covDet = covMat.llt().matrixL();
     zirtCovInv.push_back(covMat.inverse());
     zirtCovDet.push_back(covDet.diagonal().array().log().sum());
   }
   int curCov = 9;
   ctr->zirtCov = zirtCovInv[9];
+  // ctr->zirtCov.resize(ctr->pX, ctr->pX); ctr->zirtCov.setZero();
+  // ctr->zirtCov.diagonal(0).array() = ctr->zirtAlpha;
   VectorXd timeSplits(ctr->pX - 1);
   
   // * Calculations used in special case: single-node trees
@@ -660,7 +662,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
 
       // if (updateTimeProb) { // update time splitting probabilities
         VectorXd timeProbs = trees[0]->nodestruct->getTimeProbs();
-        double beta = R::rbeta(0.5, 1.0);
+        double beta = R::rbeta(1.0, 1.0);
         double modKappaNew = beta * (ctr->pX - 1.0)/ (1 - beta);
         double mhrDir = logDirichletDensity(timeProbs, timeSplits + modKappaNew * timeProbs0) - 
           logDirichletDensity(timeProbs, timeSplits + ctr->modKappa * timeProbs0);
@@ -691,7 +693,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
       dgn->fhat +=                          ctr->fhat;
       dgn->fhat2 +=                         ctr->fhat.array().square().matrix();
       dgn->zirtPsi0.col(ctr->record - 1) =  ctr->zirtPsi0;
-      dgn->zirtCov(ctr->record - 1) =            curCov;
+      // dgn->zirtCov(ctr->record - 1) =            curCov;
       dgn->kappa(ctr->record - 1) =            ctr->modKappa;
       dgn->timeProbs.col(ctr->record -1) = trees[0]->nodestruct->getTimeProbs();
       dgn->timeCounts.col(ctr->record - 1) = ctr->timeCounts;

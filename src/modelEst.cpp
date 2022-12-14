@@ -447,31 +447,31 @@ VectorXd countTimeSplits(Node* tree, modelCtr* ctr)
     if (tn->nodestruct->get(6) == 0)
       continue;
     timeCount(tn->nodestruct->get(6) - 1) += 1.0;
-    unavail.clear();
-    unavailProb.setZero();
-    for (int i = 0; i < ctr->pX - 1; ++i) {
-      if ((tn->nodestruct->get(3) - 1 > i) || (tn->nodestruct->get(4) - 1 < i)) {
-        unavail.push_back(i);
-        unavailProb(i) = tree->nodestruct->getTimeProbs()(i);
-      }
-    }
-    if (unavail.size() > 0) {
-      std::random_shuffle(unavail.begin(), unavail.end());
-      double totProb = unavailProb.sum();
-      int pseudoDraw = R::rgeom(std::max(0.00000001, 1 - totProb));
-      int binomDraw = 0;
-      if (pseudoDraw > 0) {
-        for (int i : unavail) {
-          binomDraw = R::rbinom(pseudoDraw, unavailProb(i) / totProb);
-          if (binomDraw > 0)
-            timeCount(i) += binomDraw * 1.0;
-          totProb -= unavailProb(i);
-          pseudoDraw -= binomDraw;
-          if (pseudoDraw < 1)
-            break;
-        } // end multinom
-      } // end pseudoDraw
-    } // end unavail
+    // unavail.clear();
+    // unavailProb.setZero();
+    // for (int i = 0; i < ctr->pX - 1; ++i) {
+    //   if ((tn->nodestruct->get(3) - 1 > i) || (tn->nodestruct->get(4) - 1 < i)) {
+    //     unavail.push_back(i);
+    //     unavailProb(i) = tree->nodestruct->getTimeProbs()(i);
+    //   }
+    // }
+    // if (unavail.size() > 0) {
+    //   std::random_shuffle(unavail.begin(), unavail.end());
+    //   double totProb = unavailProb.sum();
+    //   int pseudoDraw = R::rgeom(std::max(0.00000001, 1 - totProb));
+    //   int binomDraw = 0;
+    //   if (pseudoDraw > 0) {
+    //     for (int i : unavail) {
+    //       binomDraw = R::rbinom(pseudoDraw, unavailProb(i) / totProb);
+    //       if (binomDraw > 0)
+    //         timeCount(i) += binomDraw * 1.0;
+    //       totProb -= unavailProb(i);
+    //       pseudoDraw -= binomDraw;
+    //       if (pseudoDraw < 1)
+    //         break;
+    //     } // end multinom
+    //   } // end pseudoDraw
+    // } // end unavail
   } // end timeCount
   return(timeCount);
 } // end countMods function

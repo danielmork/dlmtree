@@ -72,7 +72,7 @@ tdlnm <- function(formula,
                   monotone = FALSE,
                   piecewise.linear = FALSE,
                   zirt.p0 = 0.5,
-                  # zirt.p0.strength = 1,
+                  zirt.p0.strength = 2/3,
                   zirt.priors = list(),
                   tree.time.params = c(.95, 2),
                   tree.time.split.params = NULL,
@@ -171,7 +171,7 @@ tdlnm <- function(formula,
   model$maxThreads <- max.threads
   model$debug <- debug
   model$zirtp0 <- zirt.p0
-  # model$zirtAlpha <- zirt.p0.strength
+  model$zirtAlpha <- zirt.p0.strength
   model$shape <- ifelse(!is.null(exposure.se), "Smooth",
                         ifelse(exposure.splits == 0, "Linear",
                                "Step Function"))
