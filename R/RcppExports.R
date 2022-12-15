@@ -61,6 +61,10 @@ rtmvnorm <- function(mu, sigma, iter) {
     .Call(`_dlmtree_rtmvnorm`, mu, sigma, iter)
 }
 
+rcpp_pgdraw <- function(b, z) {
+    .Call(`_dlmtree_rcpp_pgdraw`, b, z)
+}
+
 tdlmm_Cpp <- function(model) {
     .Call(`_dlmtree_tdlmm_Cpp`, model)
 }
