@@ -69,14 +69,15 @@ tdlnm <- function(formula,
                   binomial.size = 1,
                   tree.params = c(.95, 2),
                   step.prob = c(.25, .25),
+                  time.split.prob = rep(1 / (ncol(exposure.data) - 1), ncol(exposure.data) - 1),
+
                   monotone = FALSE,
-                  piecewise.linear = FALSE,
-                  zirt.p0 = 0.5,
-                  zirt.p0.strength = 2/3,
-                  zirt.priors = list(),
-                  tree.time.params = c(.95, 2),
-                  tree.time.split.params = NULL,
-                  tree.exp.params = c(.95, 2),
+                  monotone.gamma0 = rep(0, ncol(exposure.data)),
+                  monotone.sigma = matrix(0, 0, 0),
+                  monotone.tree.time.params = c(.95, 2),
+                  monotone.tree.exp.params = c(.95, 2),
+                  monotone.time.kappa = NULL,
+
                   shrinkage = ifelse(monotone, F, T),
                   subset = NULL,
                   lowmem = FALSE,
@@ -89,6 +90,7 @@ tdlnm <- function(formula,
 {
   model <- list()
   options(stringsAsFactors = F)
+  piecewise.linear = FALSE
 
   # ---- Check inputs ----
   # number of iterations
@@ -163,22 +165,30 @@ tdlnm <- function(formula,
   model$treePrior <- tree.params
   model$stepProb <- c(step.prob[1], step.prob[1], step.prob[2])
   model$stepProb <- model$stepProb / sum(model$stepProb)
+  model$timeSplits0 = time.split.prob
+  model$monotone = monotone
   model$shrinkage <- shrinkage
   model$lowmem <- lowmem
-  model$monotone <- monotone
-  model$treePriorExp <- tree.exp.params
-  model$treePriorTime <- tree.time.params
   model$maxThreads <- max.threads
   model$debug <- debug
-  model$zirtp0 <- zirt.p0
-  model$zirtAlpha <- zirt.p0.strength
   model$shape <- ifelse(!is.null(exposure.se), "Smooth",
                         ifelse(exposure.splits == 0, "Linear",
                                "Step Function"))
-  model$shape <- ifelse(piecewise.linear, "Piecewise Linear",
-                        ifelse(!is.null(exposure.se), "Smooth",
-                               ifelse(exposure.splits == 0, "Linear",
-                                      "Step Function")))
+  model$shape <- ifelse(!is.null(exposure.se), "Smooth",
+    ifelse(exposure.splits == 0, "Linear", "Step Function"))
+
+
+  # Monotone model priors -----------------
+  if (model$monotone) {
+    model$zirtGamma0 = monotone.gamma0
+    model$zirtSigma = monotone.sigma
+    model$treePriorTime = monotone.tree.time.params
+    model$treePriorExp = monotone.tree.exp.params
+    model$timeKappa = ifelse(is.null(monotone.time.kappa), 1.0, monotone.time.kappa)
+    model$updateTimeKappa = ifelse(is.null(monotone.time.kappa), TRUE, FALSE)
+  }
+
+
 
   if (model$verbose)
     cat("Preparing data...\n")
@@ -215,14 +225,6 @@ tdlnm <- function(formula,
 
   # ---- Exposure splits ----
   model$pExp <- ncol(exposure.data)
-  if (!is.null(tree.time.split.params) && 
-  length(tree.time.split.params) == (model$pExp - 1)) {
-    model$timeProb <- tree.time.split.params / sum(tree.time.split.params)
-    model$updateTimeProb <- 0
-  } else {
-    model$timeProb <- rep(1 / (model$pExp - 1), model$pExp - 1)
-    model$updateTimeProb <- 1
-  }
   model$X <- force(exposure.data)
   model$Xrange <- force(range(exposure.data))
   if (is.null(exposure.se)) {
@@ -325,47 +327,41 @@ tdlnm <- function(formula,
     }
   }
 
-  if (length(model$zirtp0) != ncol(model$X)) {
-    if (length(model$zirtp0) == 1) {
-      model$zirtp0 = rep(model$zirtp0, ncol(model$X))
-    } else {
-      stop("zirt.p0 must be of length 1 or number of columns in exposure.data")
-    }
-  }
+
 
 
   # create informative priors for zirt
-  model$zirtPseudoX <- matrix(0, 0, 0)
-  model$zirtPseudoY <- c()
-  model$zirtPseudoTerm <- 0
-  model$timeSplits0 <- rep(0, model$pExp)
-  if (length(zirt.priors) > 0) {
-    zirtPseudoX <- NULL
-    zirtPseudoY <- c()
-    zirtPseudoTerm <- 0
-    timeSplits0 <- 0
-    for (i in 1:length(zirt.priors)) {
-      cw <- zirt.priors[[i]]
-      if (!all(cw == 1 | cw == 0))
-        stop("zirt.priors must contain only zeros or ones representing periods of susceptibility") 
-      splits <- abs(diff(cw))
-      cwX <- matrix(0, sum(splits) + 1, length(cw))
-      cwY <- rep(0, sum(splits) + 1)
-      s <- c(0, which(splits == 1), length(cw))
-      for (j in 2:length(s)) {
-        cwX[j - 1, (s[j - 1] + 1):s[j]] <- 1
-        cwY[j - 1] <- all(cw[(s[j - 1] + 1):s[j]] == 1)
-      }
-      zirtPseudoX <- rbind(zirtPseudoX, cwX)
-      zirtPseudoY <- c(zirtPseudoY, cwY)
-      timeSplits0 <- timeSplits0 * rep(1, length(splits)) + splits
-      zirtPseudoTerm <- zirtPseudoTerm + sum(splits) + 1
-    }
-    model$zirtPseudoX <- zirtPseudoX
-    model$zirtPseudoY <- zirtPseudoY
-    model$zirtPseudoTerm <- zirtPseudoTerm
-    model$timeSplits0 <- timeSplits0
-  }
+  # model$zirtPseudoX <- matrix(0, 0, 0)
+  # model$zirtPseudoY <- c()
+  # model$zirtPseudoTerm <- 0
+  # model$timeSplits0 <- rep(0, model$pExp)
+  # if (length(zirt.priors) > 0) {
+  #   zirtPseudoX <- NULL
+  #   zirtPseudoY <- c()
+  #   zirtPseudoTerm <- 0
+  #   timeSplits0 <- 0
+  #   for (i in 1:length(zirt.priors)) {
+  #     cw <- zirt.priors[[i]]
+  #     if (!all(cw == 1 | cw == 0))
+  #       stop("zirt.priors must contain only zeros or ones representing periods of susceptibility") 
+  #     splits <- abs(diff(cw))
+  #     cwX <- matrix(0, sum(splits) + 1, length(cw))
+  #     cwY <- rep(0, sum(splits) + 1)
+  #     s <- c(0, which(splits == 1), length(cw))
+  #     for (j in 2:length(s)) {
+  #       cwX[j - 1, (s[j - 1] + 1):s[j]] <- 1
+  #       cwY[j - 1] <- all(cw[(s[j - 1] + 1):s[j]] == 1)
+  #     }
+  #     zirtPseudoX <- rbind(zirtPseudoX, cwX)
+  #     zirtPseudoY <- c(zirtPseudoY, cwY)
+  #     timeSplits0 <- timeSplits0 * rep(1, length(splits)) + splits
+  #     zirtPseudoTerm <- zirtPseudoTerm + sum(splits) + 1
+  #   }
+  #   model$zirtPseudoX <- zirtPseudoX
+  #   model$zirtPseudoY <- zirtPseudoY
+  #   model$zirtPseudoTerm <- zirtPseudoTerm
+  #   model$timeSplits0 <- timeSplits0
+  # }
 
 
 

@@ -326,7 +326,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   int t;
   std::vector<Node*> trees;
   NodeStruct *ns;
-  VectorXd timeProbs0 = as<VectorXd>(model["timeProb"]);
+  VectorXd timeProbs0 = as<VectorXd>(model["timeSplits0"]);
   ns = new DLNMStruct(0, ctr->nSplits + 1, 1, int (ctr->pX),
                       as<VectorXd>(model["splitProb"]),
                       timeProbs0);

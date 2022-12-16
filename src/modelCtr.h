@@ -28,10 +28,18 @@ public:
   VectorXd gamma;
   VectorXd fhat;
   VectorXd tau;
-  VectorXd zirtP0;
-  double zirtAlpha;
-  MatrixXd zirtCov;
-  VectorXd timeCounts;
+
+  // Monotone
+  VectorXd zirtGamma0;
+  VectorXd zirtGamma;
+  MatrixXd zirtSigma;
+  bool zirtUpdateSigma;
+  VectorXd zirtSplitCounts;
+  VectorXd timeSplitProb0;
+  VectorXd timeSplitProbs;
+  VectorXd timeSplitCounts;
+  double timeKappa;
+  bool updateTimeKappa;
   
   // Binomial
   bool binomial;
@@ -45,8 +53,6 @@ public:
 struct tdlmCtr : modelCtr {
 public:
   VectorXd nTerm;
-  VectorXd zirtPsi0;
-  VectorXd zirtPsi1;
 
   // Mixtures
   int interaction, nExp, nMix;
@@ -79,11 +85,11 @@ public:
   VectorXd fhat;
   VectorXd fhat2;
   MatrixXd termNodes;
-  MatrixXd zirtPsi0;
-  MatrixXd zirtPsi1;
-  VectorXd zirtCov;
+
+  // Monotone
   MatrixXd timeProbs;
-  MatrixXd timeCounts;
+  MatrixXd zirtSplitCounts;
+  MatrixXd zirtGamma;
 
   // Mixtures
   std::vector<VectorXd> MIXexp;
@@ -213,6 +219,11 @@ double zeroInflatedTreeMHR(VectorXd timeProbs, std::vector<Node*> trees,
                            int t, double newProb);
 void updateGPMats(Node* n, dlmtreeCtr* ctr);
 // void dlmtreeRecDLM(dlmtreeCtr* ctr, dlmtreeLog* dgn);
+void updateTimeSplitProbs(std::vector<Node*> trees, modelCtr* ctr);
+int updateZirtSigma(std::vector<Node*> trees, modelCtr* ctr, 
+ int curCov, std::vector<MatrixXd> zirtSigmaInv, 
+ std::vector<double> zirtSigmaDet);
+ void updateZirtGamma(std::vector<Node*> trees, modelCtr* ctr);
 
 
 struct treeMHR {
