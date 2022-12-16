@@ -196,6 +196,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rcpp_pgdraw
+Eigen::VectorXd rcpp_pgdraw(Eigen::VectorXd b, Eigen::VectorXd z);
+RcppExport SEXP _dlmtree_rcpp_pgdraw(SEXP bSEXP, SEXP zSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Eigen::VectorXd >::type b(bSEXP);
+    Rcpp::traits::input_parameter< Eigen::VectorXd >::type z(zSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpp_pgdraw(b, z));
+    return rcpp_result_gen;
+END_RCPP
+}
 // tdlmm_Cpp
 Rcpp::List tdlmm_Cpp(const Rcpp::List model);
 RcppExport SEXP _dlmtree_tdlmm_Cpp(SEXP modelSEXP) {
@@ -235,6 +247,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dlmtree_monotdlnm_Cpp", (DL_FUNC) &_dlmtree_monotdlnm_Cpp, 1},
     {"_dlmtree_zeroToInfNormCDF", (DL_FUNC) &_dlmtree_zeroToInfNormCDF, 2},
     {"_dlmtree_rtmvnorm", (DL_FUNC) &_dlmtree_rtmvnorm, 3},
+    {"_dlmtree_rcpp_pgdraw", (DL_FUNC) &_dlmtree_rcpp_pgdraw, 2},
     {"_dlmtree_tdlmm_Cpp", (DL_FUNC) &_dlmtree_tdlmm_Cpp, 1},
     {"_dlmtree_tdlnm_Cpp", (DL_FUNC) &_dlmtree_tdlnm_Cpp, 1},
     {NULL, NULL, 0}

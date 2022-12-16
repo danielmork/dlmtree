@@ -195,8 +195,10 @@ void tdlnmTreeMCMC(int t, Node *tree, tdlmCtr *ctr, tdlmLog *dgn,
     rHalfCauchyFC(&(ctr->tau(t)), mhr0.nTerm, 
                 mhr0.termT2 / (ctr->sigma2 * ctr->nu));
 
-  if ((ctr->tau)(t) != (ctr->tau)(t)) 
+  if ((ctr->tau)(t) != (ctr->tau)(t)) {
+    Rcout << ctr->gamma << "\n" << ctr->sigma2 << " " << ctr->tau << "\n" << ctr->Omega.mean();
     stop("\nNaN values occured during model run, rerun model.\n");
+  }
 
   ctr->nTerm(t) =     mhr0.nTerm;
   ctr->totTerm +=     mhr0.nTerm;
@@ -270,7 +272,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   ctr->Zw = ctr->Z;
   ctr->pZ = (ctr->Z).cols();
   MatrixXd VgInv = (ctr->Z).transpose() * (ctr->Z);
-  VgInv.diagonal().array() += 1.0 / 100000.0;
+  VgInv.diagonal().array() += 1.0 / 1000.0;
   ctr->Vg = VgInv.inverse();
   ctr->VgChol = (ctr->Vg).llt().matrixL();
   VgInv.resize(0,0);
@@ -357,7 +359,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     ctr->Omega =rcpp_pgdraw(ctr->binomialSize, ctr->fhat + ctr->Z * ctr->gamma);
     ctr->Zw = ctr->Omega.asDiagonal() * ctr->Z;
     ctr->VgInv =   ctr->Z.transpose() * ctr->Zw;
-    ctr->VgInv.diagonal().array() += 1 / 100000.0;
+    ctr->VgInv.diagonal().array() += 1 / 1000.0;
     ctr->Vg = ctr->VgInv.inverse();
     ctr->VgChol = ctr->Vg.llt().matrixL();
     // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
@@ -403,8 +405,10 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     ctr->R = ctr->Y - ctr->fhat;
     tdlmModelEst(ctr);
     rHalfCauchyFC(&(ctr->nu), ctr->totTerm, ctr->sumTermT2 / ctr->sigma2);
-    if ((ctr->sigma2 != ctr->sigma2) || (ctr->nu != ctr->nu))
+    if ((ctr->sigma2 != ctr->sigma2) || (ctr->nu != ctr->nu)) {
+      Rcout << ctr->gamma << "\n" << ctr->sigma2 << " " << ctr->nu << "\n" << ctr->Omega.mean() << " " << ctr->Y.mean();
       stop("\nNaN values occured during model run, rerun model.\n");
+      }
 
 // 
 //     if ((ctr->b > 1000) || (ctr->b > (0.5 * ctr->burn))) {
