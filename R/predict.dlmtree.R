@@ -24,10 +24,10 @@ predict.dlmtree <- function(object, new.data, new.exposure.data, ...,
                         xlev = object$termLevels)
   z <-      model.matrix(delete.response(object$terms), new.mf,
                          xlev = object$termLevels)
-  z <-      z[, sort(object$QR$pivot[ seq_len(object$QR$rank) ]) ]
-  if (length(object$droppedCovar) > 0 & object$verbose)
-    warning("variables {", paste0(object$droppedCovar, collapse = ", "),
-            "} dropped from original due to perfect collinearity\n")
+  # z <-      z[, sort(object$QR$pivot[ seq_len(object$QR$rank) ]) ]
+  # if (length(object$droppedCovar) > 0 & object$verbose)
+  #   warning("variables {", paste0(object$droppedCovar, collapse = ", "),
+  #           "} dropped from original due to perfect collinearity\n")
   n <-      nrow(z)
   mod <-    lapply(object$modNames, function(m) {
     if (!is.numeric(object$MoUnique[[m]])) {
