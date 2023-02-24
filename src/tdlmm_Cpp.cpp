@@ -462,7 +462,7 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
   // * Record tree 2
   if (ctr->diagnostics) {
     Eigen::VectorXd acc(7);
-    acc << 1, step2, success, m2, term2.size(), stepMhr, ratio;
+    acc << 2, step2, success, m2, term2.size(), stepMhr, ratio;
     (dgn->TreeAccept).push_back(acc);
   }
 
@@ -512,25 +512,27 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
 
   // * Record
   if (ctr->record > 0) {
-    Eigen::VectorXd rec(7);
+    Eigen::VectorXd rec(8);
     Eigen::VectorXd mix(10);
-    rec << ctr->record, t, 0, 0, 0, 0, 0;
+    rec << ctr->record, t, 0, 0, 0, 0, 0, 0;
     mix << ctr->record, t, 0, 0, 0, 0, 0, 0, 0, 0;//(ctr->tau)(t) *
     int k = 0;
     for(int i = 0; i < mhr0.nTerm1; ++i) {
-      rec[2] = m1;
-      rec[3] = (term1[i]->nodestruct)->get(3);
-      rec[4] = (term1[i]->nodestruct)->get(4);
-      rec[5] = mhr0.draw1(i);
-      rec[6] = (ctr->tau)(t) * m1Var;
+      rec[2] = 0; // First of the tree pair
+      rec[3] = m1;
+      rec[4] = (term1[i]->nodestruct)->get(3);
+      rec[5] = (term1[i]->nodestruct)->get(4);
+      rec[6] = mhr0.draw1(i);
+      rec[7] = (ctr->tau)(t) * m1Var;
       (dgn->DLMexp).push_back(rec);
       for (int j = 0; j < mhr0.nTerm2; ++j) {
         if (i == 0) {
-          rec[2] = m2;
-          rec[3] = (term2[j]->nodestruct)->get(3);
-          rec[4] = (term2[j]->nodestruct)->get(4);
-          rec[5] = mhr0.draw2(j);
-          rec[6] = (ctr->tau)(t) * m2Var;
+          rec[2] = 1; // Second of the tree pair
+          rec[3] = m2;
+          rec[4] = (term2[j]->nodestruct)->get(3);
+          rec[5] = (term2[j]->nodestruct)->get(4);
+          rec[6] = mhr0.draw2(j);
+          rec[7] = (ctr->tau)(t) * m2Var;
           (dgn->DLMexp).push_back(rec);
         }
         if (mixVar != 0) {
@@ -582,11 +584,12 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   // Tree parameters
   ctr->nTrees = as<int>(model["nTrees"]);                        // Number of trees for the ensemble
   ctr->stepProb = as<std::vector<double> >(model["stepProb"]);   // A vector of step probability for the tree structure update
+  ctr->swapStep = as<bool>(model["swapStep"]); 
   ctr->treePrior = as<std::vector<double> >(model["treePrior"]); // Tree prior of vector length 2 c(alpha, beta)
   ctr->verbose = as<bool>(model["verbose"]);                     // Boolean for returning output
   ctr->diagnostics = as<bool>(model["diagnostics"]);             // Store diagnostic or not
 
-  // Model choice
+  // Model selection
   ctr->binomial = as<bool>(model["binomial"]);  // Binomial
   ctr->zinb = as<bool>(model["zinb"]);          // ZINB
   //ctr->w = as<Eigen::VectorXd>(model["wTrue"]);
@@ -605,24 +608,34 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   ctr->Y0 = as<Eigen::VectorXd>(model["Y"]);      // Response variable
   ctr->Ystar = as<Eigen::VectorXd>(model["Y"]);   // For Gaussian default,
   ctr->n = (ctr->Y0).size();                      // Sample size, n
+
   ctr->Z = as<Eigen::MatrixXd>(model["Z"]);       // Fixed effect design matrix, Z (n x p)
   ctr->Zw = ctr->Z;                               // Copy Z to Zw, will be updated throughout iteration (Z Omega)
   ctr->pZ = (ctr->Z).cols();                      // Number of fixed effect covariates (ncol(Z))
 
+  // binary component
+  ctr->Z1 = as<Eigen::MatrixXd>(model["Z_b"]);       // Fixed effect design matrix, Z (n x p)
+  ctr->Zw1 = ctr->Z1;                               // Copy Z to Zw, will be updated throughout iteration (Z Omega)
+  ctr->pZ1 = (ctr->Z1).cols();                      // Number of fixed effect covariates (ncol(Z))
+
   // Full conditional initialization for logistic model: V_gamma
+  // Compute V_gamma^{-1} = Zt*Z + I/c where c = 100000 from Supplemental Eq(2) of TDLM
+  Eigen::MatrixXd VgInv1(ctr->pZ1, ctr->pZ1);        // pxp var-cov matrix
+  VgInv1 = (ctr->Z1).transpose() * (ctr->Z1);        // Zt*Z
+  VgInv1.diagonal().array() += 1.0 / 100.0;     // Zt*Z + I/c where c = 100000
+  ctr->Vg1 = VgInv1.inverse();                      // V_gamma
+  VgInv1.resize(0,0);                              // Clear VgInv now that we obtained Vg
+  ctr->VgChol1 = (ctr->Vg1).llt().matrixL();        // Compute the cholesky of Vg: V_gamma = L*Lt = VgChol * t(VgChol)
+                                                  // (Ref: https://eigen.tuxfamily.org/dox/classEigen_1_1LLT.html)
+
   // Compute V_gamma^{-1} = Zt*Z + I/c where c = 100000 from Supplemental Eq(2) of TDLM
   Eigen::MatrixXd VgInv(ctr->pZ, ctr->pZ);        // pxp var-cov matrix
   VgInv = (ctr->Z).transpose() * (ctr->Z);        // Zt*Z
-  VgInv.diagonal().array() += 1.0 / 100000.0;     // Zt*Z + I/c where c = 100000
+  VgInv.diagonal().array() += 1.0 / 100.0;     // Zt*Z + I/c where c = 100000
   ctr->Vg = VgInv.inverse();                      // V_gamma
   VgInv.resize(0,0);                              // Clear VgInv now that we obtained Vg
   ctr->VgChol = (ctr->Vg).llt().matrixL();        // Compute the cholesky of Vg: V_gamma = L*Lt = VgChol * t(VgChol)
                                                   // (Ref: https://eigen.tuxfamily.org/dox/classEigen_1_1LLT.html)
-  
-  // Same parameterization for binary component in ZINB model hence copying.
-  ctr->Vg1 = ctr->Vg;
-  ctr->VgInv1 = ctr->VgInv;
-  ctr->VgChol1 = ctr->VgChol;
 
   // ============ Set up parameters for logistic model ============
   // In the paper, lambda = kappa/omega where kappa = (y_i - n_i/2)
@@ -638,7 +651,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
 
   // ============ Set up parameters for ZINB model ============
   // Initialize values
-  ctr->r = 5;                                       // Dispersion parameter: Starting at the center of Unif(0, 10)
+  ctr->r = 5;                    // Dispersion parameter: Starting at the center of Unif(0, 10)
 
   // Useful vectors for PG variable sampling 
   ctr->ones.resize(ctr->n);   ctr->ones.setOnes();  // Vector of ones
@@ -650,25 +663,28 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
     ctr->Ystar = ctr->z2;                                 // Ystar in tdlmm_Cpp.cpp, z2 in modelEst.cpp
   }
 
-  ctr->w.resize(ctr->n);             ctr->w.setOnes();           // At-risk binary latent variable
-  ctr->b1 = as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(100)));   // Prior sampling of coefficients for binary component (p x 1)
+  ctr->w.resize(ctr->n);                                  // At-risk binary latent variable
+  ctr->b1 = as<Eigen::VectorXd>(rnorm(ctr->pZ1, 0, sqrt(100)));   // Prior sampling of coefficients for binary component (p x 1)
   ctr->b2 = as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(100)));   // Prior sampling of coefficients for NegBin component (p x 1)
 
   ctr->omega1.resize(ctr->n);        ctr->omega1.setOnes();      // Initiate with omega1(binary) as an identity matrix
   ctr->omega2.resize(ctr->n);        ctr->omega2.setOnes();      // Initiate with omega2(NegBin) as an identity matrix
   
   ctr->z1.resize(ctr->n);            ctr->z1.setZero();          // z1 for binary component
-  ctr->Zstar = (ctr->Z).array().colwise() * (ctr->w).array();    // Fixed effect matrix with [w == 0] zeroed out.
 
   // Store the indices of y == 0 (yZeroIdx) & y != 0 (atRiskIdx)
-  for(int i = 0; i < (ctr->Y0).size(); i++){
-    if((ctr->Y0)[i] == 0){
-      (ctr->yZeroIdx).push_back(i);     // y == 0: Could be structural or at-risk zero
+  for(int j = 0; j < ctr->n; j++){
+    if((ctr->Y0)[j] == 0){
+      (ctr->yZeroIdx).push_back(j);     // y == 0: Could be structural or at-risk zero
+      (ctr->w)[j] = 0.5;
     } else {
-      (ctr->atRiskIdx).push_back(i);    // y != 0: Determined to be at-risk as y != 0
+      (ctr->atRiskIdx).push_back(j);    // y != 0: Determined to be at-risk as y != 0
+      (ctr->w)[j] = 1;
     }
   }
-  
+
+  ctr->Zstar = (ctr->Z).array().colwise() * (ctr->w).array();    // Fixed effect matrix with [w == 0] zeroed out.
+
   // Calculate the size: yZeroN + nStar should equal to n
   ctr->yZeroN = (ctr->yZeroIdx).size();   // Fixed as we are just counting y == 0
   ctr->nStar = (ctr->atRiskIdx).size();   // Random as some of y == 0 can be at-risk
@@ -691,7 +707,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
 
   // Random uniform distribution sampling to initialize spPhi
   std::default_random_engine Generator;
-  std::uniform_real_distribution<double> distribution(-2.0, 2.0);
+  std::uniform_real_distribution<double> distribution(-1.0, 1.0);
 
   // If spatial random effect is called:
   if(ctr->spatial){
@@ -708,7 +724,8 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
     ctr->spPhi.resize(ctr->spN);        // spN has been updated -> Update the vector size as well
     ctr->spPhi.setZero();               // Set zero.
 
-    ctr->spTau = 100;                     // Spatial precision parameter initialized as 1
+    ctr->spTau = 1/R::rgamma(3.0, 1.0) ;  // variance: spTau prior ~ IG(3, 1) : Range (0 ~ 3)
+    ctr->rho = 1;                         // Spatial correlation
 
     // Initialize spPhi ~ Unif(-2, 2)
     for (int spIndex = 0; spIndex < ctr->spN; spIndex++) {
@@ -717,16 +734,12 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
     }
 
     // Initialize components for full conditional of spPhi, similarly to binary component of ZINB   
-    ctr->zPhi.resize(ctr->spN);            ctr->zPhi.setZero();
+    ctr->zPhi = ctr->z1;
     
     // Similarly to V_gamma, parameterize as Vp for V_phi
-    // Compute the prior
-    ctr->rho = 0.5;
-    ctr->areaQ = (ctr->spTau) * (ctr->areaD - (ctr->rho) * ctr->areaW);
-
     Eigen::MatrixXd VpInv(ctr->spN, ctr->spN);        // Vp (spN x spN)
-    VpInv = (ctr->areaA).transpose() * (ctr->areaA);  // At*A
-    VpInv += ctr->areaQ;                           // At*A + CAR prior (Qinv)
+    VpInv = ctr->areaA.transpose() * ctr->omega1.asDiagonal() * ctr->areaA;  //
+    VpInv.noalias() += (1 / ctr->spTau) * (ctr->areaD - (ctr->rho) * ctr->areaW);
     ctr->Vp = VpInv.inverse();
     VpInv.resize(0,0);                                // Clear VpInv now that we obtained Vp
     ctr->VpChol = (ctr->Vp).llt().matrixL();          // Compute the cholesky of Vp: V_phi = L*Lt = VpChol * t(VpChol)
@@ -781,8 +794,28 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
                       as<Eigen::VectorXd>(model["timeProb"])); // Uniform probability for time split
 
   for (t = 0; t < ctr->nTrees; ++t) { // For each tree pair a in the ensemble,
-    ctr->tree1Exp(t) = sampleInt(ctr->expProb); // Randomly assign one exposure to Tree1
-    ctr->tree2Exp(t) = sampleInt(ctr->expProb); // Randomly assign one expousre to Tree2
+    if(ctr->swapStep){
+      ctr->tree1Exp(t) = sampleInt(ctr->expProb); // Randomly assign one exposure to Tree1
+      ctr->tree2Exp(t) = sampleInt(ctr->expProb); // Randomly assign one expousre to Tree2
+    } else {
+      if(ctr->interaction == 1){
+        // Only works for two exposures now.
+        ctr->tree1Exp(t) = 0;
+        ctr->tree2Exp(t) = 1;
+      } else if (ctr->interaction == 2){
+        if(t % 3 == 0){
+          ctr->tree1Exp(t) = 0; 
+          ctr->tree2Exp(t) = 0; 
+        } else if (t % 3 == 1) {
+          ctr->tree1Exp(t) = 1; 
+          ctr->tree2Exp(t) = 1; 
+        } else {
+          ctr->tree1Exp(t) = 0; 
+          ctr->tree2Exp(t) = 1; 
+        }
+      }
+    }
+    
     trees1.push_back(new Node(0, 1));           // Fill in the tree vector 1 with a node of 0 depth and not terminal node
     trees2.push_back(new Node(0, 1));           // Fill in the tree vector 2 with a node of 0 depth and not terminal node
     trees1[t]->nodestruct = ns->clone();        // Tree 1: Copy NodeStruct object to Node parameter
@@ -819,7 +852,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   (dgn->tree2Exp).resize(ctr->nTrees, ctr->nRec);   (dgn->tree2Exp).setZero();    // Exposure vector of tree vector 2
 
   // ZINB log
-  (dgn->b1).resize(ctr->pZ, ctr->nRec);              (dgn->b1).setZero();         // Binary component coeffient (p x MCMC)
+  (dgn->b1).resize(ctr->pZ1, ctr->nRec);             (dgn->b1).setZero();         // Binary component coeffient (p x MCMC)
   (dgn->b2).resize(ctr->pZ, ctr->nRec);              (dgn->b2).setZero();         // NegBin component coeffient (p x MCMC)
   (dgn->r).resize(ctr->nRec);                        (dgn->r).setZero();          // Dispersion parameter
   (dgn->wMat).resize(ctr->n, ctr->nRec);             (dgn->wMat).setZero();       // At-risk Auxiliary: Each column is w at each iteration
@@ -1013,7 +1046,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
 
 
   // * Setup data for return
-  Eigen::MatrixXd DLM((dgn->DLMexp).size(), 7);
+  Eigen::MatrixXd DLM((dgn->DLMexp).size(), 8);
   for (s = 0; s < (dgn->DLMexp).size(); ++s)
     DLM.row(s) = dgn->DLMexp[s];
   Eigen::VectorXd sigma2 = dgn->sigma2;
@@ -1073,10 +1106,10 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
                             // Named("sigma2") = wrap(sigma2),
                             //Named("nu") = wrap(nu),
                             //Named("tau") = wrap(tau),
-                            //Named("termNodes") = wrap(termNodes),
-                            //Named("termNodes2") = wrap(termNodes2), // Temporarily commented out since list::create allows 20
-                            Named("tree1Exp") = wrap(tree1Exp),
-                            Named("tree2Exp") = wrap(tree2Exp),
+                            Named("termNodes") = wrap(termNodes),
+                            Named("termNodes2") = wrap(termNodes2), 
+                            // Named("tree1Exp") = wrap(tree1Exp),
+                            // Named("tree2Exp") = wrap(tree2Exp),
                             Named("expProb") = wrap(expProb),
                             Named("expInf") = wrap(expInf),
                             Named("expCount") = wrap(expCount),
@@ -1084,15 +1117,15 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
                             Named("mixCount") = wrap(mixCount), 
                             Named("muExp") = wrap(muExp),
                             Named("muMix") = wrap(muMix),
-                            Named("kappa") = wrap(kappa),
-                            //Named("treeAccept") = wrap(Accept),
+                            //Named("kappa") = wrap(kappa),
+                            Named("treeAccept") = wrap(Accept),
                             Named("b1") = wrap(b1),
                             Named("b2") = wrap(b2),
                             Named("r") = wrap(r),
-                            Named("wMat") = wrap(wMat)));
-                            //Named("spPhi") = wrap(spPhi),
-                            //Named("spTau") = wrap(spTau),
-                            //Named("rho") = wrap(rho)));
+                            Named("wMat") = wrap(wMat),
+                            Named("spPhi") = wrap(spPhi),
+                            Named("spTau") = wrap(spTau)));
+                           //Named("rho") = wrap(rho)
 } // end tdlmm_Cpp
 
 

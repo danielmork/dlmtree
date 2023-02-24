@@ -243,6 +243,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   ctr->nTrees = as<int>(model["nTrees"]);
   ctr->verbose = as<bool>(model["verbose"]);
   ctr->diagnostics = as<bool>(model["diagnostics"]);
+
   ctr->binomial = as<bool>(model["binomial"]);
   ctr->zinb = as<bool>(model["zinb"]);          // ZINB
   ctr->stepProb = as<std::vector<double> >(model["stepProb"]);
@@ -250,21 +251,34 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   ctr->shrinkage = as<int>(model["shrinkage"]);
   
   // * Set up model data
-  ctr->Y0 = as<VectorXd>(model["Y"]); // Change to Y0 later for the consistency later
+  ctr->Y0 = as<VectorXd>(model["Y"]); // Change to Y0 later for the consistency later 
   ctr->n = (ctr->Y0).size(); // Change to Y0 later for the consistency later
+
   ctr->Z = as<MatrixXd>(model["Z"]);
   ctr->Zw = ctr->Z;
   ctr->pZ = (ctr->Z).cols();
-  MatrixXd VgInv = (ctr->Z).transpose() * (ctr->Z);
-  VgInv.diagonal().array() += 1.0 / 100000.0;
-  ctr->Vg = VgInv.inverse();
-  ctr->VgChol = (ctr->Vg).llt().matrixL();
-  VgInv.resize(0,0);
 
-  // Same parameterization for binary component in ZINB model hence copying.
-  ctr->Vg1 = ctr->Vg;
-  ctr->VgInv1 = ctr->VgInv;
-  ctr->VgChol1 = ctr->VgChol;
+    // binary component
+  ctr->Z1 = as<Eigen::MatrixXd>(model["Z_b"]);       // Fixed effect design matrix, Z (n x p)
+  ctr->Zw1 = ctr->Z1;                               // Copy Z to Zw, will be updated throughout iteration (Z Omega)
+  ctr->pZ1 = (ctr->Z1).cols();                      // Number of fixed effect covariates (ncol(Z))
+
+  // Full conditional initialization for logistic model: V_gamma
+  // Compute V_gamma^{-1} = Zt*Z + I/c where c = 100000 from Supplemental Eq(2) of TDLM
+  Eigen::MatrixXd VgInv1(ctr->pZ1, ctr->pZ1);        // pxp var-cov matrix
+  VgInv1 = (ctr->Z1).transpose() * (ctr->Z1);        // Zt*Z
+  VgInv1.diagonal().array() += 1.0 / 100.0;     // Zt*Z + I/c where c = 100000
+  ctr->Vg1 = VgInv1.inverse();                      // V_gamma
+  VgInv1.resize(0,0);                              // Clear VgInv now that we obtained Vg
+  ctr->VgChol1 = (ctr->Vg1).llt().matrixL();        // Compute the cholesky of Vg: V_gamma = L*Lt = VgChol * t(VgChol)
+                                                  // (Ref: https://eigen.tuxfamily.org/dox/classEigen_1_1LLT.html)
+
+  Eigen::MatrixXd VgInv = (ctr->Z).transpose() * (ctr->Z);
+  VgInv.diagonal().array() += 1.0 / 100.0;
+  ctr->Vg = VgInv.inverse();
+  VgInv.resize(0,0);
+  ctr->VgChol = (ctr->Vg).llt().matrixL();
+  
   
   // * Set up data for logistic model
   ctr->binomialSize.resize(ctr->n);               ctr->binomialSize.setZero();
@@ -283,6 +297,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
 
   // Useful vectors for PG variable sampling 
   ctr->ones.resize(ctr->n);   ctr->ones.setOnes();  // Vector of ones
+  ctr->rVec = (ctr->r) * (ctr->ones).array();       // Dispersion parameter as a vector: rep(r, n)
 
   // If ZINB, calculate the fixed values
   if(ctr->zinb){                                      
@@ -290,25 +305,28 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     ctr->Ystar = ctr->z2;                                 // Ystar in tdlmm_Cpp.cpp, z2 in modelEst.cpp
   }
 
-  ctr->w.resize(ctr->n);             ctr->w.setOnes();           // At-risk binary latent variable
-  ctr->b1 = as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(100)));   // Prior sampling of coefficients for binary component (p x 1)
+  ctr->w.resize(ctr->n);                                        // At-risk binary latent variable
+  ctr->b1 = as<Eigen::VectorXd>(rnorm(ctr->pZ1, 0, sqrt(100)));   // Prior sampling of coefficients for binary component (p x 1)
   ctr->b2 = as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(100)));   // Prior sampling of coefficients for NegBin component (p x 1)
 
   ctr->omega1.resize(ctr->n);        ctr->omega1.setOnes();      // Initiate with omega1(binary) as an identity matrix
   ctr->omega2.resize(ctr->n);        ctr->omega2.setOnes();      // Initiate with omega2(NegBin) as an identity matrix
   
   ctr->z1.resize(ctr->n);            ctr->z1.setZero();          // z1 for binary component
-  ctr->Zstar = (ctr->Z).array().colwise() * (ctr->w).array();    // Fixed effect matrix with [w == 0] zeroed out.
 
   // Store the indices of y == 0 (yZeroIdx) & y != 0 (atRiskIdx)
-  for(int i = 0; i < (ctr->Y0).size(); i++){
-    if((ctr->Y0)[i] == 0){
-      (ctr->yZeroIdx).push_back(i);     // y == 0: Could be structural or at-risk zero
+  for(int j = 0; j < ctr->n; j++){
+    if((ctr->Y0)[j] == 0){
+      (ctr->yZeroIdx).push_back(j);     // y == 0: Could be structural or at-risk zero
+      (ctr->w)[j] = 0.5;
     } else {
-      (ctr->atRiskIdx).push_back(i);    // y != 0: Determined to be at-risk as y != 0
+      (ctr->atRiskIdx).push_back(j);    // y != 0: Determined to be at-risk as y != 0
+      (ctr->w)[j] = 1;
     }
   }
-  
+
+  ctr->Zstar = (ctr->Z).array().colwise() * (ctr->w).array();    // Fixed effect matrix with [w == 0] zeroed out.
+
   // Calculate the size: yZeroN + nStar should equal to n
   ctr->yZeroN = (ctr->yZeroIdx).size();   // Fixed as we are just counting y == 0
   ctr->nStar = (ctr->atRiskIdx).size();   // Random as some of y == 0 can be at-risk
@@ -331,7 +349,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
 
   // Random uniform distribution sampling to initialize spPhi
   std::default_random_engine Generator;
-  std::uniform_real_distribution<double> distribution(-2.0, 2.0);
+  std::uniform_real_distribution<double> distribution(-1.0, 1.0);
 
   // If spatial random effect is called:
   if(ctr->spatial){
@@ -348,7 +366,8 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     ctr->spPhi.resize(ctr->spN);        // spN has been updated -> Update the vector size as well
     ctr->spPhi.setZero();               // Set zero.
 
-    ctr->spTau = 100;                     // Spatial precision parameter initialized as 1
+    ctr->spTau = 1/R::rgamma(1.0, 1.0) ;  // variance: spTau prior ~ IG(1, 1)
+    ctr->rho = 1;                         // Spatial correlation
 
     // Initialize spPhi ~ Unif(-2, 2)
     for (int spIndex = 0; spIndex < ctr->spN; spIndex++) {
@@ -357,21 +376,17 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     }
 
     // Initialize components for full conditional of spPhi, similarly to binary component of ZINB   
-    ctr->zPhi.resize(ctr->spN);            ctr->zPhi.setZero();
+    ctr->zPhi = ctr->z1;
     
     // Similarly to V_gamma, parameterize as Vp for V_phi
-    // Compute the prior
-    ctr->rho = 0.5;
-    ctr->areaQ = (ctr->spTau) * (ctr->areaD - (ctr->rho) * ctr->areaW);
-
     Eigen::MatrixXd VpInv(ctr->spN, ctr->spN);        // Vp (spN x spN)
-    VpInv = (ctr->areaA).transpose() * (ctr->areaA);  // At*A
-    VpInv += ctr->areaQ;                           // At*A + CAR prior (Qinv)
+    VpInv = ctr->areaA.transpose() * ctr->omega1.asDiagonal() * ctr->areaA;  //
+    VpInv.noalias() += (1 / ctr->spTau) * (ctr->areaD - (ctr->rho) * ctr->areaW);
     ctr->Vp = VpInv.inverse();
     VpInv.resize(0,0);                                // Clear VpInv now that we obtained Vp
     ctr->VpChol = (ctr->Vp).llt().matrixL();          // Compute the cholesky of Vp: V_phi = L*Lt = VpChol * t(VpChol)
   }
-  
+
   // * Create exposure data management
   exposureDat *Exp;
   if (as<int>(model["nSplits"]) == 0) { // DLM
@@ -430,7 +445,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   (dgn->termNodes).resize(ctr->nTrees, ctr->nRec);  (dgn->termNodes).setZero();
 
   // ZINB log
-  (dgn->b1).resize(ctr->pZ, ctr->nRec);              (dgn->b1).setZero();         // Binary component coeffient (p x MCMC)
+  (dgn->b1).resize(ctr->pZ1, ctr->nRec);             (dgn->b1).setZero();         // Binary component coeffient (p x MCMC)
   (dgn->b2).resize(ctr->pZ, ctr->nRec);              (dgn->b2).setZero();         // NegBin component coeffient (p x MCMC)
   (dgn->r).resize(ctr->nRec);                        (dgn->r).setZero();          // Dispersion parameter
   (dgn->wMat).resize(ctr->n, ctr->nRec);             (dgn->wMat).setZero();       // At-risk Auxiliary: Each column is w at each iteration
@@ -503,7 +518,6 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
       (dgn->rho)(ctr->record - 1) = ctr->rho;
       (dgn->spTau)(ctr->record - 1) = ctr->spTau;
     }
-
     // * Update progress
     prog->printMark();
   } // end MCMC

@@ -62,11 +62,13 @@ tdlmm <- function(formula,
                   mixture.interactions = "noself",
                   tree.params = c(.95, 2),
                   step.prob = c(.25, .25, .25),
+                  swap.step = TRUE,
                   mix.prior = 1,
                   shrinkage = "all",
                   subset = NULL,
                   verbose = TRUE,
                   diagnostics = FALSE,
+                  formula_b = NULL, # b stands for binary
                   spNodes = NULL,
                   areaW = NULL,
                   areaA = NULL,
@@ -208,8 +210,20 @@ tdlmm <- function(formula,
   model$verbose <- force(verbose) # Boolean for print output
   model$diagnostics <- force(diagnostics) # keep model diagnostic
   model$treePrior <- force(tree.params)   # alpha, beta
-  model$stepProb <- force(c(step.prob[1], step.prob[1], step.prob[2], step.prob[3])) # Step probabilities
-  model$stepProb <- force(model$stepProb / sum(model$stepProb))
+  
+  model$swapStep <- force(swap.step)
+  if(swap.step){
+    model$stepProb <- force(c(step.prob[1], step.prob[1], step.prob[2], step.prob[3])) # Step probabilities
+    model$stepProb <- force(model$stepProb / sum(model$stepProb))
+  } else {
+    if(model$nExp > 2){
+      stop("There must be only two exposures to impose no-swapping")
+    }
+
+    model$stepProb <- force(c(step.prob[1], step.prob[2], step.prob[3], 0)) # Step probabilities
+    model$stepProb <- force(model$stepProb / sum(model$stepProb))
+  }
+
   model$mixPrior <- mix.prior # Positive scalar hyperparameter for sparsity of exposures (Linero)
   model$shrinkage <- ifelse(shrinkage == "all", 3,
                             ifelse(shrinkage == "trees", 2,
@@ -233,18 +247,26 @@ tdlmm <- function(formula,
 
 
   # ---- [Setup control and response variables] ----
+  if(is.null(formula_b)){
+    formula_b <- formula
+  }
+
   model$formula <- force(as.formula(formula))     # Save the string "y ~ ." as a formula type
+  model$formula_b <- force(as.formula(formula_b)) 
   tf <- terms.formula(model$formula, data = data) # terms.formula with data -> returns model.matrix & attributes
-  
+  tf_b <- terms.formula(model$formula_b, data = data) # terms.formula with data -> returns model.matrix & attributes
+
   # Sanity check for response
-  if (!attr(tf, "response"))
+  if (!attr(tf, "response") & !attr(tf_b, "response"))
     stop("no valid response in formula")
 
   # Save if intercept is included in the model
   model$intercept <- force(ifelse(attr(tf, "intercept"), TRUE, FALSE)) 
+  model$intercept_b <- force(ifelse(attr(tf_b, "intercept"), TRUE, FALSE)) 
 
   # Sanity check for variables and the names
-  if (length(which(attr(tf, "term.labels") %in% colnames(data))) == 0) 
+  if (length(which(attr(tf, "term.labels") %in% colnames(data))) == 0 & 
+      length(which(attr(tf_b, "term.labels") %in% colnames(data))) == 0) 
     stop("no valid variables in formula")
 
   # ---- [Exposure splits] ----
@@ -274,17 +296,28 @@ tdlmm <- function(formula,
   mf <- model.frame(model$formula, data = data,                   # Extract Model information with formula and data
                     drop.unused.levels = TRUE,
                     na.action = NULL)
-  if (any(is.na(mf)))
+  mf_b <- model.frame(model$formula_b, data = data,                   # Extract Model information with formula and data
+                      drop.unused.levels = TRUE,
+                      na.action = NULL)
+  if (any(is.na(mf)) & any(is.na(mf_b)))
     stop("missing values in model data, use `complete.cases()` to subset data")
   
   # Organize response variable & fixed effect variable
   model$Y <- force(model.response(mf))                            # Response Y
+
   model$Z <- force(model.matrix(model$formula, data = mf))        # Fixed effect matrix, Z (c1 ~ c5, b1 ~ b5)
   QR <- qr(crossprod(model$Z))                                    # t(Z)%*%Z and its QR decomposition
-  model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)])]           
+  model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)])]      
   model$droppedCovar <- colnames(model$Z)[QR$pivot[-seq_len(QR$rank)]]
   model$Z <- force(scaleModelMatrix(model$Z))
   rm(QR)
+
+  model$Z_b <- force(model.matrix(model$formula_b, data = mf_b))        # Fixed effect matrix, Z (c1 ~ c5, b1 ~ b5)
+  QR_b <- qr(crossprod(model$Z_b))                                    # t(Z)%*%Z and its QR decomposition
+  model$Z_b <- model$Z_b[,sort(QR_b$pivot[seq_len(QR_b$rank)])]           
+  model$droppedCovar_b <- colnames(model$Z_b)[QR_b$pivot[-seq_len(QR_b$rank)]]
+  model$Z_b <- force(scaleModelMatrix(model$Z_b))
+  rm(QR_b)
 
   # Organize for different models
   # Gaussian
@@ -300,11 +333,16 @@ tdlmm <- function(formula,
 
   # Store the processed values
   model$Y <- force(c(model$Y))
+
   model$Zscale <- attr(model$Z, "scaled:scale")
   model$Zmean <- attr(model$Z, "scaled:center")
   model$Znames <- colnames(model$Z)
   model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
 
+  model$Zscale_b <- attr(model$Z_b, "scaled:scale")
+  model$Zmean_b <- attr(model$Z_b, "scaled:center")
+  model$Znames_b <- colnames(model$Z_b)
+  model$Z_b <- force(matrix(model$Z_b, nrow(model$Z_b), ncol(model$Z_b)))
 
   # ---- [Spatial structure construction: Adjacency & Diagonal matrix for CAR model] ----
   # default setting for no spatial effect
@@ -318,12 +356,13 @@ tdlmm <- function(formula,
     model$spNodes2 = spNodes[[2]]
     model$areaW = areaW        
     model$areaD = diag(rowSums(areaW))
-
-    model$areaA = force(scaleModelMatrix(areaA))      # Assignment matrix A so that A*phi is n x 1
-    model$areaA = force(matrix(model$areaA, nrow(model$areaA), ncol(model$areaA)))
-    model$Ascale <- attr(model$areaA, "scaled:scale")
-    model$Amean <- attr(model$areaA, "scaled:center")
-
+    
+    # model$areaA = force(scaleModelMatrix(areaA))      # Assignment matrix A so that A*phi is n x 1
+    # model$areaA = force(matrix(model$areaA, nrow(model$areaA), ncol(model$areaA)))
+    # model$Ascale <- attr(model$areaA, "scaled:scale")
+    # model$Amean <- attr(model$areaA, "scaled:center")
+    # model$areaA = scale(areaA, center = FALSE, scale = TRUE)
+    model$areaA <- areaA
     model$spN = ncol(areaA)                           # Number of unique areas
     model$spatial = TRUE                              # Set the spatial flag to be true
   }
@@ -386,6 +425,7 @@ tdlmm <- function(formula,
     model[[n]] <- out[[n]]
 
 
+
   # ---- Prepare output ----
   model$Y <- model$Y * model$Yscale + model$Ymean
   model$fhat <- model$fhat * model$Yscale
@@ -414,7 +454,7 @@ tdlmm <- function(formula,
 
   # ZINB fixed effect (binary)
   model$b1 <- sapply(1:ncol(model$b1), function(i) {
-  model$b1[,i] * model$Yscale / model$Zscale[i] })
+  model$b1[,i] * model$Yscale / model$Zscale_b[i] })
 
   # ZINB fixed effect (NegBin)
   model$b2 <- sapply(1:ncol(model$b2), function(i) {
@@ -423,30 +463,32 @@ tdlmm <- function(formula,
   # ZINB + Spatial random effect
   if(model$spatial){
     model$spPhi <- sapply(1:ncol(model$spPhi), function(i) {
-    model$spPhi[,i] * model$Yscale / model$Ascale[i] })
+    model$spPhi[,i] * model$Yscale }) # / model$Ascale[i]
   }
-
+  
   if (model$intercept) {
     model$gamma[,1] <- model$gamma[,1] + model$Ymean
     if (ncol(model$Z) > 1)
       model$gamma[,1] <- model$gamma[,1] - model$gamma[,-1] %*% model$Zmean[-1]
-
-    model$b1[,1] <- model$b1[,1] + model$Ymean
-    if (ncol(model$Z) > 1)
-      model$b1[,1] <- model$b1[,1] - model$b1[,-1] %*% model$Zmean[-1]
 
     model$b2[,1] <- model$b2[,1] + model$Ymean
     if (ncol(model$Z) > 1)
       model$b2[,1] <- model$b2[,1] - model$b2[,-1] %*% model$Zmean[-1]
   }
 
+  if (model$intercept_b) {
+    model$b1[,1] <- model$b1[,1] + model$Ymean
+    if (ncol(model$Z_b) > 1)
+      model$b1[,1] <- model$b1[,1] - model$b1[,-1] %*% model$Zmean_b[-1]
+  }
+
   colnames(model$gamma) <- model$Znames
-  colnames(model$b1) <- model$Znames
+  colnames(model$b1) <- model$Znames_b
   colnames(model$b2) <- model$Znames
 
   # rescale DLM and Mixture estimates
   model$DLM <- as.data.frame(model$DLM)
-  colnames(model$DLM) <- c("Iter", "Tree", "exp", "tmin", "tmax",
+  colnames(model$DLM) <- c("Iter", "Tree", "TreePair", "exp", "tmin", "tmax",
                            "est", "kappa")
   model$MIX <- as.data.frame(model$MIX)
   colnames(model$MIX) <- c("Iter", "Tree", "exp1", "tmin1", "tmax1",
@@ -498,6 +540,7 @@ tdlmm <- function(formula,
   for (i in 1:length(model$X))
     model$X[[i]]$X <- model$X[[i]]$Tcalc <- NULL
   model$Z <- NULL
+  model$Z_b <- NULL
 
   # Change env to list
   model.out <- lapply(names(model), function(i) model[[i]])

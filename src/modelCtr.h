@@ -5,7 +5,7 @@ using namespace Eigen;
 struct modelCtr {
 public:
   bool verbose, diagnostics;
-  int n, pZ, pX, nRec, nSplits, nTrees;
+  int n, pZ, pZ1, pX, nRec, nSplits, nTrees;
   int b, iter, thin, burn, record, threads, shrinkage;
   double sigma2, xiInvSigma2, nu, VTheta1Inv, totTerm, sumTermT2;
   double modKappa, modZeta;
@@ -38,6 +38,7 @@ public:
   bool zinb; // Indicator boolean for ZINB
 
   // Binary component of ZINB (labelled with 1)
+  Eigen::MatrixXd Z1; // Design matrix for fixed effect
   Eigen::VectorXd b1;       // coefficients
   Eigen::MatrixXd Vg1;       // V_gamma
   Eigen::MatrixXd VgInv1;    // V_gamma inverse
@@ -68,6 +69,7 @@ public:
   int r;                      // dispersion parameter of negative binomial
   Eigen::VectorXd rVec;       // a vector of dispersion parameter: rep(r, n)
   double MHratio;             // Metropolis-Hasting ratio
+  bool swapStep;              // Swap-step
 
   // Spatial component
   // rho update
@@ -78,7 +80,6 @@ public:
   int spN;
   Eigen::MatrixXd areaD;
   Eigen::MatrixXd areaW;
-  Eigen::MatrixXd areaQ;
   Eigen::MatrixXd areaA;
   Eigen::VectorXd spPhi;
   double rho;                 // Spatial correlation

@@ -68,6 +68,7 @@ tdlnm <- function(formula,
                   subset = NULL,
                   verbose = TRUE,
                   diagnostics = FALSE,
+                  formula_b = NULL, # b stands for binary
                   spNodes = NULL,
                   areaW = NULL,
                   areaA = NULL,
@@ -182,12 +183,27 @@ tdlnm <- function(formula,
 
 
   # ---- Setup control and response variables ----
+  if(is.null(formula_b)){
+    formula_b <- formula
+  }
+
   model$formula <- force(as.formula(formula))
+  model$formula_b <- force(as.formula(formula_b)) 
+
   tf <- terms.formula(model$formula, data = data)
-  if (!attr(tf, "response"))
+  tf_b <- terms.formula(model$formula_b, data = data) # terms.formula with data -> returns model.matrix & attributes
+
+  # Sanity check for response
+  if (!attr(tf, "response") & !attr(tf_b, "response"))
     stop("no valid response in formula")
-  model$intercept <- force(ifelse(attr(tf, "intercept"), TRUE, FALSE))
-  if (length(which(attr(tf, "term.labels") %in% colnames(data))) == 0)
+
+  # Save if intercept is included in the model
+  model$intercept <- force(ifelse(attr(tf, "intercept"), TRUE, FALSE)) 
+  model$intercept_b <- force(ifelse(attr(tf_b, "intercept"), TRUE, FALSE)) 
+
+  # Sanity check for variables and the names
+  if (length(which(attr(tf, "term.labels") %in% colnames(data))) == 0 & 
+      length(which(attr(tf_b, "term.labels") %in% colnames(data))) == 0) 
     stop("no valid variables in formula")
 
 
@@ -294,36 +310,58 @@ tdlnm <- function(formula,
 
 
 
-  # ---- Scale data and setup exposures ----
-  data <- droplevels(data)
-  mf <- model.frame(model$formula, data = data,
+  # ---- [Scale data and setup exposures] ----
+  data <- droplevels(data)                                        # Drop all levels of factors in the data.
+  mf <- model.frame(model$formula, data = data,                   # Extract Model information with formula and data
                     drop.unused.levels = TRUE,
                     na.action = NULL)
-  if (any(is.na(mf)))
+  mf_b <- model.frame(model$formula_b, data = data,                   # Extract Model information with formula and data
+                      drop.unused.levels = TRUE,
+                      na.action = NULL)
+  if (any(is.na(mf)) & any(is.na(mf_b)))
     stop("missing values in model data, use `complete.cases()` to subset data")
-  model$Y <- force(model.response(mf))
-  model$Z <- force(model.matrix(model$formula, data = mf))
-  QR <- qr(crossprod(model$Z))
-  model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)])]
+  
+  # Organize response variable & fixed effect variable
+  model$Y <- force(model.response(mf))                            # Response Y
+
+  model$Z <- force(model.matrix(model$formula, data = mf))        # Fixed effect matrix, Z (c1 ~ c5, b1 ~ b5)
+  QR <- qr(crossprod(model$Z))                                    # t(Z)%*%Z and its QR decomposition
+  model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)])]      
+  model$droppedCovar <- colnames(model$Z)[QR$pivot[-seq_len(QR$rank)]]
   model$Z <- force(scaleModelMatrix(model$Z))
   rm(QR)
 
+  model$Z_b <- force(model.matrix(model$formula_b, data = mf_b))        # Fixed effect matrix, Z (c1 ~ c5, b1 ~ b5)
+  QR_b <- qr(crossprod(model$Z_b))                                    # t(Z)%*%Z and its QR decomposition
+  model$Z_b <- model$Z_b[,sort(QR_b$pivot[seq_len(QR_b$rank)])]           
+  model$droppedCovar_b <- colnames(model$Z_b)[QR_b$pivot[-seq_len(QR_b$rank)]]
+  model$Z_b <- force(scaleModelMatrix(model$Z_b))
+  rm(QR_b)
 
-
+  # Organize for different models
+  # Gaussian
   if (model$family == "gaussian") {
-    model$Ymean <- sum(range(model$Y))/2
+    model$Ymean <- sum(range(model$Y)) / 2
     model$Yscale <- diff(range(model$Y - model$Ymean))
     model$Y <- force((model$Y - model$Ymean) / model$Yscale)
-  } else { # logistic & Gaussian
+  } else { # For both logistic and ZINB,
     model$Yscale <- 1
     model$Ymean <- 0
     model$Y <- force(scale(model$Y, center = 0, scale = 1))
   }
+
+  # Store the processed values
   model$Y <- force(c(model$Y))
+
   model$Zscale <- attr(model$Z, "scaled:scale")
   model$Zmean <- attr(model$Z, "scaled:center")
   model$Znames <- colnames(model$Z)
   model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
+
+  model$Zscale_b <- attr(model$Z_b, "scaled:scale")
+  model$Zmean_b <- attr(model$Z_b, "scaled:center")
+  model$Znames_b <- colnames(model$Z_b)
+  model$Z_b <- force(matrix(model$Z_b, nrow(model$Z_b), ncol(model$Z_b)))
 
   # ---- [Spatial structure construction: Adjacency & Diagonal matrix for CAR model] ----
   # default setting for no spatial effect
@@ -367,35 +405,42 @@ tdlnm <- function(formula,
     colnames(model$treeAccept) <- c("step", "success", "term", "treeMhr", "mhr")
   }
 
-  # rescale fixed effect estimates
-  # Gaussian & Logistic fixed effect
+# Gaussian & Logistic fixed effect
   model$gamma <- sapply(1:ncol(model$gamma), function(i) {
   model$gamma[,i] * model$Yscale / model$Zscale[i] })
 
   # ZINB fixed effect (binary)
   model$b1 <- sapply(1:ncol(model$b1), function(i) {
-  model$b1[,i] * model$Yscale / model$Zscale[i] })
+  model$b1[,i] * model$Yscale / model$Zscale_b[i] })
 
   # ZINB fixed effect (NegBin)
   model$b2 <- sapply(1:ncol(model$b2), function(i) {
   model$b2[,i] * model$Yscale / model$Zscale[i] })
 
+  # ZINB + Spatial random effect
+  if(model$spatial){
+    model$spPhi <- sapply(1:ncol(model$spPhi), function(i) {
+    model$spPhi[,i] * model$Yscale / model$Ascale[i] })
+  }
+  
   if (model$intercept) {
     model$gamma[,1] <- model$gamma[,1] + model$Ymean
     if (ncol(model$Z) > 1)
-      model$gamma[,1] <- model$gamma[,1] - model$gamma[,-1, drop=FALSE] %*% model$Zmean[-1]
-
-    model$b1[,1] <- model$b1[,1] + model$Ymean
-    if (ncol(model$Z) > 1)
-      model$b1[,1] <- model$b1[,1] - model$b1[,-1] %*% model$Zmean[-1]
+      model$gamma[,1] <- model$gamma[,1] - model$gamma[,-1] %*% model$Zmean[-1]
 
     model$b2[,1] <- model$b2[,1] + model$Ymean
     if (ncol(model$Z) > 1)
       model$b2[,1] <- model$b2[,1] - model$b2[,-1] %*% model$Zmean[-1]
   }
 
+  if (model$intercept_b) {
+    model$b1[,1] <- model$b1[,1] + model$Ymean
+    if (ncol(model$Z_b) > 1)
+      model$b1[,1] <- model$b1[,1] - model$b1[,-1] %*% model$Zmean_b[-1]
+  }
+
   colnames(model$gamma) <- model$Znames
-  colnames(model$b1) <- model$Znames
+  colnames(model$b1) <- model$Znames_b
   colnames(model$b2) <- model$Znames
 
 
@@ -418,6 +463,7 @@ tdlnm <- function(formula,
   model$Tcalc <- NULL
   model$Xcalc <- NULL
   model$Z <- NULL
+  model$Z_b <- NULL
 
   # Change env to list
   model.out <- lapply(names(model), function(i) model[[i]])

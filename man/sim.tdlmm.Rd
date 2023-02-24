@@ -13,6 +13,8 @@ sim.tdlmm(
   n = 5000,
   spatial = FALSE,
   expList = NULL,
+  data_zinb = NULL,
+  ctnum = NULL,
   areaN = NULL,
   rho = NULL,
   spTau = NULL

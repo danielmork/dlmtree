@@ -22,6 +22,7 @@ tdlnm(
   subset = NULL,
   verbose = TRUE,
   diagnostics = FALSE,
+  formula_b = NULL,
   spNodes = NULL,
   areaW = NULL,
   areaA = NULL,

@@ -83,224 +83,133 @@ void tdlmModelEst(modelCtr *ctr)
 
   } else { // ZINB
     // *** Step 1: Update the latent At-Risk Indicators ***
-    // Step 1-1: Calculate eta1 for logit1, eta2 (binary) & logit2 (count)
-    // Rcout << "Step 1: Updating the latent indicator variable \n";
-    Eigen::VectorXd eta1 = (ctr->Z) * (ctr->b1);              // Z * \gamma
-    Eigen::VectorXd eta2 = (ctr->Z * ctr->b2) + (ctr->fhat);    // Fixed effect +  dlm effect
-    if(ctr->spatial){
-      eta1.noalias() += ctr->areaA * ctr->spPhi;                // Z * \gamma + spatial random effect (spPhi = 0 as default)
+    // Calculate eta1 for logit1 (binary), eta2 & logit2 (count)
+    // std::cout << "Current line number in code: " << __LINE__ << std::endl;
+
+    Eigen::VectorXd eta1 = (ctr->Z1 * ctr->b1);  // Fixed effect + spatial random effect
+    if(ctr->spatial){ 
+      eta1.noalias() += (ctr->areaA * ctr->spPhi); // Spatial random effect
     }
 
-    Eigen::VectorXd logit1 = 1 / (1 + exp(-(eta1).array()));
-    Eigen::VectorXd logit2 = 1 / (1 + exp(-(eta2).array()));  // psi 
-
-    // Rcout << "Step 1: Resetting the latent indicator variable, w \n";
-    ctr->w.setOnes(); 
-    
-    // Sampling w
-    for (int z = 0; z < (ctr->yZeroN); z++){ // For all y = 0,
-      // Find the index of y = 0,
-      int idx = (ctr->yZeroIdx)[z]; 
-
-      // Bernoulli probability
-      double prob = log(logit1[idx]) + ctr->r * log((1 - logit2.array())[idx])
-                    - log(1 - logit1[idx] + logit1[idx] * pow((1 - logit2.array())[idx], ctr->r)); 
-
-      // Update the index with a probability with either 0 or 1
-      (ctr->w)[idx] = R::rbinom(1, exp(prob)); 
-    }
-    
-    // Update the number of at-risk individuals
-    ctr->nStar = (ctr->w).sum();
-
-    // Update the indices of at-risk
-    ctr->atRiskIdx.clear();  // Clear the vector
-    for (int j = 0; j < (ctr->n); j++){
-      if((ctr->w)[j] == 1){
-        ctr->atRiskIdx.push_back(j); // Save the index if w = 1
-      }
-    }
-
-    // *** Step 2: Binary component aka Update b1 ***
-    // 2-0: Store the previous b1 before update for spatial update
-    Eigen::VectorXd b1Prev = ctr->b1;
-
-    // 2-1: Update Omega1 ~ PG(1, eta1)
-    // Rcout << "Step 2-1: Sampling Omega1 \n";
-    ctr->omega1 = rcpp_pgdraw(ctr->ones, eta1);     // Sample PG
-    ctr->Zw1 = ctr->omega1.asDiagonal() * ctr->Z;   
+    // Sample PG(1, eta1)
+    ctr->omega1 = rcpp_pgdraw(ctr->ones, eta1);
+    ctr->Zw1 = ctr->omega1.asDiagonal() * ctr->Z1;   
 
     // 2-2: Update Vg and z1
     // Vg
-    // Rcout << "Step 2-2: Updating Vg \n";
-    Eigen::MatrixXd VgInv(ctr->pZ, ctr->pZ); 
-    VgInv.triangularView<Eigen::Lower>() = ctr->Z.transpose() * ctr->Zw1; // Zt * Omega * Z : (pxp)
-    VgInv.diagonal().array() += 1 / 100.0; // Zt*Omega*Z  + c*I(prior) where c = 100
-    VgInv.triangularView<Eigen::Upper>() = VgInv.transpose().eval(); 
+    Eigen::MatrixXd VgInv1(ctr->pZ1, ctr->pZ1); 
+    VgInv1.triangularView<Eigen::Lower>() = ctr->Z1.transpose() * ctr->Zw1; // Zt * Omega * Z : (pxp)
+    VgInv1.diagonal().array() += 1 / 100.0; // Zt*Omega*Z  + c*I(prior) where c = 100
+    VgInv1.triangularView<Eigen::Upper>() = VgInv1.transpose().eval(); 
+    ctr->Vg1.triangularView<Eigen::Lower>() = VgInv1.inverse();
+    ctr->Vg1.triangularView<Eigen::Upper>() = ctr->Vg1.transpose().eval();   
+    ctr->VgChol1 = ctr->Vg1.llt().matrixL();
 
-    ctr->Vg.triangularView<Eigen::Lower>() = VgInv.inverse();
-    ctr->Vg.triangularView<Eigen::Upper>() = ctr->Vg.transpose().eval();   
-    ctr->VgChol = ctr->Vg.llt().matrixL();
-
-    // z1
-    // Rcout << "Step 2-2: Updating z1 \n";
-    ctr->z1 = ((ctr->w).array() - 0.5).array() / ctr->omega1.array(); 
-
-    // 2-3: Sample b1
-    // Rcout << "Step 2-3: Sampling b1 \n";
-    // Mean of b1 & Variance of b1 with cholesky
+    // z1 from PG 
+    ctr->z1 = ((ctr->w).array() - 0.5).array() / ctr->omega1.array();
     if(ctr->spatial){
-      ctr->z1 -= (ctr->areaA * ctr->spPhi);
+      ctr->z1 -= ctr->areaA * ctr->spPhi;
+    } 
+
+    // Sample b1
+    // Mean of b1 & Variance of b1 with cholesky
+    const Eigen::VectorXd ZR1 = ctr->Zw1.transpose() * (ctr->z1); // (px1)(nxn)(nx1) = (px1)(no DLM effects)
+    ctr->b1 = ctr->Vg1 * ZR1; // Mean (pxp)(px1)              // b1 has prior with mean 0
+    ctr->b1.noalias() += ctr->VgChol1 * as<Eigen::VectorXd>(rnorm(ctr->pZ1, 0, sqrt(ctr->sigma2)));
+
+    // *** Update at-risk latent variable, w ***
+    eta1 = (ctr->Z1 * ctr->b1); // Recalculate with the new MCMC sample of b1
+    if(ctr->spatial){ 
+      eta1.noalias() += (ctr->areaA * ctr->spPhi); // Spatial random effect
+    }
+    Eigen::VectorXd eta2 = (ctr->Z * ctr->b2) + (ctr->fhat);
+    Eigen::VectorXd logit1 = 1 / (1 + exp(-(eta1).array()));
+    Eigen::VectorXd logit2 = 1 / (1 + exp(-(eta2).array()));
+    
+    // *******************************************************************
+    // Sampling w only for observations with y = 0
+    for (int z = 0; z < (ctr->yZeroN); z++){ 
+      int idx = (ctr->yZeroIdx)[z];  // Find the index of y = 0
+      // Bernoulli probability and sampling
+      double prob = log(logit1[idx]) + ctr->r * log((1 - logit2[idx]))
+                    - log(1 - logit1[idx] + logit1[idx] * pow(1 - logit2[idx], ctr->r)); 
+      (ctr->w)[idx] = R::rbinom(1, exp(prob));   // Update the index with a probability with either 0 or 1
     }
 
-    const Eigen::VectorXd ZR1 = ctr->Zw1.transpose() * (ctr->z1); // (px1)(nxn)(nx1) = (px1)(no DLM effects)
-    ctr->b1 = ctr->Vg * ZR1; // Mean (pxp)(px1)              // b1 has prior with mean 0
-    ctr->b1.noalias() += ctr->VgChol * as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2)));
+    // ctr->w.setOnes();
+    // *******************************************************************
+
+    ctr->nStar = (ctr->w).sum();      // Update the number of at-risk individuals
+
+    // Update the indices of at-risk
+    ctr->atRiskIdx.clear();  
+    // Save at-risk row numbers
+    for (int j = 0; j < (ctr->n); j++){
+      if((ctr->w)[j]){
+        ctr->atRiskIdx.push_back(j);
+      }
+    }
 
     // *** Extra Step 2: Spatial random effect ***
-    if(ctr->spatial){ // For spatial analysis, add a random effect
-      // [Update spTau with full conditional (Strictly positive)] 
-      double spTauP = ctr->spTau + R::rnorm(0, 1);
-      while(spTauP < 0){ // If negative, re-sample
-        spTauP = ctr->spTau + R::rnorm(0, 1);
-      }
+    if(ctr->spatial){
+      // [Update spTau with full condition: IG conjugacy]
+      ctr->spTau = 1.0 / R::rgamma(3.0 + double(ctr->spN / 2.0), 1.0 / (1.0 + 0.5 * ctr->spPhi.transpose() * (ctr->areaD - (ctr->rho) * ctr->areaW) * ctr->spPhi));
 
-      // 2. Calcuate the full conditional of spTau : p(spTau) * p(spPhi|spTau) 
-      double spTauMHratio = 0;
-
-      // Add prior probability: Prior is set as Gamma(3, 3)
-      spTauMHratio += R::dgamma(spTauP, 3, 3, true);      // Proposed (Numerator)
-      spTauMHratio -= R::dgamma(ctr->spTau, 3, 3, true);  // Current (Denominator)
-
-      for (int spNodeIndex = 0; spNodeIndex < (ctr->spNodes1).size(); spNodeIndex++){
-        // Converting from R indexing to C++ index
-        int spNode1 = (ctr->spNodes1)[spNodeIndex] - 1;
-        int spNode2 = (ctr->spNodes2)[spNodeIndex] - 1;
-
-        // Numerator (Proposed)
-        spTauMHratio += - (spTauP) * 0.5 * (pow((ctr->spPhi)[spNode1], 2) - 2 * (ctr->rho) * (ctr->spPhi)[spNode1] * (ctr->spPhi)[spNode2] + pow((ctr->spPhi)[spNode2], 2)); 
-        // Denominator (Current)
-        spTauMHratio -= - (ctr->spTau) * 0.5 * (pow((ctr->spPhi)[spNode1], 2) - 2 * (ctr->rho) * (ctr->spPhi)[spNode1] * (ctr->spPhi)[spNode2] + pow((ctr->spPhi)[spNode2], 2));
-      }
-
-      spTauMHratio = std::min(1.0, exp(spTauMHratio));
-
-      // 3. Accept/Reject
-      // Proposed probability is higher -> accept with 1
-      if(R::runif(0, 1) < spTauMHratio){
-        ctr->spTau = spTauP;
-      } // spTau update end
-
-      // [Update rho with full conditional] ----------------------------------------------------------------
-      // Metropolis Hasting for rho 
-      double rhoP = ctr->rho + R::rnorm(0, 0.1); // Proposal: q(rho*|rho) ~ N(rho, 0.1) -> Transition in MH ratio cancels out
-      while(rhoP < 0 || rhoP > 1){               // rho must be between 0 and 1
-        rhoP = ctr->rho + R::rnorm(0, 0.1);
-      }
+      // // [Update rho with full conditional: Metropolis Hasting for rho]
+      // // Proposal
+      // double eps = 0.5 * R::runif(0, 1);
+      // double rhoP = R::runif(0, 1) * eps + (ctr->rho - eps); // Transformation from U(0, 1) to U(rho - eps, rho + eps)
+      // if(rhoP < 0){
+      //   rhoP = abs(rhoP);
+      // } else if (rhoP > 1){
+      //   rhoP -= 2;
+      // }
       
-      // 2. Calcuate the full conditional of rho : p(rho) * p(spPhi|rho)
-      // FC of rho = log(dnorm(0, 0.2)) + log(prob of phi1^2 - 2 * rho * phi1 * phi2 + phi2^2)
-      double rhoMHratio = 0;
+      // // 2. Calcuate the full conditional of rho : p(rho) * p(spPhi|rho)
+      // // FC of rho = log(dnorm(0, 0.2)) + log(prob of phi1^2 - 2 * rho * phi1 * phi2 + phi2^2)
+      // double rhoMHratio = 0;
+      // for (int spNodeIndex = 0; spNodeIndex < (ctr->spNodes1).size(); spNodeIndex++){
+      //   // Converting from R indexing to C++ index
+      //   int spNode1 = (ctr->spNodes1)[spNodeIndex] - 1;
+      //   int spNode2 = (ctr->spNodes2)[spNodeIndex] - 1;
 
-      // Add prior probability in log: Prior is set as Unif(0, 1) = Beta(1, 1) as rho is between -1 and 1
-      rhoMHratio += log(0.5);        // Proposed
-      rhoMHratio -= log(0.5);        // Current
+      //   // Proposed
+      //   rhoMHratio += - (1 / ctr->spTau) * 0.5 * (pow(ctr->spPhi[spNode1], 2) - 2 * (rhoP) * ctr->spPhi[spNode1] * ctr->spPhi[spNode2] + pow(ctr->spPhi[spNode2], 2))
+      //                       - 0.5 * log(det((ctr->areaD - rhoP * ctr->areaW).inverse()));
+      //   // Current
+      //   rhoMHratio -= - (1 / ctr->spTau) * 0.5 * (pow(ctr->spPhi[spNode1], 2) - 2 * (ctr->rho) * ctr->spPhi[spNode1] * ctr->spPhi[spNode2] + pow(ctr->spPhi[spNode2], 2))
+      //                       - 0.5 * log(det((ctr->areaD - ctr->rho * ctr->areaW).inverse()));
+      // }
+      // // 3. Accept/Reject
+      // rhoMHratio = std::min(1.0, exp(rhoMHratio));
+      // if(R::runif(0, 1) < rhoMHratio){
+      //   ctr->rho = rhoP;
+      // } // rho update end
+      ctr->rho = 1; // Fix rho to 1 for now.
 
-      for (int spNodeIndex = 0; spNodeIndex < (ctr->spNodes1).size(); spNodeIndex++){
-        // Converting from R indexing to C++ index
-        int spNode1 = (ctr->spNodes1)[spNodeIndex] - 1;
-        int spNode2 = (ctr->spNodes2)[spNodeIndex] - 1;
+      // Recalculate eta1 with updated b1 and resample omega1
+      eta1 = (ctr->Z1 * ctr->b1) + (ctr->areaA * ctr->spPhi);
+      ctr->omega1 = rcpp_pgdraw(ctr->ones, eta1);
 
-        // Proposed
-        rhoMHratio += - (ctr->spTau) * 0.5 * (pow(ctr->spPhi[spNode1], 2) - 2 * (rhoP) * ctr->spPhi[spNode1] * ctr->spPhi[spNode2] + pow(ctr->spPhi[spNode2], 2));
-        // Current
-        rhoMHratio -= - (ctr->spTau) * 0.5 * (pow(ctr->spPhi[spNode1], 2) - 2 * (ctr->rho) * ctr->spPhi[spNode1] * ctr->spPhi[spNode2] + pow(ctr->spPhi[spNode2], 2));
-      }
-
-      rhoMHratio = std::min(1.0, exp(rhoMHratio));
-
-      // 3. Accept/Reject
-      // Proposed probability is higher -> accept with 1
-      if(R::runif(0, 1) < rhoMHratio){
-        ctr->rho = rhoP;
-      } // rho update end
-
-      // [With updated rho and spTau, update Qinv] ------------------------------------------------
-      ctr->areaQ = (ctr->spTau) * (ctr->areaD - (ctr->rho) * ctr->areaW);
-      //ctr->areaQinv = (ctr->areaQ).inverse();
-
-      // Resample PG variable with the updated eta1
-      ctr->zPhi = ((ctr->w).array() - 0.5).array() / ctr->omega1.array(); 
+      // [Update spPhi]
+      ctr->zPhi = ((ctr->w).array() - 0.5).array() / ctr->omega1.array();  // Same as ctr->z1
+      ctr->zPhi -= ctr->Z1 * ctr->b1;
 
       // Vp
-      // Rcout << "Step 2-2: Updating Vg \n";
       Eigen::MatrixXd VpInv(ctr->spN, ctr->spN); 
-      // At * Omega * A : (spN x spN)
-      VpInv.triangularView<Eigen::Lower>() = ctr->areaA.transpose() * ((ctr->omega1).asDiagonal()) * (ctr->areaA);
-      VpInv += ctr->areaQ; // AT*omega1*A  + CAR prior inverse
+      VpInv.triangularView<Eigen::Lower>() = ctr->areaA.transpose() * ctr->omega1.asDiagonal() * ctr->areaA; // At * Omega * A : (pxp)
+      VpInv.noalias() += (1 / ctr->spTau) * (ctr->areaD - ctr->rho * ctr->areaW); // Zt*Omega*Z  + c*I(prior) where c = 100
       VpInv.triangularView<Eigen::Upper>() = VpInv.transpose().eval(); 
       ctr->Vp.triangularView<Eigen::Lower>() = VpInv.inverse();
-      ctr->Vp.triangularView<Eigen::Upper>() = ctr->Vp.transpose().eval();   
+      ctr->Vp.triangularView<Eigen::Upper>() = ctr->Vp.transpose().eval(); 
       ctr->VpChol = ctr->Vp.llt().matrixL();
 
-      // 2-3: Sample phi
-      //Rcout << "Step 2-3: Sampling spPhi \n";
-      // Mean of spPhi
-      Eigen::VectorXd Rphi = ctr->zPhi - ((ctr->Z) * (b1Prev));
-      const Eigen::VectorXd ARphi = ctr->areaA.transpose() * ((ctr->omega1).asDiagonal()) * (Rphi); // (px1)(nxn)(nx1) = (px1)(no DLM effects)
-      ctr->spPhi = ctr->Vp * ARphi; // Mean (spN x spN)(spN x 1)
-
-      // Variance of spPhi using cholesky
-      ctr->spPhi.noalias() += ctr->VpChol * as<Eigen::VectorXd>(rnorm(ctr->spN, 0, sqrt(ctr->sigma2)));
+      // Sample spPhi
+      ctr->spPhi = ctr->Vp * ctr->areaA.transpose() * (ctr->omega1).asDiagonal() * ctr->zPhi;      // Mean of spPhi
+      ctr->spPhi.noalias() += ctr->VpChol * as<Eigen::VectorXd>(rnorm(ctr->spN, 0, sqrt(ctr->sigma2))); // Variance of spPhi using cholesky
     } // Spatial finish
 
-    // *** Step 3: Negative Binomial (count) component ***
-    // 3-1: Update omega2 ~ PG(y + r, psi2) with dlm effect
-    // Rcout << "Step 3-1: Sampling omega2 \n";
-    // Start omega2 vector with ones and sample only for the at-risk (No need to sample PG(y + r, 0))
-    (ctr->omega2).setOnes(); // Can set anything as it will be multiplied to zero
-    for(int k = 0; k < (ctr->nStar); k++){
-      int tmp = (ctr->atRiskIdx)[k];
-      (ctr->omega2)[tmp] = rcpp_pgdraw((ctr->Y0)[tmp] + ctr->r, eta2[tmp]);
-    }
-
-    // 3-2: Update Zstar, Zw, Vg, z2, R
-    // Zstar (Z with non At-risk individuals zeroed out)
-    ctr->Zstar = (ctr->Z).array().colwise() * (ctr->w).array();
-
-    // Zw
-    // Rcout << "Step 3-2: Updating Zw \n";
-    ctr->Zw = (ctr->omega2).asDiagonal() * ctr->Zstar;  // (nxn) x (nxp) = (nxp) with only with at-risk
-
-    // Vg (pxp)
-    // Rcout << "Step 3-2: Updating Vg \n";
-    VgInv.setZero(); 
-    VgInv.triangularView<Eigen::Lower>() = ctr->Zstar.transpose() * (ctr->Zw); // Zt * Omega * Z: (pxn)(nxn)(nxp)
-    VgInv.diagonal().array() += 1 / 100.0; // Zt*Omega*Z  + c*I where c = 100000
-    VgInv.triangularView<Eigen::Upper>() = VgInv.transpose().eval(); 
-
-    ctr->Vg.triangularView<Eigen::Lower>() = VgInv.inverse();
-    ctr->Vg.triangularView<Eigen::Upper>() = ctr->Vg.transpose().eval();   
-    ctr->VgChol = ctr->Vg.llt().matrixL();
-
-    // z2 (= Ystar) (nx1)
-    // Rcout << "Step 3-2: Updating z2 \n";
-    ctr->z2 = (ctr->Y0 - ctr->rVec).array() / (2*(ctr->omega2).array()).array();
-    ctr->Ystar = (ctr->z2).array() * (ctr->w).array();
-
-    // R (partial residual) (nx1)
-    // Rcout << "Step 3-2: Updating R \n";
-    Eigen::VectorXd fhatStar = ctr->fhat.array() * ctr->w.array(); 
-    ctr->R = ctr->Ystar - fhatStar; // (nx1) - (nx1) = (nx1)
-
-    // 3-3: Sample b2
-    // Rcout << "Step 3-3: Sampling b2 \n";
-    const Eigen::VectorXd ZR = ctr->Zw.transpose() * (ctr->R); // R = Y - f(DLM effects) : (pxn) x (nx1) = (px1)
-    ctr->b2 = ctr->Vg * ZR; // Mean: (pxp) x (px1) = (px1)
-    ctr->b2.noalias() += ctr->VgChol * as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2))); // Variance
-
-    // *** Step 4: Update the dispersion parameter, r ***
-    // Rcout << "Step 4: Updating dispersion parameter, r \n";
+    // *** Step 3: Update the dispersion parameter, r ***
     // Propose a new r with a random walk
     int rP;
     if(R::runif(0, 1) < 0.5){ // Walk to left
@@ -312,25 +221,60 @@ void tdlmModelEst(modelCtr *ctr)
     // Reset MH ratio
     ctr->MHratio = 0;
 
-    // Support range = 1 ~ 10
-    // MH ratio is zero (always rejected) if 0 and 11 is proposed.
-    // Otherwise, compute MH ratio.
-    if(rP != 0 && rP != 11){ // Out of support -> reject
+    // r must be positive
+    if(rP > 0){ 
       for(int q = 0; q < (ctr->nStar); q++){
         int idx_aR = (ctr->atRiskIdx)[q];
-        (ctr->MHratio) += R::dnbinom((ctr->Y0)[idx_aR], rP, (1 - logit2.array())[idx_aR], true);
-        (ctr->MHratio) -= R::dnbinom((ctr->Y0)[idx_aR], ctr->r, (1 - logit2.array())[idx_aR], true);
+        // nu = 1 - logit2 but R parameterizes nu as 1 - probability hence 1 - nu = 1 - (1 - logit2) = logit2
+        ctr->MHratio += R::dnbinom((ctr->Y0)[idx_aR], rP, logit2[idx_aR], true)-
+                        R::dnbinom((ctr->Y0)[idx_aR], ctr->r, logit2[idx_aR], true);
       }
 
-      // MH ratio
-      ctr->MHratio = std::min(1.0, exp(ctr->MHratio));
+      // Accept/Reject 
+      if(log(R::runif(0, 1)) < ctr->MHratio){
+        ctr->r = rP;
+        ctr->rVec = (ctr->ones).array() * (ctr->r);
+      }
     }
 
-    // Accept/Reject 
-    if(R::runif(0, 1) < ctr->MHratio){
-      ctr->r = rP;
-      ctr->rVec = (ctr->ones).array() * (ctr->r);
-    }    
+    // *** Step 4: Negative Binomial (count) component ***
+    // Update omega2 ~ PG(y + r, eta2) with dlm effect
+    // Start omega2 vector with ones and sample only for the at-risk (No need to sample PG(y + r, 0))
+    (ctr->omega2).setOnes(); // Can set anything as it will be multiplied to zero
+    for(int k = 0; k < ctr->nStar; k++){
+      int tmp = (ctr->atRiskIdx)[k];
+      (ctr->omega2)[tmp] = rcpp_pgdraw((ctr->Y0)[tmp] + ctr->r, eta2[tmp]);
+    }
+
+    // 3-2: Update Zstar, Zw, Vg, z2, R
+    // Zstar (Z with non At-risk individuals zeroed out)
+    ctr->Zstar = (ctr->Z).array().colwise() * (ctr->w).array();
+
+    // Zw
+    ctr->Zw = (ctr->omega2).asDiagonal() * ctr->Zstar;  // Subset at-risk
+
+    // Vg
+    Eigen::MatrixXd VgInv(ctr->pZ, ctr->pZ); 
+    VgInv.setZero(); 
+    VgInv.triangularView<Eigen::Lower>() = ctr->Zstar.transpose() * (ctr->Zw); // Zt * Omega * Z
+    VgInv.diagonal().array() += 1 / 100.0; // Zt*Omega*Z  + c*I where c = 100000
+    VgInv.triangularView<Eigen::Upper>() = VgInv.transpose().eval(); 
+    ctr->Vg.triangularView<Eigen::Lower>() = VgInv.inverse();
+    ctr->Vg.triangularView<Eigen::Upper>() = ctr->Vg.transpose().eval();   
+    ctr->VgChol = ctr->Vg.llt().matrixL();
+
+    // z2 (= Ystar)
+    ctr->z2 = (ctr->Y0 - ctr->rVec).array() / (2*(ctr->omega2).array()).array();
+    ctr->Ystar = (ctr->z2).array() * (ctr->w).array();
+
+    // R (partial residual)
+    Eigen::VectorXd fhatStar = ctr->fhat.array() * ctr->w.array(); 
+    ctr->R = ctr->Ystar - fhatStar;
+
+    // Sample b2
+    const Eigen::VectorXd ZR = ctr->Zw.transpose() * (ctr->R);
+    ctr->b2 = ctr->Vg * ZR; // Mean
+    ctr->b2.noalias() += ctr->VgChol * as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2))); // Variance
   } // End ZINB
 } // end tdlmModelEst function
 

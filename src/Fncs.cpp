@@ -338,3 +338,34 @@ Eigen::MatrixXd selectIndM(Eigen::MatrixXd original, std::vector<int> indices) {
 
   return submat;
 }
+
+// /**
+//  * @brief Calculate the determinant of a matrix
+//  * 
+//  * @param original A vector to be subset
+//  * @param indices A vector containing wanted indices of row
+//  * @return A vector with values of given indices
+//  */
+// double determinant(Eigen::MatrixXd matrix, int n) {
+//    double det = 0;
+//    double submatrix[10][10];
+//    if (n == 2)
+//    return ((matrix[0][0] * matrix[1][1]) - (matrix[1][0] * matrix[0][1]));
+//    else {
+//       for (int x = 0; x < n; x++) {
+//          int subi = 0;
+//          for (int i = 1; i < n; i++) {
+//             int subj = 0;
+//             for (int j = 0; j < n; j++) {
+//                if (j == x)
+//                continue;
+//                submatrix[subi][subj] = matrix[i][j];
+//                subj++;
+//             }
+//             subi++;
+//          }
+//          det = det + (pow(-1, x) * matrix[0][x] * determinant( submatrix, n - 1 ));
+//       }
+//    }
+//    return det;
+// }
