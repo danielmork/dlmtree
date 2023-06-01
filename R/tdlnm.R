@@ -396,6 +396,7 @@ tdlnm <- function(formula,
   # ---- Prepare output ----
   model$Y <- model$Y * model$Yscale + model$Ymean
   model$fhat <- model$fhat * model$Yscale
+  model$Yhat <- model$Yhat * model$Yscale + model$Ymean
   model$sigma2 <- model$sigma2 * (model$Yscale ^ 2)
   if (model$diagnostics) {
     model$treeAccept <- as.data.frame(model$treeAccept)

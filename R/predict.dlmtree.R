@@ -51,7 +51,7 @@ predict.dlmtree <- function(object, new.data, new.exposure.data, ...,
   # ---- Predict DLMs ----
   mark <- ceiling(nrow(object$TreeStructs) / 42)
   if (verbose)
-    cat(paste0("Reanalyzing trees for new.data: % complete\n",
+    cat(paste0("\nReanalyzing trees for new.data: % complete\n",
                "[0--------25--------50--------75--------100]\n '"))
 
   draws <- lapply(1:object$mcmcIter, function(i) matrix(0.0, n, object$pExp))
