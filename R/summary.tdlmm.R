@@ -38,6 +38,7 @@ summary.tdlmm <- function(object,
   res$interaction <- object$interaction
   res$mixPrior <- object$mixPrior
   res$formula <- object$formula
+  res$formula_zi <- object$formula_zi
   res$family <- object$family
   res$droppedCovar <- object$droppedCovar
   res$conf.level <- conf.level
@@ -46,20 +47,22 @@ summary.tdlmm <- function(object,
 
 
 
-  # ---- Set levels for marginaliztion ----
-  if (marginalize == "mean") {
-    res$marg.values <- sapply(object$X, function(i) i$intX)
-  } else if (length(marginalize) == 1 & is.numeric(marginalize)) {
-    if (marginalize < 0 | marginalize > 100)
-      stop("is specifying a percentile for marginializetion
-           it must be between 0 and 100")
-    res$marg.values <- sapply(object$X, function(i) {
-      i$Xquant[round(marginalize) + 1] })
+  # ---- Set levels for marginalization ----
+  if(length(marginalize) == 1){
+    if(marginalize == "mean"){
+      res$marg.values <- sapply(object$X, function(i) i$intX)
+    } else if (length(marginalize) == 1 & is.numeric(marginalize)) {
+        if (marginalize < 0 | marginalize > 100)
+          stop("is specifying a percentile for marginializetion
+              it must be between 0 and 100")
+        res$marg.values <- sapply(object$X, function(i) {i$Xquant[round(marginalize) + 1] })
+    } else {
+      stop("`marginalize` is incorrectly specified, see ?summary.tdlmm for details")
+    }
   } else if (length(marginalize) == res$nExp & is.numeric(marginalize)) {
     res$marg.values <- marginalize
   } else {
-    stop("`marginalize` is incorrectly specified, see ?summary.tdlmm for
-         details")
+    stop("`marginalize` is incorrectly specified, see ?summary.tdlmm for details")
   }
   names(res$marg.values) <- res$expNames
 

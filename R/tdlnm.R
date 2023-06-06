@@ -29,6 +29,10 @@
 #' response with logit link, 'zinb' for zero-inflated negative binomial model
 #' @param binomial.size integer type scalar (if all equal, default = 1) or
 #' vector defining binomial size for 'logit' family
+#' @param formula_zi object of class formula, a symbolic description of the at-risk 
+#' model to be fitted, e.g. y ~ a + b. This only applies to ZINB where covariates for
+#' at-risk model is different from NB model. This is same as the main formula by default
+#' @param keep_XZ false (default) or true: keep the model scale exposure and covariate data
 #' @param tree.params numerical vector of alpha and beta hyperparameters
 #' controlling tree depth (see Bayesian CART, 1998), default: alpha = 0.95,
 #' beta = 2
@@ -62,16 +66,14 @@ tdlnm <- function(formula,
                   n.thin = 10,
                   family = "gaussian",
                   binomial.size = 1,
+                  formula_zi = NULL, 
+                  keep_XZ = FALSE,
                   tree.params = c(.95, 2),
                   step.prob = c(.25, .25),
                   shrinkage = 1,
                   subset = NULL,
                   verbose = TRUE,
                   diagnostics = FALSE,
-                  formula_b = NULL, # b stands for binary
-                  spNodes = NULL,
-                  areaW = NULL,
-                  areaA = NULL,
                   ...)
 {
   model <- list()
@@ -183,27 +185,27 @@ tdlnm <- function(formula,
 
 
   # ---- Setup control and response variables ----
-  if(is.null(formula_b)){
-    formula_b <- formula
+  if(is.null(formula_zi)){
+    formula_zi <- formula
   }
 
   model$formula <- force(as.formula(formula))
-  model$formula_b <- force(as.formula(formula_b)) 
+  model$formula_zi <- force(as.formula(formula_zi)) 
 
   tf <- terms.formula(model$formula, data = data)
-  tf_b <- terms.formula(model$formula_b, data = data) # terms.formula with data -> returns model.matrix & attributes
+  tf_zi <- terms.formula(model$formula_zi, data = data) # terms.formula with data -> returns model.matrix & attributes
 
   # Sanity check for response
-  if (!attr(tf, "response") & !attr(tf_b, "response"))
+  if (!attr(tf, "response") & !attr(tf_zi, "response"))
     stop("no valid response in formula")
 
   # Save if intercept is included in the model
   model$intercept <- force(ifelse(attr(tf, "intercept"), TRUE, FALSE)) 
-  model$intercept_b <- force(ifelse(attr(tf_b, "intercept"), TRUE, FALSE)) 
+  model$intercept_zi <- force(ifelse(attr(tf_zi, "intercept"), TRUE, FALSE)) 
 
   # Sanity check for variables and the names
   if (length(which(attr(tf, "term.labels") %in% colnames(data))) == 0 & 
-      length(which(attr(tf_b, "term.labels") %in% colnames(data))) == 0) 
+      length(which(attr(tf_zi, "term.labels") %in% colnames(data))) == 0) 
     stop("no valid variables in formula")
 
 
@@ -315,10 +317,10 @@ tdlnm <- function(formula,
   mf <- model.frame(model$formula, data = data,                   # Extract Model information with formula and data
                     drop.unused.levels = TRUE,
                     na.action = NULL)
-  mf_b <- model.frame(model$formula_b, data = data,                   # Extract Model information with formula and data
+  mf_zi <- model.frame(model$formula_zi, data = data,                   # Extract Model information with formula and data
                       drop.unused.levels = TRUE,
                       na.action = NULL)
-  if (any(is.na(mf)) & any(is.na(mf_b)))
+  if (any(is.na(mf)) & any(is.na(mf_zi)))
     stop("missing values in model data, use `complete.cases()` to subset data")
   
   # Organize response variable & fixed effect variable
@@ -331,12 +333,12 @@ tdlnm <- function(formula,
   model$Z <- force(scaleModelMatrix(model$Z))
   rm(QR)
 
-  model$Z_b <- force(model.matrix(model$formula_b, data = mf_b))        # Fixed effect matrix, Z (c1 ~ c5, b1 ~ b5)
-  QR_b <- qr(crossprod(model$Z_b))                                    # t(Z)%*%Z and its QR decomposition
-  model$Z_b <- model$Z_b[,sort(QR_b$pivot[seq_len(QR_b$rank)])]           
-  model$droppedCovar_b <- colnames(model$Z_b)[QR_b$pivot[-seq_len(QR_b$rank)]]
-  model$Z_b <- force(scaleModelMatrix(model$Z_b))
-  rm(QR_b)
+  model$Z_zi <- force(model.matrix(model$formula_zi, data = mf_zi))        # Fixed effect matrix, Z (c1 ~ c5, b1 ~ b5)
+  QR_zi <- qr(crossprod(model$Z_zi))                                    # t(Z)%*%Z and its QR decomposition
+  model$Z_zi <- model$Z_zi[,sort(QR_zi$pivot[seq_len(QR_zi$rank)])]           
+  model$droppedCovar_zi <- colnames(model$Z_zi)[QR_zi$pivot[-seq_len(QR_zi$rank)]]
+  model$Z_zi <- force(scaleModelMatrix(model$Z_zi))
+  rm(QR_zi)
 
   # Organize for different models
   # Gaussian
@@ -358,31 +360,10 @@ tdlnm <- function(formula,
   model$Znames <- colnames(model$Z)
   model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
 
-  model$Zscale_b <- attr(model$Z_b, "scaled:scale")
-  model$Zmean_b <- attr(model$Z_b, "scaled:center")
-  model$Znames_b <- colnames(model$Z_b)
-  model$Z_b <- force(matrix(model$Z_b, nrow(model$Z_b), ncol(model$Z_b)))
-
-  # ---- [Spatial structure construction: Adjacency & Diagonal matrix for CAR model] ----
-  # default setting for no spatial effect
-  model$spatial = FALSE
-
-  #if(!is.null(spNodes) && !is.null(areaA)){
-  if(!is.null(spNodes) && !is.null(areaW) && !is.null(areaA)){
-    # For now, we just feed the cov-var matrix of phi for the compuation issue with spatial packages in HPC
-    model$spNodes1 = spNodes[[1]]
-    model$spNodes2 = spNodes[[2]]
-    model$areaW = areaW        
-    model$areaD = diag(rowSums(areaW))
-
-    model$areaA = force(scaleModelMatrix(areaA))      # Assignment matrix A so that A*phi is n x 1
-    model$areaA = force(matrix(model$areaA, nrow(model$areaA), ncol(model$areaA)))
-    model$Ascale <- attr(model$areaA, "scaled:scale")
-    model$Amean <- attr(model$areaA, "scaled:center")
-
-    model$spN = ncol(areaA)                           # Number of unique areas
-    model$spatial = TRUE                              # Set the spatial flag to be true
-  }
+  model$Zscale_zi <- attr(model$Z_zi, "scaled:scale")
+  model$Zmean_zi <- attr(model$Z_zi, "scaled:center")
+  model$Znames_zi <- colnames(model$Z_zi)
+  model$Z_zi <- force(matrix(model$Z_zi, nrow(model$Z_zi), ncol(model$Z_zi)))
 
   # ---- Run model ----
   # model.list <- lapply(ls(envir = model), function(i) model[[i]])
@@ -411,18 +392,13 @@ tdlnm <- function(formula,
 
   # ZINB fixed effect (binary)
   model$b1 <- sapply(1:ncol(model$b1), function(i) {
-  model$b1[,i] * model$Yscale / model$Zscale_b[i] })
+  model$b1[,i] * model$Yscale / model$Zscale_zi[i] })
 
   # ZINB fixed effect (NegBin)
   model$b2 <- sapply(1:ncol(model$b2), function(i) {
   model$b2[,i] * model$Yscale / model$Zscale[i] })
 
-  # ZINB + Spatial random effect
-  if(model$spatial){
-    model$spPhi <- sapply(1:ncol(model$spPhi), function(i) {
-    model$spPhi[,i] * model$Yscale / model$Ascale[i] })
-  }
-  
+  # # If intercept:
   if (model$intercept) {
     model$gamma[,1] <- model$gamma[,1] + model$Ymean
     if (ncol(model$Z) > 1)
@@ -433,14 +409,14 @@ tdlnm <- function(formula,
       model$b2[,1] <- model$b2[,1] - model$b2[,-1] %*% model$Zmean[-1]
   }
 
-  if (model$intercept_b) {
+  if (model$intercept_zi) {
     model$b1[,1] <- model$b1[,1] + model$Ymean
-    if (ncol(model$Z_b) > 1)
-      model$b1[,1] <- model$b1[,1] - model$b1[,-1] %*% model$Zmean_b[-1]
+    if (ncol(model$Z_zi) > 1)
+      model$b1[,1] <- model$b1[,1] - model$b1[,-1] %*% model$Zmean_zi[-1]
   }
 
   colnames(model$gamma) <- model$Znames
-  colnames(model$b1) <- model$Znames_b
+  colnames(model$b1) <- model$Znames_zi
   colnames(model$b2) <- model$Znames
 
 
@@ -458,12 +434,15 @@ tdlnm <- function(formula,
     else model$Xsplits[i]
   })
 
+
   # Remove model and exposure data
-  model$X <- NULL
-  model$Tcalc <- NULL
-  model$Xcalc <- NULL
-  model$Z <- NULL
-  model$Z_b <- NULL
+  if(!keep_XZ){
+    model$X <- NULL
+    model$Tcalc <- NULL
+    model$Xcalc <- NULL
+    model$Z <- NULL
+    model$Z_zi <- NULL
+  }
 
   # Change env to list
   model.out <- lapply(names(model), function(i) model[[i]])

@@ -11,9 +11,6 @@
 
 \item{digits}{integer number of digits to round}
 }
-\value{
-
-}
 \description{
 print.summary.tdlnm
 }

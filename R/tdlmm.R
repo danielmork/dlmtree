@@ -23,6 +23,10 @@
 #' response with logit link, or 'zinb' for zero-inflated negative binomial model
 #' @param binomial.size integer type scalar (if all equal, default = 1) or
 #' vector defining binomial size for 'logit' family
+#' @param formula_zi object of class formula, a symbolic description of the at-risk 
+#' model to be fitted, e.g. y ~ a + b. This only applies to ZINB where covariates for
+#' at-risk model is different from NB model. This is same as the main formula by default
+#' @param keep_XZ false (default) or true: keep the model scale exposure and covariate data
 #' @param mixture.interactions 'noself' (default) which estimates interactions
 #' only between two different exposures, 'all' which also allows
 #' interactions within the same exposure, or 'none' which eliminates all
@@ -59,6 +63,8 @@ tdlmm <- function(formula,
                   n.thin = 5,
                   family = "gaussian",
                   binomial.size = 1,
+                  formula_zi = NULL, 
+                  keep_XZ = FALSE,
                   mixture.interactions = "noself",
                   tree.params = c(.95, 2),
                   step.prob = c(.25, .25, .25),
@@ -68,11 +74,6 @@ tdlmm <- function(formula,
                   subset = NULL,
                   verbose = TRUE,
                   diagnostics = FALSE,
-                  formula_b = NULL, # b stands for binary
-                  spNodes = NULL,
-                  areaW = NULL,
-                  areaA = NULL,
-                  #geoid = NULL,
                   ...)
 {
   model <- list()                 # Create a list to send to tdlmm_Cpp.cpp 
@@ -155,17 +156,6 @@ tdlmm <- function(formula,
     #model$wTrue = wTrue
   }
 
-  # # geoid check -> UPDATE WHEN WE HAVE AN ACTUAL DATASET WITH GEOID TYPE DATA
-  # if(!is.null(geoid)){
-  #   if(nrow(data) != length(geoid)){ 
-  #     stop("every observation must have a geoid")
-  #   }
-
-  #   if(sum(nchar(geoid)) != nrow(data)*11){
-  #     stop("geoid must have 11 letters")
-  #   }
-  # }
-
   # [Mixture interactions]
   # [Correct options for interaction parameter]
   if (!(mixture.interactions %in% c("noself", "all", "none")))
@@ -247,26 +237,26 @@ tdlmm <- function(formula,
 
 
   # ---- [Setup control and response variables] ----
-  if(is.null(formula_b)){
-    formula_b <- formula
+  if(is.null(formula_zi)){
+    formula_zi <- formula
   }
 
   model$formula <- force(as.formula(formula))     # Save the string "y ~ ." as a formula type
-  model$formula_b <- force(as.formula(formula_b)) 
+  model$formula_zi <- force(as.formula(formula_zi)) 
   tf <- terms.formula(model$formula, data = data) # terms.formula with data -> returns model.matrix & attributes
-  tf_b <- terms.formula(model$formula_b, data = data) # terms.formula with data -> returns model.matrix & attributes
+  tf_zi <- terms.formula(model$formula_zi, data = data) # terms.formula with data -> returns model.matrix & attributes
 
   # Sanity check for response
-  if (!attr(tf, "response") & !attr(tf_b, "response"))
+  if (!attr(tf, "response") & !attr(tf_zi, "response"))
     stop("no valid response in formula")
 
   # Save if intercept is included in the model
   model$intercept <- force(ifelse(attr(tf, "intercept"), TRUE, FALSE)) 
-  model$intercept_b <- force(ifelse(attr(tf_b, "intercept"), TRUE, FALSE)) 
+  model$intercept_zi <- force(ifelse(attr(tf_zi, "intercept"), TRUE, FALSE)) 
 
   # Sanity check for variables and the names
   if (length(which(attr(tf, "term.labels") %in% colnames(data))) == 0 & 
-      length(which(attr(tf_b, "term.labels") %in% colnames(data))) == 0) 
+      length(which(attr(tf_zi, "term.labels") %in% colnames(data))) == 0) 
     stop("no valid variables in formula")
 
   # ---- [Exposure splits] ----
@@ -296,10 +286,10 @@ tdlmm <- function(formula,
   mf <- model.frame(model$formula, data = data,                   # Extract Model information with formula and data
                     drop.unused.levels = TRUE,
                     na.action = NULL)
-  mf_b <- model.frame(model$formula_b, data = data,                   # Extract Model information with formula and data
+  mf_zi <- model.frame(model$formula_zi, data = data,                   # Extract Model information with formula and data
                       drop.unused.levels = TRUE,
                       na.action = NULL)
-  if (any(is.na(mf)) & any(is.na(mf_b)))
+  if (any(is.na(mf)) & any(is.na(mf_zi)))
     stop("missing values in model data, use `complete.cases()` to subset data")
   
   # Organize response variable & fixed effect variable
@@ -312,12 +302,12 @@ tdlmm <- function(formula,
   model$Z <- force(scaleModelMatrix(model$Z))
   rm(QR)
 
-  model$Z_b <- force(model.matrix(model$formula_b, data = mf_b))        # Fixed effect matrix, Z (c1 ~ c5, b1 ~ b5)
-  QR_b <- qr(crossprod(model$Z_b))                                    # t(Z)%*%Z and its QR decomposition
-  model$Z_b <- model$Z_b[,sort(QR_b$pivot[seq_len(QR_b$rank)])]           
-  model$droppedCovar_b <- colnames(model$Z_b)[QR_b$pivot[-seq_len(QR_b$rank)]]
-  model$Z_b <- force(scaleModelMatrix(model$Z_b))
-  rm(QR_b)
+  model$Z_zi <- force(model.matrix(model$formula_zi, data = mf_zi))        # Fixed effect matrix, Z (c1 ~ c5, b1 ~ b5)
+  QR_zi <- qr(crossprod(model$Z_zi))                                    # t(Z)%*%Z and its QR decomposition
+  model$Z_zi <- model$Z_zi[,sort(QR_zi$pivot[seq_len(QR_zi$rank)])]           
+  model$droppedCovar_zi <- colnames(model$Z_zi)[QR_zi$pivot[-seq_len(QR_zi$rank)]]
+  model$Z_zi <- force(scaleModelMatrix(model$Z_zi))
+  rm(QR_zi)
 
   # Organize for different models
   # Gaussian
@@ -339,73 +329,11 @@ tdlmm <- function(formula,
   model$Znames <- colnames(model$Z)
   model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
 
-  model$Zscale_b <- attr(model$Z_b, "scaled:scale")
-  model$Zmean_b <- attr(model$Z_b, "scaled:center")
-  model$Znames_b <- colnames(model$Z_b)
-  model$Z_b <- force(matrix(model$Z_b, nrow(model$Z_b), ncol(model$Z_b)))
+  model$Zscale_zi <- attr(model$Z_zi, "scaled:scale")
+  model$Zmean_zi <- attr(model$Z_zi, "scaled:center")
+  model$Znames_zi <- colnames(model$Z_zi)
+  model$Z_zi <- force(matrix(model$Z_zi, nrow(model$Z_zi), ncol(model$Z_zi)))
 
-  # ---- [Spatial structure construction: Adjacency & Diagonal matrix for CAR model] ----
-  # default setting for no spatial effect
-  model$spatial = FALSE
-
-  #if(!is.null(spNodes) && !is.null(areaA)){
-  if(!is.null(spNodes) && !is.null(areaW) && !is.null(areaA)){
-    print("Entering a spatial model...")
-    # For now, we just feed the cov-var matrix of phi for the compuation issue with spatial packages in HPC
-    model$spNodes1 = spNodes[[1]]
-    model$spNodes2 = spNodes[[2]]
-    model$areaW = areaW        
-    model$areaD = diag(rowSums(areaW))
-    
-    # model$areaA = force(scaleModelMatrix(areaA))      # Assignment matrix A so that A*phi is n x 1
-    # model$areaA = force(matrix(model$areaA, nrow(model$areaA), ncol(model$areaA)))
-    # model$Ascale <- attr(model$areaA, "scaled:scale")
-    # model$Amean <- attr(model$areaA, "scaled:center")
-    # model$areaA = scale(areaA, center = FALSE, scale = TRUE)
-    model$areaA <- areaA
-    model$spN = ncol(areaA)                           # Number of unique areas
-    model$spatial = TRUE                              # Set the spatial flag to be true
-  }
-
-  # FOR REAL DATASET
-  #if(!is.null(geoid)){
-    # if (model$verbose){
-    #   cat("Gathering spatial data...\n")
-    # }
-
-    # stateCode <- substr(geoid[1], 1, 2)          # Could be a vector but usually one number
-    # countiesCode <- unique(substr(geoid, 3, 5))  # A vector
-
-    # # With geoid, create a SpatialPolygonsDataFrame (SPDF) object
-    # ctspatial <- tigris::tracts(state = stateCode, county = countiesCode, refresh = T, class = "sp") 
-
-    # # geoid_df & sp_data
-    # geoid_df = data.frame("geoid" = geoid)
-    # geoid_df$state = substr(geoid_df$geoid, 1, 2)  
-    # geoid_df$county = substr(geoid_df$geoid, 3, 5)  
-    # geoid_df$tract = substr(geoid_df$geoid, 6, 11)  
-
-    # sp_data = cbind(data, geoid_df)
-
-    # # Merge the spatial information with the cityfile
-    # spatial_data <- sp::merge(ctspatial, sp_data, by.y = "geoid", by.x = "GEOID", all.x = F, all.y = T, duplicateGeoms = TRUE)
-
-    # # Get an adjacency matrix
-    # adj <- poly2nb(spatial_data)
-
-    # #adj <- poly2nb(spatial_data, row.names = spatial_data$GEOID)
-    # coord_df = coordinates(spatial_data)
-    # row.names(coord_df) = spatial_data$GEOID
-
-    # W <- nb2mat(adj, style = "B") # Adjacency matrix
-    # D <- diag(rowSums(W))         # Diagonal matrix
-
-    # # Compute variance-covariance matrix for phi (CAR model)
-    # alpha = 0.5 # alpha = 0 implies no spatial effect. Note that alpha = 1 makes Q non-invertible
-    # Q <- chol2inv(chol(D - alpha*W))
-    # model$Q = Q
-    # model$spatial = TRUE
-  #}
 
   # ---- Run model ----
   # model.list <- lapply(ls(envir = model), function(i) model[[i]])
@@ -454,18 +382,13 @@ tdlmm <- function(formula,
 
   # ZINB fixed effect (binary)
   model$b1 <- sapply(1:ncol(model$b1), function(i) {
-  model$b1[,i] * model$Yscale / model$Zscale_b[i] })
+  model$b1[,i] * model$Yscale / model$Zscale_zi[i] })
 
   # ZINB fixed effect (NegBin)
   model$b2 <- sapply(1:ncol(model$b2), function(i) {
   model$b2[,i] * model$Yscale / model$Zscale[i] })
 
-  # ZINB + Spatial random effect
-  if(model$spatial){
-    model$spPhi <- sapply(1:ncol(model$spPhi), function(i) {
-    model$spPhi[,i] * model$Yscale }) # / model$Ascale[i]
-  }
-  
+  # If intercept:
   if (model$intercept) {
     model$gamma[,1] <- model$gamma[,1] + model$Ymean
     if (ncol(model$Z) > 1)
@@ -476,14 +399,14 @@ tdlmm <- function(formula,
       model$b2[,1] <- model$b2[,1] - model$b2[,-1] %*% model$Zmean[-1]
   }
 
-  if (model$intercept_b) {
+  if (model$intercept_zi) {
     model$b1[,1] <- model$b1[,1] + model$Ymean
-    if (ncol(model$Z_b) > 1)
-      model$b1[,1] <- model$b1[,1] - model$b1[,-1] %*% model$Zmean_b[-1]
+    if (ncol(model$Z_zi) > 1)
+      model$b1[,1] <- model$b1[,1] - model$b1[,-1] %*% model$Zmean_zi[-1]
   }
 
   colnames(model$gamma) <- model$Znames
-  colnames(model$b1) <- model$Znames_b
+  colnames(model$b1) <- model$Znames_zi
   colnames(model$b2) <- model$Znames
 
   # rescale DLM and Mixture estimates
@@ -534,13 +457,14 @@ tdlmm <- function(formula,
                                    labels = model$expNames)
   }
 
-
-
   # Remove model and exposure data
-  for (i in 1:length(model$X))
-    model$X[[i]]$X <- model$X[[i]]$Tcalc <- NULL
-  model$Z <- NULL
-  model$Z_b <- NULL
+  if(!keep_XZ){
+    for (i in 1:length(model$X))
+      model$X[[i]]$X <- model$X[[i]]$Tcalc <- NULL
+    model$Z <- NULL
+    model$Z_zi <- NULL
+  }
+
 
   # Change env to list
   model.out <- lapply(names(model), function(i) model[[i]])

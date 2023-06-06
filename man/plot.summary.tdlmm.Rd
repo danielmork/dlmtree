@@ -14,6 +14,7 @@
   show.cw = TRUE,
   cw.plots.only = TRUE,
   trueDLM = NULL,
+  scale = NULL,
   ...
 )
 }

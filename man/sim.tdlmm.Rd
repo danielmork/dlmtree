@@ -11,13 +11,7 @@ sim.tdlmm(
   n.exp = 25,
   prop.active = 0.05,
   n = 5000,
-  spatial = FALSE,
-  expList = NULL,
-  data_zinb = NULL,
-  ctnum = NULL,
-  areaN = NULL,
-  rho = NULL,
-  spTau = NULL
+  expList = NULL
 )
 }
 \arguments{
@@ -36,9 +30,6 @@ three}
 \item{n}{sample size for simulation}
 
 \item{expList}{named list of exposure data}
-}
-\value{
-
 }
 \description{
 Simulation scenarios to accompany TDLM/TDLMM

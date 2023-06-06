@@ -14,7 +14,14 @@ print.summary.tdlmm <- function(object, digits = 4, cw.only = TRUE)
 
   # Print model info
   cat("Model run info\n")
-  cat("-", Reduce(paste, deparse(object$formula)), "\n")
+
+  # Print ZI and NB part separately for ZINB
+  if(object$family == "zinb"){
+    cat("- ZI:", Reduce(paste, deparse(object$formula_zi)), "\n")
+    cat("- NB:", Reduce(paste, deparse(object$formula)), "\n")
+  } else {
+    cat("-", Reduce(paste, deparse(object$formula)), "\n")
+  }
   cat("- family:", object$family, "\n")
   cat("-", object$nTrees, "trees (alpha =", object$treePrior[1], ", beta =", object$treePrior[2], ")\n")
   cat("-", object$nBurn, "burn-in iterations\n")
@@ -115,18 +122,33 @@ print.summary.tdlmm <- function(object, digits = 4, cw.only = TRUE)
   # Print mixture effects
   if (object$interaction > 0) {
     cat("\n--\nInteraction effects: critical windows\n")
-    # cat(" exposure1 / exposure2 (signal): critical windows")
+    
     for (mix.name in names(object$MIX)) {
       cw <- rowSums(object$MIX[[mix.name]]$cw)
-      if (any(cw > 0) | !cw.only) {
-        cat("\n",
+  
+      if (any(cw > 0) | (!cw.only & length(object$MIX) > 1)) {
+        if(length(names(object$MIX)) == 1){ # Single interaction when we fit TDLMMns to two components
+          cat("\n",
+            paste0(ifelse(object$mixSel[mix.name], "*", " "),
+                   object$MIX[[mix.name]]$rows, "/", object$MIX[[mix.name]]$cols,
+                   " (", round(object$mixVar[1], 2), "):"))
+          for (r in which(cw > 0)) {
+            s <- which(object$MIX[[mix.name]]$cw[r,])
+            cat("\n", paste0(r, "/", ppRange(s)))
+          }
+        } else { # More than one interaction
+          cat("\n",
             paste0(ifelse(object$mixSel[mix.name], "*", " "),
                    object$MIX[[mix.name]]$rows, "/", object$MIX[[mix.name]]$cols,
                    " (", round(object$mixVar[2, mix.name], 2), "):"))
-        for (r in which(cw > 0)) {
-          s <- which(object$MIX[[mix.name]]$cw[r,])
-          cat("\n", paste0(r, "/", ppRange(s)))
+          for (r in which(cw > 0)) {
+            s <- which(object$MIX[[mix.name]]$cw[r,])
+            cat("\n", paste0(r, "/", ppRange(s)))
+          }
         }
+        
+      } else {
+        cat("\n - No critical windows")
       }
     }
   }

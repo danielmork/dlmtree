@@ -16,16 +16,14 @@ tdlnm(
   n.thin = 10,
   family = "gaussian",
   binomial.size = 1,
+  formula_zi = NULL,
+  keep_XZ = FALSE,
   tree.params = c(0.95, 2),
   step.prob = c(0.25, 0.25),
   shrinkage = 1,
   subset = NULL,
   verbose = TRUE,
   diagnostics = FALSE,
-  formula_b = NULL,
-  spNodes = NULL,
-  areaW = NULL,
-  areaA = NULL,
   ...
 )
 }
@@ -62,6 +60,12 @@ response with logit link, 'zinb' for zero-inflated negative binomial model}
 
 \item{binomial.size}{integer type scalar (if all equal, default = 1) or
 vector defining binomial size for 'logit' family}
+
+\item{formula_zi}{object of class formula, a symbolic description of the at-risk 
+model to be fitted, e.g. y ~ a + b. This only applies to ZINB where covariates for
+at-risk model is different from NB model. This is same as the main formula by default}
+
+\item{keep_XZ}{false (default) or true: keep the model scale exposure and covariate data}
 
 \item{tree.params}{numerical vector of alpha and beta hyperparameters
 controlling tree depth (see Bayesian CART, 1998), default: alpha = 0.95,

@@ -21,13 +21,8 @@ sim.tdlmm <- function(sim = 1,
                       n.exp = 25,
                       prop.active = 0.05,
                       n = 5000,
-                      spatial = FALSE,
-                      expList = NULL,
-                      data_zinb = NULL,
-                      ctnum = NULL,
-                      areaN = NULL,
-                      rho = NULL,
-                      spTau = NULL)
+                      expList = NULL
+                      )
 {
   if (!(sim %in% 1:4))
     stop("`sim` must be an integer from 1-4")
@@ -144,7 +139,6 @@ sim.tdlmm <- function(sim = 1,
                 "f" = f, "c" = c))
   }
 
-
   # Sim 4: continuous response to test exposure selection using one exposure
   # main effect and two interaction effects
   if (sim == 4) {
@@ -173,6 +167,4 @@ sim.tdlmm <- function(sim = 1,
                 "active.int" = active.int,
                 "f" = f, "c" = c))
   }
-
-
 }

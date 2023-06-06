@@ -48,12 +48,6 @@ public:
   Eigen::MatrixXd Sigma1;   // Var-Cov for MCMC update (nxn)
   Eigen::VectorXd Mu1;      // Mean for MCMC update (nx1)
 
-  // Spatial component of ZINB
-  Eigen::MatrixXd Vp;       // V_gamma
-  Eigen::MatrixXd VpInv;    // V_spPhi inverse
-  Eigen::MatrixXd VpChol;   // V_spPhi cholesky decomposition
-  Eigen::VectorXd zPhi;
-
   // Count component(Negative Binomial) of ZINB (labelled with 2)
   int nStar;                  // Number of At-risk observations (w = 1)
   int yZeroN;                 // Number of zeros in the data
@@ -70,20 +64,6 @@ public:
   Eigen::VectorXd rVec;       // a vector of dispersion parameter: rep(r, n)
   double MHratio;             // Metropolis-Hasting ratio
   bool swapStep;              // Swap-step
-
-  // Spatial component
-  // rho update
-  bool spatial; 
-  Eigen::VectorXd spNodes1;
-  Eigen::VectorXd spNodes2;
-  // phi update
-  int spN;
-  Eigen::MatrixXd areaD;
-  Eigen::MatrixXd areaW;
-  Eigen::MatrixXd areaA;
-  Eigen::VectorXd spPhi;
-  double rho;                 // Spatial correlation
-  double spTau;               // Spatial precision
 
   // Updating at-risk component
   Eigen::VectorXd w;            // At-risk latent variable
@@ -152,9 +132,6 @@ public:
   Eigen::MatrixXd b2;
   Eigen::VectorXd r;
   Eigen::MatrixXd wMat;
-  Eigen::MatrixXd spPhi;
-  Eigen::VectorXd rho;
-  Eigen::VectorXd spTau;
 };
 
 struct dlmtreeCtr : modelCtr {
@@ -238,9 +215,6 @@ public:
   Eigen::MatrixXd b2; // Count coefficient
   Eigen::VectorXd r; // dispersion parameter
   Eigen::MatrixXd wMat;
-  Eigen::MatrixXd spPhi;
-  Eigen::VectorXd rho;
-  Eigen::VectorXd spTau;
 
   // Mixtures
   // std::vector<Eigen::VectorXd> MIXexp;
