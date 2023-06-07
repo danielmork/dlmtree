@@ -20,5 +20,6 @@ combine.models <- function(mlist) {
   out$timeProbs <- do.call(rbind, lapply(mlist, function(l) l$timeProbs))
   out$timeCounts <- do.call(rbind, lapply(mlist, function(l) l$timeCounts))
   out$sigma2 <- do.call(c, lapply(mlist, function(l) l$sigma2))
+  out$Yhat <- rowMeans(do.call(cbind, lapply(mlist, function(l) l$Yhat)))
   return(out)
 }
