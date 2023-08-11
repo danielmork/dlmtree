@@ -633,11 +633,11 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
       dgn->termNodes.col(ctr->record - 1) = ctr->nTerm;
       dgn->fhat +=                          ctr->fhat;
       dgn->fhat2 +=                         ctr->fhat.array().square().matrix();
-      dgn->zirtGamma.col(ctr->record - 1) =  ctr->zirtGamma;
-      dgn->kappa(ctr->record - 1) =         ctr->timeKappa;
-      dgn->timeProbs.col(ctr->record - 1) = trees[0]->nodestruct->getTimeProbs();
-      dgn->zirtSplitCounts.col(ctr->record - 1) = ctr->zirtSplitCounts;
-      Yhat += ctr->fhat + ctr->Z * ctr->gamma;
+      dgn->zirtPsi0.col(ctr->record - 1) =  ctr->zirtPsi0;
+      // dgn->zirtCov(ctr->record - 1) =            curCov;
+      dgn->kappa(ctr->record - 1) =            ctr->modKappa;
+      dgn->timeProbs.col(ctr->record -1) = trees[0]->nodestruct->getTimeProbs();
+      dgn->timeCounts.col(ctr->record - 1) = ctr->timeCounts;
     }
     
     // * Update progress
@@ -654,11 +654,14 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   MatrixXd gamma = (dgn->gamma).transpose();
   MatrixXd zirtGamma = dgn->zirtGamma.transpose();
   VectorXd kappa = dgn->kappa;
+  VectorXd zirtCov = dgn->zirtCov;
   MatrixXd tau = (dgn->tau).transpose();
   MatrixXd termNodes = (dgn->termNodes).transpose();
   MatrixXd timeProbs = (dgn->timeProbs).transpose();
-  MatrixXd zirtSplitCounts = (dgn->zirtSplitCounts).transpose();
-  Yhat /= ctr->nRec;
+  MatrixXd timeCounts = (dgn->timeCounts).transpose();
+  MatrixXd Accept((dgn->TreeAccept).size(), 5);
+  for (s = 0; s < (dgn->TreeAccept).size(); ++s)
+    Accept.row(s) = dgn->TreeAccept[s];
   delete prog;
   delete dgn;
   delete Exp;
@@ -670,14 +673,15 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   return(Rcpp::List::create(
     Named("DLM")    = wrap(DLM),
     Named("fhat")   = wrap(fhat),
-    Named("Yhat") = wrap(Yhat),
     Named("sigma2") = wrap(sigma2),
     Named("nu")     = wrap(nu),
     Named("kappa")     = wrap(kappa),
+    Named("zirtCov")     = wrap(zirtCov),
     Named("tau")    = wrap(tau),
     Named("termNodes")  = wrap(termNodes),
     Named("gamma")  = wrap(gamma),
     Named("zirtGamma") = wrap(zirtGamma),
     Named("timeProbs") = wrap(timeProbs),
-    Named("zirtSplitCounts") = wrap(zirtSplitCounts)));
+    Named("timeCounts") = wrap(timeCounts),
+    Named("treeAccept") = wrap(Accept)));
 } // end function monotdlnm_Cppa
