@@ -17,6 +17,7 @@ summary.tdlnm <- function(object,
                           cenval = 0,
                           conf.level = 0.95,
                           exposure.se = NULL,
+                          mcmc = FALSE,
                           verbose = TRUE)
 {
   Iter <- object$mcmcIter
@@ -134,5 +135,11 @@ summary.tdlnm <- function(object,
               "splitProb" = splitProb,
               "splitIter" = splitIter)
   class(ret) <- "summary.tdlnm"
+  if (mcmc) {
+    ret$dlm_mcmc <- dlmest
+    ret$cumulative_mcmc <- sapply(1:length(pred.at), function(i) {
+      colSums(dlmest[,i,]) })
+    colnames(ret$cumulative_mcmc) <- as.character(pred.at)
+  }
   return(ret)
 }

@@ -348,6 +348,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   (dgn->fhat).resize(ctr->n);                       (dgn->fhat).setZero();
   (dgn->termNodes).resize(ctr->nTrees, ctr->nRec);  (dgn->termNodes).setZero();
   dgn->timeProbs.resize(ctr->pX - 1, ctr->nRec);   dgn->timeProbs.setZero();
+  VectorXd Yhat(ctr->n); Yhat.setZero();
   
   // * Initial values and draws
   ctr->fhat.resize(ctr->n);                         (ctr->fhat).setZero();
@@ -451,6 +452,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
       (dgn->termNodes).col(ctr->record - 1) = ctr->nTerm;
       dgn->timeProbs.col(ctr->record -1) = trees[0]->nodestruct->getTimeProbs();
       dgn->fhat += ctr->fhat;
+      Yhat += ctr->fhat + ctr->Z * ctr->gamma;
     }
 
     // * Update progress
@@ -480,6 +482,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
 
   return(Rcpp::List::create(Named("DLM")    = wrap(DLM),
                             Named("fhat")   = wrap(fhat),
+                            Named("Yhat") = wrap(Yhat / ctr->nRec),
                             Named("sigma2") = wrap(sigma2),
                             Named("nu")     = wrap(nu),
                             Named("tau")    = wrap(tau),

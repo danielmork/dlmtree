@@ -527,6 +527,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   dgn->kappa.resize(ctr->nRec);                   dgn->kappa.setZero();
   dgn->timeProbs.resize(ctr->pX - 1, ctr->nRec);   dgn->timeProbs.setZero();
   dgn->zirtSplitCounts.resize(ctr->pX, ctr->nRec);   dgn->zirtSplitCounts.setZero();
+  VectorXd Yhat(ctr->n); Yhat.setZero();
   
   // * Initial values and draws
   if (ctr->debug)
@@ -636,6 +637,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
       dgn->kappa(ctr->record - 1) =         ctr->timeKappa;
       dgn->timeProbs.col(ctr->record -1) = trees[0]->nodestruct->getTimeProbs();
       dgn->zirtSplitCounts.col(ctr->record - 1) = ctr->zirtSplitCounts;
+      Yhat += ctr->fhat + ctr->Z * ctr->gamma;
     }
     
     // * Update progress
@@ -670,6 +672,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   return(Rcpp::List::create(
     Named("DLM")    = wrap(DLM),
     Named("fhat")   = wrap(fhat),
+    Named("Yhat") = wrap(Yhat / ctr->nRec),
     Named("sigma2") = wrap(sigma2),
     Named("nu")     = wrap(nu),
     Named("kappa")     = wrap(kappa),
