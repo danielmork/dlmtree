@@ -342,17 +342,8 @@ double modProposeTree(Node* tree, modDat* Mod, dlmtreeCtr* ctr, int step)
   return(stepMhr);
 } // end modProposeTree function
 
-// void dlmtreeRecDLM(dlmtreeCtr* ctr, dlmtreeLog* dgn)
-// {
-//   double sumDLM;
-//   for (int i = 0; i < ctr->n; ++i) {
-//     dgn->exDLM.col(i) += ctr->exDLM.col(i);
-//     dgn->ex2DLM.col(i) += ctr->exDLM.col(i).array().square().matrix();
-//     sumDLM = ctr->exDLM.col(i).sum();
-//     dgn->cumDLM(i) += sumDLM;
-//     dgn->cum2DLM(i) += pow(sumDLM, 2);
-//   }
-// } // end dlmtreeRecDLM function
+
+
 
 /**
  * @brief return a string describing current series of modifier rules leading to terminal node
@@ -394,6 +385,11 @@ std::string modRuleStr(Node* n, modDat* Mod)
   return(rule);
 } // end modRuleStr function
                  
+
+
+
+
+
 /**
  * @brief count of modifier variables used in current tree
  * 
@@ -438,43 +434,141 @@ VectorXd countMods(Node* tree, modDat* Mod)
 } // end countMods function
 
 
-VectorXd countTimeSplits(Node* tree, modelCtr* ctr)
-{
-  VectorXd timeCount(ctr->pX - 1); timeCount.setZero();
-  VectorXd unavailProb(ctr->pX - 1); unavailProb.setZero();
-  std::vector<int> unavail;  
-  for (Node* tn : tree->listInternal()) {
-    if (tn->nodestruct->get(6) == 0)
-      continue;
-    timeCount(tn->nodestruct->get(6) - 1) += 1.0;
-    // unavail.clear();
-    // unavailProb.setZero();
-    // for (int i = 0; i < ctr->pX - 1; ++i) {
-    //   if ((tn->nodestruct->get(3) - 1 > i) || (tn->nodestruct->get(4) - 1 < i)) {
-    //     unavail.push_back(i);
-    //     unavailProb(i) = tree->nodestruct->getTimeProbs()(i);
-    //   }
-    // }
-    // if (unavail.size() > 0) {
-    //   std::random_shuffle(unavail.begin(), unavail.end());
-    //   double totProb = unavailProb.sum();
-    //   int pseudoDraw = R::rgeom(std::max(0.00000001, 1 - totProb));
-    //   int binomDraw = 0;
-    //   if (pseudoDraw > 0) {
-    //     for (int i : unavail) {
-    //       binomDraw = R::rbinom(pseudoDraw, unavailProb(i) / totProb);
-    //       if (binomDraw > 0)
-    //         timeCount(i) += binomDraw * 1.0;
-    //       totProb -= unavailProb(i);
-    //       pseudoDraw -= binomDraw;
-    //       if (pseudoDraw < 1)
-    //         break;
-    //     } // end multinom
-    //   } // end pseudoDraw
-    // } // end unavail
-  } // end timeCount
-  return(timeCount);
-} // end countMods function
+
+
+
+
+
+void updateZirtGamma(std::vector<Node*> trees, modelCtr* ctr) {
+  ctr->zirtSplitCounts.setZero();
+
+  // count terminal nodes in time trees
+  int nTerm = 0;
+  for (Node* tree : trees)
+    nTerm += tree->nTerminal();
+
+  // Create split outcome (zY) and design matrix (zX)
+  VectorXd zY(nTerm); zY.array() = -0.5; // polya-gamma y 
+  MatrixXd zX(nTerm, ctr->pX); zX.setZero(); // times
+  // Rcout << ctr->totTerm << " " << zY.size() << " " << zX.cols() << " " << zX.rows() << " " << ctr->zirtGamma.size();
+  int i = 0;
+
+  // loop over tree terminal nodes to determine times and nonzero effect
+  for (Node* tree : trees) {
+    for (Node* eta : tree->listTerminal(0)) { 
+      // Rcout << "\neta" << i;
+      // set indices of x matrix equal to 1 corresponding to terminal node times
+      int tmin = eta->nodestruct->get(3);
+      int tmax = eta->nodestruct->get(4);  
+      zX.row(i).segment(tmin - 1, tmax - tmin + 1).array() = 1.0;
+
+      // determine if node has nonzero effect, set y = 1 (kappa = 1/2)
+      if (eta->nodevals->nestedTree->c1 != 0) {
+        zY(i) += 1.0;
+        ctr->zirtSplitCounts.segment(tmin - 1, tmax - tmin + 1).array() = 1.0;
+      }
+
+      // increase iterator for X and y
+      ++i;
+    }
+  }
+      
+  // draw polya-gamma for CW var selection
+  VectorXd zOnes(nTerm); zOnes.setOnes();
+  MatrixXd zV;
+  VectorXd psi, zPG;
+  // repeat 10 times for convergence
+  for (i = 0; i < 10; ++i) {
+    // Rcout << "\nIt " << i;
+    psi = zX * ctr->zirtGamma;
+    // Rcout << "\na" << psi.size();
+    zPG = rcpp_pgdraw(zOnes, psi);
+    // Rcout << "\nb" << zPG.size();
+    zV = zX.transpose() * zPG.asDiagonal() * zX + ctr->zirtSigma;
+    // Rcout << "\nc" << zV.size();
+    ctr->zirtGamma = zV.inverse() * (zX.transpose() * zY + ctr->zirtSigma * ctr->zirtGamma0);
+    // Rcout << "\nd" << gamma.size();
+    ctr->zirtGamma += zV.inverse().llt().matrixL() * as<VectorXd>(rnorm(ctr->pX, 0, 1));
+    // Rcout << "\ne" << gamma.size() << " " << ctr->pX;
+  }
+  // Rcout << "\n" << ctr->zirtGamma;
+} // end updateZirtGamma
+
+
+
+
+
+
+
+int updateZirtSigma(std::vector<Node*> trees, modelCtr* ctr, 
+ int curCov, std::vector<MatrixXd> zirtSigmaInv, 
+ std::vector<double> zirtSigmaDet) {
+
+  double covMHR = 0.0;
+  int newCov = curCov;
+
+  // step to next covariance matrix unless at limit (0 and 18)
+  if (curCov == 0) {
+    newCov = 1;
+    covMHR += log(0.5);
+  } else if (curCov == 18) {
+    newCov = 17;
+    covMHR += log(0.5);
+  } else {
+    if (R::runif(0.0, 1.0) < 0.5)
+      ++newCov;
+    else
+      --newCov;
+  } // end step to next covariance matrix
+
+  // calculate MHR for change in covariance matrix
+  covMHR += -zirtSigmaDet[newCov] - 
+    (ctr->zirtGamma - ctr->zirtGamma0).dot(zirtSigmaInv[newCov] * (ctr->zirtGamma - ctr->zirtGamma0)) + 
+    zirtSigmaDet[curCov] + (ctr->zirtGamma - ctr->zirtGamma0).dot(zirtSigmaInv[curCov] * (ctr->zirtGamma - ctr->zirtGamma0));
+  if (log(R::runif(0.0, 1.0)) < covMHR) {
+    curCov = newCov;
+    ctr->zirtSigma = zirtSigmaInv[curCov];
+  }
+  return(curCov);
+} // end updateZirtSigma
+
+
+
+void updateTimeSplitProbs(std::vector<Node*> trees, modelCtr* ctr) {
+  ctr->timeSplitCounts.setZero();
+
+  // count split locations
+  // Rcout << 1;
+  for (Node* tree : trees) {
+    for (Node* tn : tree->listInternal()) {
+      if (tn->nodestruct->get(6) == 0)
+        continue;
+      ctr->timeSplitCounts(tn->nodestruct->get(6) - 1) += 1.0;
+    }
+  }
+
+  // update time split probabilities
+  // Rcout << 2;
+  ctr->timeSplitProbs = rDirichlet(ctr->timeSplitCounts + ctr->timeKappa * ctr->timeSplitProb0);
+  // Rcout << ctr->timeSplitProbs;
+  for (Node* tree : trees) {
+    tree->nodestruct->setTimeProbs(ctr->timeSplitProbs);
+    tree->updateStruct();
+  }
+
+  // update dirichlet scaling factor (if not fixed)
+  // Rcout << 3;
+  if (ctr->updateTimeKappa) {
+    double beta = R::rbeta(1.0, 1.0);
+    double timeKappaNew = beta * (ctr->pX - 1.0)/ (1 - beta);
+    double mhrDir = 
+      logDirichletDensity(ctr->timeSplitProbs, ctr->timeSplitCounts + timeKappaNew * ctr->timeSplitProb0) - 
+      logDirichletDensity(ctr->timeSplitProbs, ctr->timeSplitCounts + ctr->timeKappa * ctr->timeSplitProb0);
+    if (log(R::runif(0, 1)) < mhrDir)
+      ctr->timeKappa = timeKappaNew;
+  }
+} // end updateTimeSplitProbs
+
 
 /**
  * @brief draw tree structure from tree prior distribution
@@ -516,7 +610,7 @@ void drawZirt(Node* eta, tdlmCtr* ctr, NodeStruct* nsX)
   eta->nodevals->nestedTree->nodestruct = nsX->clone();
   eta->nodevals->nestedTree->nodestruct->setTimeRange(tmin, tmax);
   
-  double logProb = logZIPSplit(ctr->zirtPsi0, tmin, tmax, ctr->nTrees, 0);  
+  double logProb = logZIPSplit(ctr->zirtGamma, tmin, tmax, ctr->nTrees, 0);  
   if (log(R::runif(0, 1)) < logProb) {
     if (eta->nodevals->nestedTree->grow()) {
       eta->nodevals->nestedTree->accept();
@@ -531,8 +625,6 @@ void drawZirt(Node* eta, tdlmCtr* ctr, NodeStruct* nsX)
 double zeroInflatedTreeMHR(VectorXd timeProbs, std::vector<Node*> trees, int t, double newProb)
 {
   double mhr =          0.0;
-  double timeProbSum =  0.0;
-  double nTimes =       0.0;
   int tmin, tmax;
   VectorXd timeProbsNew = timeProbs;
   timeProbsNew(t) = newProb;

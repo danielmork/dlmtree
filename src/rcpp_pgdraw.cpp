@@ -24,7 +24,6 @@
  */
 
 #include "RcppEigen.h"
-using Eigen::VectorXd;
 using namespace Rcpp;
 using std::pow;
 
@@ -43,6 +42,7 @@ using std::pow;
 double samplepg(double, double, double);
 double samplepg_na(double, double);
 double ratio(double);
+double exprnd(double);
 double tinvgauss(double, double);
 double truncgamma();
 double randinvg(double);
@@ -73,32 +73,21 @@ Eigen::VectorXd rcpp_pgdraw(Eigen::VectorXd b, Eigen::VectorXd z) {
     } else {
       y(i) = samplepg_na(b(i), z(i));
     }
-    y(i) = pgdraw;
   }
   return y;
 }
 
-double ratio(double z) {
+double ratio(double z)
+{
   //  PG(b, z) = 0.25 * J*(b, z/2)
   // z = (double)std::fabs((double)z) * 0.5;
   
-  // Point on the intersection IL = [0, 4/ log 3] 
-  // and IR = [(log 3)/pi^2, \infty)
+  // Point on the intersection IL = [0, 4/ log 3] and IR = [(log 3)/pi^2, \infty)
   double t = MATH_2_PI;
   
   // Compute p, q and the ratio q / (q + p)
   // (derived from scratch; derivation is not in the original paper)
-  // double K = z*z/2.0 + MATH_PI2/8.0;
-  // double logA = log(4) - MATH_LOG_PI - z;
-  // double logK = log(K);
-  // double Kt = K * t;
-  // double w = sqrt(MATH_PI_2);
-  // 
-  // double logf1 = logA + R::pnorm(w*(t*z - 1),0.0,1.0,1,1) + logK + Kt;
-  // double logf2 = logA + 2*z + R::pnorm(-w*(t*z+1),0.0,1.0,1,1) + logK + Kt;
-  // double p_over_q = exp(logf1) + exp(logf2);
-  // double ratio = 1.0 / (1.0 + p_over_q);
-  double K = z*z / 2.0 + MATH_PI2 / 8.0;
+  double K = z*z/2.0 + MATH_PI2/8.0;
   double logA = (double)std::log(4.0) - MATH_LOG_PI - z;
   double logK = (double)std::log(K);
   double Kt = K * t;
@@ -107,7 +96,8 @@ double ratio(double z) {
   double logf1 = logA + R::pnorm(w*(t*z - 1),0.0,1.0,1,1) + logK + Kt;
   double logf2 = logA + 2*z + R::pnorm(-w*(t*z+1),0.0,1.0,1,1) + logK + Kt;
   double p_over_q = (double)std::exp(logf1) + (double)std::exp(logf2);
-  return(1.0 / (1.0 + p_over_q));
+  double ratio = 1.0 / (1.0 + p_over_q); 
+  return ratio;
 }
 
 
@@ -120,34 +110,40 @@ double samplepg(double z, double ratio, double K)
   double u, X;
 
   // Main sampling loop; page 130 of the Windle PhD thesis
-  while (1) {
+  while(1)
+  {
     // Step 1: Sample X ? g(x|z)
     u = R::runif(0.0,1.0);
-    if (u < ratio) // truncated exponential
-      X = MATH_2_PI + R::rexp(1.0)/K;
-    else // truncated Inverse Gaussian
-      X = tinvgauss(z, MATH_2_PI);
+    if(u < ratio) {
+      // truncated exponential
+      X = t + exprnd(1.0)/K;
+    }
+    else {
+      // truncated Inverse Gaussian
+      X = tinvgauss(z, t);
+    }
 
-    // Step 2: Iteratively calculate Sn(X|z), starting at S1(X|z), until 
-    // U ? Sn(X|z) for an odd n or U > Sn(X|z) for an even n
+    // Step 2: Iteratively calculate Sn(X|z), starting at S1(X|z), until U ? Sn(X|z) for an odd n or U > Sn(X|z) for an even n
     int i = 1;
-    double Sn = aterm(0, X, MATH_2_PI);
+    double Sn = aterm(0, X, t);
     double U = R::runif(0.0,1.0) * Sn;
     int asgn = -1;
     bool even = false;
 
-    while (1) {
-      Sn = Sn + asgn * aterm(i, X, MATH_2_PI);
+    while(1)
+    {
+      Sn = Sn + asgn * aterm(i, X, t);
 
       // Accept if n is odd
-      if (!even && (U <= Sn)) {
+      if(!even && (U <= Sn)) {
         X = X * 0.25;
         return X;
       }
 
       // Return to step 1 if n is even
-      if (even && (U > Sn))
+      if(even && (U > Sn)) {
         break;
+      }
 
       even = !even;
       asgn = -asgn;
@@ -188,32 +184,37 @@ double exprnd(double mu)
 //
 // Also found in the PhD thesis of Windle (2013) in equations
 // (2.14) and (2.15), page 24
-double aterm(int n, double x, double t) {
+double aterm(int n, double x, double t)
+{
   double f = 0;
   if(x <= t) {
     f = MATH_LOG_PI + log(n + 0.5) + 1.5*(M_LOG_2_PI-log(x)) - 2*(n + 0.5)*(n + 0.5)/x;
   }
   else {
     f = MATH_LOG_PI + log(n + 0.5) - x * MATH_PI2_2 * (n + 0.5)*(n + 0.5);
+  }
   return exp(f);
 }
 
 // Generate inverse gaussian random variates
-double randinvg(double mu) {
+double randinvg(double mu)
+{
   // sampling
   double u = R::rnorm(0.0,1.0);
   double V = u*u;
   double out = mu + 0.5*mu * ( mu*V - sqrt(4*mu*V + mu*mu * V*V) );
 
-  if (R::runif(0.0, 1.0) > mu /(mu+out))
+  if(R::runif(0.0,1.0) > mu /(mu+out)) {
     out = mu*mu / out;
+  }
   return out;
 }
 
 // Sample truncated gamma random variates
 // Ref: Chung, Y.: Simulation of truncated gamma variables
 // Korean Journal of Computational & Applied Mathematics, 1998, 5, 601-610
-double truncgamma() {
+double truncgamma()
+{
   double c = MATH_PI_2;
   double X, gX;
 
@@ -223,8 +224,9 @@ double truncgamma() {
     X = exprnd(1.0) * 2.0 + c;
     gX = M_SQRT_PI_2 / sqrt(X);
 
-    if (R::runif(0.0,1.0) <= gX)
+    if(R::runif(0.0,1.0) <= gX) {
       done = true;
+    }
   }
 
   return X;
@@ -232,25 +234,28 @@ double truncgamma() {
 
 // Sample truncated inverse Gaussian random variates
 // Algorithm 4 in the Windle (2013) PhD thesis, page 129
-double tinvgauss(double z, double t) {
+double tinvgauss(double z, double t)
+{
   double X, u;
   double mu = 1.0/z;
 
   // Pick sampler
-  if (mu > t) {
+  if(mu > t) {
     // Sampler based on truncated gamma
     // Algorithm 3 in the Windle (2013) PhD thesis, page 128
-    while (1) {
+    while(1) {
       u = R::runif(0.0, 1.0);
       X = 1.0 / truncgamma();
 
-      if (log(u) < (-z*z*0.5*X))
+      if(log(u) < (-z*z*0.5*X)) {
         break;
+      }
     }
-  } else {
+  }
+  else {
     // Rejection sampler
     X = t + 1.0;
-    while (X >= t) {
+    while(X >= t) {
       X = randinvg(mu);
     }
   }

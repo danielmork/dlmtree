@@ -18,11 +18,11 @@ tdlmm(
   tree.params = c(0.95, 2),
   step.prob = c(0.25, 0.25, 0.25),
   mix.prior = 1,
-  shrinkage = "all",
+  shrinkage = "exposures",
   subset = NULL,
   verbose = TRUE,
   diagnostics = FALSE,
-  initial.params = FALSE,
+  initial.params = NULL,
   ...
 )
 }

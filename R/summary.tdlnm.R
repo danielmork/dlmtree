@@ -17,7 +17,7 @@ summary.tdlnm <- function(object,
                           cenval = 0,
                           conf.level = 0.95,
                           exposure.se = NULL,
-                          # zirt.cond = FALSE,
+                          mcmc = FALSE,
                           verbose = TRUE)
 {
   Iter <- object$mcmcIter
@@ -58,14 +58,12 @@ summary.tdlnm <- function(object,
 
   # Bayes factor
   splitIter <- matrix(1, Lags, Iter)
-  splitProb <- logBF <- rep(0, Lags)
+  splitProb <- rep(0, Lags)
   if (object$monotone) {
-    splitIter <- t(object$timeCounts)
-    # splitIter <- splitPIP(as.matrix(object$DLM[object$DLM$est > 0,]), Lags, Iter)
+    splitIter <- t(object$zirtSplitCounts)
     splitProb <- rowMeans(splitIter)
-    # splitProb <- apply(splitIter, 1, mean)
-    logBF <- log10(splitProb) - log10(1 - splitProb) -
-      (log10(1 - (1 - object$zirtp0)^object$nTrees) - log10((1 - object$zirtp0)^object$nTrees))
+    # logBF <- log10(splitProb) - log10(1 - splitProb) -
+    #   (log10(1 - (1 - object$zirtGamma0)) - log10((1 - object$zirtGamma0)))
   }
 
   # Generate cumulative estimtes
@@ -133,9 +131,15 @@ summary.tdlnm <- function(object,
               "pred.at" = pred.at,
               "gamma.mean" = gamma.mean,
               "gamma.ci" = gamma.ci,
-              "logBF" = logBF,
+              # "logBF" = logBF,
               "splitProb" = splitProb,
               "splitIter" = splitIter)
   class(ret) <- "summary.tdlnm"
+  if (mcmc) {
+    ret$dlm_mcmc <- dlmest
+    ret$cumulative_mcmc <- sapply(1:length(pred.at), function(i) {
+      colSums(dlmest[,i,]) })
+    colnames(ret$cumulative_mcmc) <- as.character(pred.at)
+  }
   return(ret)
 }

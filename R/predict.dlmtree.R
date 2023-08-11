@@ -24,10 +24,10 @@ predict.dlmtree <- function(object, new.data, new.exposure.data, ...,
                         xlev = object$termLevels)
   z <-      model.matrix(delete.response(object$terms), new.mf,
                          xlev = object$termLevels)
-  z <-      z[, sort(object$QR$pivot[ seq_len(object$QR$rank) ]) ]
-  if (length(object$droppedCovar) > 0 & object$verbose)
-    warning("variables {", paste0(object$droppedCovar, collapse = ", "),
-            "} dropped from original due to perfect collinearity\n")
+  # z <-      z[, sort(object$QR$pivot[ seq_len(object$QR$rank) ]) ]
+  # if (length(object$droppedCovar) > 0 & object$verbose)
+  #   warning("variables {", paste0(object$droppedCovar, collapse = ", "),
+  #           "} dropped from original due to perfect collinearity\n")
   n <-      nrow(z)
   mod <-    lapply(object$modNames, function(m) {
     if (!is.numeric(object$MoUnique[[m]])) {
@@ -51,7 +51,7 @@ predict.dlmtree <- function(object, new.data, new.exposure.data, ...,
   # ---- Predict DLMs ----
   mark <- ceiling(nrow(object$TreeStructs) / 42)
   if (verbose)
-    cat(paste0("Reanalyzing trees for new.data: % complete\n",
+    cat(paste0("\nReanalyzing trees for new.data: % complete\n",
                "[0--------25--------50--------75--------100]\n '"))
 
   draws <- lapply(1:object$mcmcIter, function(i) matrix(0.0, n, object$pExp))
