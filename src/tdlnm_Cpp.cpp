@@ -411,38 +411,6 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
       stop("\nNaN values occured during model run, rerun model.\n");
       }
 
-// 
-//     if ((ctr->b > 1000) || (ctr->b > (0.5 * ctr->burn))) {
-//       // if (updateTimeProb) { // update time splitting probabilities
-//       Rcout << "1";
-//       VectorXd timeSplits(ctr->pX - 1); timeSplits.setZero();
-
-//       // Count time-tree terminal nodes for logistic model estimation
-//       for (Node* tree : trees) {
-//         timeSplits += countTimeSplits(tree, ctr);
-//       }
-//       Rcout << timeSplits;
-
-//       VectorXd timeProbs = trees[0]->nodestruct->getTimeProbs();
-//       double beta = R::rbeta(1.0, 1.0);
-//       double modKappaNew = beta * (ctr->pX - 1.0)/ (1 - beta);
-//       double mhrDir = logDirichletDensity(timeProbs, timeSplits + modKappaNew * timeProbs0) - logDirichletDensity(timeProbs, timeSplits + ctr->modKappa * timeProbs0);
-//       if (log(R::runif(0, 1)) < mhrDir)
-//         ctr->modKappa = modKappaNew;
-
-//       Rcout << "2";
-//       VectorXd newTimeProbs = rDirichlet(timeSplits + ctr->modKappa * timeProbs0);
-
-//       // Rcout << newTimeProbs << "--3--" << newTimeProbs.sum();
-
-//       // update tree time split probabilities
-//       for (Node* tree : trees) {
-//         tree->nodestruct->setTimeProbs(newTimeProbs);
-//         tree->updateStruct();
-//       }
-//       // Rcout << "44";
-//     }
-
     // * Record
     if (ctr->record > 0) {
       (dgn->gamma).col(ctr->record - 1) = ctr->gamma;

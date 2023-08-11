@@ -637,6 +637,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
       dgn->kappa(ctr->record - 1) =            ctr->modKappa;
       dgn->timeProbs.col(ctr->record -1) = trees[0]->nodestruct->getTimeProbs();
       dgn->zirtSplitCounts.col(ctr->record - 1) = ctr->zirtSplitCounts;
+      Yhat += ctr->fhat + ctr->Z * ctr->gamma;
     }
     
     // * Update progress
@@ -657,6 +658,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   MatrixXd termNodes = (dgn->termNodes).transpose();
   MatrixXd timeProbs = (dgn->timeProbs).transpose();
   MatrixXd zirtSplitCounts = (dgn->zirtSplitCounts).transpose();
+  VectorXd YhatOut = Yhat / ctr->nRec;
   delete prog;
   delete dgn;
   delete Exp;
@@ -669,6 +671,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
     Named("DLM")    = wrap(DLM),
     Named("fhat")   = wrap(fhat),
     Named("sigma2") = wrap(sigma2),
+    Named("Yhat") = wrap(YhatOut),
     Named("nu")     = wrap(nu),
     Named("kappa")     = wrap(kappa),
     Named("tau")    = wrap(tau),
