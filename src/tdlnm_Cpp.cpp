@@ -470,11 +470,12 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   MatrixXd tau = (dgn->tau).transpose();
   MatrixXd termNodes = (dgn->termNodes).transpose();
   MatrixXd timeProbs = (dgn->timeProbs).transpose();
+  VectorXd YhatOut = Yhat / ctr->nRec;
   MatrixXd Accept((dgn->TreeAccept).size(), 5);
   for (s = 0; s < (dgn->TreeAccept).size(); ++s)
     Accept.row(s) = dgn->TreeAccept[s];
   delete prog;
-  delete ctr;
+  // delete ctr;
   delete dgn;
   delete Exp;
   for (s = 0; s < trees.size(); ++s)
@@ -482,7 +483,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
 
   return(Rcpp::List::create(Named("DLM")    = wrap(DLM),
                             Named("fhat")   = wrap(fhat),
-                            Named("Yhat") = wrap(Yhat / ctr->nRec),
+                            Named("Yhat") = wrap(YhatOut),
                             Named("sigma2") = wrap(sigma2),
                             Named("nu")     = wrap(nu),
                             Named("tau")    = wrap(tau),

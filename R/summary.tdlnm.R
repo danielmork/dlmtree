@@ -46,9 +46,10 @@ summary.tdlnm <- function(object,
   if (verbose)
     cat("Centered DLNM at exposure value", cenval, "\n")
   cen.quant <- which.min(abs(pred.at - cenval))
-  if (object$shape == "Piecewise Linear") {
-    dlmest <- dlnmPLEst(as.matrix(object$DLM), pred.at, Lags, Iter, cen.quant)
-  } else if (exposure.se == 0) {
+  # if (object$shape == "Piecewise Linear") {
+  #   dlmest <- dlnmPLEst(as.matrix(object$DLM), pred.at, Lags, Iter, cen.quant)
+  # } else 
+  if (exposure.se == 0) {
     dlmest <- dlnmEst(as.matrix(object$DLM), pred.at, Lags, Iter,
                       cen.quant, exposure.se)
   } else {
