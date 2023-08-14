@@ -78,7 +78,7 @@ tdlnm <- function(formula,
                   monotone.tree.exp.params = c(.95, 2),
                   monotone.time.kappa = NULL,
 
-                  shrinkage = ifelse(monotone, F, T),
+                  shrinkage = T,#ifelse(monotone, F, T),
                   subset = NULL,
                   lowmem = FALSE,
                   max.threads = 0,

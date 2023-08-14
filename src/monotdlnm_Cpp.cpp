@@ -604,7 +604,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
 
 
     // Update ZIRT split probabilities ---------------------------
-    if ((ctr->b > 1000) || (ctr->b > (0.5 * ctr->burn))) {
+    if (ctr->b > (0.5 * ctr->burn)) {
       
       // Update zirt splitting probabilities
       updateZirtGamma(trees, ctr);
