@@ -47,7 +47,7 @@ public:
   Eigen::VectorXd z1;
   Eigen::MatrixXd Sigma1;   // Var-Cov for MCMC update (nxn)
   Eigen::VectorXd Mu1;      // Mean for MCMC update (nx1)
-
+  
   // Count component(Negative Binomial) of ZINB (labelled with 2)
   int nStar;                  // Number of At-risk observations (w = 1)
   int yZeroN;                 // Number of zeros in the data
@@ -67,7 +67,7 @@ public:
 
   // Updating at-risk component
   Eigen::VectorXd w;            // At-risk latent variable
-  std::vector<int> atRiskIdx;   // Vector containing non-zero y indices
+  std::vector<int> NBidx;   // Vector containing non-zero y indices
   // Subsetting parameters
   Eigen::VectorXd Ytemp; // Fixed response
   Eigen::MatrixXd Ztemp; // Design matrix for fixed effect

@@ -153,7 +153,7 @@ tdlmm <- function(formula,
   # If ZINB is called, set the flag to true
   if(family == "zinb"){
     model$zinb <- 1
-    #model$wTrue = wTrue
+    model$sigma2 <- 1
   }
 
   # [Mixture interactions]

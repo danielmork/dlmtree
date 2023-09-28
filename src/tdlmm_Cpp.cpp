@@ -113,11 +113,11 @@ treeMHR mixMHR(std::vector<Node*> nodes1, std::vector<Node*> nodes2,
     XtVzInvR = Xdw.transpose() * ctr->R;                                // (2xn) x (nx1) = (2x1)
 
   } else if (ctr->zinb){ // ZINB (subsetting at-risk observations)
-    Eigen::MatrixXd outXdstar = selectIndM(out.Xd, ctr->atRiskIdx);        // At-risk observations only
-    const Eigen::MatrixXd Xdw = (selectInd(ctr->omega2, ctr->atRiskIdx)).asDiagonal() * outXdstar; // (n*xn*) x (n*x2) = (n*x2) 
+    Eigen::MatrixXd outXdstar = selectIndM(out.Xd, ctr->NBidx);        // At-risk observations only
+    const Eigen::MatrixXd Xdw = (selectInd(ctr->omega2, ctr->NBidx)).asDiagonal() * outXdstar; // (n*xn*) x (n*x2) = (n*x2) 
     tempV = Xdw.transpose() * outXdstar;                                   // (2xn*) x (n*x2) = (2x2)
     tempV.noalias() -= ZtX.transpose() * VgZtX;                            // (2x2) - (2x5) x (5x2)
-    XtVzInvR = Xdw.transpose() * selectInd(ctr->R, ctr->atRiskIdx);       // (2xn*) x (n*x1) = (2x1)
+    XtVzInvR = Xdw.transpose() * selectInd(ctr->R, ctr->NBidx);       // (2xn*) x (n*x1) = (2x1)
 
     // Eigen::MatrixXd outXdstar = out.Xd.array().colwise() * (ctr->w).array();        // At-risk observations only
     // const Eigen::MatrixXd Xdw = ctr->omega2.asDiagonal() * outXdstar; // (n*xn*) x (n*x2) = (n*x2) 
@@ -670,23 +670,23 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   ctr->omega2.resize(ctr->n);        ctr->omega2.setOnes();       // Initiate omega2 (NB) as an identity matrix
   ctr->z1.resize(ctr->n);            ctr->z1.setZero();           // z1 for binary component
 
-  // Store the indices of y == 0 (yZeroIdx) & y != 0 (atRiskIdx)
+  // Store the indices of y == 0 (yZeroIdx) & y != 0 (NBidx)
   for(int j = 0; j < ctr->n; j++){
     if((ctr->Y0)[j] == 0){
-      (ctr->yZeroIdx).push_back(j);     // y == 0: Could be structural or at-risk zero
+      (ctr->yZeroIdx).push_back(j);     // y == 0: Could be ZI or NB zero
       (ctr->w)[j] = 0.5;
     } else {
-      (ctr->atRiskIdx).push_back(j);    // y != 0: Determined to be at-risk as y != 0
-      (ctr->w)[j] = 1;
+      (ctr->NBidx).push_back(j);    // y != 0: Cannot be part of zero-inflation
+      (ctr->w)[j] = 0;
     }
   }
 
   // Fixed effect matrix with [w == 0] zeroed out
-  ctr->Zstar = (ctr->Z).array().colwise() * (ctr->w).array();    
+  ctr->Zstar = (ctr->Z).array().colwise() * (1 - ctr->w.array());
 
   // Calculate the size: yZeroN + nStar should equal to n
   ctr->yZeroN = (ctr->yZeroIdx).size();   // Fixed as we are just counting y == 0
-  ctr->nStar = (ctr->atRiskIdx).size();   // Random as some of y == 0 can be at-risk
+  ctr->nStar = (ctr->NBidx).size();   // Random as some of y == 0 can be at-risk
 
   // ****** Create exposure data management ******
   std::vector<exposureDat*> Exp;                      // exposureDat object

@@ -119,19 +119,18 @@ void tdlmModelEst(modelCtr *ctr)
     // 2-2: Sampling w only for observations with y = 0
     for (int z = 0; z < (ctr->yZeroN); z++){ 
       int idx = (ctr->yZeroIdx)[z];  // Find the index of y = 0
-      // Bernoulli probability and sampling
-      double prob = log(logit1[idx]) + ctr->r * log((1 - logit2[idx]))
-                    - log(1 - logit1[idx] + logit1[idx] * pow(1 - logit2[idx], ctr->r)); 
+      // Probability of zero coming from zero mass
+      double prob = log(logit1[idx]) - log(pow(1 - logit2[idx], ctr->r) * (1 - logit1[idx]) + logit1[idx]); 
       (ctr->w)[idx] = R::rbinom(1, exp(prob));   // Update the index with a probability with either 0 or 1
     }
-    // ctr->w.setOnes();                  // Commenting out 2-2 and using this code turns the model to NB from ZINB
-    ctr->nStar = (ctr->w).sum();          // Update the number of at-risk individuals
+    // ctr->w.setZero();                  // Commenting out 2-2 and using this code turns the model to NB from ZINB
+    ctr->nStar = ctr->n - (ctr->w).sum();          // Update the number of at-risk individuals
 
     // 2-3: Update the indices of at-risk
-    ctr->atRiskIdx.clear();  
+    ctr->NBidx.clear();  
     for (int j = 0; j < (ctr->n); j++){   // Save at-risk row numbers
-      if((ctr->w)[j]){
-        ctr->atRiskIdx.push_back(j);
+      if(!(ctr->w)[j]){ // If not zero-inflated -> belongs to NB
+        ctr->NBidx.push_back(j);
       }
     }
 
@@ -150,7 +149,7 @@ void tdlmModelEst(modelCtr *ctr)
 
     if(rP > 0){         // r must be positive
       for(int q = 0; q < (ctr->nStar); q++){ // Compute MH ratio
-        int idx_aR = (ctr->atRiskIdx)[q];
+        int idx_aR = (ctr->NBidx)[q];
         // nu = 1 - logit2 but R parameterizes nu as 1 - probability hence 1 - nu = 1 - (1 - logit2) = logit2
         ctr->MHratio += R::dnbinom((ctr->Y0)[idx_aR], rP, logit2[idx_aR], true) -
                         R::dnbinom((ctr->Y0)[idx_aR], ctr->r, logit2[idx_aR], true);
@@ -168,13 +167,13 @@ void tdlmModelEst(modelCtr *ctr)
     // Start omega2 vector with ones and sample only for the at-risk (No need to sample PG(y + r, 0))
     (ctr->omega2).setOnes(); // Can set anything as it will be multiplied to zero
     for(int k = 0; k < ctr->nStar; k++){
-      int tmp = (ctr->atRiskIdx)[k];
+      int tmp = (ctr->NBidx)[k];
       (ctr->omega2)[tmp] = rcpp_pgdraw((ctr->Y0)[tmp] + ctr->r, eta2[tmp]);
     }
 
     // 4-2: Update Zstar, Zw, Vg, z2, R
     // Zstar (Z with non At-risk individuals zeroed out)
-    ctr->Zstar = (ctr->Z).array().colwise() * (ctr->w).array();
+    ctr->Zstar = (ctr->Z).array().colwise() * (1 - ctr->w.array());
 
     // Zw
     ctr->Zw = (ctr->omega2).asDiagonal() * ctr->Zstar;  // Subset at-risk
@@ -191,10 +190,10 @@ void tdlmModelEst(modelCtr *ctr)
 
     // z2 (= Ystar)
     ctr->z2 = (ctr->Y0 - ctr->rVec).array() / (2*(ctr->omega2).array()).array();
-    ctr->Ystar = (ctr->z2).array() * (ctr->w).array();
+    ctr->Ystar = (ctr->z2).array() * (1 - ctr->w.array());
 
     // R (partial residual)
-    Eigen::VectorXd fhatStar = ctr->fhat.array() * ctr->w.array(); 
+    Eigen::VectorXd fhatStar = ctr->fhat.array() * (1 - ctr->w.array()); 
     ctr->R = ctr->Ystar - fhatStar;
 
     // 4-3: Sample b2

@@ -69,30 +69,30 @@ sim.tdlmm.zinb <- function(sim = 1,
     beta1 <- rnorm(ncol(data_zi), mean = zi_mean, sd = 1) # Sample true beta1 from a standard normal
     eta1 <- c(data_zi[, 1:ncol(data_zi)] %*% beta1)       # Compute eta1: xT * beta1 (n x 10)x(10 x 1) = (nx1)          
 
-    phi <- 1 / (1 + exp(-eta1))           # 1 - P(structural zero)
-    w <- rbinom(n.samp, 1, phi)           # "At-risk" indicator variable
-    nStar <- sum(w)                       # Proportion of structural zeros
+    pi <- 1 / (1 + exp(-eta1))               # Inverse-logit
+    w <- rbinom(n.samp, 1, pi)           # Zero-inflation indicator variable
+    nStar <- n.samp - sum(w)                       # Proportion of structural zeros
 
     # NB regression coefficients
     beta2 <- rnorm(ncol(data_nb))                             # Sample true beta2 from a standard normal
-    eta2 <- c(data_nb[w == 1, 1:ncol(data_nb)] %*% beta2)     # Compute eta2: xT * beta2 (n x 10)x(10 x 1) = (nStarx1)
+    eta2 <- c(data_nb[w == 0, 1:ncol(data_nb)] %*% beta2)     # Compute eta2: xT * beta2 (n x 10)x(10 x 1) = (nStarx1)
 
     # Update f to use only at-risk observations
-    truth1Sums <- exposures[[1]][w == 1, ] %*% eff1           # A single exposure (n* x 37) %*% eff1 (37 x 1) = (n* x 1)
+    truth1Sums <- exposures[[1]][w == 0, ] %*% eff1           # A single exposure (n* x 37) %*% eff1 (37 x 1) = (n* x 1)
     f <- truth1Sums
     eta2_dlm <- effect.size * (eta2 + f)
-    pi <- 1 / (1 + exp(-eta2_dlm))            # Probability of success in negative binomial
+    psi <- 1 / (1 + exp(-eta2_dlm))            # Probability of success in negative binomial
 
     # Draw y with eta1, eta2, and f
-    y[w == 1] <- rnbinom(nStar, r, prob = 1 - pi)
+    y[w == 0] <- rnbinom(nStar, r, prob = 1 - psi)
 
     # Control the magnitude of the count outcome
     f <- f * effect.size
     margDLM1 <- eff1 * effect.size
 
     # Zero-inflation information
-    zeroStr <- length(y[y == 0 & w == 0])/n   # y = 0 & classified as structural
-    zeroAr <- length(y[y == 0 & w != 0])/n    # y = 0 & classified as at-risk
+    zeroStr <- length(y[y == 0 & w == 1])/n   # y = 0 & classified as structural
+    zeroAr <- length(y[y == 0 & w == 0])/n    # y = 0 & classified as at-risk
     nonzero <- length(y[y != 0])/n            # y is not zero
     zeroProp <- length(y[y == 0])/n           # Proportion of zeros
 
@@ -104,7 +104,7 @@ sim.tdlmm.zinb <- function(sim = 1,
                 "margDLM1" = margDLM1, 
                 "eta1" = eta1, "eta2" = eta2,
                 "b1" = beta1, "b2" = beta2 * effect.size,
-                "phi" = phi, "pi" = pi, "r" = r, "f" = f, "w" = w,
+                "pi" = pi, "psi" = psi, "r" = r, "f" = f, "w" = w,
                 "zeroStr" = zeroStr,
                 "zeroAr" = zeroAr,
                 "nonzero" = nonzero,
@@ -132,27 +132,27 @@ sim.tdlmm.zinb <- function(sim = 1,
     beta1 <- rnorm(ncol(data_zi), mean = zi_mean, sd = 1)   # Sample true beta1 from a standard normal
     eta1 <- c(data_zi[, 1:ncol(data_zi)] %*% beta1)         # Compute eta1: xT * beta1 (n x 10)x(10 x 1) = (nx1)          
 
-    phi <- 1 / (1 + exp(-eta1))           # 1 - P(structural zero)
-    w <- rbinom(n.samp, 1, phi)           # "At-risk" indicator variable
-    nStar <- sum(w)                       # Proportion of at-risk zeros
+    pi <- 1 / (1 + exp(-eta1))           # 1 - P(structural zero)
+    w <- rbinom(n.samp, 1, pi)           # Zero-inflation indicator variable
+    nStar <- n.samp - sum(w)                 
 
     # NB regression coefficients
     beta2 <- rnorm(ncol(data_nb))                             # Sample true beta2 from a standard normal
-    eta2 <- c(data_nb[w == 1, 1:ncol(data_nb)] %*% beta2)     # Compute eta2: xT * beta2 (n x 10)x(10 x 1) = (nStarx1)
+    eta2 <- c(data_nb[w == 0, 1:ncol(data_nb)] %*% beta2)     # Compute eta2: xT * beta2 (n x 10)x(10 x 1) = (nStarx1)
 
     # Compute f with interaction
-    truth1Sums <- exposures[[1]][w == 1, ] %*% eff1
-    truth2Sums <- exposures[[2]][w == 1, ] %*% eff2
+    truth1Sums <- exposures[[1]][w == 0, ] %*% eff1
+    truth2Sums <- exposures[[2]][w == 0, ] %*% eff2
     int.effect = 0.025
 
     f <- truth1Sums + (int.effect * truth1Sums * truth2Sums) # PM2.5 main effect + interaction effect
 
     # NB with fixed and exposure effect
     eta2_dlm <- effect.size * (eta2 + f)
-    pi <- 1 / (1 + exp(-eta2_dlm))            # Probability of success in negative binomial
+    psi <- 1 / (1 + exp(-eta2_dlm))            # Probability of success in negative binomial
 
     # Draw y with eta1, eta2, and f
-    y[w == 1] <- rnbinom(nStar, r, prob = 1 - pi)
+    y[w == 0] <- rnbinom(nStar, r, prob = 1 - psi)
 
     # Calculate marginalized effects
     truthInt <- outer(eff1, eff2) * int.effect * effect.size
@@ -160,8 +160,8 @@ sim.tdlmm.zinb <- function(sim = 1,
     margDLM2 <- colSums(truthInt) * mean(exposures[[1]])
 
     # Zero-inflation information
-    zeroStr <- length(y[y == 0 & w == 0])/n   # y = 0 & classified as structural
-    zeroAr <- length(y[y == 0 & w == 1])/n    # y = 0 & classified as at-risk
+    zeroStr <- length(y[y == 0 & w == 1])/n   # y = 0 & classified as structural
+    zeroAr <- length(y[y == 0 & w == 0])/n    # y = 0 & classified as at-risk
     nonzero <- length(y[y != 0])/n            # y is not zero hence structural
     zeroProp <- length(y[y == 0])/n           # Proportion of zeros
 
@@ -172,8 +172,8 @@ sim.tdlmm.zinb <- function(sim = 1,
                 "truthInt" = truthInt,
                 "start.time1" = start.time1, "start.time2" = start.time2,
                 "margDLM1" = margDLM1, "margDLM2" = margDLM2,
-                "f" = f, "w" = w, "phi" = phi, "r" = r,
-                "eta1" = eta1, "eta2" = eta2,
+                "f" = f, "w" = w, "psi" = psi, "r" = r,
+                "eta1" = eta1, "eta2" = eta2_dlm,
                 "b1" = beta1, "b2" = beta2 * effect.size,
                 "zeroStr" = zeroStr,
                 "zeroAr" = zeroAr,
