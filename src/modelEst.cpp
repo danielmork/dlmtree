@@ -450,22 +450,20 @@ void updateZirtGamma(std::vector<Node*> trees, modelCtr* ctr) {
   // Create split outcome (zY) and design matrix (zX)
   VectorXd zY(nTerm); zY.array() = -0.5; // polya-gamma y 
   MatrixXd zX(nTerm, ctr->pX); zX.setZero(); // times
-  // Rcout << ctr->totTerm << " " << zY.size() << " " << zX.cols() << " " << zX.rows() << " " << ctr->zirtGamma.size();
   int i = 0;
 
   // loop over tree terminal nodes to determine times and nonzero effect
   for (Node* tree : trees) {
     for (Node* eta : tree->listTerminal(0)) { 
-      // Rcout << "\neta" << i;
       // set indices of x matrix equal to 1 corresponding to terminal node times
       int tmin = eta->nodestruct->get(3);
-      int tmax = eta->nodestruct->get(4);  
-      zX.row(i).segment(tmin - 1, tmax - tmin + 1).array() = 1.0;
+      int tmax = eta->nodestruct->get(4);
+      zX.row(i).segment(tmin - 1, tmax - tmin + 1).array() = 1.0 / (tmax - tmin + 1);
 
       // determine if node has nonzero effect, set y = 1 (kappa = 1/2)
       if (eta->nodevals->nestedTree->c1 != 0) {
         zY(i) += 1.0;
-        ctr->zirtSplitCounts.segment(tmin - 1, tmax - tmin + 1).array() = 1.0;
+        ctr->zirtSplitCounts.segment(tmin - 1, tmax - tmin + 1).array() += 1.0;
       }
 
       // increase iterator for X and y
@@ -477,21 +475,11 @@ void updateZirtGamma(std::vector<Node*> trees, modelCtr* ctr) {
   VectorXd zOnes(nTerm); zOnes.setOnes();
   MatrixXd zV;
   VectorXd psi, zPG;
-  // repeat 10 times for convergence
-  for (i = 0; i < 10; ++i) {
-    // Rcout << "\nIt " << i;
-    psi = zX * ctr->zirtGamma;
-    // Rcout << "\na" << psi.size();
-    zPG = rcpp_pgdraw(zOnes, psi);
-    // Rcout << "\nb" << zPG.size();
-    zV = zX.transpose() * zPG.asDiagonal() * zX + ctr->zirtSigma;
-    // Rcout << "\nc" << zV.size();
-    ctr->zirtGamma = zV.inverse() * (zX.transpose() * zY + ctr->zirtSigma * ctr->zirtGamma0);
-    // Rcout << "\nd" << gamma.size();
-    ctr->zirtGamma += zV.inverse().llt().matrixL() * as<VectorXd>(rnorm(ctr->pX, 0, 1));
-    // Rcout << "\ne" << gamma.size() << " " << ctr->pX;
-  }
-  // Rcout << "\n" << ctr->zirtGamma;
+  psi = zX * ctr->zirtGamma;
+  zPG = rcpp_pgdraw(zOnes, psi);
+  zV = zX.transpose() * zPG.asDiagonal() * zX + ctr->zirtSigma;
+  ctr->zirtGamma = zV.inverse() * (zX.transpose() * zY + ctr->zirtSigma * ctr->zirtGamma0);
+  ctr->zirtGamma += zV.inverse().llt().matrixL() * as<VectorXd>(rnorm(ctr->pX, 0, 1));
 } // end updateZirtGamma
 
 
@@ -624,7 +612,7 @@ void drawZirt(Node* eta, tdlmCtr* ctr, NodeStruct* nsX)
 
 double zeroInflatedTreeMHR(VectorXd timeProbs, std::vector<Node*> trees, int t, double newProb)
 {
-  double mhr =          0.0;
+  double mhr = 0.0;
   int tmin, tmax;
   VectorXd timeProbsNew = timeProbs;
   timeProbsNew(t) = newProb;

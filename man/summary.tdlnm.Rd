@@ -10,7 +10,7 @@
   cenval = 0,
   conf.level = 0.95,
   exposure.se = NULL,
-  zirt.cond = FALSE,
+  mcmc = FALSE,
   verbose = TRUE
 )
 }

@@ -1,6 +1,6 @@
 // new MCMC approach to monotone TDLNM
 // draw time tree using grow/prune/change
-// draw nested tree from root
+// draw nested tree from root if nonzero or propose zero if large
 
 
 /**
@@ -27,7 +27,7 @@ using Eigen::MatrixXd;
 using Eigen::Lower;
 
 
-treeMHR monoDlnmMHR(std::vector<Node*> dlnmTerm, tdlmCtr* ctr, VectorXd ZtR, double treevar, Node* tree, bool updateNested)
+treeMHR monoDlnmMHR4(std::vector<Node*> dlnmTerm, tdlmCtr* ctr, VectorXd ZtR, double treevar, Node* tree, bool updateNested)
 {
   treeMHR out;
   int totTerm = 0;
@@ -148,7 +148,7 @@ treeMHR monoDlnmMHR(std::vector<Node*> dlnmTerm, tdlmCtr* ctr, VectorXd ZtR, dou
  * @param Exp exposureDat pointer
  * @param nsX pointer to exposure concentration struct
  */
-void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn, exposureDat* Exp, NodeStruct* nsX)
+void monoTDLNMTreeUpdate4(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn, exposureDat* Exp, NodeStruct* nsX)
 {
   int step =        0;
   int success =     0;
@@ -173,9 +173,9 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn, exposure
     Rcout << "\nstep = " << step << " nnodes = " << dlnmTerm.size() << " stepMhr = " << stepMhr;
   
   if (tree->nodevals->tempV.rows() > 0)
-    mhr0 = monoDlnmMHR(dlnmTerm, ctr, ZtR, treevar, tree, 0);
+    mhr0 = monoDlnmMHR4(dlnmTerm, ctr, ZtR, treevar, tree, 0);
   else
-    mhr0 = monoDlnmMHR(dlnmTerm, ctr, ZtR, treevar, tree, 1);
+    mhr0 = monoDlnmMHR4(dlnmTerm, ctr, ZtR, treevar, tree, 1);
     
   if (success && (stepMhr == stepMhr)) {
     newDlnmTerm = tree->listTerminal(1);
@@ -183,21 +183,23 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn, exposure
     // draw nested trees if grow/prune
     if (step < 2) {
       for (Node* eta : newDlnmTerm) {
+        // if (ctr->debug)
+        //   Rcout << "\n"; eta->nodestruct->printStruct();
+
         if (eta->nodevals == 0)
           eta->nodevals = new NodeVals(ctr->n);
         if (eta->nodevals->nestedTree == 0) {
           drawZirt(eta, ctr, nsX);
           
           for (Node* lambda : eta->nodevals->nestedTree->listTerminal()) {
+            // if (ctr->debug)
+            //   Rcout << "\n\t"; lambda->nodestruct->printStruct();
+
             Exp->updateNodeVals(lambda);
           }
         }
       }
-
-    // end if grow/prune proposal
-
-    // if change proposal
-    } else { 
+    } else { // end draw nested trees if grow/prune
       for (Node* eta : newDlnmTerm) { // update time range for nested nodes
         int tmin = eta->nodestruct->get(3);
         int tmax = eta->nodestruct->get(4);
@@ -208,15 +210,20 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn, exposure
           eta->nodevals->nestedTree->nodestruct->setTimeRange(tmin, tmax);
           eta->nodevals->nestedTree->updateStruct();
           eta->nodevals->nestedTree->setUpdate(1);
+          // if (ctr->debug)
+          //   Rcout << "\n"; eta->nodestruct->printStruct();
 
           for (Node* lambda : eta->nodevals->nestedTree->listTerminal()) {
+            // if (ctr->debug)
+            //   Rcout << "\n\t"; lambda->nodestruct->printStruct();
+
             Exp->updateNodeVals(lambda);
-          } // end loop over nested tree terminal nodes
-        } // end if change time range
-      } // end loop over terminal nodes
-    } // end if change proposal
+          }
+        }
+      }
+    }
     
-    mhr = monoDlnmMHR(newDlnmTerm, ctr, ZtR, treevar, tree, 1);
+    mhr = monoDlnmMHR4(newDlnmTerm, ctr, ZtR, treevar, tree, 1);
     
     // combine mhr parts into log-MH ratio
     ratio = stepMhr + (mhr.logVThetaChol - mhr0.logVThetaChol) +
@@ -251,24 +258,42 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn, exposure
     }
   }
   
-  
   // * Propose new nested tree at each terminal node
   for (Node* eta : dlnmTerm) {
+    int tmin = eta->nodestruct->get(3);
+    int tmax = eta->nodestruct->get(4);
 
     // draw for tree prior new nested tree structure
     NodeVals* old_nv = eta->nodevals;
     eta->nodevals = new NodeVals(ctr->n);
-    drawZirt(eta, ctr, nsX);
+    eta->nodevals->nestedTree = new Node(0, 1);
+    eta->nodevals->nestedTree->nodestruct = nsX->clone();
+    eta->nodevals->nestedTree->nodestruct->setTimeRange(tmin, tmax);
+
+    // Propose grow if no effect
+    if (old_nv->nestedTree->nTerminal() == 1) {
+      stepMhr = logZIPSplit(ctr->zirtGamma, tmin, tmax, ctr->nTrees, 0) - logZIPSplit(ctr->zirtGamma, tmin, tmax, ctr->nTrees, 1);
+      if (eta->nodevals->nestedTree->grow()) {
+        eta->nodevals->nestedTree->accept();
+        drawTree(eta->nodevals->nestedTree, eta->nodevals->nestedTree->c1, ctr->treePrior2[0], ctr->treePrior2[1], 0.0);
+        drawTree(eta->nodevals->nestedTree, eta->nodevals->nestedTree->c2,   ctr->treePrior2[0], ctr->treePrior2[1], 0.0);
+      }
+    } else {// else propose prune to no effect
+      stepMhr = logZIPSplit(ctr->zirtGamma, tmin, tmax, ctr->nTrees, 1) - logZIPSplit(ctr->zirtGamma, tmin, tmax, ctr->nTrees, 0);
+    }
 
     // update nodevals
     eta->nodevals->nestedTree->setUpdate(1);
     for (Node* lambda : eta->nodevals->nestedTree->listTerminal(1)) {
+      if (ctr->debug) {
+        Rcout << "\n\t"; lambda->nodestruct->printStruct();
+      }
       Exp->updateNodeVals(lambda);
     }
       
     // calculate MHR
-    mhr = monoDlnmMHR(dlnmTerm, ctr, ZtR, treevar, tree, 1);
-    ratio = (mhr.logVThetaChol - mhr0.logVThetaChol) +
+    mhr = monoDlnmMHR4(dlnmTerm, ctr, ZtR, treevar, tree, 1);
+    ratio = stepMhr + (mhr.logVThetaChol - mhr0.logVThetaChol) +
     (0.5 * (mhr.beta - mhr0.beta) * (1 / ctr->sigma2)) -
     (log(4 * ctr->sigma2 * treevar) * 0.5 * (mhr.totTerm - mhr0.totTerm)) +
     log(mhr.cdf) - log(mhr0.cdf);
@@ -342,7 +367,7 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn, exposure
       } // end loop over nested tree term
     } // end loop over dlnmTerm
   } // end record
-} // end function monoTDLNMTreeUpdate
+} // end function monoTDLNMTreeUpdate4
 
 
 
@@ -373,7 +398,7 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn, exposure
 * @return Rcpp::List 
 */
 // [[Rcpp::export]]
-Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
+Rcpp::List monotdlnm4_Cpp(const Rcpp::List model)
 {
    // * Set up model control
   tdlmCtr *ctr =      new tdlmCtr;
@@ -591,7 +616,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
     for (t = 0; t < ctr->nTrees; t++) {
       if (ctr->debug)
         Rcout << "\n" << t << ":";
-      monoTDLNMTreeUpdate(t, trees[t], ctr, dgn, Exp, nsX);
+      monoTDLNMTreeUpdate4(t, trees[t], ctr, dgn, Exp, nsX);
       ctr->fhat += ctr->Rmat.col(t);
       if (t < ctr->nTrees - 1)
         ctr->R += ctr->Rmat.col(t + 1) - ctr->Rmat.col(t);

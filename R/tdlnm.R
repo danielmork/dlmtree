@@ -73,12 +73,12 @@ tdlnm <- function(formula,
 
                   monotone = FALSE,
                   monotone.gamma0 = rep(0, ncol(exposure.data)),
-                  monotone.sigma = matrix(0, 0, 0),
+                  monotone.sigma = diag(ncol(exposure.data)) * 1.502^2,
                   monotone.tree.time.params = c(.95, 2),
                   monotone.tree.exp.params = c(.95, 2),
                   monotone.time.kappa = NULL,
 
-                  shrinkage = T,#ifelse(monotone, F, T),
+                  shrinkage = ifelse(monotone, F, T),
                   subset = NULL,
                   lowmem = FALSE,
                   max.threads = 0,
@@ -411,10 +411,7 @@ tdlnm <- function(formula,
 
   # ---- Run model ----
   if (model$monotone) {
-    if (piecewise.linear)
-      out <- monolintdlnm_Cpp(model)
-    else
-      out <- monotdlnm_Cpp(model)
+    out <- monotdlnm_Cpp(model)
   } else
     out <- tdlnm_Cpp(model)
 

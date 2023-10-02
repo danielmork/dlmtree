@@ -62,7 +62,7 @@ summary.tdlnm <- function(object,
   splitProb <- rep(0, Lags)
   if (object$monotone) {
     splitIter <- t(object$zirtSplitCounts)
-    splitProb <- rowMeans(splitIter)
+    splitProb <- rowMeans(splitIter > 0)
     # logBF <- log10(splitProb) - log10(1 - splitProb) -
     #   (log10(1 - (1 - object$zirtGamma0)) - log10((1 - object$zirtGamma0)))
   }

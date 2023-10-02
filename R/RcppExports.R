@@ -49,6 +49,22 @@ mixEst <- function(dlm, nlags, nsamp) {
     .Call(`_dlmtree_mixEst`, dlm, nlags, nsamp)
 }
 
+monotdlnm2_Cpp <- function(model) {
+    .Call(`_dlmtree_monotdlnm2_Cpp`, model)
+}
+
+monotdlnm3_Cpp <- function(model) {
+    .Call(`_dlmtree_monotdlnm3_Cpp`, model)
+}
+
+monotdlnm4_Cpp <- function(model) {
+    .Call(`_dlmtree_monotdlnm4_Cpp`, model)
+}
+
+monotdlnm5_Cpp <- function(model) {
+    .Call(`_dlmtree_monotdlnm5_Cpp`, model)
+}
+
 monotdlnm_Cpp <- function(model) {
     .Call(`_dlmtree_monotdlnm_Cpp`, model)
 }
