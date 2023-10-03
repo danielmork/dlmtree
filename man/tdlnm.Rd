@@ -26,7 +26,6 @@ tdlnm(
   monotone.tree.exp.params = c(0.95, 2),
   monotone.time.kappa = NULL,
   shrinkage = ifelse(monotone, F, T),
-  altmcmc = 0,
   subset = NULL,
   lowmem = FALSE,
   max.threads = 0,

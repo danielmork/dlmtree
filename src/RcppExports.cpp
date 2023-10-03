@@ -193,17 +193,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// monotdlnm5_Cpp
-Rcpp::List monotdlnm5_Cpp(const Rcpp::List model);
-RcppExport SEXP _dlmtree_monotdlnm5_Cpp(SEXP modelSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
-    rcpp_result_gen = Rcpp::wrap(monotdlnm5_Cpp(model));
-    return rcpp_result_gen;
-END_RCPP
-}
 // monotdlnm_Cpp
 Rcpp::List monotdlnm_Cpp(const Rcpp::List model);
 RcppExport SEXP _dlmtree_monotdlnm_Cpp(SEXP modelSEXP) {
@@ -212,6 +201,17 @@ BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
     rcpp_result_gen = Rcpp::wrap(monotdlnm_Cpp(model));
+    return rcpp_result_gen;
+END_RCPP
+}
+// monotdlnm_old_Cpp
+Rcpp::List monotdlnm_old_Cpp(const Rcpp::List model);
+RcppExport SEXP _dlmtree_monotdlnm_old_Cpp(SEXP modelSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
+    rcpp_result_gen = Rcpp::wrap(monotdlnm_old_Cpp(model));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -291,8 +291,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dlmtree_monotdlnm2_Cpp", (DL_FUNC) &_dlmtree_monotdlnm2_Cpp, 1},
     {"_dlmtree_monotdlnm3_Cpp", (DL_FUNC) &_dlmtree_monotdlnm3_Cpp, 1},
     {"_dlmtree_monotdlnm4_Cpp", (DL_FUNC) &_dlmtree_monotdlnm4_Cpp, 1},
-    {"_dlmtree_monotdlnm5_Cpp", (DL_FUNC) &_dlmtree_monotdlnm5_Cpp, 1},
     {"_dlmtree_monotdlnm_Cpp", (DL_FUNC) &_dlmtree_monotdlnm_Cpp, 1},
+    {"_dlmtree_monotdlnm_old_Cpp", (DL_FUNC) &_dlmtree_monotdlnm_old_Cpp, 1},
     {"_dlmtree_zeroToInfNormCDF", (DL_FUNC) &_dlmtree_zeroToInfNormCDF, 2},
     {"_dlmtree_rtmvnorm", (DL_FUNC) &_dlmtree_rtmvnorm, 3},
     {"_dlmtree_rcpp_pgdraw", (DL_FUNC) &_dlmtree_rcpp_pgdraw, 2},

@@ -61,12 +61,12 @@ monotdlnm4_Cpp <- function(model) {
     .Call(`_dlmtree_monotdlnm4_Cpp`, model)
 }
 
-monotdlnm5_Cpp <- function(model) {
-    .Call(`_dlmtree_monotdlnm5_Cpp`, model)
-}
-
 monotdlnm_Cpp <- function(model) {
     .Call(`_dlmtree_monotdlnm_Cpp`, model)
+}
+
+monotdlnm_old_Cpp <- function(model) {
+    .Call(`_dlmtree_monotdlnm_old_Cpp`, model)
 }
 
 zeroToInfNormCDF <- function(mu, sigma) {
