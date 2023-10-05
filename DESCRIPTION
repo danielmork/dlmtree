@@ -13,4 +13,4 @@ LazyData: true
 Depends: R (>= 3.5.0)
 Imports: Rcpp (>= 1.0.6), ggplot2, viridis
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3

@@ -109,6 +109,8 @@ Rcpp::List dlmtreeTDLMGaussian(const Rcpp::List model)
   (dgn->nu).resize(ctr->nRec); (dgn->nu).setZero();
   (dgn->tau).resize(ctr->nTrees, ctr->nRec); (dgn->tau).setZero();
   (dgn->fhat).resize(ctr->n); (dgn->fhat).setZero();
+  (dgn->totTerm).resize(ctr->nRec); (dgn->totTerm).setZero();
+
   (dgn->modProb).resize(ctr->pM, ctr->nRec); (dgn->modProb).setZero();
   (dgn->modCount).resize(ctr->pM, ctr->nRec); (dgn->modCount).setZero();
   (dgn->modInf).resize(ctr->pM, ctr->nRec); (dgn->modInf).setZero();
@@ -209,8 +211,6 @@ Rcpp::List dlmtreeTDLMGaussian(const Rcpp::List model)
                                  ctr->modKappa / ctr->pM).matrix());
     } // end modifier selection
 
-
-
     // -- Record --
     if (ctr->record > 0) {
       (dgn->gamma).col(ctr->record - 1) = ctr->gamma;
@@ -223,13 +223,12 @@ Rcpp::List dlmtreeTDLMGaussian(const Rcpp::List model)
       (dgn->modCount).col(ctr->record - 1) = ctr->modCount;
       (dgn->modInf).col(ctr->record - 1) = ctr->modInf / ctr->modInf.maxCoeff();
       (dgn->modKappa)(ctr->record - 1) = ctr->modKappa;
+      (dgn->totTerm)(ctr->record - 1) = ctr->totTerm;
       dgn->fhat += ctr->fhat;
-      
+
       // if (ctr->nSplits == 0)
       //   dlmtreeRecDLM(ctr, dgn);
     } // end record
-
-
 
     // -- Progress --
     prog->printMark();
@@ -260,6 +259,7 @@ Rcpp::List dlmtreeTDLMGaussian(const Rcpp::List model)
   Eigen::VectorXd nu = dgn->nu;
   Eigen::MatrixXd tau = (dgn->tau).transpose();
   Eigen::VectorXd fhat = (dgn->fhat).array() / ctr->nRec;
+  Eigen::VectorXd totTerm = dgn->totTerm;  
   Eigen::MatrixXd gamma = (dgn->gamma).transpose();
 
   Eigen::MatrixXd termNodesMod = (dgn->termNodesMod).transpose();
@@ -288,7 +288,8 @@ Rcpp::List dlmtreeTDLMGaussian(const Rcpp::List model)
                             Named("TreeStructs") = wrap(TreeStructs),
                             Named("termRules") = wrap(termRule),
                             Named("termNodesDLM") = wrap(termNodesDLM),
-                            Named("fhat") = wrap(fhat),
+                            //Named("fhat") = wrap(fhat),
+                            Named("totTerm") = wrap(totTerm),
                             Named("sigma2") = wrap(sigma2),
                             Named("nu") = wrap(nu),
                             Named("tau") = wrap(tau),
@@ -331,6 +332,7 @@ void dlmtreeTDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
     case 1: step = 0; break;
     default: step = sampleInt(ctr->stepProb, 1);;
   } 
+
   stepMhr = tdlmProposeTree(dlmTree, Exp, ctr, step);
   success = dlmTree->isProposed();
 
@@ -358,12 +360,12 @@ void dlmtreeTDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
       for (Node* n : modTerm) {
         n->nodevals->updateXmat = 0;
       }
+
     } else {
       modTree->setUpdateXmat(1);
     }
   } // end dlmTree proposal
   dlmTree->reject();
-
 
 
   // -- Propose new modifier tree --
@@ -393,7 +395,7 @@ void dlmtreeTDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
       success = 2;
       modTree->accept();
       modTerm = modTree->listTerminal();
-    }
+    } 
   } // end modTree proposal
   modTree->reject();
 
@@ -430,10 +432,10 @@ void dlmtreeTDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
       rule = modRuleStr(modTerm[s], Mod);
       for (std::size_t s2 = 0; s2 < dlmTerm.size(); ++s2) {
         rec << ctr->record, t, s, s2, 
-          (dlmTerm[s2]->nodestruct)->get(1),
-          (dlmTerm[s2]->nodestruct)->get(2), 
-          (dlmTerm[s2]->nodestruct)->get(3),
-          (dlmTerm[s2]->nodestruct)->get(4), 
+          (dlmTerm[s2]->nodestruct)->get(1), // Exposure minimum value
+          (dlmTerm[s2]->nodestruct)->get(2), // Exposure maximum value
+          (dlmTerm[s2]->nodestruct)->get(3), // tmin
+          (dlmTerm[s2]->nodestruct)->get(4), // tmax
           mhr0.draw(s * mhr0.nDlmTerm + s2);
         dgn->termRule.push_back(rule);
         dgn->DLMexp.push_back(rec);
@@ -538,9 +540,7 @@ treeMHR dlmtreeTDLM_MHR(std::vector<Node*> modTerm,
   int j;
   int start = 0;
   for (Node* n : modTerm) {
-    
-    if (n->nodevals->updateXmat) { // update matrices for current node
-                                  
+    if (n->nodevals->updateXmat) { // update matrices for current node                                  
       Xtemp.resize(n->nodevals->idx.size(), pXDlm); Xtemp.setZero();
       Ztemp.resize(n->nodevals->idx.size(), ctr->pZ); Ztemp.setZero();
       Rtemp.resize(n->nodevals->idx.size()); Rtemp.setZero();
@@ -563,8 +563,7 @@ treeMHR dlmtreeTDLM_MHR(std::vector<Node*> modTerm,
       
       XtR.segment(start, pXDlm) = Xtemp.transpose() * Rtemp;
       
-    } else { // reuse precalculated matrices
-      
+    } else { // reuse precalculated matrices      
       for (int i : n->nodevals->idx) {
         XtR.segment(start, pXDlm).noalias() += 
           X.row(i).transpose() * ctr->R(i);
@@ -589,14 +588,16 @@ treeMHR dlmtreeTDLM_MHR(std::vector<Node*> modTerm,
   Eigen::VectorXd ThetaHat = VTheta * XtVzInvR;
   Eigen::MatrixXd VThetaChol = VTheta.llt().matrixL();
 
-  // Calculate fitted values
+  // Calculate fitted values 
+  // -> This is the same as out.Xd * out.draw in TDLMM code
+  // -> Instead of calculating it outside of 'out' object, calculate and return "fitted" property 
   out.draw = ThetaHat;
   out.draw.noalias() +=
     VThetaChol * as<Eigen::VectorXd>(rnorm(pXComb, 0.0, sqrt(ctr->sigma2)));
   out.fitted.resize(ctr->n);
   Eigen::VectorXd drawTemp(pXDlm);
   for (s = 0; s < modTerm.size(); ++s) {
-    drawTemp = out.draw.segment(s * pXDlm, pXDlm);
+    drawTemp = out.draw.segment(s * pXDlm, pXDlm); // pxDlm elements starting s*pXDlm
     for (int i : modTerm[s]->nodevals->idx)
       out.fitted(i) = X.row(i) * drawTemp;
   }

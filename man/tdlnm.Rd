@@ -23,6 +23,7 @@ tdlnm(
   tree.exp.params = c(0.2, 2),
   shrinkage = 1,
   subset = NULL,
+  lowmem = FALSE,
   verbose = TRUE,
   diagnostics = FALSE,
   ...
@@ -74,6 +75,8 @@ probability of each step for tree updates}
 0 turn off}
 
 \item{subset}{integer vector to analyze only a subset of data and exposures}
+
+\item{lowmem}{turn on memory saver for DLNM, slower computation time}
 
 \item{verbose}{true (default) or false: print output}
 

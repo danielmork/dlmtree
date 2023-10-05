@@ -92,6 +92,7 @@ tdlmm <- function(formula,
       any(model$expNames == ""))
     stop("`exposure.data` must be a named list with unique, non-empty names")
   model$pExp <- ncol(exposure.data[[1]])
+  
   for (i in 1:length(exposure.data)) {
     if (!is.numeric(exposure.data[[i]]))
       stop("each exposure in list `exposure.data` must be a numeric matrix")
@@ -234,10 +235,10 @@ tdlmm <- function(formula,
   model$Y <- force(model.response(mf))
   model$Z <- force(model.matrix(model$formula, data = mf))
   QR <- qr(crossprod(model$Z))
-  model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)])]
+  model$Z <- model$Z[, sort(QR$pivot[seq_len(QR$rank)])]
   model$Znames <- colnames(model$Z)[sort(QR$pivot[seq_len(QR$rank)])]
   model$droppedCovar <- colnames(model$Z)[QR$pivot[-seq_len(QR$rank)]]
-  model$Z <- matrix(model$Z[,sort(QR$pivot[seq_len(QR$rank)])], nrow(model$Z), QR$rank)
+  #model$Z <- matrix(model$Z, nrow(model$Z), QR$rank)
   model$Z <- force(scaleModelMatrix(model$Z))
   rm(QR)
 
@@ -293,11 +294,9 @@ tdlmm <- function(formula,
   model$mixNames <- c()
 
   for (i in 1:length(model$X)) {
-
-    idx <- which(model$DLM$exp == (i - 1))
+    idx <- which(model$DLM$exp == (i - 1)) # Converting indices from cpp to R
     if (length(idx) > 0)
-      model$DLM$est[idx] <- model$DLM$est[idx] *
-        model$Yscale / model$X[[i]]$Xscale
+      model$DLM$est[idx] <- model$DLM$est[idx] * model$Yscale / model$X[[i]]$Xscale
 
     for (j in i:length(model$X)) {
 
@@ -307,13 +306,12 @@ tdlmm <- function(formula,
 
       idx <- which(model$MIX$exp1 == (i - 1) & model$MIX$exp2 == (j - 1))
       if (length(idx) > 0) {
-        model$MIX$est[idx] <- model$MIX$est[idx] *
-          model$Yscale / (model$X[[i]]$Xscale * model$X[[j]]$Xscale)
+        model$MIX$est[idx] <- model$MIX$est[idx] * model$Yscale / (model$X[[i]]$Xscale * model$X[[j]]$Xscale)
       }
-
     }
   }
 
+  # Exposure names
   colnames(model$expProb) <- colnames(model$expCount) <-
     colnames(model$expInf) <- colnames(model$muExp) <- model$expNames
   if (model$interaction > 0) {
@@ -332,8 +330,6 @@ tdlmm <- function(formula,
                                    levels = 1:model$nExp,
                                    labels = model$expNames)
   }
-
-
 
   # Remove model and exposure data
   for (i in 1:length(model$X))

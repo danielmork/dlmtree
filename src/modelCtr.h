@@ -17,6 +17,7 @@ public:
   std::vector<double> stepProb, treePrior, treePrior2;
   VectorXd Y;
   MatrixXd Z;
+  MatrixXd Xd;
   VectorXd R;
   MatrixXd Rmat;
   MatrixXd Vg;
@@ -94,11 +95,15 @@ public:
   int pM;
   double XcenterIdx;
   std::vector<double> stepProbMod, treePriorMod;
-  VectorXd nTerm;
+  VectorXd nTerm;     // HDLM
+  VectorXd nTermDLM;     // TDLM
+  VectorXd nTermDLM1;    // TDLMM
+  VectorXd nTermDLM2;    // TDLMM
   VectorXd nTermMod;
   MatrixXd exDLM;
   VectorXd modCount;
   VectorXd modInf;
+  VectorXd kappa;
   
   // Gaussian Process
   MatrixXd X;
@@ -114,22 +119,22 @@ public:
   int covarType;
 
   // Mixtures
-  // int interaction, nExp, nMix;
-  // double modZeta, modKappa;
-  // VectorXd expProb;
-  // VectorXd expCount;
-  // MatrixXd mixCount;
-  // VectorXd expInf;
-  // MatrixXd mixInf;
-  // VectorXd nTerm2;
-  // VectorXd tree1Exp;
-  // VectorXd tree2Exp;
-  // VectorXd totTermExp;
-  // MatrixXd totTermMix;
-  // VectorXd sumTermT2Exp;
-  // MatrixXd sumTermT2Mix;
-  // VectorXd muExp;
-  // MatrixXd muMix;
+  int interaction, nExp, nMix;
+  double modZeta, modKappa, mixKappa;
+
+  VectorXd expProb;
+  VectorXd expCount;
+  MatrixXd mixCount;
+  VectorXd expInf;
+  MatrixXd mixInf;
+  VectorXd dlmTree1Exp;
+  VectorXd dlmTree2Exp;
+  VectorXd totTermExp;
+  MatrixXd totTermMix; 
+  VectorXd sumTermT2Exp;
+  MatrixXd sumTermT2Mix;
+  VectorXd muExp;
+  MatrixXd muMix;
 };
 
 
@@ -140,7 +145,8 @@ public:
   VectorXd sigma2;
   VectorXd nu;
   MatrixXd tau;
-  VectorXd fhat;  
+  VectorXd fhat;
+  VectorXd totTerm;
   
   // Modifier tree logs
   std::vector<VectorXd> treeModAccept;
@@ -152,32 +158,37 @@ public:
     
   // DLM tree logs
   std::vector<VectorXd> treeDLMAccept;
-  MatrixXd termNodesDLM;
+  MatrixXd termNodesDLM;    // TDLM
+  MatrixXd termNodesDLM1;   // TDLMM
+  MatrixXd termNodesDLM2;   // TDLMM
+  VectorXd kappa;
+  VectorXd mixKappa;
+
+  // Mixtures
+  std::vector<VectorXd> MIXexp;
+  MatrixXd termNodes1;
+  MatrixXd termNodes2;
+  MatrixXd expCount;
+  MatrixXd mixCount;
+  MatrixXd expProb;
+  MatrixXd expInf;
+  MatrixXd mixInf;
+  MatrixXd dlmTree1Exp;
+  MatrixXd dlmTree2Exp;
+  MatrixXd muExp;
+  MatrixXd muMix;
   
   // DLM and cumulative effect estimates
   MatrixXd exDLM;
   MatrixXd ex2DLM;
   VectorXd cumDLM;
   VectorXd cum2DLM;
-  std::vector<std::string> termRule;
   std::vector<VectorXd> DLMexp;
+  std::vector<std::string> termRule;
+  std::vector<std::string> termRuleMIX;
   
   // GP
   VectorXd phi;
-
-  // Mixtures
-  // std::vector<VectorXd> MIXexp;
-  // VectorXd kappa;
-  // MatrixXd termNodes2;
-  // MatrixXd expCount;
-  // MatrixXd mixCount;
-  // MatrixXd expProb;
-  // MatrixXd expInf;
-  // MatrixXd mixInf;
-  // MatrixXd tree1Exp;
-  // MatrixXd tree2Exp;
-  // MatrixXd muExp;
-  // MatrixXd muMix;
 };
 
 
@@ -193,7 +204,7 @@ std::string modRuleStr(Node* n, modDat* Mod);
 VectorXd countMods(Node* tree, modDat* Mod);
 void drawTree(Node* tree, Node* n, double alpha, double beta);
 void updateGPMats(Node* n, dlmtreeCtr* ctr);
-// void dlmtreeRecDLM(dlmtreeCtr* ctr, dlmtreeLog* dgn);
+// void dlmtreeRecDLM(dlmtreeCtr* ctr, dlmtreeLog* dlmtreeLog);
 
 
 struct treeMHR {
@@ -204,9 +215,11 @@ public:
   MatrixXd tempV;
   MatrixXd Xd, Dtrans;
   double logVThetaChol, beta, termT2, cdf;
-  double nNodes, nModTerm, nDlmTerm, totTerm, nTerm;
+  double nNodes, nModTerm, nDlmTerm, nDlmTerm1, nDlmTerm2, totTerm, nTerm;
   double term1T2, term2T2, mixT2, nTerm1, nTerm2;
-  int pXd;
+  double pXd;
+  double m1Var, m2Var;
+  double nTermMix;
 };
 
 

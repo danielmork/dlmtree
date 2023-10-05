@@ -1,7 +1,8 @@
 predict.dlmtree <- function(object, new.data, new.exposure.data, ...,
                             ci.level = 0.95,
                             fixed.idx = list(), est.dlm = FALSE, verbose = TRUE)
-{
+{ 
+
   `%notin%` <- Negate(`%in%`)
   out <- list()
   new.exposure.data <- matrix(new.exposure.data, ncol = object$pExp)
@@ -94,8 +95,10 @@ predict.dlmtree <- function(object, new.data, new.exposure.data, ...,
     }
   }
 
-
+  # Generate mcmcIter number of matrices (n x pExp)
+  # do.call generates c(draws)
   draws <- array(do.call(c, draws), c(n, object$pExp, object$mcmcIter))
+
 
   if (est.dlm) {
     if (verbose)
@@ -119,6 +122,7 @@ predict.dlmtree <- function(object, new.data, new.exposure.data, ...,
   out$fhat.lims <- apply(fhat.draws, 1, quantile, probs = ci.lims)
 
   # ---- Outcome predictions ----
+  # fixed effect + DLM + normal error
   y.draws <- ztg.draws + fhat.draws +
     sapply(1:object$mcmcIter, function(i) rnorm(nrow(ztg.draws), 0, sqrt(object$sigma2[i])))
   out$y <- rowMeans(y.draws)

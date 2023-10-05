@@ -34,10 +34,11 @@ void tdlmModelEst(modelCtr *ctr)
   // * Update sigma^2 and xi_sigma2
   if (!(ctr->binomial)) {
     rHalfCauchyFC(&(ctr->sigma2), (double)ctr->n + (double)ctr->totTerm, 
-                  ctr->R.dot(ctr->R) - ZR.dot(ctr->gamma) + 
-                    ctr->sumTermT2 / ctr->nu, &(ctr->xiInvSigma2));
+                  ctr->R.dot(ctr->R) - ZR.dot(ctr->gamma) + ctr->sumTermT2 / ctr->nu, &(ctr->xiInvSigma2));
+
     if ((ctr->sigma2 != ctr->sigma2)) // ! stop if infinte or nan variance
       stop("\nNaN values (sigma) occured during model run, rerun model.\n");
+    
   }
   
   // * Draw fixed effect coefficients
@@ -357,29 +358,30 @@ double modProposeTree(Node* tree, modDat* Mod, dlmtreeCtr* ctr, int step)
 std::string modRuleStr(Node* n, modDat* Mod)
 {
   std::string rule = "";
-  if (n->depth == 0)
+  if (n->depth == 0)  // One root node -> no rules to the terminal nodes -> return
     return(rule);
   
+  // If there is a node to ther terminal nodes, store a parent node
   Node* parent = n->parent;
-  int splitVar = parent->nodestruct->get(1);
-  int splitVal = parent->nodestruct->get(2);
-  std::vector<int> splitVec = parent->nodestruct->get2(1);
+  int splitVar = parent->nodestruct->get(1);  // What variable of the parent?
+  int splitVal = parent->nodestruct->get(2);  // What value of the parent?
+  std::vector<int> splitVec = parent->nodestruct->get2(1); // Return split vector
   
-  rule += std::to_string(splitVar);
-  if (Mod->varIsNum[splitVar]) {
-    if (parent->c1 == n)
-      rule += "<";
-    else
-      rule += ">=";
-    rule += std::to_string(splitVal);
+  rule += std::to_string(splitVar);       // Convert to a string and concatenate
+  if (Mod->varIsNum[splitVar]) {          // [If continuous], 
+    if (parent->c1 == n)                  // If the first child node is the same as the node, (c1 = child node 1)
+      rule += "<";                        // Add a rule
+    else                                  
+      rule += ">=";                       // Add a rule
+    rule += std::to_string(splitVal);     // Add the splitting value
   } else {
-    if (parent->c1 == n)
-      rule += "[]";
+    if (parent->c1 == n)                  // [If categorical],
+      rule += "[]";                       // Add a subsetting rule
     else
-      rule += "][";
+      rule += "][";                       // Add a subsetting rule
     for (int i : splitVec)
-      rule += std::to_string(i) + ",";
-    rule.pop_back();
+      rule += std::to_string(i) + ",";    // 
+    rule.pop_back();                      // Remove the last character of the string
   }
   if (parent->depth != 0)
     rule += "&" + modRuleStr(parent, Mod);
@@ -409,23 +411,23 @@ VectorXd countMods(Node* tree, modDat* Mod)
         unavailProb(i) = Mod->modProb[i];
       }
     }
-    if (unavail.size() > 0) {
-      std::random_shuffle(unavail.begin(), unavail.end());
-      double totProb = unavailProb.sum();
-      int pseudoDraw = R::rgeom(std::max(0.00000001, 1 - totProb));
-      int binomDraw = 0;
-      if (pseudoDraw > 0) {
-        for (int i : unavail) {
-          binomDraw = R::rbinom(pseudoDraw, unavailProb(i) / totProb);
-          if (binomDraw > 0)
-            modCount(i) += binomDraw * 1.0;
-          totProb -= unavailProb(i);
-          pseudoDraw -= binomDraw;
-          if (pseudoDraw < 1)
-            break;
-        } // end multinom
-      } // end pseudoDraw
-    } // end unavail
+    // if (unavail.size() > 0) {
+    //   std::random_shuffle(unavail.begin(), unavail.end());
+    //   double totProb = unavailProb.sum();
+    //   int pseudoDraw = R::rgeom(std::max(0.00000001, 1 - totProb));
+    //   int binomDraw = 0;
+    //   if (pseudoDraw > 0) {
+    //     for (int i : unavail) {
+    //       binomDraw = R::rbinom(pseudoDraw, unavailProb(i) / totProb);
+    //       if (binomDraw > 0)
+    //         modCount(i) += binomDraw * 1.0;
+    //       totProb -= unavailProb(i);
+    //       pseudoDraw -= binomDraw;
+    //       if (pseudoDraw < 1)
+    //         break;
+    //     } // end multinom
+    //   } // end pseudoDraw
+    // } // end unavail
   } // end modCount
   return(modCount);
 } // end countMods function

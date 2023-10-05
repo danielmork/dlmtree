@@ -12,9 +12,6 @@ zero splits (i.e. a linear effect DLM)}
 
 \item{conf.level}{confidence level for computation of credible intervals}
 }
-\value{
-
-}
 \description{
 summary.tdlm
 }

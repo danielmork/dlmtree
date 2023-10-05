@@ -46,7 +46,7 @@ summary.tdlmm <- function(object,
 
 
 
-  # ---- Set levels for marginaliztion ----
+  # ---- Set levels for marginalization ----
   if (marginalize == "mean") {
     res$marg.values <- sapply(object$X, function(i) i$intX)
   } else if (length(marginalize) == 1 & is.numeric(marginalize)) {
