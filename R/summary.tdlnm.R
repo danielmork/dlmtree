@@ -8,7 +8,7 @@
 #' @param conf.level confidence level for computation of credible intervals
 #' @param exposure.se scalar smoothing factor, if different from model
 #'
-#' @return
+#' @return list of type 'summary.tdlnm'
 #' @export summary.tdlnm
 #' @export
 #'

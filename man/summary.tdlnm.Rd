@@ -25,6 +25,9 @@ predictions at all other exposure values}
 
 \item{exposure.se}{scalar smoothing factor, if different from model}
 }
+\value{
+list of type 'summary.tdlnm'
+}
 \description{
 summary.tdlnm
 }

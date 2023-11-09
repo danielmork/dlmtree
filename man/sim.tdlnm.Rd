@@ -11,6 +11,9 @@ sim.tdlnm(effect = "A", error.to.signal = 1)
 
 \item{error.to.signal}{scalar value setting error: sigma^2/var(f)}
 }
+\value{
+Simulated data and true parameters for tdlnm
+}
 \description{
 sim.tdlnm
 }

@@ -24,7 +24,7 @@ dlmtree <- function(formula,
                     zeta.prior = 0.5,
                     shrinkage = "all",
                     mixture.interactions = "noself", # SI
-                    mix.prior = 1,                   # SI
+                    mix.prior = 1,                   # SI - No exposure selection
                     subset = 1:nrow(data),
                     save.data = TRUE,
                     verbose = TRUE,
@@ -46,17 +46,19 @@ dlmtree <- function(formula,
       stop("`exposure.data` must be a numeric matrix")
     if (nrow(data) != nrow(exposure.data))
       stop("`data` and `exposure.data` must have same number of observations")
+
     model$pExp <- ncol(exposure.data) # lag
-  } else { # HDLMM [Exposure data] SI ===============================
-    # print("Exposure data check")
+  } else { # HDLMM [Exposure data] SI ----------------------------------------------------------------------
     if (!is.list(exposure.data))
       stop("`exposure.data` must be a list of named exposures")
-    model$nExp <- length(exposure.data) # Number of exposures
-    model$expNames <- names(exposure.data) # Exposure names
-    if (is.null(model$expNames) || length(unique(model$expNames)) != model$nExp ||
-      any(model$expNames == ""))
+
+    model$nExp <- length(exposure.data)       # Number of exposures
+    model$expNames <- names(exposure.data)    # Exposure names
+
+    if (is.null(model$expNames) || length(unique(model$expNames)) != model$nExp || any(model$expNames == ""))
       stop("`exposure.data` must be a named list with unique, non-empty names")
-    model$pExp <- ncol(exposure.data[[1]]) # total lag
+
+    model$pExp <- ncol(exposure.data[[1]])    # total lag
 
     for (i in 1:length(exposure.data)) {
       if (!is.numeric(exposure.data[[i]]))
@@ -70,7 +72,7 @@ dlmtree <- function(formula,
         stop("missing values in exposure data")
     }
   }
-  # ==================================================
+  # ---------------------------------------------------------------------------------------------------------
 
   # if (!is.null(exposure.se)) {
   #   if (!is.numeric(exposure.se))
@@ -101,7 +103,7 @@ dlmtree <- function(formula,
     model$binomialSize <- force(binomial.size)
   }
 
-  # [Mixture interactions] SI ===============================
+  # [Mixture interactions] SI ----------------------------------------------------------------------
   if (!(mixture.interactions %in% c("noself", "all", "none")))
     stop("`mixture.interactions must be one of `noself`, `all`, `none`")
 
@@ -112,7 +114,7 @@ dlmtree <- function(formula,
   } else {  # TDLMMall
     model$interaction <- 2      # All interaction including oneself
   }
-  # =========================================================
+  # -----------------------------------------------------------------------------------------------
 
   # tree parameters
   # print("modTree & dlmTree parameters check")
@@ -171,24 +173,21 @@ dlmtree <- function(formula,
                            step.prob.tdlm[2])
   model$stepProbTDLM <-  model$stepProbTDLM / sum(model$stepProbTDLM)
 
+  # ---------------------------------------------------------------------------------------------------------
   # We have extra transition step : Switch-exposure for exposure mixture
   # Step probability is now a vector of length 4
   if(dlm.type == "hdlmm"){
-    # model$stepProbTDLM <-  c(step.prob.tdlm[1], step.prob.tdlm[1],
-    #                          step.prob.tdlm[2], step.prob.tdlm[2])
-    # model$stepProbTDLM <-  c(step.prob.tdlm[1], step.prob.tdlm[1],
-    #                          step.prob.tdlm[1], 0)
     model$stepProbTDLM <-  step.prob.tdlm
     model$stepProbTDLM <-  model$stepProbTDLM / sum(model$stepProbTDLM)
   }
 
-  # [Mixture parameters] SI ================================================================
+  # [Mixture parameters] SI 
   # print("Shrinkage & mixture")
   model$mixPrior <- mix.prior # Positive scalar hyperparameter for sparsity of exposures (Linero)
   model$shrinkage <- ifelse(shrinkage == "all", 3,
                             ifelse(shrinkage == "trees", 2,
                                    ifelse(shrinkage == "exposures", 1, 0)))
-  # =====================================================================================
+  # ---------------------------------------------------------------------------------------------------------
 
   if (model$verbose)
     cat("Preparing data...\n")
@@ -276,22 +275,22 @@ dlmtree <- function(formula,
     model$Xscale <-     sd(model$X)
     model$X <-          model$X / model$Xscale
     model$Tcalc <-      sapply(1:ncol(model$X), function(i) rowSums(model$X[, 1:i, drop = F]))
-  } else { # Multiple exposure - SI
+  } else { # Multiple exposure - SI ----------------------------------------------------------------------
     model$X <- list() 
     for (i in 1:model$nExp) { # For each exposure,
-      model$X[[i]] <- force(list(Xscale = sd(exposure.data[[i]]),     # Store standard deviation of exposure data
-                                X = exposure.data[[i]]))             # Store exposure data itself
-      model$X[[i]]$X <- force(model$X[[i]]$X / model$X[[i]]$Xscale)   # Scale the stored exposure data
-      model$X[[i]]$Xrange <- force(range(model$X[[i]]$X))             # Store range of exposure data
-      model$X[[i]]$Xquant <- force(quantile(model$X[[i]]$X, 0:100/100) *  model$X[[i]]$Xscale) # Store unscaled quantile
-      model$X[[i]]$intX <- force(mean(model$X[[i]]$X))                # Store the mean of scaled exposure data
+      model$X[[i]] <- force(list(Xscale = sd(exposure.data[[i]]),                                
+                                X = exposure.data[[i]]))          
+      model$X[[i]]$X <- force(model$X[[i]]$X / model$X[[i]]$Xscale)  
+      model$X[[i]]$Xrange <- force(range(model$X[[i]]$X)) 
+      model$X[[i]]$Xquant <- force(quantile(model$X[[i]]$X, 0:100/100) *  model$X[[i]]$Xscale)
+      model$X[[i]]$intX <- force(mean(model$X[[i]]$X)) 
       model$X[[i]]$Tcalc <-
         force(sapply(1:ncol(model$X[[i]]$X), function(j) { 
           rowSums(model$X[[i]]$X[, 1:j, drop = F]) }))       
     }
-    names(model$X) <- model$expNames                                  # Save exposure names
-    model$expProb <- force(rep(1/length(model$X), length(model$X)))   # Uniform probability for exposure selection
-  }
+    names(model$X) <- model$expNames                                  
+    model$expProb <- force(rep(1/length(model$X), length(model$X)))  
+  } # ----------------------------------------------------------------------------------------------------
       # splits defined by quantiles of exposure
     # } else {
     #   model$dlFunction <- "dlnm"
@@ -434,7 +433,7 @@ dlmtree <- function(formula,
   if (is.null(fixed.tree.idx)) {
     if (model$dlmType %in% c("tdlm", "shared"))
       out <- dlmtreeTDLMGaussian(model)
-    else if (model$dlmType == "hdlmm") # SI ***
+    else if (model$dlmType == "hdlmm") # SI -----------------------------------
       out <- dlmtreeTDLMMGaussian(model)
     else if (model$dlmType %in% c("tdlm2", "nested"))
       # if (ver == 2)
@@ -481,12 +480,12 @@ dlmtree <- function(formula,
 
   # print("Preparing output in dlmtree.R")
   # ---- Prepare output ----
-  model$Y <- model$Y * model$Yscale + model$Ymean           # Unscale Y
-  model$fhat <- model$fhat * model$Yscale                   # Unscale fhat
-  model$sigma2 <- model$sigma2 * (model$Yscale^2)         # Unscale sigma2
+  model$Y <- model$Y * model$Yscale + model$Ymean  
+  model$fhat <- model$fhat * model$Yscale    
+  model$sigma2 <- model$sigma2 * (model$Yscale^2)     
 
   # rescale fixed effect estimates
-  model$gamma <- sapply(1:ncol(model$gamma), function(i) {  # Unscale fixed effect estimates
+  model$gamma <- sapply(1:ncol(model$gamma), function(i) {
     model$gamma[,i] * model$Yscale / model$Zscale[i] })
 
   # If there is an intercept, extra calculation
@@ -495,15 +494,15 @@ dlmtree <- function(formula,
     if (ncol(model$Z) > 1)
       model$gamma[,1] <- model$gamma[,1] - model$gamma[,-1,drop=FALSE] %*% model$Zmean[-1]
   }
-  colnames(model$gamma) <- model$Znames   # Set variable names
+  colnames(model$gamma) <- model$Znames
 
-  if (is.null(fixed.tree.idx)) # This is null in HDLMM case: modProb, modCount, modInf all have the lengths of modifier variable so set the names
+  if (is.null(fixed.tree.idx)) 
     colnames(model$modProb) <- colnames(model$modCount) <-
       colnames(model$modInf) <- names(model$Mo)
 
   if (is.null(fixed.tree.idx)) { # This is null in HDLMM case:
-    modNames <- names(model$Mo)                     # Modifier names to match with rule
-    splitRules <- strsplit(model$termRules, "&", T) # Extract the string rules cut by "&"
+    modNames <- names(model$Mo)                     
+    splitRules <- strsplit(model$termRules, "&", T) 
     rule <- sapply(splitRules, function(str) {
               paste0(lapply(sort(str), function(rule) {
                 # no rule
@@ -541,8 +540,8 @@ dlmtree <- function(formula,
                   return("")
                 }
               }), collapse = " & ")})
-    if (model$dlmType == "hdlmm" & model$interaction > 0){ # Rules saved for the interaction effects
-      splitRulesMIX <- strsplit(model$termRuleMIX, "&", T) # Extract the string rules cut by "&"
+    if (model$dlmType == "hdlmm" & model$interaction > 0){
+      splitRulesMIX <- strsplit(model$termRuleMIX, "&", T) 
       ruleMIX <- sapply(splitRulesMIX, function(str) {
                 paste0(lapply(sort(str), function(rule) {
                   # no rule
@@ -607,6 +606,7 @@ dlmtree <- function(formula,
     # }
 
     # *** Combine the rules and the exposure data frames ***
+    # HDLMM ---------------------------------------------------------------------------------------------------------
     if(model$dlmType == "hdlmm"){
       # Combine DLM with rules with colnames
       model$TreeStructs <- cbind.data.frame(rule, model$TreeStructs)
@@ -621,7 +621,7 @@ dlmtree <- function(formula,
       }
 
       model$mixNames <- c()
-
+    # ---------------------------------------------------------------------------------------------------------
     } else {
       model$TreeStructs <- cbind.data.frame(rule, model$TreeStructs)
     }
@@ -666,16 +666,9 @@ dlmtree <- function(formula,
           }
         }
       }
-    
-
-      # # Exposure names
-      # colnames(model$expProb) <- colnames(model$expCount) <- colnames(model$muExp) <- model$expNames
-      # if (model$interaction > 0) {
-      #   colnames(model$muMix) <- colnames(model$mixCount) <- model$mixNames
-      # }
     }
 
-  # Fixed tree index (Does not apply to HDLMM)
+  # Fixed tree index
   } else {
     model$TreeStructs <- as.data.frame(model$TreeStructs)
     if (model$dlmType == "gp") {

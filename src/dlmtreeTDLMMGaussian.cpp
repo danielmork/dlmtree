@@ -38,52 +38,46 @@ treeMHR dlmtreeTDLMM_MHR(std::vector<Node*> modTerm,
 
 // [[Rcpp::export]]
 Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){ 
-  // Rcout << "*** Initializing dlmtreeTDLMMGaussian ***\n";
-  // **** Set up general control variables ****
-  // Model control(ctr) object with pointer
+  // *** Set up general control variables ***
   dlmtreeCtr *ctr = new dlmtreeCtr;
 
   // MCMC parameters
-  // Rcout << "MCMC parameters \n";
-  ctr->iter = as<int>(model["nIter"]);        // Number of iterations
-  ctr->burn = as<int>(model["nBurn"]);        // Number of burn-in
-  ctr->thin = as<int>(model["nThin"]);        // Number of thinning 
-  ctr->nRec = floor(ctr->iter / ctr->thin);   // Number of actual recording after thinning & burn-in
-  ctr->nTrees = as<int>(model["nTrees"]);     // Number of ensemble tree
+  ctr->iter = as<int>(model["nIter"]); 
+  ctr->burn = as<int>(model["nBurn"]); 
+  ctr->thin = as<int>(model["nThin"]); 
+  ctr->nRec = floor(ctr->iter / ctr->thin);
+  ctr->nTrees = as<int>(model["nTrees"]);  
 
   // Data setup
-  // Rcout << "Data setup \n";
-  ctr->Y = as<Eigen::VectorXd>(model["Y"]);   // Response variable
-  ctr->n = (ctr->Y).size();                   // Sample size
+  ctr->Y = as<Eigen::VectorXd>(model["Y"]);
+  ctr->n = (ctr->Y).size();
 
   // Modifier tree hyperparameter
-  ctr->modZeta = as<double>(model["zeta"]);   // Hyperparameter for modifier tree
-  ctr->modKappa = 100;                        // Hyperparameter for Dirichlet-Categorial 
+  ctr->modZeta = as<double>(model["zeta"]); 
+  ctr->modKappa = 100;        
 
   // Model estimation initialization
-  // Rcout << "Model pre-calculation \n";
-  ctr->Z = as<Eigen::MatrixXd>(model["Z"]);         // Fixed effect model matrix
-  ctr->Zw = ctr->Z;                                 // Zw in case of logistic/zinb (w = omega)
-  ctr->pZ = (ctr->Z).cols();                        // Number of fixed effect covariates
+  ctr->Z = as<Eigen::MatrixXd>(model["Z"]); 
+  ctr->Zw = ctr->Z; 
+  ctr->pZ = (ctr->Z).cols(); 
 
-  ctr->VgInv = (ctr->Z).transpose() * (ctr->Z);     // V_gamma initial calculation
-  ctr->VgInv.diagonal().array() += 1.0 / 100000.0;  // V_gamma + prior
-  ctr->Vg = ctr->VgInv.inverse();                   // V_gamma inverse
-  ctr->VgChol = (ctr->Vg).llt().matrixL();          // V_gamma inverse cholesky
+  ctr->VgInv = (ctr->Z).transpose() * (ctr->Z); 
+  ctr->VgInv.diagonal().array() += 1.0 / 100000.0;
+  ctr->Vg = ctr->VgInv.inverse();  
+  ctr->VgChol = (ctr->Vg).llt().matrixL();
   
-  // Binomial flag set as false                     
-  ctr->binomial = 0;                                // Binomial flag (Never used but may be later)
+  // Binomial flag              
+  ctr->binomial = 0;             
 
   // Diagnostics & messages
-  ctr->verbose = bool(model["verbose"]);            // Technical messages
-  ctr->diagnostics = bool(model["diagnostics"]);   // Technical diagnostics
+  ctr->verbose = bool(model["verbose"]); 
+  ctr->diagnostics = bool(model["diagnostics"]);
 
-  // Rcout << "Step probabilities \n";
   // Tree prior probabilities for the modifier tree and DLM tree
-  ctr->stepProbMod = as<std::vector<double>>(model["stepProbMod"]);   // modifier tree step prob.
-  ctr->stepProb = as<std::vector<double>>(model["stepProbTDLM"]);     // dlm tree step prob.
-  ctr->treePriorMod = as<std::vector<double>>(model["treePriorMod"]); // modifier tree alpha, beta
-  ctr->treePrior = as<std::vector<double>>(model["treePriorTDLM"]);   // dlm tree alpha, beta
+  ctr->stepProbMod = as<std::vector<double>>(model["stepProbMod"]);
+  ctr->stepProb = as<std::vector<double>>(model["stepProbTDLM"]);
+  ctr->treePriorMod = as<std::vector<double>>(model["treePriorMod"]); 
+  ctr->treePrior = as<std::vector<double>>(model["treePriorTDLM"]);
 
   // [Mixture & Shrinkage] 
   // Store shrinkage: 
@@ -93,30 +87,27 @@ Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){
   // 0 = none
   ctr->shrinkage = as<int>(model["shrinkage"]);
 
-  // Different notation: modKappa in TDLM = mixKappa in HDLM
-  // Rcout << "Mixture: mixKappa setup \n";
-  ctr->mixKappa = as<double>(model["mixPrior"]);  // Positive scalar hyperparameter for sparsity of exposures (Linero): Set as 1
-  bool updateKappa = false;                       // Check to update mixKappa: if negative, set to 1 as default.
-  if (ctr->mixKappa < 0) {                        // This "if" condition will not be used as default is 1 
+  // Sparsity hyperparameter (Deprecated now as HDLMM does not perform exposure selection)
+  ctr->mixKappa = as<double>(model["mixPrior"]); 
+  bool updateKappa = false;  
+  if (ctr->mixKappa < 0) {       
     updateKappa = true;
     ctr->mixKappa = 1;
   }
 
-  // **** Setup modifier data ****
-  // Rcout << "modifier data/parameter \n";
-  modDat *Mod = new modDat(as<std::vector<int>>(model["modIsNum"]),   // Boolean vector of continuous vs categorical
-                           as<Rcpp::List>(model["modSplitIdx"]),      // If we have wanted split points, read row indice in  
-                           as<std::vector<int>>(model["fullIdx"]));   // 0:(nrow(data) - 1)
+  // *** Setup modifier data ***
+  modDat *Mod = new modDat(as<std::vector<int>>(model["modIsNum"]), 
+                           as<Rcpp::List>(model["modSplitIdx"]), 
+                           as<std::vector<int>>(model["fullIdx"]));
 
-  NodeStruct *modNS;            // NodeStruct object for the modifier tree
-  modNS = new ModStruct(Mod);   // Take Mod info and construct the modifier tree
-  ctr->pM = Mod->nMods;         // Number of modifiers (Simulation has three)
+  NodeStruct *modNS; 
+  modNS = new ModStruct(Mod); 
+  ctr->pM = Mod->nMods; 
 
-  // **** Pre-calculate single node tree pair matrices ****
-  // Rcout << "Multiple exposure parameter control \n";
-  std::vector<exposureDat*> Exp;                      // Exposure structure
-  Rcpp::List exp_dat = as<Rcpp::List>(model["X"]);    // List of exposures
-  ctr->nExp = exp_dat.size();                         // Number of exposures
+  // *** Pre-calculate single node tree pair matrices ***
+  std::vector<exposureDat*> Exp;                     
+  Rcpp::List exp_dat = as<Rcpp::List>(model["X"]); 
+  ctr->nExp = exp_dat.size();                  
   for (int i = 0; i < ctr->nExp; i++) {
     Exp.push_back(
       new exposureDat(
@@ -124,33 +115,28 @@ Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){
           as<Rcpp::List>(exp_dat[i])["Tcalc"]), ctr->Z, ctr->Vg));
   }
 
-  // Rcout << "Exposure lag & interaction \n";
-  ctr->pX = Exp[0]->pX;     // Total number of lags (columns of exposure matrix X)
-  ctr->nSplits = 0;         // Never used
+  ctr->pX = Exp[0]->pX; 
+  ctr->nSplits = 0;
 
-  // **** Mixture / interaction management ****
-  ctr->interaction = as<int>(model["interaction"]);   // Interaction: TDLMMadd(1) / TDLMMns(2) / TDLMMall(3)
-  ctr->nMix = 0;                                      // Interaction flag with a default of none
+  // *** Mixture / interaction management ***
+  ctr->interaction = as<int>(model["interaction"]);
+  ctr->nMix = 0;
   if (ctr->interaction) { 
-    ctr->nMix += int (ctr->nExp * (ctr->nExp - 1.0) / 2.0); // (M choose 2) for HDLMMns
-    if (ctr->interaction == 2) { // HDLMMall
-      ctr->nMix += ctr->nExp;                               // (M choose 2) + M for HDLMMall
+    ctr->nMix += int (ctr->nExp * (ctr->nExp - 1.0) / 2.0); 
+    if (ctr->interaction == 2) {
+      ctr->nMix += ctr->nExp;
     }
   }
 
-  // **** Create trees ****
-  // Rcout << "Creating trees \n";
-  NodeStruct *expNS;   // NodeStruct object
-  // DLNMStruct takes (xmin_in, xmax_in, 
-  //                   tmin_in, tmax_in, 
-  //                   Xp_in, Tp_in)
-  expNS = new DLNMStruct(0, ctr->nSplits + 1,  // xmin_in, xmax_in 
-                         1, int (ctr->pX),     // tmin_in, tmax_in
-                         as<Eigen::VectorXd>(model["splitProb"]), // Xprob_in
-                         as<Eigen::VectorXd>(model["timeProb"])); // Tprob_in
+  // *** Create trees ***
+  NodeStruct *expNS;
+  expNS = new DLNMStruct(0, ctr->nSplits + 1,
+                         1, int (ctr->pX), 
+                         as<Eigen::VectorXd>(model["splitProb"]),
+                         as<Eigen::VectorXd>(model["timeProb"]));
 
   // Exposure information vectors
-  ctr->expProb = as<Eigen::VectorXd>(model["expProb"]);  // Exposure selection probability
+  ctr->expProb = as<Eigen::VectorXd>(model["expProb"]);
 
   (ctr->dlmTree1Exp).resize(ctr->nTrees);    
   (ctr->dlmTree2Exp).resize(ctr->nTrees);
@@ -159,143 +145,126 @@ Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){
   ctr->dlmTree1Exp = as<Eigen::VectorXd>(model["comb1"]);
   ctr->dlmTree2Exp = as<Eigen::VectorXd>(model["comb2"]);
 
-  (ctr->expCount).resize((ctr->expProb).size()); // Count how many are currently selected
-  (ctr->expInf).resize((ctr->expProb).size());   // Sum of shrinkage prior for math later
+  (ctr->expCount).resize((ctr->expProb).size()); 
+  (ctr->expInf).resize((ctr->expProb).size());
 
-  // [Tree pair] ===================================================
-  // Rcout << "Creating tree pairs \n";
+  // *** Tree pair ***
   int t; // Tree index
   
   std::vector<Node*> modTrees;
-  std::vector<Node*> dlmTrees1;    // Tree1 Ensemble vector
-  std::vector<Node*> dlmTrees2;    // Tree2 Ensemble vector
+  std::vector<Node*> dlmTrees1;
+  std::vector<Node*> dlmTrees2;
 
   // For loop iterating through trees to start the "roots"
   for (t = 0; t < ctr->nTrees; t++) {
     // Modifier tree initialize
-    modTrees.push_back(new Node(0, 1));         // Root node initialize
-    modTrees[t]->nodestruct = modNS->clone();   // Each modifier tree shares the same property as modNS
-    Mod->updateNodeVals(modTrees[t]);           // update modifier root node
+    modTrees.push_back(new Node(0, 1));         
+    modTrees[t]->nodestruct = modNS->clone();   
+    Mod->updateNodeVals(modTrees[t]);           
 
-    // // dlmtree pair initialize -> No swap step for HDLMM, fix the exposures
-    // ctr->dlmTree1Exp(t) = (ctr->comb1)[t]; // Each dlmtree1 is randomly assigned an exposure
-    // ctr->dlmTree2Exp(t) = (ctr->comb2)[t]; // Each dlmtree2 is randomly assigned an exposure
-
-    dlmTrees1.push_back(new Node(0, 1));        // dlmtree1 Ensemble Root node initialize
-    dlmTrees2.push_back(new Node(0, 1));        // dlmtree2 Ensemble Root node initialize
-    dlmTrees1[t]->nodestruct = expNS->clone();  // Each dlmtree1 shares the same property as expNS
-    dlmTrees2[t]->nodestruct = expNS->clone();  // Each dlmtree2 shares the same property as expNS
-    Exp[ctr->dlmTree1Exp(t)]->updateNodeVals(dlmTrees1[t]); // Update dlmtree1 root node
-    Exp[ctr->dlmTree2Exp(t)]->updateNodeVals(dlmTrees2[t]); // Update dlmtree2 root node
+    dlmTrees1.push_back(new Node(0, 1));        
+    dlmTrees2.push_back(new Node(0, 1));        
+    dlmTrees1[t]->nodestruct = expNS->clone();  
+    dlmTrees2[t]->nodestruct = expNS->clone();  
+    Exp[ctr->dlmTree1Exp(t)]->updateNodeVals(dlmTrees1[t]); 
+    Exp[ctr->dlmTree2Exp(t)]->updateNodeVals(dlmTrees2[t]); 
   }
-  // ================================================================
-  delete modNS; // delete the object used for cloning a modifier tree
-  delete expNS; // delete the object used for cloning a exposure dlmtree
 
-  // **** Logs ****
-  // Rcout << "Logs \n";
-  dlmtreeLog *dgn = new dlmtreeLog;   // Initialize log for the output
-  // dlmTree log with ctr->nRec
-  // Rcout << "dlmTree log \n";
-  (dgn->gamma).resize(ctr->pZ, ctr->nRec);    (dgn->gamma).setZero();   // fixed effect coefficient
-  (dgn->sigma2).resize(ctr->nRec);            (dgn->sigma2).setZero();  // sigma2 variance (single value)
-  (dgn->nu).resize(ctr->nRec);                (dgn->nu).setZero();      // Global shrinkage (single value)
-  (dgn->tau).resize(ctr->nTrees, ctr->nRec);  (dgn->tau).setZero();     // Tree shrinkage (vector)
-  (dgn->fhat).resize(ctr->n);                 (dgn->fhat).setZero();    // partial fitted
-  (dgn->totTerm).resize(ctr->nRec);           (dgn->totTerm).setZero(); // P (total term #)
+  delete modNS;
+  delete expNS;
 
-  // Exposure-specific shrinkage - SI 
-  // Rcout << "Exposure-specific shrinkage \n";
-  (dgn->muExp).resize(ctr->nExp, ctr->nRec);        (dgn->muExp).setZero();   // Exposure-specific variance
-  if (ctr->interaction > 0) { // For TDLMMns / TDLMMall
-    // A vector of all possible combinations of exposures
+  // *** Logs ***
+  dlmtreeLog *dgn = new dlmtreeLog;
+  (dgn->gamma).resize(ctr->pZ, ctr->nRec);    (dgn->gamma).setZero();  
+  (dgn->sigma2).resize(ctr->nRec);            (dgn->sigma2).setZero(); 
+  (dgn->nu).resize(ctr->nRec);                (dgn->nu).setZero();     
+  (dgn->tau).resize(ctr->nTrees, ctr->nRec);  (dgn->tau).setZero();    
+  (dgn->fhat).resize(ctr->n);                 (dgn->fhat).setZero();   
+  (dgn->totTerm).resize(ctr->nRec);           (dgn->totTerm).setZero();
+
+  // Exposure-specific shrinkage
+  (dgn->muExp).resize(ctr->nExp, ctr->nRec);        (dgn->muExp).setZero();
+  if (ctr->interaction > 0) { 
     (dgn->muMix).resize(ctr->nMix, ctr->nRec);      (dgn->muMix).setZero();   
     (dgn->mixInf).resize(ctr->nMix, ctr->nRec);     (dgn->mixInf).setZero(); 
     (dgn->mixCount).resize(ctr->nMix, ctr->nRec);   (dgn->mixCount).setZero();
-  } else { // For TDLMMadd -> No interaction terms -> nMix is 0 so just set them as constants
+  } else { 
     (dgn->muMix).resize(1, 1);                      (dgn->muMix).setZero();
     (dgn->mixInf).resize(1, 1);                     (dgn->mixInf).setZero(); 
     (dgn->mixCount).resize(1, 1);                   (dgn->mixCount).setZero();
   }
 
   // Modifier tree log
-  // Rcout << "Modtree log \n";
-  (dgn->modProb).resize(ctr->pM, ctr->nRec);  (dgn->modProb).setZero();   // modifier probability
-  (dgn->modCount).resize(ctr->pM, ctr->nRec); (dgn->modCount).setZero();  // how many current modifiers
-  (dgn->modInf).resize(ctr->pM, ctr->nRec);   (dgn->modInf).setZero();    // Sum of shrinkage prior for math
-  (dgn->modKappa).resize(ctr->nRec);          (dgn->modKappa).setZero();  // (sparsity for categorical)
-  (dgn->termNodesMod).resize(ctr->nTrees, ctr->nRec);   (dgn->termNodesMod).setZero();  // Number of terminal node for each modifier tree
+  (dgn->modProb).resize(ctr->pM, ctr->nRec);  (dgn->modProb).setZero();   
+  (dgn->modCount).resize(ctr->pM, ctr->nRec); (dgn->modCount).setZero();  
+  (dgn->modInf).resize(ctr->pM, ctr->nRec);   (dgn->modInf).setZero();  
+  (dgn->modKappa).resize(ctr->nRec);          (dgn->modKappa).setZero(); 
+  (dgn->termNodesMod).resize(ctr->nTrees, ctr->nRec);   (dgn->termNodesMod).setZero();
 
   // Exposure log
-  // Rcout << "Exposure information log \n";
-  (dgn->expProb).resize(ctr->nExp, ctr->nRec);          (dgn->expProb).setZero();       // Exposure selection probability
-  (dgn->expCount).resize(ctr->nExp, ctr->nRec);         (dgn->expCount).setZero();      // Number of current selected exposures
-  (dgn->expInf).resize(ctr->nExp, ctr->nRec);           (dgn->expInf).setZero();        // Sum of prior shrinkage for math
-  (dgn->dlmTree1Exp).resize(ctr->nTrees, ctr->nRec);    (dgn->dlmTree1Exp).setZero();      // Exposure vector of tree vector1
-  (dgn->dlmTree2Exp).resize(ctr->nTrees, ctr->nRec);    (dgn->dlmTree2Exp).setZero();      // Exposure vector of tree vector2
-  (dgn->termNodesDLM1).resize(ctr->nTrees, ctr->nRec);  (dgn->termNodesDLM1).setZero(); // Number of terminal node for each dlmtree1
-  (dgn->termNodesDLM2).resize(ctr->nTrees, ctr->nRec);  (dgn->termNodesDLM2).setZero(); // Number of terminal node for each dlmtree2
-  (dgn->mixKappa).resize(ctr->nRec);                    (dgn->mixKappa).setZero();      // This is essentially a vector of one
+  (dgn->expProb).resize(ctr->nExp, ctr->nRec);          (dgn->expProb).setZero();       
+  (dgn->expCount).resize(ctr->nExp, ctr->nRec);         (dgn->expCount).setZero();      
+  (dgn->expInf).resize(ctr->nExp, ctr->nRec);           (dgn->expInf).setZero();        
+  (dgn->dlmTree1Exp).resize(ctr->nTrees, ctr->nRec);    (dgn->dlmTree1Exp).setZero();   
+  (dgn->dlmTree2Exp).resize(ctr->nTrees, ctr->nRec);    (dgn->dlmTree2Exp).setZero();   
+  (dgn->termNodesDLM1).resize(ctr->nTrees, ctr->nRec);  (dgn->termNodesDLM1).setZero(); 
+  (dgn->termNodesDLM2).resize(ctr->nTrees, ctr->nRec);  (dgn->termNodesDLM2).setZero(); 
+  (dgn->mixKappa).resize(ctr->nRec);                    (dgn->mixKappa).setZero();      
 
-  // **** Initial draws ****
-  // Rcout << "Partial residual setup \n";
-  (ctr->fhat).resize(ctr->n);      (ctr->fhat).setZero();    // Partial residual set to zero
-  ctr->R = ctr->Y;                  // Partial residual is initially Y as fhat is 0
-  (ctr->gamma).resize(ctr->pZ);     // Coefficient for each fixed effect covariate
+  // *** Initial draws ***
+  (ctr->fhat).resize(ctr->n);      
+  (ctr->fhat).setZero();   
+  ctr->R = ctr->Y;                  
+  (ctr->gamma).resize(ctr->pZ); 
 
-  // **** Exposure specific parameters ****
-  // Rcout << "Exposure terminal node counting \n";
-  (ctr->totTermExp).resize(ctr->nExp);      (ctr->totTermExp).setZero();   // total number of terminal nodes per exposure
-  (ctr->sumTermT2Exp).resize(ctr->nExp);    (ctr->sumTermT2Exp).setZero(); // (delta_a)^2 per exposure for MHR math
-  (ctr->muExp).resize(ctr->nExp);           (ctr->muExp).setOnes();        // Exposure-specific variance
+  // *** Exposure specific parameters ***
+  (ctr->totTermExp).resize(ctr->nExp);      (ctr->totTermExp).setZero();   
+  (ctr->sumTermT2Exp).resize(ctr->nExp);    (ctr->sumTermT2Exp).setZero(); 
+  (ctr->muExp).resize(ctr->nExp);           (ctr->muExp).setOnes();        
 
   // If there is an interaction, define more parameters
-  // Rcout << "Updating interaction parameters \n";
   // Initiate interaction effect muMix as a matrix of 1 -> start mixVar = 1
   if (ctr->interaction) { 
-    (ctr->totTermMix).resize(ctr->nExp, ctr->nExp);   (ctr->totTermMix).setZero();    // total number of terminal nodes for exposure combinations
-    (ctr->sumTermT2Mix).resize(ctr->nExp, ctr->nExp); (ctr->sumTermT2Mix).setZero();  // (delta_a)^2 per exposure combination for MHR math
-    (ctr->muMix).resize(ctr->nExp, ctr->nExp);        (ctr->muMix).setOnes();         // interaction-specific variance
-    (ctr->mixInf).resize(ctr->nExp, ctr->nExp);       (ctr->mixInf).setZero();        // interaction shrinkage prior
-    (ctr->mixCount).resize(ctr->nExp, ctr->nExp);     (ctr->mixCount).setZero();      // Count of how many mixtures there are
+    (ctr->totTermMix).resize(ctr->nExp, ctr->nExp);   (ctr->totTermMix).setZero();   
+    (ctr->sumTermT2Mix).resize(ctr->nExp, ctr->nExp); (ctr->sumTermT2Mix).setZero(); 
+    (ctr->muMix).resize(ctr->nExp, ctr->nExp);        (ctr->muMix).setOnes();        
+    (ctr->mixInf).resize(ctr->nExp, ctr->nExp);       (ctr->mixInf).setZero();       
+    (ctr->mixCount).resize(ctr->nExp, ctr->nExp);     (ctr->mixCount).setZero();     
   }
 
-  // No MCMC run yet so zero terminal nodes
+  // Initialize hyperparameters
   ctr->totTerm = 0;
   ctr->sumTermT2 = 0;
   ctr->nu = 1.0;
   ctr->sigma2 = 1.0;
 
-  // Rcout << "Initial model fitting \n";
-  tdlmModelEst(ctr); // Initial Gaussian sampling for gamma / fhat / R
+  // Initial model fitting
+  tdlmModelEst(ctr); 
 
   // Shrinkage hyperparameters
-  rHalfCauchyFC(&(ctr->nu), ctr->nTrees, 0.0);            // Global shrinkage: nu
-  (ctr->tau).resize(ctr->nTrees);  (ctr->tau).setOnes();  // Tree shrinkage: tau(t)
+  rHalfCauchyFC(&(ctr->nu), ctr->nTrees, 0.0);           
+  (ctr->tau).resize(ctr->nTrees);  (ctr->tau).setOnes(); 
   if (ctr->shrinkage > 1){
     for (t = 0; t < ctr->nTrees; t++) {
       rHalfCauchyFC(&((ctr->tau)(t)), 0.0, 0.0);
     }
   }
 
-  // **** Initializing trees ****
+  // *** Initializing trees ***
   // DLM tree pairs
-  // Rcout << "dlmTree pair terminal nodes # \n";
-  ctr->nTermDLM.resize(ctr->nTrees);     (ctr->nTermDLM).array() = 2;    // Every tree pair starts with 2 (root) terminal nodes
-  ctr->nTermDLM1.resize(ctr->nTrees);    (ctr->nTermDLM1).array() = 1;   // Every tree 1 starts with 1 (root) terminal node
-  ctr->nTermDLM2.resize(ctr->nTrees);    (ctr->nTermDLM2).array() = 1;   // Every tree 2 starts with 1 (root) terminal node
+  ctr->nTermDLM.resize(ctr->nTrees);     (ctr->nTermDLM).array() = 2; 
+  ctr->nTermDLM1.resize(ctr->nTrees);    (ctr->nTermDLM1).array() = 1;
+  ctr->nTermDLM2.resize(ctr->nTrees);    (ctr->nTermDLM2).array() = 1;
 
   // Modifier trees
-  // Rcout << "modTree pair terminal nodes # \n";
-  ctr->nTermMod.resize(ctr->nTrees);   (ctr->nTermMod).array() = 1; // Every modifier tree starts with 1 (root) terminal node
-  ctr->modCount.resize(ctr->pM);       (ctr->modCount).setZero();   // Modifier covariate count vector
-  ctr->modInf.resize(ctr->pM);         (ctr->modInf).setZero();     // Sum starts from zero
+  ctr->nTermMod.resize(ctr->nTrees);   (ctr->nTermMod).array() = 1; 
+  ctr->modCount.resize(ctr->pM);       (ctr->modCount).setZero();   
+  ctr->modInf.resize(ctr->pM);         (ctr->modInf).setZero();     
 
   // Partial residual matrix
-  (ctr->Rmat).resize(ctr->n, ctr->nTrees);  (ctr->Rmat).setZero();  // Each ensemble has a partial residual
+  (ctr->Rmat).resize(ctr->n, ctr->nTrees);  (ctr->Rmat).setZero();
   
-  // **** MCMC ****
-  // Rcout << "Initializing MCMC iteration \n";
+  // *** MCMC ***
   // Create a progress meter
   progressMeter* prog = new progressMeter(ctr);
 
@@ -307,8 +276,7 @@ Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){
       ctr->record = 0;
     }
 
-    // **** Update trees and parameters ****
-    // Rcout << "Update trees \n";
+    // *** Update trees and parameters ***
     ctr->R += (ctr->Rmat).col(0); 
 
     // Reset DLM tree parameters
@@ -336,19 +304,17 @@ Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){
     (ctr->modInf).setZero();
 
     // For each dlmTree pair & Modifier tree, perform one MCMC iteration
-    // Rcout << "Iterating through the tree ensemble \n";
     for (t = 0; t < ctr->nTrees; t++) {
-      dlmtreeTDLMMGaussian_TreeMCMC(t,                    // Tree index
-                                    modTrees[t],          // Modtree
-                                    dlmTrees1[t],         // Tree 1 of t-th pair
-                                    dlmTrees2[t],         // Tree 2 of t-th pair
-                                    ctr, dgn, Mod, Exp);  // ctr, record, mod, exposure
+      dlmtreeTDLMMGaussian_TreeMCMC(t,                   
+                                    modTrees[t],          
+                                    dlmTrees1[t],       
+                                    dlmTrees2[t], 
+                                    ctr, dgn, Mod, Exp);
       
-      //[Bayesian backfitting] Update the fitted values after each iteration of t 
+      // Update the fitted values after each iteration of t 
       ctr->fhat += (ctr->Rmat).col(t);
 
       // For each tree pair, update the partial residual
-      // Note: ctr->R is used as t is iterated
       if (t < ctr->nTrees - 1)
         ctr->R += (ctr->Rmat).col(t + 1) - (ctr->Rmat).col(t);
     }
@@ -364,7 +330,6 @@ Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){
     }
 
     // Update gamma
-    // Rcout << "Updating Gaussian(gamma) \n";
     tdlmModelEst(ctr);
 
     // Exposure Shrinkage update
@@ -385,32 +350,23 @@ Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){
     double sigmanu = ctr->sigma2 * ctr->nu;
     if (ctr->shrinkage == 1 || ctr->shrinkage == 3) { 
       for (int i = 0; i < ctr->nExp; i++) {
-        // Eq(16) & Eq(17) from TDLMM
         xiInv = R::rgamma(1, 1.0 / (1.0 + 1.0 / (ctr->muExp(i))));
         ctr->muExp(i) = 1.0 / R::rgamma(0.5 * ctr->totTermExp(i) + 0.5,
                         1.0 / (0.5 * ctr->sumTermT2Exp(i) / sigmanu + xiInv));
 
-        // Similarly update interaction-specific terms as well
+        // Similarly update interaction-specific terms
         if (ctr->interaction) {
           for (int j = i; j < ctr->nExp; j++) {
             if ((j > i) || (ctr->interaction == 2)){
               rHalfCauchyFC(&(ctr->muMix(j, i)), ctr->totTermMix(j, i),
                             ctr->sumTermT2Mix(j, i) / sigmanu);
-              // Rcout << "muMix: e";
-              // Rcout << i;
-              // Rcout << "-e";
-              // Rcout << j;
-              // Rcout << ": ";
-              // Rcout << ctr->muMix(j, i);
-              // Rcout << "\n";
             }
           } // end for loop updating interaction variances
         } // end if interactions
       } // end for loop updating exposure variances
     } // end if shrinkage == 1 or 3
 
-    // **** Update modifier selection ****
-    // Rcout << "Begin Modtree selection update after burn-in \n";
+    // *** Update modifier selection ***
     if ((ctr->b > 1000) || (ctr->b > (0.5 * ctr->burn))) {
       // Modifier selection start
       double beta = R::rbeta(ctr->modZeta, 1.0);
@@ -422,26 +378,28 @@ Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){
         ctr->modKappa = modKappaNew;
       }
 
-      Mod->modProb = rDirichlet((ctr->modCount.array() + ctr->modKappa / ctr->pM).matrix());
+      Mod->modProb = rDirichlet((ctr->modCount.array() + ctr->modKappa / ctr->pM).matrix());  // (m_1 + kappa / J, ..., m_J + kappa / J)
       // end modifier selection
 
-      // HDLMM: Exposure selection posterior calculation
-      if (updateKappa) {
-        double mixKappaNew = R::rgamma(1.0, ctr->nTrees/4.0);
-        double mhrDirMix =
-          logDirichletDensity(ctr->expProb, ((ctr->expCount).array() + mixKappaNew).matrix()) -
-          logDirichletDensity(ctr->expProb, ((ctr->expCount).array() + ctr->mixKappa).matrix());
+      // // HDLMM: Exposure selection posterior calculation (Deprecated)
+      // if (updateKappa) {
+      //   double mixKappaNew = R::rgamma(1.0, ctr->nTrees/4.0);
+      //   double mhrDirMix =
+      //     logDirichletDensity(ctr->expProb, ((ctr->expCount).array() + mixKappaNew).matrix()) -
+      //     logDirichletDensity(ctr->expProb, ((ctr->expCount).array() + ctr->mixKappa).matrix());
 
-        if (log(R::runif(0, 1)) < mhrDirMix && (mhrDirMix == mhrDirMix)){
-          ctr->mixKappa = mixKappaNew;
-        }
-      }
+      //   if (log(R::runif(0, 1)) < mhrDirMix && (mhrDirMix == mhrDirMix)){
+      //     ctr->mixKappa = mixKappaNew;
+      //   }
+      // }
       
-      // Update the exposure selection probability
-      ctr->expProb = rDirichlet(((ctr->expCount).array() + ctr->mixKappa).matrix());
+      // // Update the exposure selection probability
+      // ctr->expProb = rDirichlet(((ctr->expCount).array() + ctr->mixKappa).matrix());
+
+
     } // HDLMM exposure selection end
 
-    // **** Record every iteration ****
+    // *** Record every iteration ***
     // Rcout << "Record: Updating dgn \n";
     if (ctr->record > 0) {
       // Tree pair parameters record (prior & exposures)
@@ -489,72 +447,21 @@ Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){
 
     } // end record
 
-    // if (ctr->diagnostics){
-    //   Rcout << "MCMC Iteration : ";
-    //   Rcout << ctr->b;
-    //   Rcout << "\n";
-
-    //   Rcout << "Sigma2 : ";
-    //   Rcout << ctr->sigma2;
-    //   Rcout << "\n";
-    //   Rcout << "nu : ";
-    //   Rcout << ctr->nu;
-    //   Rcout << "\n";
-
-    //   Rcout << "tau : ";
-    //   for(int p = 0; p < ctr->nTrees; p++){
-    //     Rcout << ctr->tau[p];
-    //     Rcout << "|";
-    //   }
-    //   Rcout << "\n";
-
-    //   Rcout << "muExp(0) : ";
-    //   Rcout << ctr->muExp(0);
-    //   Rcout << "\n";
-    //   Rcout << "muExp(1) : ";
-    //   Rcout << ctr->muExp(1);
-    //   Rcout << "\n";
-    //   Rcout << "muExp(2) : ";
-    //   Rcout << ctr->muExp(2);
-    //   Rcout << "\n";
-
-    //   if(ctr->interaction > 0){
-    //     Rcout << "muMix(0-1) : ";
-    //     Rcout << ctr->muMix(1, 0);
-    //     Rcout << "\n";
-    //     Rcout << "muMix(1-2) : ";
-    //     Rcout << ctr->muMix(2, 1);
-    //     Rcout << "\n";
-    //     Rcout << "muMix(0-2) : ";
-    //     Rcout << ctr->muMix(2, 0);
-    //     Rcout << "\n";
-    //   }
-    
-    //   Rcout << "totTerm (denoted P) : ";
-    //   Rcout << ctr->totTerm;
-    //   Rcout << "\n";
-
-    //   Rcout << "sumTermT2 (denoted D) : ";
-    //   Rcout << ctr->sumTermT2;
-    //   Rcout << "\n";
-    //   Rcout << "----------------- \n";
-    // }
-    
     // Progress mark
     prog->printMark();
   } // end MCMC
   // Rcout << "MCMC complete \n";
 
 
-  // **** Prepare outout ****
+  // *** Prepare outout ***
   // Rcout << "Preparing output \n";
-  Eigen::MatrixXd TreeStructs((dgn->DLMexp).size(), 10);    // TreeStructs is the same as DLM
-  Rcpp::StringVector termRule(dgn->termRule.size());        // Store rules for DLM
-  Rcpp::StringVector termRuleMIX(dgn->termRuleMIX.size());  // Store rules for MIX
+  Eigen::MatrixXd TreeStructs((dgn->DLMexp).size(), 10);    
+  Rcpp::StringVector termRule(dgn->termRule.size());        
+  Rcpp::StringVector termRuleMIX(dgn->termRuleMIX.size());  
 
   // Store rec() vectors
-  std::size_t s;                                // std::size_t is similar to (int)
-  for (s = 0; s < (dgn->DLMexp).size(); s++){    // rbind all rec()'s to build TreeStructs
+  std::size_t s; 
+  for (s = 0; s < (dgn->DLMexp).size(); s++){ 
     TreeStructs.row(s) = dgn->DLMexp[s];
   }
 
@@ -617,17 +524,17 @@ Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){
   delete prog;
   delete ctr;
   delete dgn;
-  for (s = 0; s < Exp.size(); s++){        // Exposure deletion
+  for (s = 0; s < Exp.size(); s++){       
     delete Exp[s];
   }
   delete Mod;
-  for (s = 0; s < modTrees.size(); s++) { // Trees deletion
+  for (s = 0; s < modTrees.size(); s++) { 
     delete modTrees[s];
     delete dlmTrees1[s];
     delete dlmTrees2[s];
   }
 
-  return(Rcpp::List::create(Named("TreeStructs") = wrap(TreeStructs), // This is DLMexp
+  return(Rcpp::List::create(Named("TreeStructs") = wrap(TreeStructs), 
                             Named("MIX") = wrap(MIX),
                             Named("termRules") = wrap(termRule),
                             Named("termRuleMIX") = wrap(termRuleMIX),
@@ -710,7 +617,7 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
                           m1Var, m2Var, mixVar);
                         
   // [Tree pair update]
-  // **** Propose a new TDLMM tree 1 ****
+  // *** Propose a new TDLMM tree 1 ***
   // "New" parameters are set as the current ones until being updated by switch-exposure step.
   // Rcout << "TreeMCMC: Updating tree 1 \n";
   newExp    = m1; 
@@ -963,7 +870,7 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
   }
 
 
-  // **** Propose new modifier tree ****
+  // *** Propose new modifier tree ***
   // std::vector<double> PruneChange = {ctr->stepProbMod[0], ctr->stepProbMod[1]}; // BIG UPDATE (Strict Prior) HERE
   // Rcout << "TreeMCMC: Modifier tree update...\n";
   switch (modTerm.size()) {
@@ -1024,7 +931,7 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
     (dgn->treeDLMAccept).push_back(acc);
   }
 
-  // **** Update parameters ****
+  // *** Update parameters ***
   // Tree shrinkage
   double tauT2 = mhr0.term1T2 / m1Var + mhr0.term2T2 / m2Var;
   if(mixVar != 0){
@@ -1078,11 +985,11 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
   }
   
   // Rcout << "TreeMCMC: Modifier count in modTree ... \n";
-  // **** Count modifiers used in tree ****
+  // *** Count modifiers used in tree ***
   Eigen::VectorXd modCount = countMods(modTree, Mod);
   ctr->modCount += modCount;
 
-  // **** Record **** 
+  // *** Record *** 
   // Rcout << "TreeMCMC: Record ... \n";
   if (ctr->record > 0) {    
     // Rcout << "Modifier count record ... \n";
@@ -1092,7 +999,7 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
       }
     }
 
-    // **** Update DLM partial estimate ****
+    // *** Update DLM partial estimate ***
     // Rcout << "Creating a rule ... \n";
     // Rule: Takes a node and modifier data and returns a string 
     // describing current series of modifier rules leading to terminal node
@@ -1335,7 +1242,7 @@ treeMHR dlmtreeTDLMM_MHR(std::vector<Node*> modTerm,    // Modifier terminal nod
     return(out);
   } // End of modifier tree with only one node
 
-  // **** Multiple Modifier nodes ****
+  // *** Multiple Modifier nodes ***
   // Rcout << "Multiple modifier nodes -> Build blocks by subetting with the modifier tree \n";
   // Xtemp, Ztemp, Rtemp will be updated throughout the modifier group
   Eigen::MatrixXd Xtemp, Ztemp;

@@ -10,14 +10,14 @@ sim.dlmtree <- function(sim = "A",
       data("pm25Exposures")
       exposure.data = sapply(3:39, function(i) pm25Exposures[,i])
     } else {
-      data("co_exp")
+      data("coExp")
       if(sim == "D"){
-        exposure.data <- list("e1" = co_exp[,1:40],
-                              "e2" = co_exp[,41:80],
-                              "e3" = co_exp[,81:120])
+        exposure.data <- list("e1" = coExp[,1:37],
+                              "e2" = coExp[,38:74],
+                              "e3" = coExp[,75:111])
       } else {
-        exposure.data <- list("e1" = co_exp[,1:40],
-                              "e2" = co_exp[,41:80])
+        exposure.data <- list("e1" = coExp[,1:37],
+                              "e2" = coExp[,38:74])
       }
     } 
   }
@@ -46,17 +46,17 @@ sim.dlmtree <- function(sim = "A",
   dlmFun <- function() {}
   if (sim == "A") {
     dlmFun <- function(dat.row) {
-      if (dat.row$mod_num > 0) {  # mod_num = modifier continuous, z1
-        if (dat.row$mod_bin == 1) # mod_bin = modifier tree binary, z2
-          c(rep(0, 10), rep(1, 8), rep(0, pX - 18)) / sd.f # 11 - 18
+      if (dat.row$mod_num > 0) {  
+        if (dat.row$mod_bin == 1)
+          c(rep(0, 10), rep(1, 8), rep(0, pX - 18)) / sd.f 
         else
-          c(rep(0, 16), rep(1, 8), rep(0, pX - 24)) / sd.f # 17 - 26
+          c(rep(0, 16), rep(1, 8), rep(0, pX - 24)) / sd.f 
       } else
         rep(0, pX)
     }
-    fixedIdx <- list(which(dat$mod_num > 0 & dat$mod_bin == 1),   # row numbers of first case
-                     which(dat$mod_num > 0 & dat$mod_bin == 0),   # row numbers of second case
-                     which(dat$mod_num < 0))                      # row numbers of third case
+    fixedIdx <- list(which(dat$mod_num > 0 & dat$mod_bin == 1),   
+                     which(dat$mod_num > 0 & dat$mod_bin == 0),  
+                     which(dat$mod_num < 0))  
   } else if (sim == "B") {
     dlmFun <- function(dat.row) {
       if (dat.row$mod_num > 0) {
@@ -77,13 +77,13 @@ sim.dlmtree <- function(sim = "A",
       d
     }
     fixedIdx <- list(1:nrow(dat))
-  } else if (sim == "D") {  # Three components but no interaction case
+  } else if (sim == "D") {  
     start.time1 <- sample(1:(pX - 7), 1)
     start.time2 <- sample(1:(pX - 7), 1)
     start.time3 <- sample(1:(pX - 7), 1)
     dlmFun <- function(dat.row) {
-      if (dat.row$mod_num > 0) {  # mod_num = modifier continuous, z1
-        if (dat.row$mod_bin == 1){ # mod_bin = modifier tree binary, z2
+      if (dat.row$mod_num > 0) { 
+        if (dat.row$mod_bin == 1){
           e1 <- rep(0, pX)
           e1[start.time1:(start.time1 + 7)] <- effect.size
           e1
@@ -98,14 +98,14 @@ sim.dlmtree <- function(sim = "A",
         e3
       }
     }
-    fixedIdx <- list(which(dat$mod_num > 0 & dat$mod_bin == 1),   # row numbers of first case
-                     which(dat$mod_num > 0 & dat$mod_bin == 0),   # row numbers of second case
-                     which(dat$mod_num < 0))                      # row numbers of third case
+    fixedIdx <- list(which(dat$mod_num > 0 & dat$mod_bin == 1),   
+                     which(dat$mod_num > 0 & dat$mod_bin == 0),  
+                     which(dat$mod_num < 0))               
 
   } else if (sim == "E"){
-    start.time11 <- sample(1:(pX - 7), 1)
-    start.time12 <- sample(1:(pX - 7), 1)
-    start.time2 <- sample(1:(pX - 7), 1)
+    start.time11 <- sample(1:(pX - 7), 1) # Subgroup 1 - main t4
+    start.time12 <- sample(1:(pX - 7), 1) # Subgroup 1 - interaction t6
+    start.time2 <- sample(1:(pX - 7), 1)  # Subgroup 2 - main t5
     
     eff11 <- eff12 <- eff2 <- rep(0, pX)
     eff11[start.time11:(start.time11 + 7)] <- effect.size
@@ -114,15 +114,15 @@ sim.dlmtree <- function(sim = "A",
     int.size = 0.025
 
     dlmFun <- function(dat.row) {
-      if (dat.row$mod_num > 0) {  # mod_num = modifier continuous, z1
-        list("e1" = eff11, "e2" = eff2) 
+      if (dat.row$mod_num > 0) {  
+        list("e1" = eff11, "e2" = eff12) 
       } else {
-        eff12 
+        eff2 
       }
     }
     
-    fixedIdx <- list(which(dat$mod_num > 0),   # row numbers of first case
-                     which(dat$mod_num <= 0))  # row numbers of third case
+    fixedIdx <- list(which(dat$mod_num > 0), 
+                     which(dat$mod_num <= 0)) 
 
   } 
 
@@ -151,38 +151,25 @@ sim.dlmtree <- function(sim = "A",
         currentIdx = indices[i]
 
         if (group == 1){
-          tmpList = dlmFun(dat[currentIdx, , drop = F])
+          effList = dlmFun(dat[currentIdx, , drop = F])
 
-          e1_effect = sum(exposure.data[[1]][currentIdx, ] * tmpList$e1)
-          e2_effect = sum(exposure.data[[2]][currentIdx, ] * tmpList$e2)
+          e1_effect = sum(exposure.data[[1]][currentIdx, ] * effList$e1)
+          e2_effect = sum(exposure.data[[2]][currentIdx, ] * effList$e2)
 
           f[currentIdx] = dat[currentIdx, , drop = F]$mod_scale * e1_effect + int.size * (e1_effect * e2_effect) # z1e1 + e1xe2
     
         } else {
           f[currentIdx] = dat[currentIdx, , drop = F]$mod_scale * sum(exposure.data[[1]][currentIdx, ] * dlmFun(dat[currentIdx, , drop = F])) # z1e1
-          # f[currentIdx] = sum(exposure.data[[group]][currentIdx, ] * dlmFun(dat[currentIdx, , drop = F]))
         } 
       }
     }
-
   } 
 
   # Scale f
   sd.f <- sd(f)
   f <- f / sd.f
 
-  # # Marginalization of exposure effect for scenario E
-  # # MargDLM1 & MargDLM2 are matrices since heterogeneous
-  # if(sim = "E"){
-  #   margDLM1 <- margDLM2 <- matrix(0, n.samp, pX)
-    
-  #   int.size = 0.025
-  #   truthInt <- outer(eff1, eff2) * int.size
-  #   margDLM1 <- (eff1 + rowSums(truthInt) * mean(exposure.data[[2]])) / sd.f 
-  #   margDLM2 <- colSums(truthInt) * mean(exposures[[1]])
-  # }
-    
-
+  # y sample
   params <- rnorm(13)
   c <- as.matrix(dat) %*% params
 

@@ -3,7 +3,7 @@
 #' @param effect character (A - D) indicating simulation scenario
 #' @param error.to.signal scalar value setting error: sigma^2/var(f)
 #'
-#' @return
+#' @return Simulated data and true parameters for tdlnm
 #' @export
 #'
 sim.tdlnm <- function(effect = "A", error.to.signal = 1)

@@ -3,7 +3,7 @@
 #' @param object an object of type 'summary.tdlnm', result of call to summary.tdlnm()
 #' @param digits integer number of digits to round
 #'
-#' @return
+#' @return output in R console
 #' @export print.summary.tdlnm
 #' @export
 #'

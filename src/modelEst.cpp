@@ -15,6 +15,8 @@
 #include "Fncs.h"
 #include "Node.h"
 #include "NodeStruct.h"
+#include <random>
+#include <algorithm>
 using namespace Rcpp;
 using Eigen::VectorXd;
 using Eigen::MatrixXd;
@@ -412,7 +414,7 @@ VectorXd countMods(Node* tree, modDat* Mod)
       }
     }
     // if (unavail.size() > 0) {
-    //   std::random_shuffle(unavail.begin(), unavail.end());
+    //   std::shuffle(unavail.begin(), unavail.end(), std::default_random_engine());
     //   double totProb = unavailProb.sum();
     //   int pseudoDraw = R::rgeom(std::max(0.00000001, 1 - totProb));
     //   int binomDraw = 0;

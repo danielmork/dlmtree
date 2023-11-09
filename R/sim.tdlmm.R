@@ -12,7 +12,7 @@
 #' @param n sample size for simulation
 #' @param expList named list of exposure data
 #'
-#' @return
+#' @return Simulated data and true parameters for tdlnm
 #' @export
 #'
 sim.tdlmm <- function(sim = 1,
