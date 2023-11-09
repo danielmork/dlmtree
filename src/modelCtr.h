@@ -10,43 +10,43 @@ public:
   double sigma2, xiInvSigma2, nu, VTheta1Inv, totTerm, sumTermT2;
   double modKappa, modZeta;
   std::vector<double> stepProb, treePrior;
-  Eigen::VectorXd Y0; // Fixed response
-  Eigen::MatrixXd Z; // Design matrix for fixed effect
-  Eigen::VectorXd R; // Partial residual (Also, Y - fhat): Store the current one -> update the next one
-  Eigen::MatrixXd Rmat; // Each column is partial residual
-  Eigen::MatrixXd Vg; // V_gamma
-  Eigen::MatrixXd VgInv; // V_gamma inverse
-  Eigen::MatrixXd VgChol; // V_gamma cholesky decomposition
-  Eigen::VectorXd X1; // X1? -> Maybe for tdlnm?
-  Eigen::VectorXd ZtX1; // Z transponse * X1
-  Eigen::VectorXd VgZtX1; // V_gamma * Z transpose * X1 -> Maybe for tdlnm?
-  Eigen::VectorXd gamma; // confounding coefficients
-  Eigen::VectorXd fhat; // fitted values
-  Eigen::VectorXd tau; // tau for IG
+  Eigen::VectorXd Y0;         // Fixed response
+  Eigen::MatrixXd Z;          // Design matrix for fixed effect
+  Eigen::VectorXd R;          // Partial residual (Also, Y - fhat): Store the current one -> update the next one
+  Eigen::MatrixXd Rmat;       // Each column is partial residual
+  Eigen::MatrixXd Vg;         // V_gamma
+  Eigen::MatrixXd VgInv;      // V_gamma inverse
+  Eigen::MatrixXd VgChol;     // V_gamma cholesky decomposition
+  Eigen::VectorXd X1;        
+  Eigen::VectorXd ZtX1;       // Z transponse * X1
+  Eigen::VectorXd VgZtX1;     // V_gamma * Z transpose * X1 -> Maybe for tdlnm?
+  Eigen::VectorXd gamma;      // confounding coefficients
+  Eigen::VectorXd fhat;       // fitted values
+  Eigen::VectorXd tau;        // tau for IG
   
   // Binomial ----------------------------------------------
   bool binomial;
-  Eigen::VectorXd Omega; // The latent variable for Polya-Gamma
-  Eigen::MatrixXd Zw; // Z * Omega
-  Eigen::MatrixXd Zw1; // Z * Omega1 (binom for Zinb)
-  Eigen::VectorXd kappa; // Kappa = y_i - n_i/2
-  Eigen::VectorXd Ystar; // Ystar which is updated every iteration of MCMC, also called z1 in ZINB
+  Eigen::VectorXd Omega;        // The latent variable for Polya-Gamma
+  Eigen::MatrixXd Zw;           // Z * Omega
+  Eigen::MatrixXd Zw1;          // Z * Omega1 (binom for Zinb)
+  Eigen::VectorXd kappa;        // Kappa = y_i - n_i/2
+  Eigen::VectorXd Ystar;        // Ystar which is updated every iteration of MCMC, also called z1 in ZINB
   Eigen::VectorXd binomialSize; // n from Binomial (n, p)
-  Eigen::VectorXd Lambda; // Kappa / Omega
+  Eigen::VectorXd Lambda;       
 
   // ZINB & NB --------------------------------------------------
   bool zinb; // Indicator boolean for ZINB
 
   // Binary component of ZINB (labelled with 1)
-  Eigen::MatrixXd Z1; // Design matrix for fixed effect
-  Eigen::VectorXd b1;       // coefficients
-  Eigen::MatrixXd Vg1;       // V_gamma
-  Eigen::MatrixXd VgInv1;    // V_gamma inverse
-  Eigen::MatrixXd VgChol1;   // V_gamma cholesky decomposition
-  Eigen::VectorXd omega1;   // Polya-gamma latent variable (nx1)
+  Eigen::MatrixXd Z1;         // Design matrix for fixed effect
+  Eigen::VectorXd b1;         // coefficients
+  Eigen::MatrixXd Vg1;        // V_gamma
+  Eigen::MatrixXd VgInv1;     // V_gamma inverse
+  Eigen::MatrixXd VgChol1;    // V_gamma cholesky decomposition
+  Eigen::VectorXd omega1;     // Polya-gamma latent variable (nx1)
   Eigen::VectorXd z1;
-  Eigen::MatrixXd Sigma1;   // Var-Cov for MCMC update (nxn)
-  Eigen::VectorXd Mu1;      // Mean for MCMC update (nx1)
+  Eigen::MatrixXd Sigma1;     // Var-Cov for MCMC update (nxn)
+  Eigen::VectorXd Mu1;        // Mean for MCMC update (nx1)
   
   // Count component(Negative Binomial) of ZINB (labelled with 2)
   int nStar;                  // Number of At-risk observations (w = 1)
@@ -63,20 +63,17 @@ public:
   int r;                      // dispersion parameter of negative binomial
   Eigen::VectorXd rVec;       // a vector of dispersion parameter: rep(r, n)
   double MHratio;             // Metropolis-Hasting ratio
-  bool swapStep;              // Swap-step
 
   // Updating at-risk component
-  Eigen::VectorXd w;            // At-risk latent variable
-  std::vector<int> NBidx;   // Vector containing non-zero y indices
-  // Subsetting parameters
-  Eigen::VectorXd Ytemp; // Fixed response
-  Eigen::MatrixXd Ztemp; // Design matrix for fixed effect
-  Eigen::VectorXd Rtemp; // Partial residual (Also, Y - fhat): Store the current one -> update the next one
-  Eigen::MatrixXd Rmat_temp; // Each column is partial residual
-
-
-  // Useful vector
-  Eigen::VectorXd ones;
+  Eigen::VectorXd w;          // At-risk latent variable
+  std::vector<int> NBidx;     // Vector containing non-zero y indices
+  
+  Eigen::VectorXd Ytemp;      // Fixed response
+  Eigen::MatrixXd Ztemp;      // Design matrix for fixed effect
+  Eigen::VectorXd Rtemp;      // Partial residual (Also, Y - fhat): Store the current one -> update the next one
+  Eigen::MatrixXd Rmat_temp;  // Each column is partial residual
+  
+  Eigen::VectorXd ones;       // Vector of ones
 };
 
 struct tdlmCtr : modelCtr { // tdlmCtr: Child class of modelCtr
@@ -86,20 +83,20 @@ public:
   // Mixtures
   int interaction, nExp, nMix;
   double modZeta, modKappa;
-  Eigen::VectorXd expProb; // Probability to choose exposure
-  Eigen::VectorXd expCount; // How many trees use a certain exposure: length of exposures we have
-  Eigen::MatrixXd mixCount; // Same thing with tree pairs (triangle)
+  Eigen::VectorXd expProb;        // Probability to choose exposure
+  Eigen::VectorXd expCount;       // How many trees use a certain exposure: length of exposures we have
+  Eigen::MatrixXd mixCount;       // Same thing with tree pairs (triangle)
   Eigen::VectorXd expInf;
   Eigen::MatrixXd mixInf;
   Eigen::VectorXd nTerm2;
-  Eigen::VectorXd tree1Exp; // Exposure of tree1 of #A tree pairs
-  Eigen::VectorXd tree2Exp; // Exposure of tree2 of #A tree pairs
-  Eigen::VectorXd totTermExp; // tree terminal nodes related to exposure
-  Eigen::MatrixXd totTermMix; // tree1 with 3 x tree2 with 4 -> (1, 2) = 12: row, column represents exposures (triangle)
-  Eigen::VectorXd sumTermT2Exp; // Terminal node effect squared
-  Eigen::MatrixXd sumTermT2Mix; // Same with mixture
-  Eigen::VectorXd muExp; // Exposure specific-variance parameter
-  Eigen::MatrixXd muMix; // Same with mixture
+  Eigen::VectorXd tree1Exp;       // Exposure of tree1 of #A tree pairs
+  Eigen::VectorXd tree2Exp;       // Exposure of tree2 of #A tree pairs
+  Eigen::VectorXd totTermExp;     // tree terminal nodes related to exposure
+  Eigen::MatrixXd totTermMix;     // tree1 with 3 x tree2 with 4 -> (1, 2) = 12: row, column represents exposures (triangle)
+  Eigen::VectorXd sumTermT2Exp;   // Terminal node effect squared
+  Eigen::MatrixXd sumTermT2Mix;   // Same with mixture
+  Eigen::VectorXd muExp;          // Exposure specific-variance parameter
+  Eigen::MatrixXd muMix;          // Same with mixture
 };
 
 struct tdlmLog {
@@ -231,14 +228,11 @@ public:
   // Eigen::MatrixXd muMix;
 };
 
-// ----- Binomial Model -----
 void tdlmModelEst(modelCtr *ctr);
-// Binomial model
-Eigen::VectorXd rcpp_pgdraw(Eigen::VectorXd, Eigen::VectorXd); // Multiple Draw from Polya-Gamma (Vector)
-double rcpp_pgdraw(double, double); // Single Draw from Polya-Gamma
-// void tdlmModelEstBinomial(modelCtr *ctr);
-// ----- ZINB Model -----
-double pgdraw_sp(double, double);
+
+// Binomial / ZINB model
+Eigen::VectorXd rcpp_pgdraw(Eigen::VectorXd, Eigen::VectorXd); 
+double rcpp_pgdraw(double, double);
 
 void dlmtreeRecDLM(dlmtreeCtr* ctr, dlmtreeLog* dgn);
 class Node;

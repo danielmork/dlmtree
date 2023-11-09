@@ -12,7 +12,7 @@
 #' @param n sample size for simulation
 #' @param expList named list of exposure data
 #'
-#' @return
+#' @return Simulated data and true parameters
 #' @export
 #'
 sim.tdlmm <- function(sim = 1,
@@ -43,7 +43,7 @@ sim.tdlmm <- function(sim = 1,
   n.samp <- min(nrow(expList[[1]]), n)    # minimum between {observation and the number of required sampling}
   idx <- sample(nrow(expList[[1]]), size = n.samp) # sample n.samp# from the entire sample n. -> Used as indices
   data <- cbind(matrix(rnorm(5 * n.samp), n.samp, 5),           # 5 guassian predictors (n.samp x 5)
-                matrix(rbinom(5 * n.samp, 1, .5), n.samp, 5))   # 5 binary predictors (n.samp x 5)                                                               # => data: (n.samp x 10)
+                matrix(rbinom(5 * n.samp, 1, .5), n.samp, 5))   # 5 binary predictors (n.samp x 5)       # => data: (n.samp x 10)
   colnames(data) <- c(paste0("c", 1:5), paste0("b", 1:5))       # Name the columns with c1 - c5 and b1 - b5
                                                                 # c for continuous, b for binary
   params <- rnorm(10)                                           # Sample true beta from a standard normal

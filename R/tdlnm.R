@@ -29,9 +29,9 @@
 #' response with logit link, 'zinb' for zero-inflated negative binomial model
 #' @param binomial.size integer type scalar (if all equal, default = 1) or
 #' vector defining binomial size for 'logit' family
-#' @param formula_zi object of class formula, a symbolic description of the at-risk 
+#' @param formula_zi object of class formula, a symbolic description of the ZI
 #' model to be fitted, e.g. y ~ a + b. This only applies to ZINB where covariates for
-#' at-risk model is different from NB model. This is same as the main formula by default
+#' ZI model is different from NB model. This is same as the main formula by default
 #' @param keep_XZ false (default) or true: keep the model scale exposure and covariate data
 #' @param tree.params numerical vector of alpha and beta hyperparameters
 #' controlling tree depth (see Bayesian CART, 1998), default: alpha = 0.95,
@@ -126,12 +126,11 @@ tdlnm <- function(formula,
     model$binomial <- 1
   }
 
-  # If not ZINB, set a flag to false (0)
+  # ZINB flag
   model$zinb <- 0
-  # If ZINB is called, set the flag to true
   if(family == "zinb"){
     model$zinb <- 1
-    #model$wTrue = wTrue
+    model$sigma2 <- 1
   }
 
   # tree parameters
@@ -193,7 +192,7 @@ tdlnm <- function(formula,
   model$formula_zi <- force(as.formula(formula_zi)) 
 
   tf <- terms.formula(model$formula, data = data)
-  tf_zi <- terms.formula(model$formula_zi, data = data) # terms.formula with data -> returns model.matrix & attributes
+  tf_zi <- terms.formula(model$formula_zi, data = data)
 
   # Sanity check for response
   if (!attr(tf, "response") & !attr(tf_zi, "response"))
@@ -313,28 +312,28 @@ tdlnm <- function(formula,
 
 
   # ---- [Scale data and setup exposures] ----
-  data <- droplevels(data)                                        # Drop all levels of factors in the data.
-  mf <- model.frame(model$formula, data = data,                   # Extract Model information with formula and data
+  data <- droplevels(data)                                        
+  mf <- model.frame(model$formula, data = data,                   
                     drop.unused.levels = TRUE,
                     na.action = NULL)
-  mf_zi <- model.frame(model$formula_zi, data = data,                   # Extract Model information with formula and data
+  mf_zi <- model.frame(model$formula_zi, data = data,             
                       drop.unused.levels = TRUE,
                       na.action = NULL)
   if (any(is.na(mf)) & any(is.na(mf_zi)))
     stop("missing values in model data, use `complete.cases()` to subset data")
   
   # Organize response variable & fixed effect variable
-  model$Y <- force(model.response(mf))                            # Response Y
+  model$Y <- force(model.response(mf))                           
 
-  model$Z <- force(model.matrix(model$formula, data = mf))        # Fixed effect matrix, Z (c1 ~ c5, b1 ~ b5)
-  QR <- qr(crossprod(model$Z))                                    # t(Z)%*%Z and its QR decomposition
+  model$Z <- force(model.matrix(model$formula, data = mf))     
+  QR <- qr(crossprod(model$Z))                           
   model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)])]      
   model$droppedCovar <- colnames(model$Z)[QR$pivot[-seq_len(QR$rank)]]
   model$Z <- force(scaleModelMatrix(model$Z))
   rm(QR)
 
-  model$Z_zi <- force(model.matrix(model$formula_zi, data = mf_zi))        # Fixed effect matrix, Z (c1 ~ c5, b1 ~ b5)
-  QR_zi <- qr(crossprod(model$Z_zi))                                    # t(Z)%*%Z and its QR decomposition
+  model$Z_zi <- force(model.matrix(model$formula_zi, data = mf_zi))   
+  QR_zi <- qr(crossprod(model$Z_zi)) 
   model$Z_zi <- model$Z_zi[,sort(QR_zi$pivot[seq_len(QR_zi$rank)])]           
   model$droppedCovar_zi <- colnames(model$Z_zi)[QR_zi$pivot[-seq_len(QR_zi$rank)]]
   model$Z_zi <- force(scaleModelMatrix(model$Z_zi))

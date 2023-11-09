@@ -20,12 +20,12 @@
 #' @param n.iter integer for number of iterations to run model after burn-in
 #' @param n.thin integer thinning factor, i.e. keep every tenth iteration
 #' @param family 'gaussian' for continuous response, 'logit' for binomial
-#' response with logit link, or 'zinb' for zero-inflated negative binomial model
+#' response with logit link, or 'zinb' for zero-inflated negative binomial with logit link
 #' @param binomial.size integer type scalar (if all equal, default = 1) or
 #' vector defining binomial size for 'logit' family
-#' @param formula_zi object of class formula, a symbolic description of the at-risk 
+#' @param formula_zi object of class formula, a symbolic description of the ZI
 #' model to be fitted, e.g. y ~ a + b. This only applies to ZINB where covariates for
-#' at-risk model is different from NB model. This is same as the main formula by default
+#' ZI model is different from NB model. This is same as the main formula by default
 #' @param keep_XZ false (default) or true: keep the model scale exposure and covariate data
 #' @param mixture.interactions 'noself' (default) which estimates interactions
 #' only between two different exposures, 'all' which also allows
@@ -68,7 +68,6 @@ tdlmm <- function(formula,
                   mixture.interactions = "noself",
                   tree.params = c(.95, 2),
                   step.prob = c(.25, .25, .25),
-                  swap.step = TRUE,
                   mix.prior = 1,
                   shrinkage = "all",
                   subset = NULL,
@@ -76,8 +75,8 @@ tdlmm <- function(formula,
                   diagnostics = FALSE,
                   ...)
 {
-  model <- list()                 # Create a list to send to tdlmm_Cpp.cpp 
-  options(stringsAsFactors = F)   # String is not a factor
+  model <- list()                 
+  options(stringsAsFactors = F)
 
   # ---- Check user inputs ----
   # number of iterations [Control for MCMC iteration vs thinning]
@@ -93,17 +92,17 @@ tdlmm <- function(formula,
   if (!is.list(exposure.data))
     stop("`exposure.data` must be a list of named exposures")
 
-  model$nExp <- length(exposure.data)     # Number of exposure
-  model$expNames <- names(exposure.data)  # Names of exposures 
+  model$nExp <- length(exposure.data)  
+  model$expNames <- names(exposure.data)
 
-  # [Exposure name check] exposure names cannot be empty & # of exposure names must match with # of exposures
+  # [Exposure name check]
   if (is.null(model$expNames) || length(unique(model$expNames)) != model$nExp || any(model$expNames == ""))
     stop("`exposure.data` must be a named list with unique, non-empty names")
 
-  model$pExp <- ncol(exposure.data[[1]])  # Total time lag (37)
+  model$pExp <- ncol(exposure.data[[1]])
 
   # Sanity check for each exposure 
-  for (i in 1:length(exposure.data)) {    # length(exposure.data) = Number of exposures (nExp)
+  for (i in 1:length(exposure.data)) {
     # [Not numeric values for exposure data]
     if (!is.numeric(exposure.data[[i]]))
       stop("each exposure in list `exposure.data` must be a numeric matrix")
@@ -120,7 +119,7 @@ tdlmm <- function(formula,
   }
 
   # [iteration control] Check if all MCMC parameters are positive integers
-  if (all(sapply(list(n.trees, n.burn, n.iter, n.thin), # all() = opposite of any()
+  if (all(sapply(list(n.trees, n.burn, n.iter, n.thin),
                  function(i) is.integer(i) & i > 0)))
     stop("n.* must be integer and > 0")
 
@@ -129,9 +128,8 @@ tdlmm <- function(formula,
     stop("`family` must be one of `gaussian`, `logit`, or 'zinb'")
 
   # [binomial size] Only for binomial 
-  # If not binomial, 
-  model$binomial <- 0                       # Set binomial flag to 0.
-  model$binomialSize <- rep(0, nrow(data))  # binomialSize is a vector of zero 
+  model$binomial <- 0                     
+  model$binomialSize <- rep(0, nrow(data))
 
   # If binomial is called, update the parameters(binomial, binomialSize) above.
   if (family == "logit") {
@@ -148,9 +146,8 @@ tdlmm <- function(formula,
     model$binomial <- 1
   }
 
-  # If not ZINB, set a flag to false (0)
+  # ZINB flag
   model$zinb <- 0
-  # If ZINB is called, set the flag to true
   if(family == "zinb"){
     model$zinb <- 1
     model$sigma2 <- 1
@@ -161,15 +158,15 @@ tdlmm <- function(formula,
   if (!(mixture.interactions %in% c("noself", "all", "none")))
     stop("`mixture.interactions must be one of `noself`, `all`, `none`")
 
-  if (mixture.interactions %in% c("marginal", "none")) { # TDLMMadd
-    model$interaction <- 0      # No interaction
-    model$nMix <- 0             # No interaction terms
-  } else if (mixture.interactions == "noself") { # TDLMMns
-    model$interaction <- 1      # All interaction except oneself
-    model$nMix <- model$nExp * (model$nExp - 1) / 2 # (M choose 2) = M(M-1)/2
-  } else {  # TDLMMall
-    model$interaction <- 2      # All interaction including oneself
-    model$nMix <- model$nExp * (model$nExp + 1) / 2 # (M choose 2) + M(exposure itself) = M(M+1)/2
+  if (mixture.interactions %in% c("marginal", "none")) {
+    model$interaction <- 0     
+    model$nMix <- 0   
+  } else if (mixture.interactions == "noself") { 
+    model$interaction <- 1  
+    model$nMix <- model$nExp * (model$nExp - 1) / 2 
+  } else { 
+    model$interaction <- 2   
+    model$nMix <- model$nExp * (model$nExp + 1) / 2 
   }
 
   # [tree parameters]
@@ -191,43 +188,34 @@ tdlmm <- function(formula,
 
 
   # ---- [Model control arguments] ----
-  model$nTrees <- force(n.trees) # Number ot trees
-  model$nBurn <- force(n.burn)   # Number of burn-in
-  model$nIter <- force(n.iter)   # Number of iteration
-  model$nThin <- force(n.thin)   # Number of thinning
-  model$mcmcIter <- force(floor(n.iter / n.thin)) # rounding MCMC iteration / thinning
-  model$family <- force(family)  # Gaussian / Logit / ZINB
-  model$verbose <- force(verbose) # Boolean for print output
-  model$diagnostics <- force(diagnostics) # keep model diagnostic
-  model$treePrior <- force(tree.params)   # alpha, beta
+  model$nTrees <- force(n.trees) 
+  model$nBurn <- force(n.burn)
+  model$nIter <- force(n.iter) 
+  model$nThin <- force(n.thin)
+  model$mcmcIter <- force(floor(n.iter / n.thin))
+  model$family <- force(family) 
+  model$verbose <- force(verbose) 
+  model$diagnostics <- force(diagnostics) 
+  model$treePrior <- force(tree.params) 
   
-  model$swapStep <- force(swap.step)
-  if(swap.step){
-    model$stepProb <- force(c(step.prob[1], step.prob[1], step.prob[2], step.prob[3])) # Step probabilities
-    model$stepProb <- force(model$stepProb / sum(model$stepProb))
-  } else {
-    if(model$nExp > 2){
-      stop("There must be only two exposures to impose no-swapping")
-    }
+  # Step probabilities
+  model$stepProb <- force(c(step.prob[1], step.prob[1], step.prob[2], step.prob[3])) 
+  model$stepProb <- force(model$stepProb / sum(model$stepProb))
 
-    model$stepProb <- force(c(step.prob[1], step.prob[2], step.prob[3], 0)) # Step probabilities
-    model$stepProb <- force(model$stepProb / sum(model$stepProb))
-  }
-
-  model$mixPrior <- mix.prior # Positive scalar hyperparameter for sparsity of exposures (Linero)
+  model$mixPrior <- mix.prior
   model$shrinkage <- ifelse(shrinkage == "all", 3,
                             ifelse(shrinkage == "trees", 2,
-                                   ifelse(shrinkage == "exposures", 1, 0))) # Assign shrinkage to 3, 2, 1 (horseshoe)
+                                   ifelse(shrinkage == "exposures", 1, 0)))
 
   if (model$verbose)
     cat("Preparing data...\n")
 
   # ---- [Create data subset] ----
   if (!is.null(subset)) {
-    if (length(subset) > 1 & is.integer(subset) & # If subset index vector is not null, all the indices are proper,
+    if (length(subset) > 1 & is.integer(subset) & 
         all(subset > 0) & all(subset <= nrow(data))) {
-      data <- data[subset,] # Subset the data
-      exposure.data <- lapply(exposure.data, function(i) i[subset,]) # Subset the rows of exposure data
+      data <- data[subset,]
+      exposure.data <- lapply(exposure.data, function(i) i[subset,]) 
       if (model$family == "logit")
         model$binomialSize <- model$binomialSize[subset]
     } else {
@@ -241,10 +229,10 @@ tdlmm <- function(formula,
     formula_zi <- formula
   }
 
-  model$formula <- force(as.formula(formula))     # Save the string "y ~ ." as a formula type
+  model$formula <- force(as.formula(formula))     
   model$formula_zi <- force(as.formula(formula_zi)) 
-  tf <- terms.formula(model$formula, data = data) # terms.formula with data -> returns model.matrix & attributes
-  tf_zi <- terms.formula(model$formula_zi, data = data) # terms.formula with data -> returns model.matrix & attributes
+  tf <- terms.formula(model$formula, data = data) 
+  tf_zi <- terms.formula(model$formula_zi, data = data) 
 
   # Sanity check for response
   if (!attr(tf, "response") & !attr(tf_zi, "response"))
@@ -261,49 +249,48 @@ tdlmm <- function(formula,
 
   # ---- [Exposure splits] ----
   model$splitProb <- as.double(c())
-  model$timeProb <- force(rep(1 / (model$pExp - 1), model$pExp - 1)) # Uniform probability 1/36 of 36 - time lags
+  model$timeProb <- force(rep(1 / (model$pExp - 1), model$pExp - 1))
   
   # Exposure data organize
   model$X <- list() 
-  for (i in 1:model$nExp) { # For each exposure,
-    model$X[[i]] <- force(list(Xscale = sd(exposure.data[[i]]),     # Store standard deviation of exposure data
-                               X = exposure.data[[i]]))             # Store exposure data itself
-    model$X[[i]]$X <- force(model$X[[i]]$X / model$X[[i]]$Xscale)   # Scale the stored exposure data
-    model$X[[i]]$Xrange <- force(range(model$X[[i]]$X))             # Store range of exposure data
-    model$X[[i]]$Xquant <- force(quantile(model$X[[i]]$X, 0:100/100) *  model$X[[i]]$Xscale) # Store unscaled quantile
-    model$X[[i]]$intX <- force(mean(model$X[[i]]$X))                # Store the mean of scaled exposure data
-    # Tcalc is a matrix (n x T) where column j, (j = 1,...,T) represents a rowsum of exposure data from t = 1 to t = j
+  for (i in 1:model$nExp) {
+    model$X[[i]] <- force(list(Xscale = sd(exposure.data[[i]]),   
+                               X = exposure.data[[i]]))           
+    model$X[[i]]$X <- force(model$X[[i]]$X / model$X[[i]]$Xscale) 
+    model$X[[i]]$Xrange <- force(range(model$X[[i]]$X))           
+    model$X[[i]]$Xquant <- force(quantile(model$X[[i]]$X, 0:100/100) *  model$X[[i]]$Xscale)
+    model$X[[i]]$intX <- force(mean(model$X[[i]]$X))              
     model$X[[i]]$Tcalc <-
       force(sapply(1:ncol(model$X[[i]]$X), function(j) { 
         rowSums(model$X[[i]]$X[, 1:j, drop = F]) }))       
   }
-  names(model$X) <- model$expNames                                  # Save exposure names
-  model$expProb <- force(rep(1/length(model$X), length(model$X)))   # Uniform probability for exposure selection
+  names(model$X) <- model$expNames                                
+  model$expProb <- force(rep(1/length(model$X), length(model$X))) 
 
 
   # ---- [Scale data and setup exposures] ----
-  data <- droplevels(data)                                        # Drop all levels of factors in the data.
-  mf <- model.frame(model$formula, data = data,                   # Extract Model information with formula and data
+  data <- droplevels(data)                                     
+  mf <- model.frame(model$formula, data = data,                
                     drop.unused.levels = TRUE,
                     na.action = NULL)
-  mf_zi <- model.frame(model$formula_zi, data = data,                   # Extract Model information with formula and data
+  mf_zi <- model.frame(model$formula_zi, data = data,               
                       drop.unused.levels = TRUE,
                       na.action = NULL)
   if (any(is.na(mf)) & any(is.na(mf_zi)))
     stop("missing values in model data, use `complete.cases()` to subset data")
   
   # Organize response variable & fixed effect variable
-  model$Y <- force(model.response(mf))                            # Response Y
+  model$Y <- force(model.response(mf))                        
 
-  model$Z <- force(model.matrix(model$formula, data = mf))        # Fixed effect matrix, Z (c1 ~ c5, b1 ~ b5)
-  QR <- qr(crossprod(model$Z))                                    # t(Z)%*%Z and its QR decomposition
+  model$Z <- force(model.matrix(model$formula, data = mf))  
+  QR <- qr(crossprod(model$Z))                              
   model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)])]      
   model$droppedCovar <- colnames(model$Z)[QR$pivot[-seq_len(QR$rank)]]
   model$Z <- force(scaleModelMatrix(model$Z))
   rm(QR)
 
-  model$Z_zi <- force(model.matrix(model$formula_zi, data = mf_zi))        # Fixed effect matrix, Z (c1 ~ c5, b1 ~ b5)
-  QR_zi <- qr(crossprod(model$Z_zi))                                    # t(Z)%*%Z and its QR decomposition
+  model$Z_zi <- force(model.matrix(model$formula_zi, data = mf_zi))  
+  QR_zi <- qr(crossprod(model$Z_zi))                                 
   model$Z_zi <- model$Z_zi[,sort(QR_zi$pivot[seq_len(QR_zi$rank)])]           
   model$droppedCovar_zi <- colnames(model$Z_zi)[QR_zi$pivot[-seq_len(QR_zi$rank)]]
   model$Z_zi <- force(scaleModelMatrix(model$Z_zi))

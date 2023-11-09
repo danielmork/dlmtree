@@ -11,6 +11,9 @@
 
 \item{digits}{integer number of digits to round}
 }
+\value{
+output in R console
+}
 \description{
 print.summary.tdlnm
 }

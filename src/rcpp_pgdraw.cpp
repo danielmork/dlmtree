@@ -342,12 +342,10 @@ struct FD {
 };
 
 // Functions from rcpp_pgdraw.cpp
-double pgdraw_sp(double, double);  // main function
 double phi_mode(double);         // mode of phi = tanh(z) / z
 double v_eval(double);            // alpha_l, alpha_r computing function
 double tangent_to_eta(double, double, double, Line&); // Takes values and returns slope and intercept
 double left_tgamma(double, double, double);
-double saddlepoint(double, double, double);
 
 
 // Computes mode for the left point of the envelope
@@ -553,108 +551,4 @@ double ltgamma(double shape, double rate, double trunc){
   }
 
   return trunc * (x/b);
-}
-
-double saddlepoint(double x, double n, double z){
-  // double v  = yv.v_func(x);
-  double v = v_eval(x);
-  double u  = 0.5 * v;
-  double z2 = z * z;
-  double t  = u + 0.5 * z2;
-  // double m  = y_func(-1 * z2);
-
-  double phi = log(cosh(z)) - log(cos_rt(v)) - t * x;
-
-  double K2  = 0.0;
-  if (fabs(v) >= 1e-6) 
-    K2 = x*x + (1-x) / v;
-  else
-    K2 = x*x - 1/3 - (2/15) * v;
-
-  double log_spa = 0.5 * log(0.5 * n / MATH_PI) - 0.5 * log(K2) + n * phi;
-  return exp(log_spa);
-}
-
-
-// Saddle point approximation of PG(n, z) following Algorithm 9 of Windle 2013
-double pgdraw_sp(double n, double z){
-  // J* density transformation
-  z = 0.5 * fabs(z);
-
-  // xl, xc, xr
-  // Rcout << "xl, xc, xr \n";
-  double xl = phi_mode(-1 * z * z);
-  double xc = 1.1 * xl;
-  double xr = 1.2 * xl;
-
-  // alpha_l, alpha_r
-  // Rcout << "alpha_l, alpha_r \n";
-  double vxc  = v_eval(xc); // middle point evaluated at v from Lemma 2.24
-  double K2xc = 0.0;        // K''(t)
-
-  if (fabs(vxc) >= 1e-6){
-    K2xc = xc*xc + (1 - xc) / K2xc;
-  } else {
-    K2xc = xc*xc - 1/3 - (2/15) * vxc;
-  }
-  
-  double xc2 = xc * xc;
-  double al = xc2 * xc / K2xc;
-  double ar = xc2 / K2xc;
-  
-  // Construct two envelope lines: left line, right line
-  // Rcout << "Tangent lines \n";
-  Line ll, lr;
-  tangent_to_eta(xl, z, xc, ll);
-  tangent_to_eta(xr, z, xc, lr);
-
-  // rho_l (rl), rho_r (rr)
-  double rl = -1. * ll.slope;
-  double rr = -1. * lr.slope;
-  double il = ll.itcpt;
-  double ir = lr.itcpt;
-
-  // Constants
-  double lcn = 0.5 * log(0.5 * n / MATH_PI);
-  double rt2rl = sqrt(2 * rl);
-
-  // Weights: w_l, w_r
-  // Rcout << "Computing weights \n";
-  double wl, wr, wt, pl;
-  wl = exp(0.5 * log(al) - n * rt2rl + n * il + 0.5 * n * 1./xc) * p_igauss(xc, 1./rt2rl, n);
-  wr = exp(0.5 * log(ar) + lcn - n * log(n * rr) + n * ir - n * log(xc)) * tgamma(n) * (1.0 - R::pgamma(xc, n, n*rr, 1, 0));
-
-  // Weight probability: p/(p+q)
-  wt = wl + wr;
-  pl = wl / wt;
-
-  // Sample
-  bool go  = true;
-  double X = 2.0;
-  double F = 0.0;
-
-  // while loop for sampling
-  // Rcout << "While loop \n";
-  while(go) {
-    double phi_ev;
-    if (R::runif(0, 1) < pl) {
-      X = tinvgauss_sp(1./rt2rl, n, xc);
-      phi_ev = n * (il - rl * X) + 0.5 * n * ((1.-1./X) - (1.-1./xc));
-      F = exp(0.5 * log(al) + lcn - 1.5 * log(X) + phi_ev);
-    } else {
-      X = ltgamma(n, n * rr, xc);
-      phi_ev = n * (ir - rr * X) + n * (log(X) - log(xc));
-      F = exp(0.5 * log(ar) + lcn + phi_ev) / X;
-    }
-
-    // Rcout << "Saddle Point \n";
-    double spa = saddlepoint(X, n, z);
-
-    if (F * R::runif(0, 1) < spa){
-      go = false;
-    }
-  }
-
-  // return n * 0.25 * X;
-  return n * 0.25 * X;
 }

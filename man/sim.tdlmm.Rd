@@ -31,6 +31,9 @@ three}
 
 \item{expList}{named list of exposure data}
 }
+\value{
+Simulated data and true parameters
+}
 \description{
 Simulation scenarios to accompany TDLM/TDLMM
 }

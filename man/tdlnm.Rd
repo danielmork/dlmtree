@@ -61,9 +61,9 @@ response with logit link, 'zinb' for zero-inflated negative binomial model}
 \item{binomial.size}{integer type scalar (if all equal, default = 1) or
 vector defining binomial size for 'logit' family}
 
-\item{formula_zi}{object of class formula, a symbolic description of the at-risk 
+\item{formula_zi}{object of class formula, a symbolic description of the ZI
 model to be fitted, e.g. y ~ a + b. This only applies to ZINB where covariates for
-at-risk model is different from NB model. This is same as the main formula by default}
+ZI model is different from NB model. This is same as the main formula by default}
 
 \item{keep_XZ}{false (default) or true: keep the model scale exposure and covariate data}
 

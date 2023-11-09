@@ -4,7 +4,7 @@
 #' zero splits (i.e. a linear effect DLM)
 #' @param conf.level confidence level for computation of credible intervals
 #'
-#' @return
+#' @return Summary of tdlm fit
 #' @export summary.tdlm
 #' @export
 #'

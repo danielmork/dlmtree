@@ -19,7 +19,6 @@ tdlmm(
   mixture.interactions = "noself",
   tree.params = c(0.95, 2),
   step.prob = c(0.25, 0.25, 0.25),
-  swap.step = TRUE,
   mix.prior = 1,
   shrinkage = "all",
   subset = NULL,
@@ -46,14 +45,14 @@ of exposure data with same, having same length as data}
 \item{n.thin}{integer thinning factor, i.e. keep every tenth iteration}
 
 \item{family}{'gaussian' for continuous response, 'logit' for binomial
-response with logit link, or 'zinb' for zero-inflated negative binomial model}
+response with logit link, or 'zinb' for zero-inflated negative binomial with logit link}
 
 \item{binomial.size}{integer type scalar (if all equal, default = 1) or
 vector defining binomial size for 'logit' family}
 
-\item{formula_zi}{object of class formula, a symbolic description of the at-risk 
+\item{formula_zi}{object of class formula, a symbolic description of the ZI
 model to be fitted, e.g. y ~ a + b. This only applies to ZINB where covariates for
-at-risk model is different from NB model. This is same as the main formula by default}
+ZI model is different from NB model. This is same as the main formula by default}
 
 \item{keep_XZ}{false (default) or true: keep the model scale exposure and covariate data}
 

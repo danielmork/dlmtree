@@ -10,7 +10,6 @@ sim.tdlmm.zinb(
   week = 561,
   expList = NULL,
   data_zinb = NULL,
-  zi_mean = 0,
   effect.size = 0.1,
   r = 1
 )
@@ -18,22 +17,20 @@ sim.tdlmm.zinb(
 \arguments{
 \item{sim}{integer (1-2) specifying simulation scenario}
 
-\item{ctnum}{number of counties,}
+\item{ctnum}{number of counties}
 
-\item{week}{Weeks for each county, must be between 1-561}
+\item{week}{number of weeks for each county, must be between 1-561}
 
-\item{expList}{Named list of exposure data}
+\item{expList}{named list of exposure data}
 
 \item{data_zinb}{covariate data}
 
-\item{zi_mean}{Mean of at-risk coefficients to control the zero-inflation of the count outcome}
+\item{effect.size}{the effect size of the window of susceptibility, resulting in controlling the magnitude of the count outcome}
 
-\item{effect.size}{Parameter to control the magnitude of the count outcome}
-
-\item{r}{Dispersion parameter}
+\item{r}{dispersion parameter}
 }
 \value{
-A simulated dataset with true parameter values & zero-inflation information
+A simulated dataset, true parameter values, zero/non-zero proportions
 }
 \description{
 Simulation scenarios to accompany TDLM/TDLMM for count data

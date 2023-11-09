@@ -12,6 +12,9 @@ zero splits (i.e. a linear effect DLM)}
 
 \item{conf.level}{confidence level for computation of credible intervals}
 }
+\value{
+Summary of tdlm fit
+}
 \description{
 summary.tdlm
 }

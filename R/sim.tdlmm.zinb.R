@@ -3,15 +3,14 @@
 #' @description Simulation scenarios to accompany TDLM/TDLMM for count data
 #'
 #' @param sim integer (1-2) specifying simulation scenario
-#' @param ctnum number of counties, 
-#' @param week Weeks for each county, must be between 1-561
-#' @param expList Named list of exposure data
+#' @param ctnum number of counties
+#' @param week number of weeks for each county, must be between 1-561
+#' @param expList named list of exposure data
 #' @param data_zinb covariate data
-#' @param zi_mean Mean of at-risk coefficients to control the zero-inflation of the count outcome
-#' @param effect.size Parameter to control the magnitude of the count outcome
-#' @param r Dispersion parameter
+#' @param effect.size the effect size of the window of susceptibility, resulting in controlling the magnitude of the count outcome
+#' @param r dispersion parameter
 #'
-#' @return A simulated dataset with true parameter values & zero-inflation information
+#' @return A simulated dataset, true parameter values, zero/non-zero proportions
 #' @export
 #'
 sim.tdlmm.zinb <- function(sim = 1,
@@ -19,7 +18,6 @@ sim.tdlmm.zinb <- function(sim = 1,
                            week = 561,
                            expList = NULL,
                            data_zinb = NULL,
-                           zi_mean = 0,
                            effect.size = 0.1,
                            r = 1) 
 {
@@ -30,14 +28,15 @@ sim.tdlmm.zinb <- function(sim = 1,
     stop(paste0("Week must be less than ", length(which(data_zinb$fipscoor == unique(data_zinb$fipscoor)[1]))))
   }
 
-  # Exposure setup
-  Lags <- ncol(expList[[1]])              # Lags: 40 weeks
-  n <- week * ctnum
+  # Setup
+  Lags <- ncol(expList[[1]])              # lags: 40 weeks
+  n <- week * ctnum                       # sample size
   n.samp <- min(nrow(expList[[1]]), n)    # minimum between {observation and the number of required sampling}
 
-  # Sample from each county
+  # Sample counties
   fips <- sample(unique(data_zinb$fipscoor), ctnum, replace = FALSE)
   
+  # Sample weeks from each county
   idx = c()
   for(code in fips){
     fips_idx = sample(which(data_zinb$fipscoor == code), week, replace = FALSE)
@@ -48,51 +47,49 @@ sim.tdlmm.zinb <- function(sim = 1,
   data_zinb <- data_zinb[idx, ]
   data_zinb$fipscoor <- droplevels(data_zinb$fipscoor)
 
-  # Model matrix construction
+  # Model matrix construction for ZI & NB model
   data_zi <- model.matrix(~ fipscoor - 1, data = data_zinb)
   data_nb <- model.matrix(~ fipscoor + month + YOC, data = data_zinb)
 
-  # Sim 1: Zero-inflated negative binomial with single exposure DLM
+  # Sim 1: A single exposure DLM
   if (sim == 1) {
-    # center/scale exposure data
-    exposures <- lapply(expList, function(i) (i[idx,] - mean(i[idx,])) / sd(i[idx,]))
+    exposures <- lapply(expList, function(i) (i[idx,] - mean(i[idx,])) / sd(i[idx,])) # center/scale exposure data
 
-    # generate random starting time
+    # Sample starting time lag
     start.time1 <- sample(1:(Lags - 7), 1)      # sample from 1 ~ 30
     eff1 <- rep(0, Lags)                        # eff1 = a vector of 37 zeros
-    eff1[start.time1:(start.time1 + 7)] <- 1    # Set 7 weeks of eff1 as 1
+    eff1[start.time1:(start.time1 + 7)] <- 1    # set 8 weeks of eff1 as 1
 
-    # Start a y vector as 0.
+    # Start y vector as 0
     y <- rep(0, n.samp)
 
-    # At-risk regression coefficients
-    beta1 <- rnorm(ncol(data_zi), mean = zi_mean, sd = 1) # Sample true beta1 from a standard normal
-    eta1 <- c(data_zi[, 1:ncol(data_zi)] %*% beta1)       # Compute eta1: xT * beta1 (n x 10)x(10 x 1) = (nx1)          
+    # ZI regression coefficients
+    beta1 <- rnorm(ncol(data_zi), mean = 0, sd = 1)   # sample true beta1 from a standard normal
+    eta1 <- c(data_zi[, 1:ncol(data_zi)] %*% beta1)   # ZI model fixed effect    
 
-    pi <- 1 / (1 + exp(-eta1))               # Inverse-logit
-    w <- rbinom(n.samp, 1, pi)           # Zero-inflation indicator variable
-    nStar <- n.samp - sum(w)                       # Proportion of structural zeros
+    pi <- 1 / (1 + exp(-eta1))                        # inverse-logit
+    w <- rbinom(n.samp, 1, pi)                        # ZI indicator variable
+    nStar <- n.samp - sum(w)                          # number of NB observations
 
     # NB regression coefficients
-    beta2 <- rnorm(ncol(data_nb))                             # Sample true beta2 from a standard normal
-    eta2 <- c(data_nb[w == 0, 1:ncol(data_nb)] %*% beta2)     # Compute eta2: xT * beta2 (n x 10)x(10 x 1) = (nStarx1)
+    beta2 <- rnorm(ncol(data_nb))                             # sample true beta2 from a standard normal
+    eta2 <- c(data_nb[w == 0, 1:ncol(data_nb)] %*% beta2)     # NB model fixed effect
 
-    # Update f to use only at-risk observations
-    truth1Sums <- exposures[[1]][w == 0, ] %*% eff1           # A single exposure (n* x 37) %*% eff1 (37 x 1) = (n* x 1)
-    f <- truth1Sums
-    eta2_dlm <- effect.size * (eta2 + f)
-    psi <- 1 / (1 + exp(-eta2_dlm))            # Probability of success in negative binomial
+    # Update f to use only NB observations
+    f <- exposures[[1]][w == 0, ] %*% eff1     # NB model exposure effect
+    eta2_dlm <- effect.size * (eta2 + f)       # scaled NB model exposure effect
+    psi <- 1 / (1 + exp(-eta2_dlm))            # probability of success in NB model
 
     # Draw y with eta1, eta2, and f
-    y[w == 0] <- rnbinom(nStar, r, prob = 1 - psi)
+    y[w == 0] <- rnbinom(nStar, r, prob = 1 - psi) 
 
-    # Control the magnitude of the count outcome
+    # Scale the magnitude of the count outcome for returning the outcome
     f <- f * effect.size
     margDLM1 <- eff1 * effect.size
 
-    # Zero-inflation information
-    zeroStr <- length(y[y == 0 & w == 1])/n   # y = 0 & classified as structural
-    zeroAr <- length(y[y == 0 & w == 0])/n    # y = 0 & classified as at-risk
+    # ZI information
+    zeroStr <- length(y[y == 0 & w == 1])/n   # y = 0 & classified as ZI
+    zeroAr <- length(y[y == 0 & w == 0])/n    # y = 0 & classified as NB
     nonzero <- length(y[y != 0])/n            # y is not zero
     zeroProp <- length(y[y == 0])/n           # Proportion of zeros
 
@@ -111,41 +108,38 @@ sim.tdlmm.zinb <- function(sim = 1,
                 "zeroProportion" = zeroProp))
   }
 
-  # Sim 2: ZINB with 2 exposures with/without interaction
+  # Sim 2: Two exposures with interaction
   if(sim == 2){
-    # DLM Structure: Choose window of susceptibility for PM2.5 and temperature
-    # Centering and Scaling
-    exposures <- lapply(expList, function(i) (i[idx,] - mean(i[idx,])) / sd(i[idx,]))
+    exposures <- lapply(expList, function(i) (i[idx,] - mean(i[idx,])) / sd(i[idx,]))     # centering and scaling
 
-    # Starting points & effects
-    start.time1 <- sample(1:(Lags - 7), 1)
-    start.time2 <- sample(1:(Lags - 7), 1)
+    start.time1 <- sample(1:(Lags - 7), 1)    # e1 starting time lag
+    start.time2 <- sample(1:(Lags - 7), 1)    # e2 starting time lag
 
-    eff1 <- eff2 <- rep(0, Lags)
-    eff1[start.time1:(start.time1 + 7)] <- 1
-    eff2[start.time2:(start.time2 + 7)] <- 1
+    eff1 <- eff2 <- rep(0, Lags)              
+    eff1[start.time1:(start.time1 + 7)] <- 1  # e1 lag effect
+    eff2[start.time2:(start.time2 + 7)] <- 1  # e2 lag effect
 
-    # Start a y vector as 0.
+    # Start y vector as 0.
     y <- rep(0, n.samp)
 
-    # At-risk regression coefficients
-    beta1 <- rnorm(ncol(data_zi), mean = zi_mean, sd = 1)   # Sample true beta1 from a standard normal
-    eta1 <- c(data_zi[, 1:ncol(data_zi)] %*% beta1)         # Compute eta1: xT * beta1 (n x 10)x(10 x 1) = (nx1)          
+    # ZI regression coefficients
+    beta1 <- rnorm(ncol(data_zi), mean = 0, sd = 1)         # Sample true beta1 from a standard normal
+    eta1 <- c(data_zi[, 1:ncol(data_zi)] %*% beta1)         # ZI model fixed effect
 
-    pi <- 1 / (1 + exp(-eta1))           # 1 - P(structural zero)
-    w <- rbinom(n.samp, 1, pi)           # Zero-inflation indicator variable
+    pi <- 1 / (1 + exp(-eta1))           # 1 - P(ZI zero)
+    w <- rbinom(n.samp, 1, pi)           # ZI indicator variable
     nStar <- n.samp - sum(w)                 
 
     # NB regression coefficients
     beta2 <- rnorm(ncol(data_nb))                             # Sample true beta2 from a standard normal
-    eta2 <- c(data_nb[w == 0, 1:ncol(data_nb)] %*% beta2)     # Compute eta2: xT * beta2 (n x 10)x(10 x 1) = (nStarx1)
+    eta2 <- c(data_nb[w == 0, 1:ncol(data_nb)] %*% beta2)     # NB model fixed effect
 
     # Compute f with interaction
-    truth1Sums <- exposures[[1]][w == 0, ] %*% eff1
-    truth2Sums <- exposures[[2]][w == 0, ] %*% eff2
+    truth1Sums <- exposures[[1]][w == 0, ] %*% eff1     # e1 exposure effect
+    truth2Sums <- exposures[[2]][w == 0, ] %*% eff2     # e2 exposure effect
     int.effect = 0.025
 
-    f <- truth1Sums + (int.effect * truth1Sums * truth2Sums) # PM2.5 main effect + interaction effect
+    f <- truth1Sums + (int.effect * truth1Sums * truth2Sums)  # e1 main effect + e1xe2 interaction effect
 
     # NB with fixed and exposure effect
     eta2_dlm <- effect.size * (eta2 + f)
@@ -159,17 +153,15 @@ sim.tdlmm.zinb <- function(sim = 1,
     margDLM1 <- eff1 * effect.size + rowSums(truthInt) * mean(exposures[[2]])
     margDLM2 <- colSums(truthInt) * mean(exposures[[1]])
 
-    # Zero-inflation information
-    zeroStr <- length(y[y == 0 & w == 1])/n   # y = 0 & classified as structural
-    zeroAr <- length(y[y == 0 & w == 0])/n    # y = 0 & classified as at-risk
-    nonzero <- length(y[y != 0])/n            # y is not zero hence structural
+    # ZI information
+    zeroStr <- length(y[y == 0 & w == 1])/n   # y = 0 & classified as ZI
+    zeroAr <- length(y[y == 0 & w == 0])/n    # y = 0 & classified as NB
+    nonzero <- length(y[y != 0])/n            # y is not zero
     zeroProp <- length(y[y == 0])/n           # Proportion of zeros
 
     return(list("data" = cbind.data.frame(y, data_zinb),
                 "exposures" = exposures,
                 "eff1" = eff1, "eff2" = eff2,
-                "outer" = outer(eff1, eff2),
-                "truthInt" = truthInt,
                 "start.time1" = start.time1, "start.time2" = start.time2,
                 "margDLM1" = margDLM1, "margDLM2" = margDLM2,
                 "f" = f, "w" = w, "psi" = psi, "r" = r,

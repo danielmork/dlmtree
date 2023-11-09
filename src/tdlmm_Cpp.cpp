@@ -8,12 +8,12 @@
  * @copyright Copyright (c) 2021
  * 
  */
-#include <RcppEigen.h> // Linear algebra package
-#include "modelCtr.h"
-#include "exposureDat.h"
-#include "Node.h"
-#include "NodeStruct.h"
-#include "Fncs.h" // Helpful functions
+#include <RcppEigen.h>      // linear algebra package
+#include "modelCtr.h"       // model parameters
+#include "exposureDat.h"    // exposure data
+#include "Node.h"           // tree
+#include "NodeStruct.h"     // tree structure
+#include "Fncs.h"           // useful functions
 #include <random>
 #include <iostream>
 using namespace Rcpp;
@@ -22,8 +22,8 @@ using namespace Eigen;
 /**
  * @brief 
  * 
- * @param nodes1 // Terminal nodes of tree1
- * @param nodes2 // Terminal nodes of tree2
+ * @param nodes1 
+ * @param nodes2 
  * @param ctr 
  * @param ZtR 
  * @param treeVar 
@@ -39,93 +39,90 @@ treeMHR mixMHR(std::vector<Node*> nodes1, std::vector<Node*> nodes2,
                   double treeVar, double m1Var, double m2Var, double mixVar,
                   Node* tree, bool newTree)
 {
-  //Rcout << "Initiating mixMHR \n";
-  treeMHR out; // treeMHR object
-
-  // This part refers to Eq(6) & (7)
+  treeMHR out; 
   int pX1 = nodes1.size();  // Number of terminal nodes for tree1
   int pX2 = nodes2.size();  // Number of terminal nodes for tree2
-  int pXd = pX1 + pX2;      // pXd = sum of sizes
+  int pXd = pX1 + pX2;      
     
-  int interaction = 0;      // interaction
-  
-  if (mixVar != 0) {  // If mix variable is not zero (there is an interaction),
-    pXd += pX1 * pX2; // Add (nodes x nodes) to the parameter # (the rectangle figure)
-    interaction = 1;  // Interaction flag
+  // If interaction,
+  int interaction = 0;      
+  if (mixVar != 0) {        
+    pXd += pX1 * pX2;       
+    interaction = 1;       
   }
   
-  // Rcout << ".";
-  out.Xd.resize(ctr->n, pXd);         out.Xd.setZero();   // This is X*delta vector for mean in Eq(8)
-  Eigen::MatrixXd ZtX(ctr->pZ, pXd);  ZtX.setZero();      // Create a matrix of (predictor# x (total terminal node#))
-  Eigen::VectorXd diagVar(pXd);       diagVar.setZero();  // Create a vector of length (parameter size)
+  out.Xd.resize(ctr->n, pXd);         out.Xd.setZero();  
+  Eigen::MatrixXd ZtX(ctr->pZ, pXd);  ZtX.setZero();     
+  Eigen::VectorXd diagVar(pXd);       diagVar.setZero();  
 
-  // ****** Constructing U_a (Exposure specific variance diagonal matrix) and computing Eq. (9) ****** 
-  // Each column of out.Xd represents a terminal node 
+  // *** Constructing U_a (Exposure specific variance diagonal matrix) and computing Eq(9) *** 
   int i, j, k;
-  // ----- Update the calculations for the tree pair 1: mu ----- 
-  // Rcout << "Updating the calculations for Nodes 1 \n";
-  for (i = 0; i < pX1; ++i) { // Partitions of design matrix
-    out.Xd.col(i) = (nodes1[i]->nodevals)->X; // Each column of Xd is a vector X associated with a node from nodes1
+
+  // Tree 1
+  for (i = 0; i < pX1; ++i) {   
+    // Partition
+    out.Xd.col(i) = (nodes1[i]->nodevals)->X; 
     diagVar(i) = 1.0 / (m1Var * treeVar);
 
-    // For binomial, we have to implement omega, For ZINB, Zw is already At-risk individuals only
-    if (ctr->binomial || ctr->zinb) { 
-      ZtX.col(i) = ctr->Zw.transpose() * (nodes1[i]->nodevals)->X; // (pZ x 1) = (n x pZ).transpose x (n x 1)
+    // Update ZtX
+    if (ctr->binomial || ctr->zinb) {  // Binomial / ZINB
+      ZtX.col(i) = ctr->Zw.transpose() * (nodes1[i]->nodevals)->X; 
     } else { // Gaussian
       ZtX.col(i) = (nodes1[i]->nodevals)->ZtX;
     }
   }
 
-  // Rcout << "Updating the calculations for the tree pair 2 \n";
-  // ----- Update the calculations for Nodes2 ----- 
+  // Tree 2
   for (j = 0; j < pX2; ++j) {
-    k = pX1 + j;                                // k is pushed back because pX2 needs to be after pX1.
+    k = pX1 + j;  // index k is pushed back because pX2 must be after pX1.
+
+    // Partition
     out.Xd.col(k) = (nodes2[j]->nodevals)->X;
     diagVar(k) = 1.0 / (m2Var * treeVar);
-    if (ctr->binomial || ctr->zinb){
+
+    // Update ZtX
+    if (ctr->binomial || ctr->zinb){  // Binomial / ZINB
       ZtX.col(k) = ctr->Zw.transpose() * (nodes2[j]->nodevals)->X;
-    } else {
+    } else { // Gaussian
       ZtX.col(k) = (nodes2[j]->nodevals)->ZtX;
     }
   }
 
-  // ----- Update the calculations for interaction ----- 
+  // Interaction ZtX
   if(interaction) {
     for (i = 0; i < pX1; ++i) {
       for (j = 0; j < pX2; ++j) {
         k = pX1 + pX2 + i * pX2 + j;
+
+        // Partition
         out.Xd.col(k) = (((nodes1[i]->nodevals)->X).array() * ((nodes2[j]->nodevals)->X).array()).matrix();
         diagVar(k) = 1.0 / (mixVar * treeVar);
+
+        // Update ZtX
         ZtX.col(k) = ctr->Zw.transpose() * out.Xd.col(k);
       }
     }
   }
 
-  // Rcout << ".";
-  // ----- calculate MHR -----
-  const Eigen::MatrixXd VgZtX = ctr->Vg * ZtX; // V_gamma * Z_t * X = (p x p) * (p x n) * (n x 1), w multiplied for ZINB
-  Eigen::MatrixXd tempV(pXd, pXd); // 
+  // *** calculate MHR ***
+  const Eigen::MatrixXd VgZtX = ctr->Vg * ZtX;
+  Eigen::MatrixXd tempV(pXd, pXd); 
   Eigen::VectorXd XtVzInvR(ctr->n);
-  if (ctr->binomial) { // V_theta = V_delta_a from eq(11) & Xd = X_a in paper
-    const Eigen::MatrixXd Xdw = (ctr->Omega).asDiagonal() * out.Xd;     // (nxn) x (nx2) = (nx2) 
-    tempV = Xdw.transpose() * out.Xd;                                   // (2xn) x (nx2) = (2x2)
-    tempV.noalias() -= ZtX.transpose() * VgZtX;                         // (2x2) - (2x5) x (5x2)
-    XtVzInvR = Xdw.transpose() * ctr->R;                                // (2xn) x (nx1) = (2x1)
+  if (ctr->binomial) {
+    const Eigen::MatrixXd Xdw = (ctr->Omega).asDiagonal() * out.Xd;     
+    tempV = Xdw.transpose() * out.Xd;                                
+    tempV.noalias() -= ZtX.transpose() * VgZtX;                         
+    XtVzInvR = Xdw.transpose() * ctr->R;                                
 
-  } else if (ctr->zinb){ // ZINB (subsetting at-risk observations)
-    Eigen::MatrixXd outXdstar = selectIndM(out.Xd, ctr->NBidx);        // At-risk observations only
-    const Eigen::MatrixXd Xdw = (selectInd(ctr->omega2, ctr->NBidx)).asDiagonal() * outXdstar; // (n*xn*) x (n*x2) = (n*x2) 
-    tempV = Xdw.transpose() * outXdstar;                                   // (2xn*) x (n*x2) = (2x2)
-    tempV.noalias() -= ZtX.transpose() * VgZtX;                            // (2x2) - (2x5) x (5x2)
-    XtVzInvR = Xdw.transpose() * selectInd(ctr->R, ctr->NBidx);       // (2xn*) x (n*x1) = (2x1)
+  } else if (ctr->zinb){ // ZINB (subsetting NB observations)
+    Eigen::MatrixXd outXdstar = selectIndM(out.Xd, ctr->NBidx); // subsetting
+    const Eigen::MatrixXd Xdw = (selectInd(ctr->omega2, ctr->NBidx)).asDiagonal() * outXdstar;
+    tempV = Xdw.transpose() * outXdstar;                                 
+    tempV.noalias() -= ZtX.transpose() * VgZtX;
+    XtVzInvR = Xdw.transpose() * selectInd(ctr->R, ctr->NBidx);
 
-    // Eigen::MatrixXd outXdstar = out.Xd.array().colwise() * (ctr->w).array();        // At-risk observations only
-    // const Eigen::MatrixXd Xdw = ctr->omega2.asDiagonal() * outXdstar; // (n*xn*) x (n*x2) = (n*x2) 
-    // tempV = Xdw.transpose() * outXdstar;                                   // (2xn*) x (n*x2) = (2x2)
-    // tempV.noalias() -= ZtX.transpose() * VgZtX;                            // (2x2) - (2x5) x (5x2)
-    // XtVzInvR = Xdw.transpose() * ctr->R;       // (2xn*) x (n*x1) = (2x1)
   } else {
-    if (newTree) { // V_theta = V_delta_a from eq(11) & Xd = X_a in paper
+    if (newTree) { 
       tempV.triangularView<Eigen::Lower>() = out.Xd.transpose() * out.Xd;
       tempV.noalias() -= ZtX.transpose() * VgZtX;
       out.tempV = tempV;
@@ -135,29 +132,29 @@ treeMHR mixMHR(std::vector<Node*> nodes1, std::vector<Node*> nodes2,
     XtVzInvR = out.Xd.transpose() * ctr->R;
   }
 
-  // Finalize Eq.(9)
-  XtVzInvR.noalias() -= VgZtX.transpose() * ZtR; // (2x1) - (2x5) * (5x1) = (2x1)
+  // Finalize calculation
+  XtVzInvR.noalias() -= VgZtX.transpose() * ZtR; 
   tempV.diagonal().noalias() += diagVar;
 
 
-  // Rcout << ".";
-  Eigen::MatrixXd VTheta(pXd, pXd); // V_theta = V_delta_a from eq(11) & Xd = X_a in paper
+  // V_theta
+  Eigen::MatrixXd VTheta(pXd, pXd); 
   VTheta.triangularView<Eigen::Lower>() =
     tempV.selfadjointView<Eigen::Lower>().llt().solve(
         Eigen::MatrixXd::Identity(pXd, pXd));
   const Eigen::MatrixXd VThetaChol =
     VTheta.selfadjointView<Eigen::Lower>().llt().matrixL();
 
-  // This part is sampling from Supplemental Eq(11) & (12) (Theta = Delta_a)
   // Mean
   const Eigen::VectorXd ThetaHat =
     VTheta.selfadjointView<Eigen::Lower>() * XtVzInvR; // Eq. (11) mean
   Eigen::VectorXd ThetaDraw = ThetaHat;
 
-  // Add variance
+  // Variance
   ThetaDraw.noalias() += VThetaChol * as<Eigen::VectorXd>(rnorm(pXd, 0, sqrt(ctr->sigma2)));
 
-  out.drawAll = ThetaDraw;                     // (px1)
+  // Store the draws
+  out.drawAll = ThetaDraw;
   out.draw1 = ThetaDraw.head(pX1);
   out.term1T2 = (out.draw1).dot(out.draw1);
   out.nTerm1 = double(pX1);
@@ -166,13 +163,14 @@ treeMHR mixMHR(std::vector<Node*> nodes1, std::vector<Node*> nodes2,
   out.nTerm2 = double(pX2);
 
   if (interaction) {
-    out.drawMix = ThetaDraw.tail(pXd - pX1 - pX2);  // Extract last pX1 x pX2 element for mixture
-    out.mixT2 = (out.drawMix).dot(out.drawMix);     // dot product
+    out.drawMix = ThetaDraw.tail(pXd - pX1 - pX2);
+    out.mixT2 = (out.drawMix).dot(out.drawMix);
   }
 
   out.beta = ThetaHat.dot(XtVzInvR);
   out.logVThetaChol = VThetaChol.diagonal().array().log().sum();
   out.pXd = pXd;
+
   return(out);
 }
 
@@ -189,7 +187,6 @@ treeMHR mixMHR(std::vector<Node*> nodes1, std::vector<Node*> nodes2,
 void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
                    std::vector<exposureDat*> Exp)
 {
-  // Rcout << "tdlmmTreeMCMC: Initialize \n";
   int m1, m2, newExp, success, step1, step2;
   double stepMhr, ratio;
   double m1Var, m2Var, mixVar, newExpVar, newMixVar, treeVar;
@@ -199,17 +196,16 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
   Node* newTree = 0;
   treeMHR mhr0, mhr;
 
-  // Rcout << "Mixture calculation \n";
-  term1 = tree1->listTerminal();        // List the terminal nodes of tree 1
-  term2 = tree2->listTerminal();        // List the terminal nodes of tree 2
-  treeVar = (ctr->nu) * (ctr->tau[t]);  // Global shrinkage x Local Shrinkage
-  m1 = ctr->tree1Exp[t];                // Exposure m1 of tree 1 of t th tree pair // Note that tree1Exp is a vector of exposures with a designated number
-  m2 = ctr->tree2Exp[t];                // Exposure m2 of tree 2 of t th tree pair
-  m1Var = ctr->muExp(m1);               // Exposure-specific variance
-  m2Var = ctr->muExp(m2);               // Exposure-specific variance
-  mixVar = 0;                           // No interaction variance for now
+  term1 = tree1->listTerminal();       
+  term2 = tree2->listTerminal();        
+  treeVar = (ctr->nu) * (ctr->tau[t]);  
+  m1 = ctr->tree1Exp[t];                
+  m2 = ctr->tree2Exp[t];              
+  m1Var = ctr->muExp(m1);             
+  m2Var = ctr->muExp(m2);       
+  mixVar = 0;    
 
-  // If there is an interaction, extract mixture variance value from the muMix matrix
+  // muMix for interaction
   if ((ctr->interaction) && ((ctr->interaction == 2) || (m1 != m2))) { 
     if (m1 <= m2)
       mixVar = ctr->muMix(m2, m1); // Interaction rectangles
@@ -217,38 +213,32 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
       mixVar = ctr->muMix(m1, m2); // Interaction rectangles
   }
 
-  // Compute t(Z) * (Y - fhat)
-  Eigen::VectorXd ZtR = (ctr->Zw).transpose() * (ctr->R); // (pxn) x (nx1) = (px1)
+  // Update ZtR (or OmegaZtR)
+  Eigen::VectorXd ZtR = (ctr->Zw).transpose() * (ctr->R); 
 
-  // * Update tree 1 ------------------------------------------------------------
+  // *** Update tree 1 ***
   newExp    = m1; 
   newExpVar = m1Var;
   newMixVar = mixVar;
   stepMhr   = 0;
   success   = 0;
   
-  // Rcout << ".";
-  // * List current tree terminal nodes
-  // 1) grow/prune, 2) change, 3) switch exposure, defaults to (0.25, 0.25, 0.25)
-  // Choose a step by sampling one integer
+  // Choose a tree update step
   step1 = sampleInt(ctr->stepProb, 1); 
-
-  // If there is only one terminal node and grow/prune/change is selected, the tree can only grow hence step1 = 0 
   if ((term1.size() == 1) && (step1 < 3))
     step1 = 0;
 
-  // * Propose update:
+  // Propose update:
   // Grow(0) / Prune(1) / Change(2)
   if (step1 < 3) { 
     stepMhr = tdlmProposeTree(tree1, Exp[m1], ctr, step1); // tdlmProposeTree returns MH ratio for each possible step
     success = tree1->isProposed();
     newTerm = tree1->listTerminal(1);
 
-  // * Switch exposures (3)
+  // Switch exposures (3)
   } else {
-    newExp = sampleInt(ctr->expProb); // Propose a new exposure
-    if (newExp != m1) { // If the proposed exposure is different from the current one,
-      // Update the information with new exposure
+    newExp = sampleInt(ctr->expProb);   
+    if (newExp != m1) { 
       success   = 1;
       newExpVar = ctr->muExp(newExp);
       newTree   = new Node(*tree1);
@@ -270,57 +260,49 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
     }
   }  // Propose update end
 
-  // * Tree 1 MHR
-  // StepMHR: Transition ratio
-  // mhr0 & mhr: Likelihood of R
-  // mhr0: Current MHR
-  // Rcout << "a";
+  // Tree 1 MHR
   if ((tree1->nodevals->tempV).rows() == 0)
-    mhr0 = mixMHR(term1, term2, ctr, ZtR, treeVar,  // 0 = denominator(old state)
+    mhr0 = mixMHR(term1, term2, ctr, ZtR, treeVar, 
                   m1Var, m2Var, mixVar, tree1, 1);
   else
     mhr0 = mixMHR(term1, term2, ctr, ZtR, treeVar, 
                   m1Var, m2Var, mixVar, tree1, 0);
 
-  //Rcout << "Tree 1 MHR: if success\n";
   if (success) {
-    // New tree terminal -> newTerm & newExpVar
-    mhr = mixMHR(newTerm, term2, ctr, ZtR, treeVar,  // numerator(new or updated state)
+    mhr = mixMHR(newTerm, term2, ctr, ZtR, treeVar, 
                  newExpVar, m2Var, newMixVar, tree1, 1);
-    // combine mhr parts into log-MH ratio
-    //Rcout << "Tree 1 MHR: log-MH ratio\n";
+    // Combine mhr parts into log-MH ratio
     if (ctr->binomial || ctr->zinb) {
       ratio = stepMhr +                                 
-              mhr.logVThetaChol - mhr0.logVThetaChol +  // Combine mhr and mhr0 to obtain Eq (10)
+              mhr.logVThetaChol - mhr0.logVThetaChol + 
               0.5 * (mhr.beta - mhr0.beta) -
               (0.5 * ((log(treeVar * newExpVar) * mhr.nTerm1) -
               (log(treeVar * m1Var) * mhr0.nTerm1)));
     } else { // Gaussian
-      // Rcout << "Tree 1 MHR: Gaussian\n";
-      // Equation (9)
       if (RtR < 0) {
-        RtR = (ctr->R).dot(ctr->R);                                             // Rt * I * R
-        RtZVgZtR = ZtR.dot((ctr->Vg).selfadjointView<Eigen::Lower>() * ZtR);    // Rt * (-ZtVgZ) * R
+        RtR = (ctr->R).dot(ctr->R);   
+        RtZVgZtR = ZtR.dot((ctr->Vg).selfadjointView<Eigen::Lower>() * ZtR); 
       }
-      ratio = stepMhr +                                           // stepMhr = p(T|T*) / p(T*|T)
-                mhr.logVThetaChol - mhr0.logVThetaChol -          // |V_delta_a|, 1/2 canceled out in Eq(10)
-                (0.5 * (ctr->n + 1.0) *                           // RtVinvXVXtVintR + 1/xi in Eq.(9) & Eq.(10)
+      ratio = stepMhr +                                          
+                mhr.logVThetaChol - mhr0.logVThetaChol -         
+                (0.5 * (ctr->n + 1.0) *                          
                 (log(0.5 * (RtR - RtZVgZtR - mhr.beta) + ctr->xiInvSigma2) -
                 log(0.5 * (RtR - RtZVgZtR - mhr0.beta) + ctr->xiInvSigma2))) -
-                (0.5 * ((log(treeVar * newExpVar) * mhr.nTerm1) - // -0.5 * (B1 * (log(nu) + log(mu of new Exposure)))
-                (log(treeVar * m1Var) * mhr0.nTerm1)));           // -0.5 * (B1 * (log(nu) + log(mu1)))
+                (0.5 * ((log(treeVar * newExpVar) * mhr.nTerm1) - 
+                (log(treeVar * m1Var) * mhr0.nTerm1)));
     }
+
     // Mixture
     if (newMixVar != 0)
-      ratio -= 0.5 * log(treeVar * newMixVar) * mhr.nTerm1 * mhr0.nTerm2; // new mu1 (new B1 x old B2) - Mixture update with switch exposure
+      ratio -= 0.5 * log(treeVar * newMixVar) * mhr.nTerm1 * mhr0.nTerm2; 
     if (mixVar != 0)
-      ratio += 0.5 * log(treeVar * mixVar) * mhr0.nTerm1 * mhr0.nTerm2;   // old mu1 (old B1 x old B2) - Mixture
+      ratio += 0.5 * log(treeVar * mixVar) * mhr0.nTerm1 * mhr0.nTerm2;   
 
-    if (log(R::runif(0, 1)) < ratio) { // Evaluate the ratio
-      mhr0 = mhr; // Update the MHR
+    if (log(R::runif(0, 1)) < ratio) { 
+      mhr0 = mhr; 
       success = 2;
 
-      // If accepted with switch-exposure transition, update a tree more
+      // Switch-exposure transition,
       if (step1 == 3) { 
         m1      = newExp;
         m1Var   = newExpVar;
@@ -346,15 +328,17 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
   if (newTree != 0)
     delete newTree;
   newTree = 0;
-  //Rcout << "Recording Tree 1\n";
+  
   // * Record tree 1
   if (ctr->diagnostics) {
     Eigen::VectorXd acc(7);
     acc << 1, step1, success, m1, term1.size(), stepMhr, ratio;
     (dgn->TreeAccept).push_back(acc);
   }
-  //Rcout << "Updating Tree 2\n";
-  // * Update tree 2 ------------------------------------------------------------
+
+
+
+  // *** Update tree 2 ***
   newExp    = m2;
   newExpVar = m2Var;
   newMixVar = mixVar;
@@ -368,7 +352,6 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
 
   // * Propose update
   if (step2 < 3) {
-    // Rcout << "g" << step2;
     stepMhr = tdlmProposeTree(tree2, Exp[m2], ctr, step2);
     success = tree2->isProposed();
     newTerm = tree2->listTerminal(1);
@@ -400,9 +383,9 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
 
   if (success) {
     // calculate new mhr part
-    // Rcout << "c";
     mhr = mixMHR(term1, newTerm, ctr, ZtR, treeVar, 
                  m1Var, newExpVar, newMixVar, tree1, 1);
+    
     // combine mhr parts into log-MH ratio
     if (ctr->binomial || ctr->zinb) {
       ratio = stepMhr + mhr.logVThetaChol - mhr0.logVThetaChol +
@@ -458,7 +441,6 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
     delete newTree;
   newTree = 0;
 
-  // Rcout << "Recording tree 2\n";
   // * Record tree 2
   if (ctr->diagnostics) {
     Eigen::VectorXd acc(7);
@@ -466,19 +448,18 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
     (dgn->TreeAccept).push_back(acc);
   }
 
-  // * Update variance and residuals ----------------------------------------
+
+
+  // *** Update variance and residuals ***
   double tauT2 = mhr0.term1T2 / m1Var + mhr0.term2T2 / m2Var;
   int totTerm = mhr0.nTerm1 + mhr0.nTerm2;
   if (mixVar != 0) {
     tauT2 += mhr0.mixT2 / mixVar;
     totTerm += mhr0.nTerm1 * mhr0.nTerm2;
   }
-  // Rcout << "d";
+
   if (ctr->shrinkage > 1)
     rHalfCauchyFC(&(ctr->tau(t)), totTerm, tauT2 / (ctr->sigma2 * ctr->nu));
-  
-  // if ((ctr->tau)(t) != (ctr->tau)(t)) 
-  //   stop("\nNaN values (tau) occured during model run, rerun model.\n");
     
   (ctr->nTerm)(t) = mhr0.nTerm1;
   (ctr->nTerm2)(t) = mhr0.nTerm2;
@@ -506,11 +487,10 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
     }
   }
 
-  // Sample R_a (Eq. (8) in Supplementary)
-  // t is an index for tree Ensemble
+  // Update Rmat
   (ctr->Rmat).col(t) = mhr0.Xd * mhr0.drawAll; 
 
-  // * Record
+  // *** Record ***
   if (ctr->record > 0) {
     Eigen::VectorXd rec(8);
     Eigen::VectorXd mix(10);
@@ -569,296 +549,267 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
 // [[Rcpp::export]]
 Rcpp::List tdlmm_Cpp(const Rcpp::List model)
 {
-  // ****** Set up model control parameters converting from R to C++ ******
-  // Rcout << "Initiating tdlmm_Cpp function \n";
-
-  // Model control(ctr) object with pointer
+  // *** Set up model control parameters converting from R to C++ ***
   tdlmCtr *ctr = new tdlmCtr; 
   
   // MCMC parameters
-  ctr->iter = as<int>(model["nIter"]);        // Total MCMC iteration
-  ctr->burn = as<int>(model["nBurn"]);        // MCMC burn-in iteration
-  ctr->thin = as<int>(model["nThin"]);        // Thinning iteration
-  ctr->nRec = floor(ctr->iter / ctr->thin);   // rounding to calculate thinned iteration
+  ctr->iter = as<int>(model["nIter"]);        
+  ctr->burn = as<int>(model["nBurn"]);       
+  ctr->thin = as<int>(model["nThin"]);        
+  ctr->nRec = floor(ctr->iter / ctr->thin);
 
   // Tree parameters
-  ctr->nTrees = as<int>(model["nTrees"]);                        // Number of trees for the ensemble
-  ctr->stepProb = as<std::vector<double> >(model["stepProb"]);   // A vector of step probability for the tree structure update
-  ctr->swapStep = as<bool>(model["swapStep"]); 
-  ctr->treePrior = as<std::vector<double> >(model["treePrior"]); // Tree prior of vector length 2 c(alpha, beta)
-  ctr->verbose = as<bool>(model["verbose"]);                     // Boolean for returning output
-  ctr->diagnostics = as<bool>(model["diagnostics"]);             // Store diagnostic or not
+  ctr->nTrees = as<int>(model["nTrees"]);                        
+  ctr->stepProb = as<std::vector<double> >(model["stepProb"]);
+  ctr->treePrior = as<std::vector<double> >(model["treePrior"]); 
+  ctr->verbose = as<bool>(model["verbose"]);                     
+  ctr->diagnostics = as<bool>(model["diagnostics"]); 
 
   // Model selection
-  ctr->binomial = as<bool>(model["binomial"]);  // Binomial
-  ctr->zinb = as<bool>(model["zinb"]);          // ZINB
+  ctr->binomial = as<bool>(model["binomial"]);  
+  ctr->zinb = as<bool>(model["zinb"]);          
 
   // Mixture & Shrinkage
-  ctr->modKappa = as<double>(model["mixPrior"]);  // Positive scalar hyperparameter for sparsity of exposures (Linero): Set as 1
-  bool updateKappa = false;                       // Check to update modKappa: if negative, set to 1 like the default.
+  ctr->modKappa = as<double>(model["mixPrior"]);
+  bool updateKappa = false; 
   if (ctr->modKappa < 0) {
     updateKappa = true;
     ctr->modKappa = 1;
   }
-  ctr->shrinkage = as<int>(model["shrinkage"]);   // Store shrinkage
-                                                  // 3 = all, 2 = trees, 1 = exposures/interactions, 0 = none
+  ctr->shrinkage = as<int>(model["shrinkage"]);  
   
-  // Fixed effect data
-  ctr->Y0 = as<Eigen::VectorXd>(model["Y"]);      // Response variable
-  ctr->Ystar = as<Eigen::VectorXd>(model["Y"]);   // For Gaussian default,
-  ctr->n = (ctr->Y0).size();                      // Sample size, n
+  // Data
+  ctr->Y0 = as<Eigen::VectorXd>(model["Y"]);      
+  ctr->Ystar = as<Eigen::VectorXd>(model["Y"]);  
+  ctr->n = (ctr->Y0).size();                  
 
-  ctr->Z = as<Eigen::MatrixXd>(model["Z"]);       // Fixed effect design matrix, Z (n x p)
-  ctr->Zw = ctr->Z;                               // Copy Z to Zw, will be updated throughout iteration (Z Omega)
-  ctr->pZ = (ctr->Z).cols();                      // Number of fixed effect covariates (ncol(Z))
+  // Fixed effect
+  ctr->Z = as<Eigen::MatrixXd>(model["Z"]);     
+  ctr->Zw = ctr->Z;                               
+  ctr->pZ = (ctr->Z).cols(); 
 
-  // Binary component
-  ctr->Z1 = as<Eigen::MatrixXd>(model["Z_zi"]);   // (Only for ZINB)Fixed effect design matrix of at-risk model, Z (n x p)
-  ctr->Zw1 = ctr->Z1;                             // Copy Z to Zw, will be updated throughout iteration (Z Omega)
-  ctr->pZ1 = (ctr->Z1).cols();                    // Number of fixed effect covariates (ncol(Z))
+  // ZI model
+  ctr->Z1 = as<Eigen::MatrixXd>(model["Z_zi"]);  
+  ctr->Zw1 = ctr->Z1; 
+  ctr->pZ1 = (ctr->Z1).cols(); 
 
-  // (At-risk model) Full conditional initialization for logistic model: V_gamma
-  Eigen::MatrixXd VgInv1(ctr->pZ1, ctr->pZ1);     // var-cov matrix
-  VgInv1 = (ctr->Z1).transpose() * (ctr->Z1);     // Zt*Z
-  VgInv1.diagonal().array() += 1.0 / 100.0;       // Zt*Z + I/c where c = 100
-  ctr->Vg1 = VgInv1.inverse();                    // V_gamma
-  VgInv1.resize(0,0);                             // Clear VgInv now that we obtained Vg
-  ctr->VgChol1 = (ctr->Vg1).llt().matrixL();      // Compute the cholesky of Vg: V_gamma = L*Lt = VgChol * t(VgChol)
-                                                  // (Ref: https://eigen.tuxfamily.org/dox/classEigen_1_1LLT.html)
+  // V_gamma for ZI model
+  Eigen::MatrixXd VgInv1(ctr->pZ1, ctr->pZ1);    
+  VgInv1 = (ctr->Z1).transpose() * (ctr->Z1);    
+  VgInv1.diagonal().array() += 1.0 / 100.0;      
+  ctr->Vg1 = VgInv1.inverse();
+  VgInv1.resize(0,0);    
+  ctr->VgChol1 = (ctr->Vg1).llt().matrixL();
 
-  // (Gaussian / Binary / NB) Full conditional initialization for logistic model: V_gamma
-  Eigen::MatrixXd VgInv(ctr->pZ, ctr->pZ);        // var-cov matrix
-  VgInv = (ctr->Z).transpose() * (ctr->Z);        // Zt*Z
-  VgInv.diagonal().array() += 1.0 / 100.0;        // Zt*Z + I/c where c = 100
-  ctr->Vg = VgInv.inverse();                      // V_gamma
-  VgInv.resize(0,0);                              // Clear VgInv now that we obtained Vg
-  ctr->VgChol = (ctr->Vg).llt().matrixL();        // Compute the cholesky of Vg: V_gamma = L*Lt = VgChol * t(VgChol)
-                                                  // (Ref: https://eigen.tuxfamily.org/dox/classEigen_1_1LLT.html)
+  // V_gamma for (Gaussian / Binary / NB model) 
+  Eigen::MatrixXd VgInv(ctr->pZ, ctr->pZ);
+  VgInv = (ctr->Z).transpose() * (ctr->Z);
+  VgInv.diagonal().array() += 1.0 / 100.0;
+  ctr->Vg = VgInv.inverse();
+  VgInv.resize(0,0);
+  ctr->VgChol = (ctr->Vg).llt().matrixL();    
 
-
-  // ****** Set up parameters for logistic model ******
-  // In the paper, lambda = kappa/omega where kappa = (y_i - n_i/2)
-  ctr->binomialSize.resize(ctr->n);               ctr->binomialSize.setZero(); // n of Binom(n, p): Zero vector (n x 1)
-  ctr->kappa.resize(ctr->n);                      ctr->kappa.setOnes();        // Kappa: One vector (n x 1)
-  ctr->Omega.resize(ctr->n);                      ctr->Omega.setOnes();        // Omega: One vector (n x 1)
+  // *** Set up parameters for logistic model ***
+  ctr->binomialSize.resize(ctr->n);               ctr->binomialSize.setZero(); 
+  ctr->kappa.resize(ctr->n);                      ctr->kappa.setOnes();        
+  ctr->Omega.resize(ctr->n);                      ctr->Omega.setOnes();        
   if (ctr->binomial) { // If binomial,
-    ctr->binomialSize = as<Eigen::VectorXd>(model["binomialSize"]);   // Save the binomialSize parameter
-    ctr->kappa = ctr->Y0 - 0.5 * (ctr->binomialSize);                 // Kappa = Ystar = y - n_i/2
-    ctr->Ystar = ctr->kappa;                                          // Save the current Kappa as ystar
+    ctr->binomialSize = as<Eigen::VectorXd>(model["binomialSize"]);  
+    ctr->kappa = ctr->Y0 - 0.5 * (ctr->binomialSize);                
+    ctr->Ystar = ctr->kappa;                                         
   }                                                                  
 
-  // ****** Set up parameters for ZINB model ******
-  // Initialize values
-  ctr->r = 5;   // Dispersion parameter: Starting at the center of Unif(0, 10)
+  // *** Set up parameters for ZINB model ***
+  ctr->r = 5; 
 
   // Useful vectors for PG variable sampling 
-  ctr->ones.resize(ctr->n);   ctr->ones.setOnes();        // Vector of ones
-  ctr->rVec = (ctr->r) * (ctr->ones).array();             // Dispersion parameter as a vector: rep(r, n)
+  ctr->ones.resize(ctr->n);   ctr->ones.setOnes(); 
+  ctr->rVec = (ctr->r) * (ctr->ones).array(); 
 
   // If ZINB, calculate the fixed values
   if(ctr->zinb){                                      
-    ctr->z2 = 0.5*((ctr->Y0).array() - ctr->r).array();   // Compute z2
-    ctr->Ystar = ctr->z2;                                 // Ystar in tdlmm_Cpp.cpp, z2 in modelEst.cpp
+    ctr->z2 = 0.5*((ctr->Y0).array() - ctr->r).array(); 
+    ctr->Ystar = ctr->z2;
   }
 
   // Initialize parameters
-  ctr->w.resize(ctr->n);                                          // At-risk binary latent variable
-  ctr->b1 = as<Eigen::VectorXd>(rnorm(ctr->pZ1, 0, sqrt(100)));   // Prior sampling of coefficients for binary component 
-  ctr->b2 = as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(100)));    // Prior sampling of coefficients for NB component
+  ctr->w.resize(ctr->n);  
+  ctr->b1 = as<Eigen::VectorXd>(rnorm(ctr->pZ1, 0, sqrt(100))); 
+  ctr->b2 = as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(100)));  
 
-  ctr->omega1.resize(ctr->n);        ctr->omega1.setOnes();       // Initiate omega1 (binary) as an identity matrix
-  ctr->omega2.resize(ctr->n);        ctr->omega2.setOnes();       // Initiate omega2 (NB) as an identity matrix
-  ctr->z1.resize(ctr->n);            ctr->z1.setZero();           // z1 for binary component
+  ctr->omega1.resize(ctr->n);        ctr->omega1.setOnes();
+  ctr->omega2.resize(ctr->n);        ctr->omega2.setOnes();
+  ctr->z1.resize(ctr->n);            ctr->z1.setZero();
 
-  // Store the indices of y == 0 (yZeroIdx) & y != 0 (NBidx)
+  // Store the indices of y = 0
   for(int j = 0; j < ctr->n; j++){
     if((ctr->Y0)[j] == 0){
-      (ctr->yZeroIdx).push_back(j);     // y == 0: Could be ZI or NB zero
+      (ctr->yZeroIdx).push_back(j);
       (ctr->w)[j] = 0.5;
     } else {
-      (ctr->NBidx).push_back(j);    // y != 0: Cannot be part of zero-inflation
+      (ctr->NBidx).push_back(j);
       (ctr->w)[j] = 0;
     }
   }
 
-  // Fixed effect matrix with [w == 0] zeroed out
+  // NB model specific parameters
   ctr->Zstar = (ctr->Z).array().colwise() * (1 - ctr->w.array());
+  ctr->yZeroN = (ctr->yZeroIdx).size(); 
+  ctr->nStar = (ctr->NBidx).size(); 
 
-  // Calculate the size: yZeroN + nStar should equal to n
-  ctr->yZeroN = (ctr->yZeroIdx).size();   // Fixed as we are just counting y == 0
-  ctr->nStar = (ctr->NBidx).size();   // Random as some of y == 0 can be at-risk
-
-  // ****** Create exposure data management ******
-  std::vector<exposureDat*> Exp;                      // exposureDat object
-  Rcpp::List exp_dat = as<Rcpp::List>(model["X"]);    // List of exposures
-  ctr->nExp = exp_dat.size();                         // Number of exposures
-  for (int i = 0; i < ctr->nExp; ++i) { // For each exposure,
-    if (ctr->binomial || ctr->zinb) // For logistic / ZINB,
+  // *** Create exposure data management ***
+  std::vector<exposureDat*> Exp; 
+  Rcpp::List exp_dat = as<Rcpp::List>(model["X"]); 
+  ctr->nExp = exp_dat.size();
+  for (int i = 0; i < ctr->nExp; ++i) { 
+    if (ctr->binomial || ctr->zinb)
       Exp.push_back(
         new exposureDat(
           as<Eigen::MatrixXd>(
-            as<Rcpp::List>(exp_dat[i])["Tcalc"]))); // Store Tcalc
-    else // Gaussian
+            as<Rcpp::List>(exp_dat[i])["Tcalc"]))); 
+    else 
       Exp.push_back(
         new exposureDat(
           as<Eigen::MatrixXd>(
-            as<Rcpp::List>(exp_dat[i])["Tcalc"]), ctr->Z, ctr->Vg)); // Store Tcalc, Z, Vg
+            as<Rcpp::List>(exp_dat[i])["Tcalc"]), ctr->Z, ctr->Vg));
   }
 
-  // ****** Mixture/interaction management ******
-  ctr->pX = Exp[0]->pX;                                     // Total time lag: T
+  // *** Mixture/interaction management ***
+  ctr->pX = Exp[0]->pX;  
   ctr->nSplits = 0;
-  ctr->interaction = as<int>(model["interaction"]);         // Interaction: TDLMMadd(1) / TDLMMns(2) / TDLMMall(3)
-  ctr->nMix = 0;                                            // Default: No interaction terms
-  if (ctr->interaction) { // TDLMMns
-    ctr->nMix += int (ctr->nExp * (ctr->nExp - 1.0) / 2.0); // (M choose 2) for TDLMMns
-    if (ctr->interaction == 2) { // TDLMMall
-      ctr->nMix += ctr->nExp;                               // (M choose 2) + M for TDLMMall
+  ctr->interaction = as<int>(model["interaction"]); 
+  ctr->nMix = 0;  
+  if (ctr->interaction) { 
+    ctr->nMix += int (ctr->nExp * (ctr->nExp - 1.0) / 2.0);
+    if (ctr->interaction == 2) { 
+      ctr->nMix += ctr->nExp; 
     }
   }
 
-  // ****** Create trees ******
-  int t;                                                             // Tree index (a = 1, ..., A in the papers)
-  (ctr->tree1Exp).resize(ctr->nTrees);    (ctr->tree1Exp).setZero(); // Trees1 vector (Number of trees for Ensemble x 1)
-  (ctr->tree2Exp).resize(ctr->nTrees);    (ctr->tree2Exp).setZero(); // Trees2 vector (Number of trees for Ensemble x 1)
-  ctr->expProb = as<Eigen::VectorXd>(model["expProb"]);              // Uniform probability for exposure selection
-  (ctr->expCount).resize((ctr->expProb).size());                     // Store number of exposures
+  // *** Create trees ***
+  int t;                                                            
+  (ctr->tree1Exp).resize(ctr->nTrees);    (ctr->tree1Exp).setZero();
+  (ctr->tree2Exp).resize(ctr->nTrees);    (ctr->tree2Exp).setZero(); 
+  ctr->expProb = as<Eigen::VectorXd>(model["expProb"]);
+  (ctr->expCount).resize((ctr->expProb).size());  
   (ctr->expInf).resize((ctr->expProb).size());                       
 
   // Create root nodes to start trees
-  std::vector<Node*> trees1; // (Root Node, ..., Root Node)
-  std::vector<Node*> trees2; // (Root Node, ..., Root Node)
-  NodeStruct *ns;            // Construct NodeStruct object
-  ns = new DLNMStruct(0,                          // xmin = 0
-                      ctr->nSplits + 1,           // xmax = 1
-                      1,                          // tmin = 1
-                      int (ctr->pX),              // tmax = pX (total time lag T)
-                      as<Eigen::VectorXd>(model["splitProb"]), // Split probability
-                      as<Eigen::VectorXd>(model["timeProb"])); // Uniform probability for time split
+  std::vector<Node*> trees1; 
+  std::vector<Node*> trees2;
+  NodeStruct *ns;           
+  ns = new DLNMStruct(0,                      
+                      ctr->nSplits + 1,          
+                      1,                        
+                      int (ctr->pX),             
+                      as<Eigen::VectorXd>(model["splitProb"]), 
+                      as<Eigen::VectorXd>(model["timeProb"])); 
 
-  for (t = 0; t < ctr->nTrees; ++t) { // For each tree pair a in the ensemble,
-    if(ctr->swapStep){
-      ctr->tree1Exp(t) = sampleInt(ctr->expProb); // Randomly assign one exposure to Tree1
-      ctr->tree2Exp(t) = sampleInt(ctr->expProb); // Randomly assign one expousre to Tree2
-    } else {
-      if(ctr->interaction == 1){
-        // Only works for two exposures now.
-        ctr->tree1Exp(t) = 0;
-        ctr->tree2Exp(t) = 1;
-      } else if (ctr->interaction == 2){
-        if(t % 3 == 0){
-          ctr->tree1Exp(t) = 0; 
-          ctr->tree2Exp(t) = 0; 
-        } else if (t % 3 == 1) {
-          ctr->tree1Exp(t) = 1; 
-          ctr->tree2Exp(t) = 1; 
-        } else {
-          ctr->tree1Exp(t) = 0; 
-          ctr->tree2Exp(t) = 1; 
-        }
-      }
-    }
-    
-    trees1.push_back(new Node(0, 1));           // Fill in the tree vector 1 with a node of 0 depth and not terminal node
-    trees2.push_back(new Node(0, 1));           // Fill in the tree vector 2 with a node of 0 depth and not terminal node
-    trees1[t]->nodestruct = ns->clone();        // Tree 1: Copy NodeStruct object to Node parameter
-    trees2[t]->nodestruct = ns->clone();        // Tree 2: Copy NodeStruct object to Node parameter
-    Exp[ctr->tree1Exp(t)]->updateNodeVals(trees1[t]); // Update trees in tree vector 1
-    Exp[ctr->tree2Exp(t)]->updateNodeVals(trees2[t]); // Update trees in tree vector 2
+  // Tree initialization
+  for (t = 0; t < ctr->nTrees; ++t) { 
+    ctr->tree1Exp(t) = sampleInt(ctr->expProb); 
+    ctr->tree2Exp(t) = sampleInt(ctr->expProb); 
+    trees1.push_back(new Node(0, 1));          
+    trees2.push_back(new Node(0, 1)); 
+    trees1[t]->nodestruct = ns->clone();
+    trees2[t]->nodestruct = ns->clone(); 
+    Exp[ctr->tree1Exp(t)]->updateNodeVals(trees1[t]); 
+    Exp[ctr->tree2Exp(t)]->updateNodeVals(trees2[t]); 
   }
-  delete ns;                                    // Delete NodeStruct ns as we cloned it
+  delete ns;
   
-  // ****** Setup model logs ******
-  tdlmLog *dgn = new tdlmLog;                                                   // Log object
-  (dgn->gamma).resize(ctr->pZ, ctr->nRec);          (dgn->gamma).setZero();     // Fixed effect coefficient
-  (dgn->sigma2).resize(ctr->nRec);                  (dgn->sigma2).setZero();    // Gaussian variance
-  (dgn->kappa).resize(ctr->nRec);                   (dgn->kappa).setZero();     // Logistic z1
-  (dgn->nu).resize(ctr->nRec);                      (dgn->nu).setZero();        // Shrinkage parameter 1
-  (dgn->tau).resize(ctr->nTrees, ctr->nRec);        (dgn->tau).setZero();       // Shrinkage parameter 2
-  (dgn->muExp).resize(ctr->nExp, ctr->nRec);        (dgn->muExp).setZero();     // Exposure-specific variance
-  if (ctr->interaction > 0) { // For TDLMMns / TDLMMall
+  // *** Setup model logs ***
+  tdlmLog *dgn = new tdlmLog;                                                
+  (dgn->gamma).resize(ctr->pZ, ctr->nRec);          (dgn->gamma).setZero();   
+  (dgn->sigma2).resize(ctr->nRec);                  (dgn->sigma2).setZero();
+  (dgn->kappa).resize(ctr->nRec);                   (dgn->kappa).setZero();  
+  (dgn->nu).resize(ctr->nRec);                      (dgn->nu).setZero();   
+  (dgn->tau).resize(ctr->nTrees, ctr->nRec);        (dgn->tau).setZero();  
+  (dgn->muExp).resize(ctr->nExp, ctr->nRec);        (dgn->muExp).setZero(); 
+  if (ctr->interaction > 0) {
     (dgn->muMix).resize(ctr->nMix, ctr->nRec);      (dgn->muMix).setZero();
     (dgn->mixInf).resize(ctr->nMix, ctr->nRec);     (dgn->mixInf).setZero();
     (dgn->mixCount).resize(ctr->nMix, ctr->nRec);   (dgn->muMix).setZero();
-  } else { // For TDLMMadd -> No interaction terms
+  } else { 
     (dgn->muMix).resize(1, 1);                      (dgn->muMix).setZero();
     (dgn->mixInf).resize(1, 1);                     (dgn->mixInf).setZero();
     (dgn->mixCount).resize(1, 1);                   (dgn->mixCount).setZero();
   }
-  (dgn->expProb).resize(ctr->nExp, ctr->nRec);      (dgn->expProb).setZero();     // Exposure selection probability
-  (dgn->expCount).resize(ctr->nExp, ctr->nRec);     (dgn->expCount).setZero();    // Number of exposures
+  (dgn->expProb).resize(ctr->nExp, ctr->nRec);      (dgn->expProb).setZero(); 
+  (dgn->expCount).resize(ctr->nExp, ctr->nRec);     (dgn->expCount).setZero();
   (dgn->expInf).resize(ctr->nExp, ctr->nRec);       (dgn->expInf).setZero();
-  (dgn->fhat).resize(ctr->n);                       (dgn->fhat).setZero();        // fhat: Sum of DLM effect except tree pair a
-  (dgn->termNodes).resize(ctr->nTrees, ctr->nRec);  (dgn->termNodes).setZero();   // Terminal nodes of tree vector 1
-  (dgn->termNodes2).resize(ctr->nTrees, ctr->nRec); (dgn->termNodes2).setZero();  // Terminal nodes of tree vector 2
-  (dgn->tree1Exp).resize(ctr->nTrees, ctr->nRec);   (dgn->tree1Exp).setZero();    // Exposure vector of tree vector 1
-  (dgn->tree2Exp).resize(ctr->nTrees, ctr->nRec);   (dgn->tree2Exp).setZero();    // Exposure vector of tree vector 2
+  (dgn->fhat).resize(ctr->n);                       (dgn->fhat).setZero(); 
+  (dgn->termNodes).resize(ctr->nTrees, ctr->nRec);  (dgn->termNodes).setZero();
+  (dgn->termNodes2).resize(ctr->nTrees, ctr->nRec); (dgn->termNodes2).setZero();
+  (dgn->tree1Exp).resize(ctr->nTrees, ctr->nRec);   (dgn->tree1Exp).setZero();
+  (dgn->tree2Exp).resize(ctr->nTrees, ctr->nRec);   (dgn->tree2Exp).setZero();
 
-  // ZINB log
-  (dgn->b1).resize(ctr->pZ1, ctr->nRec);             (dgn->b1).setZero();         // Binary component coeffient (p x MCMC)
-  (dgn->b2).resize(ctr->pZ, ctr->nRec);              (dgn->b2).setZero();         // NB component coeffient (p x MCMC)
-  (dgn->r).resize(ctr->nRec);                        (dgn->r).setZero();          // Dispersion parameter
-  (dgn->wMat).resize(ctr->n, ctr->nRec);             (dgn->wMat).setZero();       // At-risk Auxiliary: Each column is w at each iteration
+  // ZINB specific log
+  (dgn->b1).resize(ctr->pZ1, ctr->nRec);             (dgn->b1).setZero(); 
+  (dgn->b2).resize(ctr->pZ, ctr->nRec);              (dgn->b2).setZero(); 
+  (dgn->r).resize(ctr->nRec);                        (dgn->r).setZero(); 
+  (dgn->wMat).resize(ctr->n, ctr->nRec);             (dgn->wMat).setZero(); 
 
-  // ****** Initial draws ******
-  (ctr->fhat).resize(ctr->n);                         (ctr->fhat).setZero();          // fhat: A vector of zeros
-  ctr->R = ctr->Ystar;                                                                // Partial residual
-  (ctr->gamma).resize(ctr->pZ);                                                       // Logistic model coefficient
+
+
+  // *** Initial draws ***
+  (ctr->fhat).resize(ctr->n);                         (ctr->fhat).setZero();     
+  ctr->R = ctr->Ystar;                                                          
+  (ctr->gamma).resize(ctr->pZ);                                               
   (ctr->totTermExp).resize(ctr->nExp);                (ctr->totTermExp).setZero();    
   (ctr->sumTermT2Exp).resize(ctr->nExp);              (ctr->sumTermT2Exp).setZero();  
-  (ctr->muExp).resize(ctr->nExp);                     (ctr->muExp).setOnes();                             // Exposure-specific variance
+  (ctr->muExp).resize(ctr->nExp);                     (ctr->muExp).setOnes();                       
 
-  // If there is an interaction, define more parameters
+  // interaction specific parameters
   if (ctr->interaction) { 
-    (ctr->totTermMix).resize(ctr->nExp, ctr->nExp);   (ctr->totTermMix).setZero();    // Interaction parameters
-    (ctr->sumTermT2Mix).resize(ctr->nExp, ctr->nExp); (ctr->sumTermT2Mix).setZero();  //
-    (ctr->muMix).resize(ctr->nExp, ctr->nExp);        (ctr->muMix).setOnes();         // interaction-specific variance
-    (ctr->mixInf).resize(ctr->nExp, ctr->nExp);       (ctr->mixInf).setZero();        // 
+    (ctr->totTermMix).resize(ctr->nExp, ctr->nExp);   (ctr->totTermMix).setZero(); 
+    (ctr->sumTermT2Mix).resize(ctr->nExp, ctr->nExp); (ctr->sumTermT2Mix).setZero();
+    (ctr->muMix).resize(ctr->nExp, ctr->nExp);        (ctr->muMix).setOnes();        
+    (ctr->mixInf).resize(ctr->nExp, ctr->nExp);       (ctr->mixInf).setZero();   
     (ctr->mixCount).resize(ctr->nExp, ctr->nExp);     (ctr->mixCount).setZero();      
   }
 
   // Hyperparameter initial values
-  ctr->totTerm = 0;       // This is represented by "b" in the paper
+  ctr->totTerm = 0; 
   ctr->sumTermT2 = 0;
   ctr->nu = 1.0; 
   ctr->sigma2 = 1.0;
 
-  // model estimation with the initial values
+  // Model estimation with the initial values
   tdlmModelEst(ctr); 
 
-  // node-specific full-conditional with half-Cauchy: C+(0, 1)
+  // Horseshoe hyperparameters
   rHalfCauchyFC(&(ctr->nu), ctr->nTrees, 0.0);
   (ctr->tau).resize(ctr->nTrees);                 (ctr->tau).setOnes();
   for (t = 0; t < ctr->nTrees; ++t) {
-    if (ctr->shrinkage > 1) // shrinkage on all (tree & exposure) or just tree
+    if (ctr->shrinkage > 1) 
       rHalfCauchyFC(&(ctr->tau(t)), 0.0, 0.0);
   }
   ctr->nTerm.resize(ctr->nTrees);                 (ctr->nTerm).setOnes();
   ctr->nTerm2.resize(ctr->nTrees);                (ctr->nTerm2).setOnes();
   (ctr->Rmat).resize(ctr->n, ctr->nTrees);        (ctr->Rmat).setZero();
 
-  // ****** Create Progress Meter ******
+
+  // *** Create Progress Meter ***
   progressMeter* prog = new progressMeter(ctr);
 
-  // ****** Beginning of MCMC ******
+
+  // *** Beginning of MCMC ***
   double sigmanu;
   std::size_t s;
-  // For all the MCMC iteration + burn-in
+
+  // MCMC iteration
   for (ctr->b = 1; ctr->b <= (ctr->iter + ctr->burn); (ctr->b)++) { 
 
-    // Record the iteration number if the iteration is after the burn-in and not one of thinning iteration
+    // Burn-in & thinning
     if ((ctr->b > ctr->burn) && (((ctr->b - ctr->burn) % ctr->thin) == 0)) { 
       ctr->record = floor((ctr->b - ctr->burn) / ctr->thin); 
     } else {
       ctr->record = 0;
     }
 
-    // [Update trees]
-    // Rcout << "Update MCMC trees \n";
-    // Add the first column of Rmat to the partial residual
-    ctr->R += (ctr->Rmat).col(0); 
-
     // Reset the parameters
+    ctr->R += (ctr->Rmat).col(0); 
     (ctr->fhat).setZero();                
     ctr->totTerm = 0;                    
     ctr->sumTermT2 = 0;                   
@@ -869,19 +820,19 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
     (ctr->expInf).setZero();
     (ctr->mixInf).setZero();
     if (ctr->interaction > 0) {
-      (ctr->totTermMix).setZero();                (ctr->sumTermT2Mix).setZero();
+      (ctr->totTermMix).setZero();                
+      (ctr->sumTermT2Mix).setZero();
     }
 
-    // For each tree pair, perform one iteration of MCMC
-    for (t = 0; t < ctr->nTrees; ++t) {                       // t = index for tree pair
-      tdlmmTreeMCMC(t, trees1[t], trees2[t], ctr, dgn, Exp);  // Tree transitions
+    // Iterate through trees
+    for (t = 0; t < ctr->nTrees; ++t) {
+      tdlmmTreeMCMC(t, trees1[t], trees2[t], ctr, dgn, Exp);
       ctr->fhat += (ctr->Rmat).col(t);
       if (t < ctr->nTrees - 1) 
         ctr->R += (ctr->Rmat).col(t + 1) - (ctr->Rmat).col(t); 
     }
-    // Rcout << " end trees \n";
 
-    // * Pre-calculations for control and variance
+    // Pre-calculations for control and variance
     ctr->R = ctr->Ystar - ctr->fhat;             
     ctr->sumTermT2 = (ctr->sumTermT2Exp).sum();
     ctr->totTerm = (ctr->totTermExp).sum();
@@ -890,52 +841,47 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
       ctr->totTerm += (ctr->totTermMix).sum();
     }
 
-    // * Update model (Binomial model should go through MCMC as well)
-    tdlmModelEst(ctr); // Go to modelEst.cpp::tdlmModelEst
+    // Update model
+    tdlmModelEst(ctr); // modelEst.cpp::tdlmModelEst
     
-    // * Update variance parameters from supplemental material -> Horseshoe sampling with IG & Half-cauchy relationship
+    // Horseshoe sampling with IG & Half-cauchy relationship
+    // nu (global)
     rHalfCauchyFC(&(ctr->nu), ctr->totTerm, ctr->sumTermT2 / ctr->sigma2);  
-    // if ((ctr->nu) != (ctr->nu)) 
-    //   stop("\nNaN values (nu) occured during model run, rerun model.\n");
     sigmanu = ctr->sigma2 * ctr->nu;
-    if ((ctr->shrinkage == 3) || (ctr->shrinkage == 1)) { // Exposure shrinkage
+    
+    // Exposure shrinkage
+    if ((ctr->shrinkage == 3) || (ctr->shrinkage == 1)) { 
       for (int i = 0; i < ctr->nExp; ++i) {
         rHalfCauchyFC(&(ctr->muExp(i)), ctr->totTermExp(i), ctr->sumTermT2Exp(i) / sigmanu);
-        // if ((ctr->muExp)(i) != (ctr->muExp)(i)) 
-        //   stop("\nNaN values (muExp) occured during model run, rerun model.\n");
-        if (ctr->interaction) { // mu_{Sa1Sa2}
+        
+        // Mixture shrinkage
+        if (ctr->interaction) { 
           for (int j = i; j < ctr->nExp; ++j) {
             if ((j > i) || (ctr->interaction == 2))
               rHalfCauchyFC(&(ctr->muMix(j, i)), ctr->totTermMix(j, i),
                             ctr->sumTermT2Mix(j, i) / sigmanu);
-            // if ((ctr->muMix)(j,i) != (ctr->muMix)(j,i)) 
-            //   stop("\nNaN values (muMix) occured during model run, rerun model.\n");
+
           } // end for loop updating interaction variances
         } // end if interactions
       } // end for loop updating exposure variances
-    } // end if shrinkage == 3 or 1R
+    } // end if shrinkage == 3 or 1
 
-    // * Update exposure selection probability from supplemental material
+    
+    // Update exposure selection probability
     if ((ctr->b > 1000) || (ctr->b > (0.5 * ctr->burn))) {
       if (updateKappa) {
-        // double modKappaNew = exp(log(ctr->modKappa) + R::rnorm(0, 0.5));
         double modKappaNew = R::rgamma(1.0, ctr->nTrees/4.0);
         double mhrDir =
-          logDirichletDensity(ctr->expProb,
-                              ((ctr->expCount).array() + 
-                               modKappaNew).matrix()) -
-          logDirichletDensity(ctr->expProb,
-                              ((ctr->expCount).array() + 
-                               ctr->modKappa).matrix());
+          logDirichletDensity(ctr->expProb, ((ctr->expCount).array() + modKappaNew).matrix()) -
+          logDirichletDensity(ctr->expProb, ((ctr->expCount).array() + ctr->modKappa).matrix());
 
         if (log(R::runif(0, 1)) < mhrDir)
           ctr->modKappa = modKappaNew;
       }
-      
       ctr->expProb = rDirichlet(((ctr->expCount).array() + ctr->modKappa).matrix());
     }
 
-    // * Record
+    // Record
     if (ctr->record > 0) {
       dgn->fhat += ctr->fhat;
       (dgn->gamma).col(ctr->record - 1) = ctr->gamma;
@@ -952,12 +898,13 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
       (dgn->muExp).col(ctr->record - 1) = ctr->muExp;
       (dgn->kappa)(ctr->record - 1) = ctr->modKappa;
 
-      // ZINB
+      // ZINB specific
       (dgn->b1).col(ctr->record - 1) = ctr->b1;
       (dgn->b2).col(ctr->record - 1) = ctr->b2;
       (dgn->r)(ctr->record - 1) = ctr->r;
       (dgn->wMat).col(ctr->record - 1) = ctr->w;
-
+      
+      // mixture specific
       if (ctr->interaction) {
         int k = 0;
         for (int i = 0; i < ctr->nExp; ++i) {
@@ -973,50 +920,9 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
       }
     }
 
-
-    if (ctr->diagnostics){
-      Rcout << "MCMC Iteration : ";
-      Rcout << ctr->b;
-      Rcout << "\n";
-
-      Rcout << "Sigma2 : ";
-      Rcout << ctr->sigma2;
-      Rcout << "\n";
-      Rcout << "nu : ";
-      Rcout << ctr->nu;
-      Rcout << "\n";
-
-      for(int p = 0; p < ctr->nTrees; p++){
-        Rcout << ctr->tau[p];
-        Rcout << "|";
-      }
-      Rcout << "\n";
-
-      Rcout << "muExp(0) : ";
-      Rcout << ctr->muExp(0);
-      Rcout << "\n";
-      Rcout << "muExp(1) : ";
-      Rcout << ctr->muExp(1);
-      Rcout << "\n";
-
-      if(ctr->interaction > 0){
-        Rcout << "muMix(0-1) : ";
-        Rcout << ctr->muMix(1, 0);
-        Rcout << "\n";
-        Rcout << "muMix(1-2) : ";
-        Rcout << ctr->muMix(2, 1);
-        Rcout << "\n";
-        Rcout << "muMix(0-2) : ";
-        Rcout << ctr->muMix(2, 0);
-        Rcout << "\n";
-      }
-
-      Rcout << "--------------------------------\n";
-    }
-
-    // * Progress
+    // Progress
     prog->printMark();
-  } // End MCMC -----------------------------------------------------------------
+  } // End MCMC ******
 
 
   // * Setup data for return
@@ -1042,12 +948,13 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   Eigen::MatrixXd muMix(1, 1); muMix.setZero();
   Eigen::MatrixXd MIX(0, 10); MIX.setZero();
 
-  // ZINB return 
-  Eigen::MatrixXd b1 = (dgn->b1).transpose(); // binary component coefficients
-  Eigen::MatrixXd b2 = (dgn->b2).transpose(); // count component coefficients (This gets return for NB)
-  Eigen::VectorXd r = dgn->r;                 // dispersion parameter
-  Eigen::MatrixXd wMat = dgn->wMat;           // What percentage of iteration was an individual at risk?
+  // ZINB specific return 
+  Eigen::MatrixXd b1 = (dgn->b1).transpose(); 
+  Eigen::MatrixXd b2 = (dgn->b2).transpose();
+  Eigen::VectorXd r = dgn->r; 
+  Eigen::MatrixXd wMat = dgn->wMat; 
 
+  // Interaction
   if (ctr->interaction) {
     muMix.resize((dgn->muMix).cols(), (dgn->muMix).rows());
     muMix = (dgn->muMix).transpose();
@@ -1073,10 +980,10 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
                             Named("gamma") = wrap(gamma),
                             // Named("fhat") = wrap(fhat),
                             Named("sigma2") = wrap(sigma2),
-                            //Named("nu") = wrap(nu),
-                            //Named("tau") = wrap(tau),
-                            Named("termNodes") = wrap(termNodes),
-                            Named("termNodes2") = wrap(termNodes2), 
+                            Named("nu") = wrap(nu),
+                            Named("tau") = wrap(tau),
+                            //Named("termNodes") = wrap(termNodes),
+                            //Named("termNodes2") = wrap(termNodes2), 
                             // Named("tree1Exp") = wrap(tree1Exp),
                             // Named("tree2Exp") = wrap(tree2Exp),
                             Named("expProb") = wrap(expProb),
@@ -1090,8 +997,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
                             Named("treeAccept") = wrap(Accept),
                             Named("b1") = wrap(b1),
                             Named("b2") = wrap(b2),
-                            Named("r") = wrap(r),
-                            Named("wMat") = wrap(wMat)));
+                            Named("r") = wrap(r)));
 } // end tdlmm_Cpp
 
 
