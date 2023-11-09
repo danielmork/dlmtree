@@ -223,7 +223,6 @@ Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){
   (ctr->muExp).resize(ctr->nExp);           (ctr->muExp).setOnes();        
 
   // If there is an interaction, define more parameters
-  // Initiate interaction effect muMix as a matrix of 1 -> start mixVar = 1
   if (ctr->interaction) { 
     (ctr->totTermMix).resize(ctr->nExp, ctr->nExp);   (ctr->totTermMix).setZero();   
     (ctr->sumTermT2Mix).resize(ctr->nExp, ctr->nExp); (ctr->sumTermT2Mix).setZero(); 
@@ -337,10 +336,6 @@ Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){
     // 2 = trees (tau(t))
     // 1 = exposures/interactions (mu(s)) - (default)
     // 0 = none
-    // Rcout << "Updating the hyperparameters for Gaussian model \n";
-    // Sample xi ~ Inv-Gamma(1, 1/(1 + 1/nu)) = xiInv ~ Gamma(1, 1/(1 + 1/nu))
-    // Update nu full conditional
-
     // Global shrinkage: nu
     double xiInv = R::rgamma(1, 1.0 / (1.0 + 1.0 / (ctr->nu)));
     ctr->nu = 1.0 / R::rgamma(0.5 * ctr->totTerm + 0.5,
@@ -471,7 +466,6 @@ Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){
 
   // Transfer variables from the dgn object
   // DLM tree pair
-  // Rcout << "DLM tree pair \n";
   Eigen::VectorXd sigma2 = dgn->sigma2;
   Eigen::VectorXd nu = dgn->nu;
   Eigen::MatrixXd tau = (dgn->tau).transpose();
@@ -480,7 +474,6 @@ Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){
   Eigen::MatrixXd gamma = (dgn->gamma).transpose();
 
   // dlmTree information
-  // Rcout << "Exposures \n";
   Eigen::MatrixXd termNodesDLM1 = (dgn->termNodesDLM1).transpose();
   Eigen::MatrixXd termNodesDLM2 = (dgn->termNodesDLM2).transpose();
   Eigen::MatrixXd tree1Exp = (dgn->dlmTree1Exp).transpose();
@@ -497,7 +490,6 @@ Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){
   Eigen::MatrixXd MIX(0, 10);   MIX.setZero();
   Eigen::VectorXd mixKappa = dgn->mixKappa;
 
-  // Rcout << "Storing interaction MCMC \n";
   // If interaction, expand muMIX and MIX
   if (ctr->interaction) {
     muMix.resize((dgn->muMix).cols(), (dgn->muMix).rows());
@@ -508,7 +500,6 @@ Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){
   }
 
   // Modifier tree
-  // Rcout << "Modifier tree record \n";
   Eigen::MatrixXd termNodesMod = (dgn->termNodesMod).transpose();
   Eigen::VectorXd kappa = dgn->modKappa;
   Eigen::MatrixXd modProb = (dgn->modProb).transpose();
@@ -569,40 +560,38 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
                                    dlmtreeCtr* ctr, dlmtreeLog *dgn,
                                    modDat* Mod, std::vector<exposureDat*> Exp)
 { 
-  // Rcout << "Reminder: The code is in the tree pair for each t";
-  // Rcout << "TreeMCMC: Defining parameters... \n";
-  int m1, m2, newExp;                                 // Exposure (& potentially new exposure)
-  int step, step1, step2;                             // MCMC transition steps
-  double m1Var, m2Var, mixVar, newExpVar, newMixVar;  // Exposure specific variance
-  int success = 0;                                    // MH ratio parameter
-  double RtR = -1.0;                                  // MH ratio parameter
-  double RtZVgZtR = 0;                                // MH ratio parameter
-  double stepMhr = 0;                                 // MH ratio parameter
-  double ratio = 0;                                   // MH ratio parameter
-  double treeVar = (ctr->nu) * (ctr->tau)(t);         // Shrinkage: Global x Local
-  std::size_t s;                                      // modifier tree count
-  std::vector<Node*> modTerm, dlmTerm1, dlmTerm2;             // Terminal nodes
-  std::vector<Node*> newModTerm, newDlmTerm1, newDlmTerm2;    // Proposed terminal nodes
-  Node* newTree = 0;                                  // Potential new tree
-  treeMHR mhr0, mhr;                                  // mhr object
+
+  int m1, m2, newExp;                                 
+  int step, step1, step2;                             
+  double m1Var, m2Var, mixVar, newExpVar, newMixVar;  
+  int success = 0;                                    
+  double RtR = -1.0;                                  
+  double RtZVgZtR = 0;                                
+  double stepMhr = 0;                                 
+  double ratio = 0;                                   
+  double treeVar = (ctr->nu) * (ctr->tau)(t);         
+  std::size_t s;                                      
+  std::vector<Node*> modTerm, dlmTerm1, dlmTerm2;          
+  std::vector<Node*> newModTerm, newDlmTerm1, newDlmTerm2; 
+  Node* newTree = 0;                                  
+  treeMHR mhr0, mhr;                                  
 
   // Pre-calculation for MH ratio update
-  // Rcout << "TreeMCMC: Precalculation for MHR update... \n";
   Eigen::VectorXd ZtR = (ctr->Z).transpose() * (ctr->R);
 
   // -- List terminal nodes --
-  // Rcout << "TreeMCMC: Listing terminal nodes... \n";
-  modTerm = modTree->listTerminal();    // modifier tree terminal nodes
-  dlmTerm1 = dlmTree1->listTerminal();  // tree1 terminal nodes
-  dlmTerm2 = dlmTree2->listTerminal();  // tree2 terminal nodes
+  modTerm = modTree->listTerminal();   
+  dlmTerm1 = dlmTree1->listTerminal(); 
+  dlmTerm2 = dlmTree2->listTerminal(); 
 
   // Extract exposure information from ctr
-  m1 = ctr->dlmTree1Exp[t];     // Exposure m1 of tree 1 of t th tree pair 
-  m2 = ctr->dlmTree2Exp[t];     // Exposure m2 of tree 2 of t th tree pair
-  m1Var = ctr->muExp(m1);    // Exposure-specific variance
-  m2Var = ctr->muExp(m2);    // Exposure-specific variance
-  mixVar = 0;                // No interaction variance for now
-  // If there is an interaction, extract mixture variance value from the muMix matrix
+  m1 = ctr->dlmTree1Exp[t]; 
+  m2 = ctr->dlmTree2Exp[t]; 
+  m1Var = ctr->muExp(m1);   
+  m2Var = ctr->muExp(m2);   
+  mixVar = 0;             
+
+  // muMix for interaction
   if ((ctr->interaction) && ((ctr->interaction == 2) || (m1 != m2))) { 
     if (m1 <= m2)
       mixVar = ctr->muMix(m2, m1);
@@ -611,15 +600,12 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
   }
 
   // Current null state MHR
-  // Rcout << "[mhr0] \n";
   mhr0 = dlmtreeTDLMM_MHR(modTerm, dlmTerm1, dlmTerm2, 
                           ctr, ZtR, treeVar, 
                           m1Var, m2Var, mixVar);
                         
   // [Tree pair update]
   // *** Propose a new TDLMM tree 1 ***
-  // "New" parameters are set as the current ones until being updated by switch-exposure step.
-  // Rcout << "TreeMCMC: Updating tree 1 \n";
   newExp    = m1; 
   newExpVar = m1Var;
   newMixVar = mixVar;
@@ -627,29 +613,27 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
   success = 0;
 
   // Choose a transition and update
-  // Rcout << "TreeMCMC: Selecting transition \n";
   step1 = sampleInt(ctr->stepProb, 1);
   if ((dlmTerm1.size() == 1) && (step1 < 3)){
     step1 = 0;
   }
 
   // This part is different from HDLM as we have multiple exposures now
-  if(step1 < 3){  // Grow / Prune / Change
-    stepMhr = tdlmProposeTree(dlmTree1, Exp[m1], ctr, step1); // Take the proposed step and propose a tree
-    success = dlmTree1->isProposed();                         // Evaluate the proposed tree
-    newDlmTerm1 = dlmTree1->listTerminal(1);                  // Save the new terminal node
-  } else { // Step 4 = Propose a new exposure
+  if(step1 < 3){ 
+    stepMhr = tdlmProposeTree(dlmTree1, Exp[m1], ctr, step1);
+    success = dlmTree1->isProposed(); 
+    newDlmTerm1 = dlmTree1->listTerminal(1); 
+  } else {
     newExp = sampleInt(ctr->expProb);
-    if (newExp != m1) { // To update, the proposed exposure must be different to the current one.
-      // Update the information with new exposure
-      success   = 1;   // exposure-switching is always successful transition                   
-      newExpVar = ctr->muExp(newExp);         // Extract the variance of the new exposure
-      newTree   = new Node(*dlmTree1);        // Propose a tree with a new exposure
-      newTree->setUpdate(1);                  // Update
-      newDlmTerm1 = newTree->listTerminal();  // Save the terminal nodes of the tree with a new exposure
+    if (newExp != m1) { 
+      success   = 1;             
+      newExpVar = ctr->muExp(newExp);       
+      newTree   = new Node(*dlmTree1);      
+      newTree->setUpdate(1);                
+      newDlmTerm1 = newTree->listTerminal();
 
-      for (Node* nt : newDlmTerm1)        // For each terminal node,
-        Exp[newExp]->updateNodeVals(nt);  // Update with a new exposure
+      for (Node* nt : newDlmTerm1)      
+        Exp[newExp]->updateNodeVals(nt);
 
       // Update the interaction using the new exposure as well for TDLMMns/all
       if ((ctr->interaction) && ((ctr->interaction == 2) || (newExp != m2))) {
@@ -657,7 +641,7 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
           newMixVar = ctr->muMix(m2, newExp); 
         else
           newMixVar = ctr->muMix(newExp, m2); 
-      } else { // TDLMMadd -> no new MixVar
+      } else {
         newMixVar = 0;
       }
     }
@@ -666,17 +650,13 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
   // * dlmTree 1 MHR 
   // StepMHR: Transition ratio
   // mhr0 & mhr: Likelihood of R
-  // Rcout << "TreeMCMC: Compute the MHR of the current tree/terminal nodes, called mhr0 \n";
-
   // If successful, calculate MH ratio
-  // Rcout << "TreeMCMC: Success: -> Compute the MHR of the proposed tree/terminal nodes, called mhr \n";
   if (success) {  
     // If transition is successful, we have a new dlm terminal node.
     newDlmTerm1 = dlmTree1->listTerminal(1);
     modTree->setUpdateXmat(1);
 
     // MH ratio with a new terminal and the exposure: newDlmTerm1, newExpVar
-    // Rcout << "[Tree1: mhr] \n";
     mhr = dlmtreeTDLMM_MHR(modTerm, 
                            newDlmTerm1, dlmTerm2, ctr, ZtR, treeVar, 
                            newExpVar, m2Var, newMixVar);
@@ -696,12 +676,12 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
             (0.5 * ((mhr.nTerm1 * mhr0.nModTerm * log(treeVar * newExpVar)) -
             (mhr0.nTerm1 * mhr0.nModTerm * log(treeVar * m1Var)))); 
 
-    // Interaction (newMixVar and mixVar cancels out if no new exposure)
-    if (newMixVar != 0){ // - (new exposure of proposed)
+    // Interaction
+    if (newMixVar != 0){ 
       ratio -= 0.5 * log(treeVar * newMixVar) * mhr.nTerm1 * mhr0.nTerm2 * mhr0.nModTerm;
     }
 
-    if (mixVar != 0){ // - (- mixVar of null)
+    if (mixVar != 0){ 
       ratio += 0.5 * log(treeVar * mixVar) * mhr0.nTerm1 * mhr0.nTerm2 * mhr0.nModTerm;
     }
 
@@ -710,29 +690,25 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
       mhr0 = mhr;
       success = 2;
 
-      // If accepted with switch-exposure transition, update a tree more
       if (step1 == 3) { 
-        // switch-exposure accept
         m1      = newExp;
         m1Var   = newExpVar;
         mixVar  = newMixVar;
         dlmTree1->replaceNodeVals(newTree);
       } else {
-        // Grow/Prune/Change accept
-        dlmTree1->accept(); // Otherwise, accept the tree
+        dlmTree1->accept(); 
       }
       // Update parameters with new tree
-      dlmTerm1 = dlmTree1->listTerminal(); // Get the new terminal nodes
-      // No need to update Xmat for dlmtree accept
+      dlmTerm1 = dlmTree1->listTerminal();
       for (Node* n : modTerm) {
         n->nodevals->updateXmat = 0;
       }
 
-    } else {  // MH-ratio rejected
-      modTree->setUpdateXmat(1);  // HDLM
+    } else {  
+      modTree->setUpdateXmat(1); 
     }
   }
-  dlmTree1->reject();         // TDLM 
+  dlmTree1->reject();
 
   // Reset new tree value for tree2
   if (newTree != 0)
@@ -746,8 +722,7 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
     (dgn->treeDLMAccept).push_back(acc);
   }
   
-  // [Propose a new TDLMM tree 2] - SI ==============================================
-  // Rcout << "TreeMCMC: Updating tree 2...\n";
+  // *** Propose a new TDLMM tree 2 ***
   newExp    = m2; 
   newExpVar = m2Var;
   newMixVar = mixVar;
@@ -760,25 +735,23 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
     step2 = 0;
   }
 
-  if(step2 < 3){ // Grow / Prune / Change
+  if(step2 < 3){ 
     stepMhr = tdlmProposeTree(dlmTree2, Exp[m2], ctr, step2);
     success = dlmTree2->isProposed();
     newDlmTerm2 = dlmTree2->listTerminal(1);
 
-  } else { // Step 4: Propose a new exposure
+  } else { 
     newExp = sampleInt(ctr->expProb); 
-    if (newExp != m2) { // If the proposed exposure is different from the current one,
-      // Update the information with new exposure
+    if (newExp != m2) { 
       success   = 1;
-      newExpVar = ctr->muExp(newExp);     // Update the exposure list
-      newTree   = new Node(*dlmTree2);    // Copy over the tree
+      newExpVar = ctr->muExp(newExp);    
+      newTree   = new Node(*dlmTree2);   
       newTree->setUpdate(1);
       newDlmTerm2   = newTree->listTerminal();
 
       for (Node* nt : newDlmTerm2)
         Exp[newExp]->updateNodeVals(nt);
 
-      // Update the interaction using the new exposure as well for TDLMMns/all
       if ((ctr->interaction) && ((ctr->interaction == 2) || (newExp != m1))) {
         if (newExp <= m1)
           newMixVar = ctr->muMix(m1, newExp);
@@ -793,15 +766,12 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
   // * dlmTree 2 MHR 
   // StepMHR: Transition ratio
   // mhr0 & mhr: Likelihood of R
-  // Rcout << "TreeMCMC: Calculating MHR for tree 2...\n";
-
   // If successful, calculate MH ratio
   if (success) {
     newDlmTerm2 = dlmTree2->listTerminal(1);
     modTree->setUpdateXmat(1);
 
     // MH ratio with a new terminal and the exposure: newDlmTerm1, newExpVar
-    // Rcout << "[Tree2: mhr] \n";
     mhr = dlmtreeTDLMM_MHR(modTerm, 
                            dlmTerm1, newDlmTerm2, ctr, ZtR, treeVar, 
                            m1Var, newExpVar, newMixVar);
@@ -833,30 +803,26 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
       mhr0 = mhr;
       success = 2;
 
-      // If accepted with switch-exposure transition, update a tree more
       if (step2 == 3) { 
-        // switch-exposure accept
         m2      = newExp;
         m2Var   = newExpVar;
         mixVar  = newMixVar;
         dlmTree2->replaceNodeVals(newTree);
       } else {
-        // Grow/Prune/Change accept
-        dlmTree2->accept(); // Otherwise, accept the tree
+        dlmTree2->accept();
       }
 
-      // Update parameters with new tree
-      dlmTerm2 = dlmTree2->listTerminal(); // Get the new terminal nodes
+      dlmTerm2 = dlmTree2->listTerminal(); 
       // No need to update Xmat for dlmtree accept
       for (Node* n : modTerm) {
         n->nodevals->updateXmat = 0;
       }
 
-    } else {  // MH-ratio rejected
-      modTree->setUpdateXmat(1);  // HDLM
+    } else { 
+      modTree->setUpdateXmat(1); 
     }
   } 
-  dlmTree2->reject();         // TDLM 
+  dlmTree2->reject();  
 
   if (newTree != 0)
     delete newTree;
@@ -871,8 +837,6 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
 
 
   // *** Propose new modifier tree ***
-  // std::vector<double> PruneChange = {ctr->stepProbMod[0], ctr->stepProbMod[1]}; // BIG UPDATE (Strict Prior) HERE
-  // Rcout << "TreeMCMC: Modifier tree update...\n";
   switch (modTerm.size()) {
     case 1: step = 0;   break;
     case 2: step = sampleInt(ctr->stepProbMod, 1 - ctr->stepProbMod[3]); break;
@@ -883,11 +847,8 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
   success = modTree->isProposed();
 
   if (success && (stepMhr == stepMhr)) {
-    // New modifier node has been proposed 
-    // -> X needs to be updated for MHR calculation
     newModTerm = modTree->listTerminal(1);
 
-    // Rcout << "[modTree: mhr] \n";
     mhr = dlmtreeTDLMM_MHR(newModTerm, dlmTerm1, dlmTerm2, 
                             ctr, ZtR, treeVar,
                             m1Var, m2Var, mixVar);
@@ -944,24 +905,20 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
                                     1.0 / ((0.5 * tauT2 / (ctr->sigma2 * ctr->nu)) + xiInv));
   }
 
-
-
-  // Rcout << "TreeMCMC: Rmat \n";
+  // Update Rmat
   ctr->Rmat.col(t) = mhr0.fitted;
 
-
   // Update exposure information
-  // Rcout << "TreeMCMC: expCount, expInf, totTermExp, nTermMod, nTerm ... \n";
   (ctr->dlmTree1Exp)(t) = m1;
   (ctr->dlmTree2Exp)(t) = m2;
-  (ctr->expCount)(m1)++;                  // Increment count of m1 exposure
-  (ctr->expCount)(m2)++;                  // Increment count of m2 exposure
-  (ctr->expInf)(m1) += ((ctr->tau)(t));   // Add tree variance
-  (ctr->expInf)(m2) += ((ctr->tau)(t));   // Add tree variance
-  (ctr->totTermExp)(m1) += mhr0.nModTerm * mhr0.nTerm1;   // Updating P_m
-  (ctr->totTermExp)(m2) += mhr0.nModTerm * mhr0.nTerm2;   // Updating P_m
-  (ctr->sumTermT2Exp)(m1) += mhr0.term1T2 / (ctr->tau)(t);  // Updating D_m
-  (ctr->sumTermT2Exp)(m2) += mhr0.term2T2 / (ctr->tau)(t);  // Updating D_m
+  (ctr->expCount)(m1)++;                 
+  (ctr->expCount)(m2)++;                 
+  (ctr->expInf)(m1) += ((ctr->tau)(t)); 
+  (ctr->expInf)(m2) += ((ctr->tau)(t)); 
+  (ctr->totTermExp)(m1) += mhr0.nModTerm * mhr0.nTerm1;   
+  (ctr->totTermExp)(m2) += mhr0.nModTerm * mhr0.nTerm2;   
+  (ctr->sumTermT2Exp)(m1) += mhr0.term1T2 / (ctr->tau)(t); 
+  (ctr->sumTermT2Exp)(m2) += mhr0.term2T2 / (ctr->tau)(t); 
 
   // modTree / dlmtree numbers information
   ctr->nTermMod(t) = mhr0.nModTerm;
@@ -992,7 +949,6 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
   // *** Record *** 
   // Rcout << "TreeMCMC: Record ... \n";
   if (ctr->record > 0) {    
-    // Rcout << "Modifier count record ... \n";
     for (int i = 0; i < modCount.size(); i++) {
       if (modCount(i) > 0){
         ctr->modInf(i) += (ctr->tau)(t);
@@ -1001,85 +957,67 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
 
     // *** Update DLM partial estimate ***
     // Rcout << "Creating a rule ... \n";
-    // Rule: Takes a node and modifier data and returns a string 
-    // describing current series of modifier rules leading to terminal node
     std::string rule; 
-
-    // 1. which MCMC iteration
-    // 2. which tree of ensemble
-    // 3. which terminal node of a modifier tree
-    // 4. which exposure
-    // 5. minimum value of exposure
-    // 6. maximum value of exposure
-    // 7. t_min
-    // 8. t_max
-    // 9. delta_a full-conditional sampled for a dlmTree node
-    // 10. Exposure-specific variance
-
     Eigen::VectorXd rec(10); 
     Eigen::VectorXd mix(10);
     rec << ctr->record, t, 0, 0, 0, 0, 0, 0, 0, 0;
     mix << ctr->record, t, 0, 0, 0, 0, 0, 0, 0, 0;
 
     // For each terminal node of the modifier trees `s`,
-    // Rcout << "Going through each modifier tree terminals ... \n";
     for (s = 0; s < modTerm.size(); s++) {
-      // rule object to setup a string rules for outputs
-      // Rcout << "Setting up a rule \n";
       rule = modRuleStr(modTerm[s], Mod); 
 
       // Iterate through dlmTree 1 and the mixture
-      // Rcout << "Tree 1 mixture record \n";
-      std::size_t k = 0; // Mixture count
+      std::size_t k = 0; 
       for (std::size_t i = 0; i < mhr0.nTerm1; i++) {
-        rec[2] = s;                                    // Modifier terminal count
-        rec[3] = 1;                                    // which tree pair
-        rec[4] = i;                                    // terminal node count
-        rec[5] = m1;                                   // Exposure
-        rec[6] = (dlmTerm1[i]->nodestruct)->get(3);    // tmin
-        rec[7] = (dlmTerm1[i]->nodestruct)->get(4);    // tmax
-        rec[8] = mhr0.drawAll(s * mhr0.nDlmTerm + i);  // delta_a sample
-        rec[9] = (ctr->tau)(t) * m1Var;                // Exposure-variance
+        rec[2] = s;                                  
+        rec[3] = 1;                                   
+        rec[4] = i;                                   
+        rec[5] = m1;                                  
+        rec[6] = (dlmTerm1[i]->nodestruct)->get(3);   
+        rec[7] = (dlmTerm1[i]->nodestruct)->get(4);   
+        rec[8] = mhr0.drawAll(s * mhr0.nDlmTerm + i); 
+        rec[9] = (ctr->tau)(t) * m1Var;               
 
-        (dgn->termRule).push_back(rule); // Save the modifier terminal rule (location)
-        (dgn->DLMexp).push_back(rec);    // Save the tree1 information
+        (dgn->termRule).push_back(rule); 
+        (dgn->DLMexp).push_back(rec);    
         
         for (std::size_t j = 0; j < mhr0.nTerm2; j++) {
           if (i == 0) {     
-            rec[2] = s;     // Still the same terminal node of the modifier tree
-            rec[3] = 2;                                    // which tree pair
-            rec[4] = j;                                    // terminal node count
-            rec[5] = m2;                                   // Exposure
-            rec[6] = (dlmTerm2[j]->nodestruct)->get(3);    // tmin
-            rec[7] = (dlmTerm2[j]->nodestruct)->get(4);    // tmax
+            rec[2] = s;   
+            rec[3] = 2;                                   
+            rec[4] = j;                                   
+            rec[5] = m2;                                  
+            rec[6] = (dlmTerm2[j]->nodestruct)->get(3);   
+            rec[7] = (dlmTerm2[j]->nodestruct)->get(4);   
             rec[8] = mhr0.drawAll(s * mhr0.nDlmTerm + mhr0.nTerm1 + j);
             rec[9] = (ctr->tau)(t) * m2Var;
             
-            (dgn->termRule).push_back(rule); // Save the modifier terminal rule (location)
-            (dgn->DLMexp).push_back(rec);    // Save the tree2 information
+            (dgn->termRule).push_back(rule);
+            (dgn->DLMexp).push_back(rec); 
           }
 
           if (mixVar != 0) {
-            mix[2] = s; // Still the same terminal node of the modifier tree
+            mix[2] = s; 
             if (m1 <= m2) {
               mix[3] = m1;
-              mix[4] = (dlmTerm1[i]->nodestruct)->get(3); // tmin
-              mix[5] = (dlmTerm1[i]->nodestruct)->get(4); // tmax
+              mix[4] = (dlmTerm1[i]->nodestruct)->get(3); 
+              mix[5] = (dlmTerm1[i]->nodestruct)->get(4); 
               mix[6] = m2;
-              mix[7] = (dlmTerm2[j]->nodestruct)->get(3); // tmin
-              mix[8] = (dlmTerm2[j]->nodestruct)->get(4); // tmax
+              mix[7] = (dlmTerm2[j]->nodestruct)->get(3); 
+              mix[8] = (dlmTerm2[j]->nodestruct)->get(4); 
             } else {
               mix[6] = m1;
-              mix[7] = (dlmTerm1[i]->nodestruct)->get(3); // tmin
-              mix[8] = (dlmTerm1[i]->nodestruct)->get(4); // tmax
+              mix[7] = (dlmTerm1[i]->nodestruct)->get(3); 
+              mix[8] = (dlmTerm1[i]->nodestruct)->get(4); 
               mix[3] = m2;
-              mix[4] = (dlmTerm2[j]->nodestruct)->get(3); // tmin
-              mix[5] = (dlmTerm2[j]->nodestruct)->get(4); // tmax
+              mix[4] = (dlmTerm2[j]->nodestruct)->get(3); 
+              mix[5] = (dlmTerm2[j]->nodestruct)->get(4);
             }
             mix[9] = mhr0.drawAll(s * mhr0.nDlmTerm + mhr0.nTerm1 + mhr0.nTerm2 + k);
             
-            (dgn->termRuleMIX).push_back(rule); // Save the modifier terminal rule (location) just for the mixture
-            (dgn->MIXexp).push_back(mix);       // Save the mixture information
+            (dgn->termRuleMIX).push_back(rule); 
+            (dgn->MIXexp).push_back(mix);       
             k++;
           } // mixVar != 0 end
         } // Tree 2 iteration end
@@ -1091,63 +1029,60 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
 } // end dlmtreeTDLMMGaussian_TreeMCMC function
 
 
-treeMHR dlmtreeTDLMM_MHR(std::vector<Node*> modTerm,    // Modifier terminal node -> Need this for calculating different effect size
-                          std::vector<Node*> dlmTerm1,  // Just need one set of dlm Terminal nodes from tree1 as this is a shared dlmtree
-                          std::vector<Node*> dlmTerm2,  // Just need one set of dlm Terminal nodes from tree2 as this is a shared dlmtree
+treeMHR dlmtreeTDLMM_MHR(std::vector<Node*> modTerm,  
+                          std::vector<Node*> dlmTerm1,
+                          std::vector<Node*> dlmTerm2,
                           dlmtreeCtr* ctr, 
                           Eigen::VectorXd ZtR, 
                           double treeVar, double m1Var, double m2Var, double mixVar)
-// Calculate part of Metropolis-Hastings ratio and make draws from full conditional. 
+
 {
-  std::size_t s;    // Count integer
-  treeMHR out;      // Storage object
+  std::size_t s; 
+  treeMHR out; 
 
   // exposure variance
   out.m1Var = m1Var;
   out.m2Var = m2Var;
 
   // modifier tree
-  // Rcout << "Counting the number of modifier terminal nodes \n";
   int pXMod = modTerm.size();
 
   // Number of terminal nodes
-  // Rcout << "Counting the number of dlmtree terminal nodes \n";
   int pXDlm1 = dlmTerm1.size();
   int pXDlm2 = dlmTerm2.size();
   int pXDlm = pXDlm1 + pXDlm2;
   int interaction = 0;
   if (mixVar != 0) { 
-    pXDlm += pXDlm1 * pXDlm2; // Add (nodes x nodes) to the parameter # (the rectangle figure)
-    interaction = 1;          // Interaction flag
+    pXDlm += pXDlm1 * pXDlm2; 
+    interaction = 1; 
   }
 
   // Rcout << "Counting the totoal number of dlmtree x modifier terminal nodes \n";
-  int pXComb = pXMod * pXDlm;   // Mod * (Tree1 + Tree2 + Tree1x2)
+  int pXComb = pXMod * pXDlm;   
 
   // Rcout << "Define parameters for calculation \n";
   Eigen::MatrixXd Xd, ZtX, VgZtX;
   Eigen::VectorXd diagVar;
-  Xd.resize(ctr->n, pXDlm);         Xd.setZero(); // Same terminal for all modifiers
+  Xd.resize(ctr->n, pXDlm);         Xd.setZero(); 
   ZtX.resize(ctr->pZ, pXComb);      ZtX.setZero();
   VgZtX.resize(ctr->pZ, pXComb);    VgZtX.setZero();
-  diagVar.resize(pXDlm);            diagVar.setZero(); // Need a diagVar as we have multiple exposures
+  diagVar.resize(pXDlm);            diagVar.setZero(); 
   
   // Building exposure matrix, Xd & ZtX
   int i, j, k;
+
   // dlmTree 1
-  // Rcout << "TDLMM tree 1 \n";
-  for (i = 0; i < pXDlm1; i++) {                // iterate through terminal nodes of tree 1
-    Xd.col(i) = (dlmTerm1[i]->nodevals)->X; // Each column of Xd is a vector X associated with a node from nodes1
-    diagVar(i) = 1.0 / (m1Var * treeVar);       // Exposure specific variance
+  for (i = 0; i < pXDlm1; i++) {               
+    Xd.col(i) = (dlmTerm1[i]->nodevals)->X;
+    diagVar(i) = 1.0 / (m1Var * treeVar);
     ZtX.col(i) = (dlmTerm1[i]->nodevals)->ZtX;
   }
 
   // dlmTree 2
-  // Rcout << "TDLMM tree 2 \n";
-  for (j = 0; j < pXDlm2; j++) {                // iterate through terminal nodes of tree 2
-    k = pXDlm1 + j;                             // k is shifted back because pX2 needs to be after pX1.
+  for (j = 0; j < pXDlm2; j++) {               
+    k = pXDlm1 + j;                            
     Xd.col(k) = (dlmTerm2[j]->nodevals)->X; 
-    diagVar(k) = 1.0 / (m2Var * treeVar);       // Exposure specific variance
+    diagVar(k) = 1.0 / (m2Var * treeVar);      
     ZtX.col(k) = (dlmTerm2[j]->nodevals)->ZtX;
   }
 
@@ -1155,8 +1090,6 @@ treeMHR dlmtreeTDLMM_MHR(std::vector<Node*> modTerm,    // Modifier terminal nod
   if(interaction) {
     for (i = 0; i < pXDlm1; i++) {
       for (j = 0; j < pXDlm2; j++) {
-        // tree1's first terminal with all terminals of tree2, 
-        // tree1's second terminal with all terminals of tree2, and so on.
         k = (pXDlm1 + pXDlm2) + i * pXDlm2 + j; 
         Xd.col(k) = (((dlmTerm1[i]->nodevals)->X).array() * ((dlmTerm2[j]->nodevals)->X).array()).matrix();
         diagVar(k) = 1.0 / (mixVar * treeVar);
@@ -1166,59 +1099,50 @@ treeMHR dlmtreeTDLMM_MHR(std::vector<Node*> modTerm,    // Modifier terminal nod
   }
 
   // MH ratio element calculation
-  if(pXMod == 1){   // Modifier has one node -> No subsetting required -> same code as TDLMM    
-    // Rcout << "Modifier has only one terminal node \n";
-    const Eigen::MatrixXd VgZtX = ctr->Vg * ZtX; // V_gamma * Z_t * X = (pxp)(pxn)(nx1) = (px1)
-    Eigen::MatrixXd tempV(pXDlm, pXDlm);        // tempV: Xa^T * V_z * Xa (first part of V_theta, note that inverse is the same)
-    Eigen::VectorXd XtVzInvR; // was ctr->n
+  if(pXMod == 1){   
+    const Eigen::MatrixXd VgZtX = ctr->Vg * ZtX; 
+    Eigen::MatrixXd tempV(pXDlm, pXDlm);        
+    Eigen::VectorXd XtVzInvR; 
 
-    // V_theta = V_delta_a from eq(11) & Xd = X_a in paper
-    tempV.triangularView<Eigen::Lower>() = Xd.transpose() * Xd;   // (dlm# x dlm#)
+    tempV.triangularView<Eigen::Lower>() = Xd.transpose() * Xd;  
     tempV.noalias() -= ZtX.transpose() * VgZtX; 
     out.tempV = tempV;
     
-    // Finalize Eq.(9)
-    tempV.diagonal().noalias() += diagVar;    // tempV is now V_theta(a)_inverse
-    XtVzInvR = Xd.transpose() * ctr->R - VgZtX.transpose() * ZtR; // (dlm# x 1)
+    tempV.diagonal().noalias() += diagVar; 
+    XtVzInvR = Xd.transpose() * ctr->R - VgZtX.transpose() * ZtR;
 
     // Calculate Vtheta & Vtheta cholesky
-    // inverse tempV to obtain V_theta(a)_inverse
-    // Rcout << "pxMod == 1: Vtheta calculation \n";
     Eigen::MatrixXd VTheta(pXDlm, pXDlm); 
     VTheta.triangularView<Eigen::Lower>() =
       tempV.selfadjointView<Eigen::Lower>().llt().solve(Eigen::MatrixXd::Identity(pXDlm, pXDlm));
     const Eigen::MatrixXd VThetaChol = VTheta.selfadjointView<Eigen::Lower>().llt().matrixL();
 
-    // Sampling from Supplemental Eq(11) & (12) (Theta = Delta_a)
-    // Mean
-    // Rcout << "pxMod == 1: Mean of Delta_a \n";
-    const Eigen::VectorXd ThetaHat = VTheta.selfadjointView<Eigen::Lower>() * XtVzInvR; // Eq. (11) mean
+    // Thetahat mean
+    const Eigen::VectorXd ThetaHat = VTheta.selfadjointView<Eigen::Lower>() * XtVzInvR; 
 
-    // Store the sampled values and also add variance
-    // Rcout << "pxMod == 1: Variance of Delta_a \n";
-    Eigen::VectorXd ThetaDraw = ThetaHat; // (pXDlm x 1) vector
+    // Thetahat variance
+    Eigen::VectorXd ThetaDraw = ThetaHat;
     ThetaDraw.noalias() += VThetaChol * as<Eigen::VectorXd>(rnorm(pXDlm, 0, sqrt(ctr->sigma2)));
 
-    // Sort out Equation 11 Full conditional draw
+    // Full conditional draw
     out.drawAll = ThetaDraw;
 
     // Temporary vectors for calculation below
-    // Rcout << "pxMod == 1: drawTemp \n";
-    Eigen::VectorXd drawTemp(pXDlm);      // Temporary draw vector for accessing the block
-    Eigen::VectorXd draw1Temp(pXDlm1);    // Can resize with a fixed value since this is a shared tree
-    Eigen::VectorXd draw2Temp(pXDlm2);    // Can resize with a fixed value since this is a shared tree
+    Eigen::VectorXd drawTemp(pXDlm);    
+    Eigen::VectorXd draw1Temp(pXDlm1);  
+    Eigen::VectorXd draw2Temp(pXDlm2);  
 
     // Exposure 1 return
     // Rcout << "pxMod == 1: Exposure 1 segment \n";
-    draw1Temp = ThetaDraw.head(pXDlm1);             // column (1 ~ pX1) => DLM effect of exposure 1 sampled
-    out.term1T2 = (draw1Temp).dot(draw1Temp);      // draw1 dot product for MHR math
-    out.nTerm1 = double(pXDlm1);                    // Number of terminal nodes of tree 1
+    draw1Temp = ThetaDraw.head(pXDlm1);            
+    out.term1T2 = (draw1Temp).dot(draw1Temp);      
+    out.nTerm1 = double(pXDlm1);                   
 
     // Exposure 2 return
     // Rcout << "pxMod == 1: Exposure 2 segment \n";
-    draw2Temp = ThetaDraw.segment(pXDlm1, pXDlm2);  // column (pX1 ~ pX2) => DLM effect of exposure 2 sampled
-    out.term2T2 = (draw2Temp).dot(draw2Temp);      // draw2 dot product for MHR math
-    out.nTerm2 = double(pXDlm2);                    // Number of terminal nodes of tree 2
+    draw2Temp = ThetaDraw.segment(pXDlm1, pXDlm2); 
+    out.term2T2 = (draw2Temp).dot(draw2Temp);      
+    out.nTerm2 = double(pXDlm2);                   
 
     // Mixture return
     if (interaction) {    
@@ -1243,51 +1167,41 @@ treeMHR dlmtreeTDLMM_MHR(std::vector<Node*> modTerm,    // Modifier terminal nod
   } // End of modifier tree with only one node
 
   // *** Multiple Modifier nodes ***
-  // Rcout << "Multiple modifier nodes -> Build blocks by subetting with the modifier tree \n";
-  // Xtemp, Ztemp, Rtemp will be updated throughout the modifier group
   Eigen::MatrixXd Xtemp, Ztemp;
   Eigen::VectorXd Rtemp;
-  Eigen::MatrixXd XtXblock(pXComb, pXComb);    XtXblock.setZero(); // BC x BC
-  Eigen::VectorXd XtR(pXComb);                 XtR.setZero();       // BC
-  Eigen::MatrixXd LInv(pXDlm, pXDlm);          LInv.setZero();      // C x C
+  Eigen::MatrixXd XtXblock(pXComb, pXComb);    XtXblock.setZero();
+  Eigen::VectorXd XtR(pXComb);                 XtR.setZero();
+  Eigen::MatrixXd LInv(pXDlm, pXDlm);          LInv.setZero();  
   LInv.diagonal().array() += diagVar.array();
 
   // Create block matrices corresponding to modifier nodes
-  // Rcout << "Subsetting data and exposures according to modifier terminal nodes \n";
   int start = 0;
-  for (Node* n : modTerm) { // For each terminal node of a modifier tree,
-    //if (n->nodevals->updateXmat) { // update matrices for current node 
-    if(true){
-      // Retrieve indices subset by the modifier tree
-      Xtemp.resize(n->nodevals->idx.size(), pXDlm);     Xtemp.setZero();  // Exposure subset
-      Ztemp.resize(n->nodevals->idx.size(), ctr->pZ);   Ztemp.setZero();  // Fixed effect
-      Rtemp.resize(n->nodevals->idx.size());            Rtemp.setZero();  // Partial residual
+  for (Node* n : modTerm) { 
+    // Retrieve indices subset by the modifier tree
+    Xtemp.resize(n->nodevals->idx.size(), pXDlm);     Xtemp.setZero();  
+    Ztemp.resize(n->nodevals->idx.size(), ctr->pZ);   Ztemp.setZero();  
+    Rtemp.resize(n->nodevals->idx.size());            Rtemp.setZero();  
+    
+    // Loop through indices and (subset) update Xtemp, Ztemp, Rtemp
+    j = 0;
+    for (int i : n->nodevals->idx) {
+      Xtemp.row(j) = Xd.row(i);  
+      Ztemp.row(j) = ctr->Z.row(i); 
+      Rtemp(j) = ctr->R(i);         
+      j++;
+    } // end loop over node indices
       
-      // Loop through indices and (subset)update Xtemp, Ztemp, Rtemp
-      j = 0;
-      for (int i : n->nodevals->idx) {
-        Xtemp.row(j) = Xd.row(i);   // Extract from Xd and store to Xtemp -> includes interaction here
-        Ztemp.row(j) = ctr->Z.row(i);   // Extract from Z and store to Ztemp
-        Rtemp(j) = ctr->R(i);           // Extract from R(vector) and store to Rtemp
-        j++;
-      } // end loop over node indices
-       
-      n->nodevals->XtX.resize(pXDlm, pXDlm);
-      n->nodevals->XtX = Xtemp.transpose() * Xtemp;
-      n->nodevals->ZtXmat.resize(ctr->pZ, pXDlm);
-      n->nodevals->ZtXmat = Ztemp.transpose() * Xtemp;
-      n->nodevals->VgZtXmat.resize(ctr->pZ, pXDlm);
-      n->nodevals->VgZtXmat = ctr->Vg * n->nodevals->ZtXmat;
-      n->nodevals->updateXmat = 0; // Xmat has been updated
+    n->nodevals->XtX.resize(pXDlm, pXDlm);
+    n->nodevals->XtX = Xtemp.transpose() * Xtemp;
+    n->nodevals->ZtXmat.resize(ctr->pZ, pXDlm);
+    n->nodevals->ZtXmat = Ztemp.transpose() * Xtemp;
+    n->nodevals->VgZtXmat.resize(ctr->pZ, pXDlm);
+    n->nodevals->VgZtXmat = ctr->Vg * n->nodevals->ZtXmat;
+    n->nodevals->updateXmat = 0;
+    
+    XtR.segment(start, pXDlm) = Xtemp.transpose() * Rtemp;
       
-      XtR.segment(start, pXDlm) = Xtemp.transpose() * Rtemp;
-      
-    } else { // No need to update -> go through idx and update XtR
-      for (int i : n->nodevals->idx) {
-        XtR.segment(start, pXDlm).noalias() += Xd.row(i).transpose() * ctr->R(i);
-      } // end loop over node indices
-    } // end update xblock and ztx block (.block = accessing a block in a matrix)
-
+    // Update blocks
     XtXblock.block(start, start, pXDlm, pXDlm) = ((n->nodevals->XtX) + LInv).inverse();
     ZtX.block(0, start, ctr->pZ, pXDlm) = n->nodevals->ZtXmat;
     VgZtX.block(0, start, ctr->pZ, pXDlm) = n->nodevals->VgZtXmat;
@@ -1307,44 +1221,31 @@ treeMHR dlmtreeTDLMM_MHR(std::vector<Node*> modTerm,    // Modifier terminal nod
   Eigen::VectorXd ThetaHat = VTheta * XtVzInvR;
   Eigen::MatrixXd VThetaChol = VTheta.llt().matrixL();
 
-  // Rcout << "Sorting thetahat \n";
   // Store the sampled values and also add variance 
-  // Rcout << "pxMod != 1: Sampling ThetaDraw Mean + Variance and saving as drawAll\n";
   out.drawAll = ThetaHat;
   out.drawAll.noalias() += 
       VThetaChol * as<Eigen::VectorXd>(rnorm(pXComb, 0.0, sqrt(ctr->sigma2)));
 
-  // Sort out Equation 11 Full conditional draw
   // drawAll = mod1-dlm1 / mod1-dlm2 / mod1-dlm1&2 / mod2-dlm1 / mod2-dlm2 / mod2-dlm1&2 / mod3 ...
-  // Note that we do not have draw1/draw2/drawMix when we have a modifier tree
-
   // Fitted value & terminal effect draws
-  // Rcout << "pxMod != 1: Setting up temporary drawTheta segment (main effect) \n";
-  out.fitted.resize(ctr->n);                  // Estimation
-  Eigen::VectorXd drawTemp(pXDlm);            // Temporary draw vector for accessing the block
-  Eigen::VectorXd draw1Temp(pXDlm1);          // Can resize with a fixed value since this is a shared tree
-  Eigen::VectorXd draw2Temp(pXDlm2);          // Can resize with a fixed value since this is a shared tree
+  out.fitted.resize(ctr->n);                 
+  Eigen::VectorXd drawTemp(pXDlm);         
+  Eigen::VectorXd draw1Temp(pXDlm1);     
+  Eigen::VectorXd draw2Temp(pXDlm2);     
   Eigen::VectorXd drawMixTemp(pXDlm1 * pXDlm2);
   
-  if(interaction){  // Prevent resizing drawMixTemp to zero in a case of HDLMMadd
-    // Rcout << "pxMod != 1: Setting up temporary drawTheta segment (interaction effect) \n";
+  if(interaction){  
     drawMixTemp.resize(pXDlm - pXDlm1 - pXDlm2);
   }
 
-  // Store Term1T2/Term2T2/MixT2 & nTerm1/nTerm2 for the MHR math
-  // Rcout << "pxMod != 1: Setting up MH ratio parameters \n";
+  // Store Term1T2/Term2T2/MixT2 & nTerm1/nTerm2
   out.term1T2 = 0;
   out.term2T2 = 0;
   out.mixT2 = 0;
   
-  // Rcout << "pxMod != 1: Iterating through blocks for each modifier terminal node \n";
-  for (s = 0; s < modTerm.size(); s++) { // Iterate through each mod terms to calculate the corresponding dlm
+  for (s = 0; s < modTerm.size(); s++) { 
     // Extract draws from the block matrix for each modifier terminal node
-    drawTemp = out.drawAll.segment(s * pXDlm, pXDlm); // subset drawAll by a corresponding modifier terminal
-    
-    // Note: 
-    // 1. The code uses fixed pXDlm1, pXDlm2 as they do not change due to shared tree setting
-    // 2. But the effects are different from the different blocks
+    drawTemp = out.drawAll.segment(s * pXDlm, pXDlm); 
 
     // Tree 1 draw 
     draw1Temp = drawTemp.head(pXDlm1);
@@ -1362,8 +1263,8 @@ treeMHR dlmtreeTDLMM_MHR(std::vector<Node*> modTerm,    // Modifier terminal nod
     }
 
     // Calculate fitted for each modifier terminal
-    for (int i : modTerm[s]->nodevals->idx){           // all indices that belong to mod terminal node s
-      out.fitted(i) = Xd.row(i) * drawTemp;       // calculate exposure x corresponding dlm
+    for (int i : modTerm[s]->nodevals->idx){
+      out.fitted(i) = Xd.row(i) * drawTemp;
     }
   }
 
