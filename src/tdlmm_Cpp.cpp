@@ -322,7 +322,7 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
     }
 
   } else if (step1 < 3) {
-      tree1->reject();
+    tree1->reject();
   }
 
   if (newTree != 0)
@@ -459,7 +459,10 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
   }
 
   if (ctr->shrinkage > 1)
-    rHalfCauchyFC(&(ctr->tau(t)), totTerm, tauT2 / (ctr->sigma2 * ctr->nu));
+    rHalfCauchyFC(&((ctr->tau)(t)), totTerm, tauT2 / (ctr->sigma2 * ctr->nu));
+  
+  // if ((ctr->tau)(t) != (ctr->tau)(t)) 
+  //   stop("\nNaN values (tau) occured during model run, rerun model.\n");
     
   (ctr->nTerm)(t) = mhr0.nTerm1;
   (ctr->nTerm2)(t) = mhr0.nTerm2;
@@ -477,12 +480,12 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
     if (m1 <= m2) {
       (ctr->mixCount)(m2, m1)++;
       (ctr->totTermMix)(m2, m1) += mhr0.nTerm1 * mhr0.nTerm2;
-      (ctr->sumTermT2Mix)(m2, m1) += mhr0.mixT2 / ctr->tau[t];
+      (ctr->sumTermT2Mix)(m2, m1) += mhr0.mixT2 / ctr->tau(t);
       (ctr->mixInf)(m2, m1) += ((ctr->tau)(t));
     } else {
       (ctr->mixCount)(m1, m2)++;
       (ctr->totTermMix)(m1, m2) += mhr0.nTerm1 * mhr0.nTerm2;
-      (ctr->sumTermT2Mix)(m1, m2) += mhr0.mixT2 / ctr->tau[t];
+      (ctr->sumTermT2Mix)(m1, m2) += mhr0.mixT2 / ctr->tau(t);
       (ctr->mixInf)(m1, m2) += ((ctr->tau)(t));
     }
   }
@@ -492,20 +495,23 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
 
   // *** Record ***
   if (ctr->record > 0) {
-    Eigen::VectorXd rec(8);
-    Eigen::VectorXd mix(10);
-    rec << ctr->record, t, 0, 0, 0, 0, 0, 0;
-    mix << ctr->record, t, 0, 0, 0, 0, 0, 0, 0, 0;
+    Eigen::VectorXd rec(8);   // 7 is just selected for the record vector
+    Eigen::VectorXd mix(10);  // 10 is also selected for the record vector
+    rec << ctr->record, t, 0, 0, 0, 0, 0, 0;          // Initiate a vector of Iteration, tree#, Exposure, tmin, tmax, estimation, exposure-variance
+    mix << ctr->record, t, 0, 0, 0, 0, 0, 0, 0, 0; 
     int k = 0;
-    for(int i = 0; i < mhr0.nTerm1; ++i) {
-      rec[2] = 0; // First of the tree pair
+    for(int i = 0; i < mhr0.nTerm1; ++i) {        // Go through the first tree's terminals
+      rec[2] = 0; // First of the tree pair                                // Exposure
       rec[3] = m1;
-      rec[4] = (term1[i]->nodestruct)->get(3);
-      rec[5] = (term1[i]->nodestruct)->get(4);
-      rec[6] = mhr0.draw1(i);
-      rec[7] = (ctr->tau)(t) * m1Var;
-      (dgn->DLMexp).push_back(rec);
-      for (int j = 0; j < mhr0.nTerm2; ++j) {
+      rec[4] = (term1[i]->nodestruct)->get(3);    // tmin
+      rec[5] = (term1[i]->nodestruct)->get(4);    // tmax
+      rec[6] = mhr0.draw1(i);                     // First tree's terminal delta_a's ith terminal
+      rec[7] = (ctr->tau)(t) * m1Var;             // Exposure-specific variance
+
+      (dgn->DLMexp).push_back(rec);               // Push DLMexp vector
+      
+      for (int j = 0; j < mhr0.nTerm2; ++j) {       // Go through the second tree's terminal node
+        // Just have to go over second tree terminal nodes once and let index i do the job with interaction
         if (i == 0) {
           rec[2] = 1; // Second of the tree pair
           rec[3] = m2;
@@ -515,6 +521,8 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
           rec[7] = (ctr->tau)(t) * m2Var;
           (dgn->DLMexp).push_back(rec);
         }
+
+        // Interaction
         if (mixVar != 0) {
           if (m1 <= m2) {
             mix[2] = m1;
@@ -531,6 +539,7 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
             mix[3] = (term2[j]->nodestruct)->get(3);
             mix[4] = (term2[j]->nodestruct)->get(4);
           }
+          
           mix[8] = mhr0.drawMix(k);
           (dgn->MIXexp).push_back(mix);
           ++k;
@@ -729,7 +738,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   if (ctr->interaction > 0) {
     (dgn->muMix).resize(ctr->nMix, ctr->nRec);      (dgn->muMix).setZero();
     (dgn->mixInf).resize(ctr->nMix, ctr->nRec);     (dgn->mixInf).setZero();
-    (dgn->mixCount).resize(ctr->nMix, ctr->nRec);   (dgn->muMix).setZero();
+    (dgn->mixCount).resize(ctr->nMix, ctr->nRec);   (dgn->mixCount).setZero();
   } else { 
     (dgn->muMix).resize(1, 1);                      (dgn->muMix).setZero();
     (dgn->mixInf).resize(1, 1);                     (dgn->mixInf).setZero();

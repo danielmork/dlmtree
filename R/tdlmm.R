@@ -298,7 +298,8 @@ tdlmm <- function(formula,
   model$Y <- force(model.response(mf))                        
   model$Z <- force(model.matrix(model$formula, data = mf))  
   QR <- qr(crossprod(model$Z))                              
-  model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)])]      
+  model$Z <- model$Z[, sort(QR$pivot[seq_len(QR$rank)])]      
+  model$Znames <- colnames(model$Z)[sort(QR$pivot[seq_len(QR$rank)])]
   model$droppedCovar <- colnames(model$Z)[QR$pivot[-seq_len(QR$rank)]]
   model$Z <- force(scaleModelMatrix(model$Z))
   rm(QR)
@@ -410,9 +411,9 @@ tdlmm <- function(formula,
   model$mixNames <- c()
 
   for (i in 1:length(model$X)) {
-
-    idx <- which(model$DLM$exp == (i - 1))
+    idx <- which(model$DLM$exp == (i - 1)) # Converting indices from cpp to R
     if (length(idx) > 0)
+      model$DLM$est[idx] <- model$DLM$est[idx] * model$Yscale / model$X[[i]]$Xscale
       model$DLM$est[idx] <- model$DLM$est[idx] * model$Yscale / model$X[[i]]$Xscale
 
     for (j in i:length(model$X)) {
@@ -425,10 +426,10 @@ tdlmm <- function(formula,
       if (length(idx) > 0) {
         model$MIX$est[idx] <- model$MIX$est[idx] * model$Yscale / (model$X[[i]]$Xscale * model$X[[j]]$Xscale)
       }
-
     }
   }
 
+  # Exposure names
   colnames(model$expProb) <- colnames(model$expCount) <-
     colnames(model$expInf) <- colnames(model$muExp) <- model$expNames
   if (model$interaction > 0) {

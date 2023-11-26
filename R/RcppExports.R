@@ -21,6 +21,10 @@ dlmtreeTDLMGaussian <- function(model) {
     .Call(`_dlmtree_dlmtreeTDLMGaussian`, model)
 }
 
+dlmtreeTDLMMGaussian <- function(model) {
+    .Call(`_dlmtree_dlmtreeTDLMMGaussian`, model)
+}
+
 dlmtreeTDLMNestedGaussian <- function(model) {
     .Call(`_dlmtree_dlmtreeTDLMNestedGaussian`, model)
 }
