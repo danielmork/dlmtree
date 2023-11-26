@@ -106,7 +106,7 @@ plot.summary.tdlmm <- function(object,
     
 
 
-    if(!is.null(trueDLM)){ # return trueDLM
+    if(!is.null(trueDLM)){ # draws an additional line of true DLM effect
       p <- ggplot(dat) +
         geom_hline(yintercept = ifelse(is.null(scale), 0, 1), color = "red", linetype = "dashed") +
         geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey") +
