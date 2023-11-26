@@ -38,6 +38,7 @@ summary.tdlmm <- function(object,
   res$interaction <- object$interaction
   res$mixPrior <- object$mixPrior
   res$formula <- object$formula
+  res$formula_zi <- object$formula_zi
   res$family <- object$family
   res$droppedCovar <- object$droppedCovar
   res$conf.level <- conf.level
@@ -53,13 +54,11 @@ summary.tdlmm <- function(object,
     if (marginalize < 0 | marginalize > 100)
       stop("is specifying a percentile for marginializetion
            it must be between 0 and 100")
-    res$marg.values <- sapply(object$X, function(i) {
-      i$Xquant[round(marginalize) + 1] })
+    res$marg.values <- sapply(object$X, function(i) {i$Xquant[round(marginalize) + 1] })
   } else if (length(marginalize) == res$nExp & is.numeric(marginalize)) {
     res$marg.values <- marginalize
   } else {
-    stop("`marginalize` is incorrectly specified, see ?summary.tdlmm for
-         details")
+    stop("`marginalize` is incorrectly specified, see ?summary.tdlmm for details")
   }
   names(res$marg.values) <- res$expNames
 
@@ -83,14 +82,13 @@ summary.tdlmm <- function(object,
     res$expSel <- (BF > log10BF.crit)
   }
 
-
   # ---- Main effect MCMC samples ----
   if (verbose)
     cat("Reconstructing main effects...\n")
   res$DLM <- list()
   for (i in 1:res$nExp) {
     idx <- which(object$DLM$exp == (i - 1))
-    est <- dlmEst(as.matrix(object$DLM[idx, -3]), res$nLags, res$mcmcIter)
+    est <- dlmEst(as.matrix(object$DLM[idx, -(3:4)]), res$nLags, res$mcmcIter)
     # est: dim 1 = time, dim 2 = iteration
     res$DLM[[i]] <- list("mcmc" = est,
                          "marg" = array(0, dim(est)),
@@ -101,7 +99,7 @@ summary.tdlmm <- function(object,
   res$expInc <- apply(object$expCount > 0, 2, mean)
   if (res$nExp == 1) {
     res$expVar <- apply(object$mixCount > 0, 2, mean)
-    names(res$expVar) <- names(res$expInc)
+    #names(res$expVar) <- names(res$expInc)
   } else {
     res$expVar <- apply((apply(object$muExp * object$expInf, 1, rank) - 1),
                         1, iqr_plus_mean) / (res$nExp - 1)
@@ -267,8 +265,28 @@ summary.tdlmm <- function(object,
 
 
   # ---- Fixed effect estimates ----
-  res$gamma.mean <- colMeans(object$gamma)
-  res$gamma.ci <- apply(object$gamma, 2, quantile, probs = res$ci.lims)
+  if (verbose)
+    cat("Calculating fixed effects...\n")
+  if(!object$zinb){
+    # Gaussian / Logistic
+    res$gamma.mean <- colMeans(object$gamma)
+    res$gamma.ci <- apply(object$gamma, 2, quantile, probs = res$ci.lims)
+  } else {
+    # ZINB
+    # binary
+    res$b1.mean <- colMeans(object$b1)
+    res$b1.ci <- apply(object$b1, 2, quantile, probs = res$ci.lims)
+
+    # count
+    res$b2.mean <- colMeans(object$b2)
+    res$b2.ci <- apply(object$b2, 2, quantile, probs = res$ci.lims)
+
+    # Dispersion parameter
+    res$r.mean <- mean(object$r)
+    res$r.ci <- quantile(object$r, probs = res$ci.lims)
+  }
+
+  
 
 
   # ---- Return ----

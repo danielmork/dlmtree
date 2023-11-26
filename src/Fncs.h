@@ -20,3 +20,5 @@ std::pair<std::vector<int>, std::vector<int> >
                    const std::vector<int> &newVec);
 std::vector<int> cppIntersection(const IntegerVector& A, 
                                  const IntegerVector& B);
+Eigen::VectorXd selectInd(Eigen::VectorXd original, std::vector<int> indices);
+Eigen::MatrixXd selectIndM(Eigen::MatrixXd original, std::vector<int> indices);

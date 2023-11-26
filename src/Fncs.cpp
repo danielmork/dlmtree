@@ -200,3 +200,33 @@ std::vector<int> cppIntersection(const IntegerVector& A,
                         std::back_inserter(output));
   return output;
 }
+
+
+
+/**
+ * @brief Subset a matrix only with given indices (rows)
+ * 
+ * @param original A vector to be subset
+ * @param indices A vector containing wanted indices of row
+ * @return A vector with values of given indices
+ */
+
+Eigen::MatrixXd selectIndM(Eigen::MatrixXd original, std::vector<int> indices) {
+
+  int rownum = indices.size(); // row# of submat
+  int colnum = original.cols(); // col# of submat
+
+  Eigen::MatrixXd submat; // define a submat
+  submat.resize(rownum, colnum);
+
+  // Match indices
+  for(int i = 0; i < rownum; i++){
+    int index = indices[i]; // Get an index from indices vector
+    for(int j = 0; j < colnum; j++){
+      double val = original(index, j); // Find the value corresponding to the index
+      submat(i, j) = val;              // Save the value
+    }
+  }
+
+  return submat;
+}

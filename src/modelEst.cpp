@@ -15,6 +15,9 @@
 #include "Fncs.h"
 #include "Node.h"
 #include "NodeStruct.h"
+#include <random>
+#include <iostream>
+#include <algorithm>
 using namespace Rcpp;
 using Eigen::VectorXd;
 using Eigen::MatrixXd;
@@ -27,43 +30,166 @@ using Eigen::Upper;
  * @param ctr model control data
  */
 void tdlmModelEst(modelCtr *ctr)
-{
-  const VectorXd ZR = ctr->Zw.transpose() * ctr->R;
-  ctr->gamma =        ctr->Vg * ZR; // gamma hat
-   
-  // * Update sigma^2 and xi_sigma2
-  if (!(ctr->binomial)) {
-    rHalfCauchyFC(&(ctr->sigma2), (double)ctr->n + (double)ctr->totTerm, 
-                  ctr->R.dot(ctr->R) - ZR.dot(ctr->gamma) + 
-                    ctr->sumTermT2 / ctr->nu, &(ctr->xiInvSigma2));
-    if ((ctr->sigma2 != ctr->sigma2)) {// ! stop if infinte or nan variance
+{ 
+  if(!(ctr->zinb)){ 
+    const Eigen::VectorXd ZR = ctr->Zw.transpose() * ctr->R; 
+    ctr->gamma = ctr->Vg * ZR; 
+    
+    // * Update sigma^2 and xi_sigma2
+    if (!(ctr->binomial)) {
+      rHalfCauchyFC(&(ctr->sigma2), (double)ctr->n + (double)ctr->totTerm, 
+                    ctr->R.dot(ctr->R) - ZR.dot(ctr->gamma) + ctr->sumTermT2 / ctr->nu, &(ctr->xiInvSigma2));
+      if ((ctr->sigma2 != ctr->sigma2)) {// ! stop if infinte or nan variance
       Rcout << ctr->sigma2 << " " << ctr->totTerm << " " << 
         ctr->R.dot(ctr->R) << " " << ZR.dot(ctr->gamma) << " " <<
         ctr->sumTermT2 / ctr->nu << " " << ctr->xiInvSigma2;
       stop("\nNaN values (sigma) occured during model run, rerun model.\n");
+      }
     }
-  }
-  
-  // * Draw fixed effect coefficients (add to gamma hat)
-  ctr->gamma.noalias() += ctr->VgChol * 
-    as<VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2)));
+
+    // * Draw fixed effect coefficients' variance
+    ctr->gamma.noalias() += ctr->VgChol * as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2))); 
+
+    // * Update polya gamma vars
+    if (ctr->binomial) {
+      VectorXd psi =   ctr->fhat + ctr->Z * ctr->gamma;
+      
+      // Latent variable, Omega
+      ctr->Omega = rcpp_pgdraw(ctr->binomialSize, psi); 
+      ctr->Zw = ctr->Omega.asDiagonal() * ctr->Z;
+
+      // Constructing V_gamma Inverse 
+      Eigen::MatrixXd VgInv(ctr->pZ, ctr->pZ); 
+      VgInv.triangularView<Eigen::Lower>() = ctr->Z.transpose() * ctr->Zw;
+      VgInv.diagonal().array() += 1 / 100000.0; 
+      VgInv.triangularView<Eigen::Upper>() = VgInv.transpose().eval(); 
+
+      // Constructing V_gamma = Inverse of V_gamma Inverse
+      ctr->Vg.triangularView<Eigen::Lower>() = VgInv.inverse();
+      ctr->Vg.triangularView<Eigen::Upper>() = ctr->Vg.transpose().eval();
+      
+      // Update the V_gamma cholesky using LLT Decomposition, Lower triangular part of matrix L
+      ctr->VgChol = ctr->Vg.llt().matrixL();
+      // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
+      ctr->Y =      ctr->kappa.array() / ctr->Omega.array();
+      ctr->R = ctr->Y - ctr->fhat; // Recalc R using new Y
+    }
+
+
+  } else { // ZINB
+    // *** Step 1: Update gamma_1 (ZI coefficient) ***
+    // 1-1: Calculate eta1 and logit1
+    Eigen::VectorXd eta1 = (ctr->Z1 * ctr->b1);
+
+    // 1-2: Sample PG(1, eta1)
+    ctr->omega1 = rcpp_pgdraw(ctr->ones, eta1);
+    ctr->Zw1 = ctr->omega1.asDiagonal() * ctr->Z1;   
+
+    // 1-3: Update Vg and z1
+    // Vg
+    Eigen::MatrixXd VgInv1(ctr->pZ1, ctr->pZ1); 
+    VgInv1.triangularView<Eigen::Lower>() = ctr->Z1.transpose() * ctr->Zw1;  
+    VgInv1.diagonal().array() += 1 / 100.0;                                
+    VgInv1.triangularView<Eigen::Upper>() = VgInv1.transpose().eval(); 
+    ctr->Vg1.triangularView<Eigen::Lower>() = VgInv1.inverse();
+    ctr->Vg1.triangularView<Eigen::Upper>() = ctr->Vg1.transpose().eval();   
+    ctr->VgChol1 = ctr->Vg1.llt().matrixL();
+
+    // z1
+    ctr->z1 = ((ctr->w).array() - 0.5).array() / ctr->omega1.array();
+
+    // 1-4: Calculate the mean of gamma_1 & Variance of gamma_1 with cholesky
+    const Eigen::VectorXd ZR1 = ctr->Zw1.transpose() * (ctr->z1); 
+    ctr->b1 = ctr->Vg1 * ZR1;
+    ctr->b1.noalias() += ctr->VgChol1 * as<Eigen::VectorXd>(rnorm(ctr->pZ1, 0, sqrt(ctr->sigma2)));
+
+    // *** Step 2: Update ZI indicator auxiliary variable, w ***
+    // 2-1: Calculate eta1 & logit1 (ZI), eta2 & logit2 (NB)
+    eta1 = (ctr->Z1 * ctr->b1);
+    Eigen::VectorXd eta2 = (ctr->Z * ctr->b2) + (ctr->fhat);
+    Eigen::VectorXd logit1 = 1 / (1 + exp(-(eta1).array()));
+    Eigen::VectorXd logit2 = 1 / (1 + exp(-(eta2).array()));
     
-  // * Update polya gamma vars
-  if (ctr->binomial) {
-    VectorXd psi =   ctr->fhat + ctr->Z * ctr->gamma;
-    ctr->Omega =     rcpp_pgdraw(ctr->binomialSize, psi);
-    ctr->Zw =        ctr->Omega.asDiagonal() * ctr->Z;
-    MatrixXd VgInv(ctr->pZ, ctr->pZ);
-    VgInv.triangularView<Lower>() =   ctr->Z.transpose() * ctr->Zw;
-    VgInv.diagonal().array() +=       1 / 1000.0;
-    VgInv.triangularView<Upper>() =   VgInv.transpose().eval();
-    ctr->Vg.triangularView<Lower>() = VgInv.inverse();
-    ctr->Vg.triangularView<Upper>() = ctr->Vg.transpose().eval();
+    // 2-2: Sampling w only for observations with y = 0
+    for (int i = 0; i < (ctr->yZeroN); i++){ 
+      int idx = (ctr->yZeroIdx)[i];
+      double prob = log(logit1[idx]) - log(pow(1 - logit2[idx], ctr->r) * (1 - logit1[idx]) + logit1[idx]);
+      (ctr->w)[idx] = R::rbinom(1, exp(prob));  // Update the index with the probability
+    }
+
+    // Update the number of at-risk individuals
+    ctr->nStar = ctr->n - (ctr->w).sum();       
+
+    // 2-3: Update the indices of at-risk
+    ctr->NBidx.clear();  
+    for (int j = 0; j < (ctr->n); j++){ 
+      if(!(ctr->w)[j]){ 
+        ctr->NBidx.push_back(j);
+      }
+    }
+
+    // *** Step 3: Update the dispersion parameter, r ***
+    // 3-1: Propose r with a random walk
+    int rP;
+    if(R::runif(0, 1) < 0.5){ 
+      rP = ctr->r - 1;
+    } else { 
+      rP = ctr->r + 1;
+    }
+
+    // 3-2: Metropolis-Hastings
+    ctr->MHratio = 0; 
+    if(rP > 0){
+      for(int k = 0; k < (ctr->nStar); k++){ 
+        int idx_aR = (ctr->NBidx)[k];
+        ctr->MHratio += R::dnbinom((ctr->Y0)[idx_aR], rP, logit2[idx_aR], true) -
+                        R::dnbinom((ctr->Y0)[idx_aR], ctr->r, logit2[idx_aR], true);
+      }
+
+      // Accept / Reject 
+      if(log(R::runif(0, 1)) < ctr->MHratio){
+        ctr->r = rP;
+        ctr->rVec = (ctr->ones).array() * (ctr->r);
+      }
+    }
+
+    // *** Step 4: Update gamma_2 (Negative Binomial coefficients) ***
+    // 4-1: Update omega2 ~ PG(y + r, eta2 + f)
+    (ctr->omega2).setOnes(); 
+    for(int l = 0; l < ctr->nStar; l++){
+      int idx_NB = (ctr->NBidx)[l];
+      (ctr->omega2)[idx_NB] = rcpp_pgdraw((ctr->Y0)[idx_NB] + ctr->r, eta2[idx_NB]);
+    }
+
+    // 4-2: Update Zstar, Zw, Vg, z2, R
+    ctr->Zstar = (ctr->Z).array().colwise() * (1 - ctr->w.array());
+
+    // Zw
+    ctr->Zw = (ctr->omega2).asDiagonal() * ctr->Zstar; 
+
+    // Vg
+    Eigen::MatrixXd VgInv(ctr->pZ, ctr->pZ); 
+    VgInv.setZero(); 
+    VgInv.triangularView<Eigen::Lower>() = ctr->Zstar.transpose() * (ctr->Zw); 
+    VgInv.diagonal().array() += 1 / 100.0; 
+    VgInv.triangularView<Eigen::Upper>() = VgInv.transpose().eval(); 
+    ctr->Vg.triangularView<Eigen::Lower>() = VgInv.inverse();
+    ctr->Vg.triangularView<Eigen::Upper>() = ctr->Vg.transpose().eval();   
     ctr->VgChol = ctr->Vg.llt().matrixL();
-    // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
-    ctr->Y =      ctr->kappa.array() / ctr->Omega.array();
-    ctr->R = ctr->Y - ctr->fhat; // Recalc R using new Y
-  }
+
+    // z2 (= Ystar)
+    ctr->z2 = (ctr->Y0 - ctr->rVec).array() / (2*(ctr->omega2).array()).array();
+    ctr->Ystar = (ctr->z2).array() * (1 - ctr->w.array());
+
+    // R (partial residual)
+    Eigen::VectorXd fhatStar = ctr->fhat.array() * (1 - ctr->w.array()); 
+    ctr->R = ctr->Ystar - fhatStar;
+
+    // 4-3: Sample gamma_2
+    const Eigen::VectorXd ZR = ctr->Zw.transpose() * (ctr->R);
+    ctr->b2 = ctr->Vg * ZR;
+    ctr->b2.noalias() += ctr->VgChol * as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2)));
+  } // End ZINB
 } // end tdlmModelEst function
 
 /**
@@ -154,11 +280,11 @@ double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step,
   // Grow
   if (step == 0) {
     // select node to grow
-    no = (std::size_t) floor(R::runif(0, dlnmTerm.size())); 
+    no = (std::size_t) floor(R::runif(0, dlnmTerm.size())); // Uniform selection among terminal nodes
 
     if (dlnmTerm[no]->grow()) { // propose new split
       double nGen2 = double(tree->nGen2());
-      if (dlnmTerm[no]->depth == 0) { // depth == 0
+      if (dlnmTerm[no]->depth == 0) { // If selected terminal node is the root node,
         ++nGen2;
       } else {
         if (!(dlnmTerm[no]->parent->isGen2())) {
@@ -177,7 +303,7 @@ double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step,
     }
 
 
-    // Prune
+  // Prune
   } else if (step == 1) {
     tempNodes = tree->listGen2();
     no = floor(R::runif(0, tempNodes.size())); // select gen2 node to prune
@@ -191,7 +317,7 @@ double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step,
     // newDlnmTerm = tree->listTerminal(1); // list proposed terminal nodes
 
 
-    // Change
+  // Change
   } else {
     tempNodes = tree->listInternal();
     no = floor(R::runif(0, tempNodes.size())); // select internal nodes to change 
@@ -412,23 +538,23 @@ VectorXd countMods(Node* tree, modDat* Mod)
         unavailProb(i) = Mod->modProb[i];
       }
     }
-    if (unavail.size() > 0) {
-      std::random_shuffle(unavail.begin(), unavail.end());
-      double totProb = unavailProb.sum();
-      int pseudoDraw = R::rgeom(std::max(0.00000001, 1 - totProb));
-      int binomDraw = 0;
-      if (pseudoDraw > 0) {
-        for (int i : unavail) {
-          binomDraw = R::rbinom(pseudoDraw, unavailProb(i) / totProb);
-          if (binomDraw > 0)
-            modCount(i) += binomDraw * 1.0;
-          totProb -= unavailProb(i);
-          pseudoDraw -= binomDraw;
-          if (pseudoDraw < 1)
-            break;
-        } // end multinom
-      } // end pseudoDraw
-    } // end unavail
+    // if (unavail.size() > 0) {
+    //   std::shuffle(unavail.begin(), unavail.end(), std::default_random_engine());
+    //   double totProb = unavailProb.sum();
+    //   int pseudoDraw = R::rgeom(std::max(0.00000001, 1 - totProb));
+    //   int binomDraw = 0;
+    //   if (pseudoDraw > 0) {
+    //     for (int i : unavail) {
+    //       binomDraw = R::rbinom(pseudoDraw, unavailProb(i) / totProb);
+    //       if (binomDraw > 0)
+    //         modCount(i) += binomDraw * 1.0;
+    //       totProb -= unavailProb(i);
+    //       pseudoDraw -= binomDraw;
+    //       if (pseudoDraw < 1)
+    //         break;
+    //     } // end multinom
+    //   } // end pseudoDraw
+    // } // end unavail
   } // end modCount
   return(modCount);
 } // end countMods function

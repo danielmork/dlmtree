@@ -28,6 +28,8 @@ plot.summary.tdlmm <- function(object,
                                time2 = c(),
                                show.cw = TRUE,
                                cw.plots.only = TRUE,
+                               trueDLM = NULL,
+                               scale = NULL,
                                ...)
 {
   # cycle through plotting all exposures and interactions if none specified
@@ -82,21 +84,48 @@ plot.summary.tdlmm <- function(object,
     if (type == "marginal") {
       main <- ifelse(!is.null(args$main), args$main,
                      paste0("Marginal effect: ", exposure1))
+
       dat <- data.frame("Est" = object$DLM[[exposure1]]$marg.matfit,
                         "CIMin" = object$DLM[[exposure1]]$marg.cilower,
                         "CIMax" = object$DLM[[exposure1]]$marg.ciupper,
                         "X" = Lags)
+
+
+      if (!is.null(scale)) {  # Scaling for dlm
+        dat[, c("Est", "CIMin", "CIMax")] <- exp(dat[, c("Est", "CIMin", "CIMax")])
+      }
+
+      if (!is.null(trueDLM)) {  # SI: df for a plot returning trueDLM
+        if (is.null(scale)) {
+          dat$trueDLM <- trueDLM
+        } else {
+          dat$trueDLM <- exp(trueDLM)
+        }
+      }
     }
+    
 
 
-    p <- ggplot(dat) +
-      geom_hline(yintercept = 0, color = "red") +
-      geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey") +
-      geom_line(aes(x = `X`, y = `Est`)) +
-      theme_bw(base_size = base_size) +
-      scale_y_continuous(expand = c(0, 0)) +
-      scale_x_continuous(expand = c(0, 0)) +
-      labs(x = xlab, y = ylab, title = main)
+    if(!is.null(trueDLM)){ # draws an additional line of true DLM effect
+      p <- ggplot(dat) +
+        geom_hline(yintercept = ifelse(is.null(scale), 0, 1), color = "red", linetype = "dashed") +
+        geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey") +
+        geom_line(aes(x = `X`, y = `Est`)) +
+        geom_line(aes(x = `X`, y = `trueDLM`), col = "blue", linetype = "dashed") + # SI
+        theme_bw(base_size = base_size) +
+        scale_y_continuous(expand = c(0, 0)) +
+        scale_x_continuous(expand = c(0, 0)) +
+        labs(x = xlab, y = ylab, title = main)
+    } else { # No true DLM (original code)
+      p <- ggplot(dat) +
+        geom_hline(yintercept = ifelse(is.null(scale), 0, 1), color = "red", linetype = "dashed") +
+        geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey") +
+        geom_line(aes(x = `X`, y = `Est`)) +
+        theme_bw(base_size = base_size) +
+        scale_y_continuous(expand = c(0, 0)) +
+        scale_x_continuous(expand = c(0, 0)) +
+        labs(x = xlab, y = ylab, title = main)
+    }
 
     return(p)
 

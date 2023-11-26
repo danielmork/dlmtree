@@ -14,6 +14,7 @@
 #include "Node.h"
 #include "NodeStruct.h"
 #include "Fncs.h"
+#include <random>
 using namespace Rcpp;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -48,7 +49,7 @@ treeMHR dlnmMHR(std::vector<Node*> nodes, tdlmCtr *ctr,
   treeMHR out;
   int pX = int(nodes.size());
   
-  if ((pX == 1) && (!ctr->binomial)) { // single terminal node, cont. response
+  if ((pX == 1) && (!ctr->binomial) && (!ctr->zinb)) { // single terminal node, cont. response
     double VTheta = var / (var * ctr->VTheta1Inv + 1.0);
     double XtVzInvR = (ctr->X1).dot(ctr->R) - (ctr->VgZtX1).dot(ZtR);
     double ThetaHat = VTheta * XtVzInvR;
@@ -61,15 +62,15 @@ treeMHR dlnmMHR(std::vector<Node*> nodes, tdlmCtr *ctr,
     out.logVThetaChol = log(VThetaChol);
   
   } else { // 2+ terminal nodes or binomial response
-    MatrixXd ZtX(ctr->pZ, pX); ZtX.setZero();
-    MatrixXd VgZtX(ctr->pZ, pX); VgZtX.setZero();
+    MatrixXd ZtX(ctr->pZ, pX);    ZtX.setZero();
+    MatrixXd VgZtX(ctr->pZ, pX);  VgZtX.setZero();
 
     // * Create design Xd, Z^tX, and VgZ^tX matrices
     out.Xd.resize(ctr->n, pX);
     for (std::size_t s = 0; s < nodes.size(); ++s) {
       out.Xd.col(s) = (nodes[s]->nodevals)->X;
       
-      if (ctr->binomial) {
+      if (ctr->binomial || ctr->zinb) {
         ZtX.col(s) = ctr->Zw.transpose() * (nodes[s]->nodevals)->X;
         VgZtX.col(s) = ctr->Vg * ZtX.col(s);
         
@@ -84,12 +85,18 @@ treeMHR dlnmMHR(std::vector<Node*> nodes, tdlmCtr *ctr,
     VectorXd XtVzInvR(pX);
     
     if (ctr->binomial) {
-      tempV = out.Xd.transpose() * 
-        (out.Xd.array().colwise() * ctr->Omega.array()).matrix();
+      const MatrixXd Xdw = (ctr->Omega).asDiagonal() * out.Xd;
+      tempV = Xdw.transpose() * out.Xd;
       tempV.noalias() -= ZtX.transpose() * VgZtX;
-      XtVzInvR = (out.Xd.array().colwise() * 
-                  ctr->Omega.array()).matrix().transpose() * ctr->R;
+      XtVzInvR = Xdw.transpose() * ctr->R;
       
+    } else if (ctr->zinb){ // ZINB (subsetting at-risk observations)
+    Eigen::MatrixXd outXdstar = selectIndM(out.Xd, ctr->NBidx); // subsetting
+    const Eigen::MatrixXd Xdw = (selectInd(ctr->omega2, ctr->NBidx)).asDiagonal() * outXdstar;
+    tempV = Xdw.transpose() * outXdstar;                                 
+    tempV.noalias() -= ZtX.transpose() * VgZtX;
+    XtVzInvR = Xdw.transpose() * selectInd(ctr->R, ctr->NBidx);
+
     } else {
       if (newTree) {
         tempV = out.Xd.transpose() * out.Xd;
@@ -100,6 +107,7 @@ treeMHR dlnmMHR(std::vector<Node*> nodes, tdlmCtr *ctr,
       }
       XtVzInvR = out.Xd.transpose() * ctr->R;
     }
+
     XtVzInvR.noalias() -= VgZtX.transpose() * ZtR;
     tempV.diagonal().array() += 1.0 / var;
     const MatrixXd VTheta = tempV.inverse();
@@ -160,7 +168,7 @@ void tdlnmTreeMCMC(int t, Node *tree, tdlmCtr *ctr, tdlmLog *dgn,
     mhr = dlnmMHR(newDlnmTerm, ctr, ZtR, treevar, tree, 1);
 
     // combine mhr parts into log-MH ratio
-    if (ctr->binomial) {
+    if (ctr->binomial || ctr->zinb) {
       ratio = stepMhr + (mhr.logVThetaChol - mhr0.logVThetaChol) +
         0.5 * (mhr.beta - mhr0.beta) -
         (log(treevar) * 0.5 * (mhr.nTerm - mhr0.nTerm));
@@ -181,7 +189,7 @@ void tdlnmTreeMCMC(int t, Node *tree, tdlmCtr *ctr, tdlmLog *dgn,
       success = 2;
       tree->accept();
       dlnmTerm = tree->listTerminal();
-      if (!ctr->binomial) {
+      if (!ctr->binomial && !(ctr->zinb)) {
         tree->nodevals->tempV.resize(dlnmTerm.size(), dlnmTerm.size());
         tree->nodevals->tempV = mhr0.tempV;
       }
@@ -259,45 +267,103 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   ctr->nTrees = as<int>(model["nTrees"]);
   ctr->verbose = as<bool>(model["verbose"]);
   ctr->diagnostics = as<bool>(model["diagnostics"]);
+
   ctr->binomial = as<bool>(model["binomial"]);
+  ctr->zinb = as<bool>(model["zinb"]); // ZINB flag
   ctr->stepProb = as<std::vector<double> >(model["stepProb"]);
   ctr->treePrior = as<std::vector<double> >(model["treePrior"]);
   ctr->shrinkage = as<int>(model["shrinkage"]);
   ctr->modKappa = 1.0;
   
   // * Set up model data
-  ctr->Y = as<VectorXd>(model["Y"]);
-  ctr->n = (ctr->Y).size();
+  ctr->Y0 = as<VectorXd>(model["Y"]);       
+  ctr->n = (ctr->Y0).size();                
+
   ctr->Z = as<MatrixXd>(model["Z"]);
   ctr->Zw = ctr->Z;
   ctr->pZ = (ctr->Z).cols();
-  MatrixXd VgInv = (ctr->Z).transpose() * (ctr->Z);
-  VgInv.diagonal().array() += 1.0 / 1000.0;
+
+  // ZI model
+  ctr->Z1 = as<Eigen::MatrixXd>(model["Z_zi"]);  
+  ctr->Zw1 = ctr->Z1; 
+  ctr->pZ1 = (ctr->Z1).cols(); 
+
+  // V_gamma for ZI model
+  Eigen::MatrixXd VgInv1(ctr->pZ1, ctr->pZ1);    
+  VgInv1 = (ctr->Z1).transpose() * (ctr->Z1);    
+  VgInv1.diagonal().array() += 1.0 / 100.0;      
+  ctr->Vg1 = VgInv1.inverse();
+  VgInv1.resize(0,0);    
+  ctr->VgChol1 = (ctr->Vg1).llt().matrixL();
+
+  // V_gamma for (Gaussian / Binary / NB model) 
+  Eigen::MatrixXd VgInv(ctr->pZ, ctr->pZ);
+  VgInv = (ctr->Z).transpose() * (ctr->Z);
+  VgInv.diagonal().array() += 1.0 / 100.0;
   ctr->Vg = VgInv.inverse();
-  ctr->VgChol = (ctr->Vg).llt().matrixL();
   VgInv.resize(0,0);
+  ctr->VgChol = (ctr->Vg).llt().matrixL();    
+
   
-  // * Set up data for logistic model
+  // *** Set up parameters for logistic model ***
   ctr->binomialSize.resize(ctr->n);               ctr->binomialSize.setZero();
   ctr->kappa.resize(ctr->n);                      ctr->kappa.setOnes();
   ctr->Omega.resize(ctr->n);                      ctr->Omega.setOnes();
   if (ctr->binomial) {
     ctr->binomialSize = as<VectorXd>(model["binomialSize"]);
-    ctr->kappa = ctr->Y - 0.5 * (ctr->binomialSize);
-    ctr->Y = ctr->kappa;
+    ctr->kappa = ctr->Y0 - 0.5 * (ctr->binomialSize); 
+    ctr->Ystar = ctr->kappa; 
     ctr->Omega.resize(ctr->n);                      ctr->Omega.setOnes();
   }
-  
+
+  // *** Set up parameters for ZINB model ***
+  ctr->r = 5; 
+
+  // Useful vectors for PG variable sampling 
+  ctr->ones.resize(ctr->n);   ctr->ones.setOnes(); 
+  ctr->rVec = (ctr->r) * (ctr->ones).array(); 
+
+  // If ZINB, calculate the fixed values
+  if(ctr->zinb){                                      
+    ctr->z2 = 0.5*((ctr->Y0).array() - ctr->r).array(); 
+    ctr->Ystar = ctr->z2;
+  }
+
+  // Initialize parameters
+  ctr->w.resize(ctr->n);  
+  ctr->b1 = as<Eigen::VectorXd>(rnorm(ctr->pZ1, 0, sqrt(100))); 
+  ctr->b2 = as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(100)));  
+
+  ctr->omega1.resize(ctr->n);        ctr->omega1.setOnes();
+  ctr->omega2.resize(ctr->n);        ctr->omega2.setOnes();
+  ctr->z1.resize(ctr->n);            ctr->z1.setZero();
+
+  // Store the indices of y = 0
+  for(int j = 0; j < ctr->n; j++){
+    if((ctr->Y0)[j] == 0){
+      (ctr->yZeroIdx).push_back(j);
+      (ctr->w)[j] = 0.5;
+    } else {
+      (ctr->NBidx).push_back(j);
+      (ctr->w)[j] = 0;
+    }
+  }
+
+  // NB model specific parameters
+  ctr->Zstar = (ctr->Z).array().colwise() * (1 - ctr->w.array());
+  ctr->yZeroN = (ctr->yZeroIdx).size(); 
+  ctr->nStar = (ctr->NBidx).size();
+
   // * Create exposure data management
   exposureDat *Exp;
   if (as<int>(model["nSplits"]) == 0) { // DLM
-    if (ctr->binomial)
+    if (ctr->binomial || ctr->zinb)
       Exp = new exposureDat(as<MatrixXd>(model["Tcalc"]));
     else
       Exp = new exposureDat(as<MatrixXd>(model["Tcalc"]),
                             ctr->Z, ctr->Vg);
   } else { // DLNM
-    if (ctr->binomial)
+    if (ctr->binomial || ctr->zinb)
       Exp = new exposureDat(as<MatrixXd>(model["X"]),
                             as<MatrixXd>(model["SE"]),
                             as<VectorXd>(model["Xsplits"]),
@@ -349,10 +415,18 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   (dgn->termNodes).resize(ctr->nTrees, ctr->nRec);  (dgn->termNodes).setZero();
   dgn->timeProbs.resize(ctr->pX - 1, ctr->nRec);   dgn->timeProbs.setZero();
   VectorXd Yhat(ctr->n); Yhat.setZero();
+
+  // ZINB specific log
+  (dgn->b1).resize(ctr->pZ1, ctr->nRec);             (dgn->b1).setZero(); 
+  (dgn->b2).resize(ctr->pZ, ctr->nRec);              (dgn->b2).setZero(); 
+  (dgn->r).resize(ctr->nRec);                        (dgn->r).setZero(); 
+  (dgn->wMat).resize(ctr->n, ctr->nRec);             (dgn->wMat).setZero(); 
+
+
   
   // * Initial values and draws
   ctr->fhat.resize(ctr->n);                         (ctr->fhat).setZero();
-  ctr->R = ctr->Y;
+  ctr->R = ctr->Ystar; 
   ctr->gamma.resize(ctr->pZ);
   // Load initial params for faster convergence in binomial model
   if (ctr->binomial) {
@@ -368,7 +442,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   }
   ctr->totTerm = 0;
   ctr->sumTermT2 = 0;
-  ctr->nu = 1.0; // ! Need to define nu and sigma2 prior to ModelEst
+  ctr->nu = 1.0; 
   ctr->sigma2 = 1.0;
   tdlmModelEst(ctr);
   rHalfCauchyFC(&(ctr->nu), ctr->nTrees, 0.0);
@@ -403,7 +477,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     } // end update trees
 
     // * Update model
-    ctr->R = ctr->Y - ctr->fhat;
+    ctr->R = ctr->Ystar - ctr->fhat; 
     tdlmModelEst(ctr);
     rHalfCauchyFC(&(ctr->nu), ctr->totTerm, ctr->sumTermT2 / ctr->sigma2);
     if ((ctr->sigma2 != ctr->sigma2) || (ctr->nu != ctr->nu)) {
@@ -421,8 +495,13 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
       dgn->timeProbs.col(ctr->record -1) = trees[0]->nodestruct->getTimeProbs();
       dgn->fhat += ctr->fhat;
       Yhat += ctr->fhat + ctr->Z * ctr->gamma;
-    }
 
+      // ZINB
+      (dgn->b1).col(ctr->record - 1) = ctr->b1;
+      (dgn->b2).col(ctr->record - 1) = ctr->b2;
+      (dgn->r)(ctr->record - 1) = ctr->r;
+      (dgn->wMat).col(ctr->record - 1) = ctr->w;
+    }
     // * Update progress
     prog->printMark();
   } // end MCMC
@@ -442,6 +521,13 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   MatrixXd Accept((dgn->TreeAccept).size(), 5);
   for (s = 0; s < (dgn->TreeAccept).size(); ++s)
     Accept.row(s) = dgn->TreeAccept[s];
+
+  // ZINB specific return 
+  Eigen::MatrixXd b1 = (dgn->b1).transpose(); 
+  Eigen::MatrixXd b2 = (dgn->b2).transpose();
+  Eigen::VectorXd r = dgn->r; 
+  Eigen::MatrixXd wMat = dgn->wMat; 
+
   delete prog;
   // delete ctr;
   delete dgn;
@@ -458,5 +544,9 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
                             Named("timeProbs") = wrap(timeProbs),
                             Named("termNodes")  = wrap(termNodes),
                             Named("gamma")  = wrap(gamma),
-                            Named("treeAccept") = wrap(Accept)));
+                            Named("treeAccept") = wrap(Accept),
+                            Named("b1") = wrap(b1),
+                            Named("b2") = wrap(b2),
+                            Named("r") = wrap(r),
+                            Named("wMat") = wrap(wMat)));
 } // end tdlnm_Cpp

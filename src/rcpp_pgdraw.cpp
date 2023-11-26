@@ -24,6 +24,7 @@
  */
 
 #include "RcppEigen.h"
+
 using namespace Rcpp;
 using std::pow;
 
@@ -49,7 +50,7 @@ double randinvg(double);
 double aterm(int, double, double);
 
 /**
- * @brief draw polya gamma latent variable for var c[i] with size b[i]
+ * @brief multiple draw polya gamma latent variable for var c[i] with size b[i]
  * 
  * @param b vector of binomial sizes
  * @param c vector of parameters
@@ -234,8 +235,8 @@ double truncgamma()
 
 // Sample truncated inverse Gaussian random variates
 // Algorithm 4 in the Windle (2013) PhD thesis, page 129
-double tinvgauss(double z, double t)
-{
+// Note that mu is arbitrary constant
+double tinvgauss(double z, double t){
   double X, u;
   double mu = 1.0/z;
 

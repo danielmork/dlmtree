@@ -2,6 +2,8 @@
 #include "NodeStruct.h"
 #include "modDat.h"
 #include "Fncs.h"
+#include <random>
+#include <algorithm>
 using namespace Rcpp;
 
 // Generic function placeholders
@@ -299,7 +301,7 @@ bool ModStruct::proposeSplit()
       // Select random categories from available
       splitVec.clear();
       int nCat = floor(R::runif(1.0, am.size()));
-      std::random_shuffle(am.begin(), am.end());
+      std::shuffle(am.begin(), am.end(), std::default_random_engine());
       for (i = 0; i < (std::size_t) nCat; ++i) {
         splitVec.push_back(am[i]);
       }
@@ -308,7 +310,7 @@ bool ModStruct::proposeSplit()
       if (unavailMod.size() > 0) {
         int nOther = floor(R::runif(0.0, unavailMod.size() + 1.0));
         if (nOther > 0) {
-          std::random_shuffle(unavailMod.begin(), unavailMod.end());
+          std::shuffle(unavailMod.begin(), unavailMod.end(), std::default_random_engine());
           for (i = 0; i < (std::size_t) nOther; ++i) {
             splitVec.push_back(unavailMod[i]);
           }

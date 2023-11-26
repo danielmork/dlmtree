@@ -14,6 +14,8 @@ tdlmm(
   n.thin = 5,
   family = "gaussian",
   binomial.size = 1,
+  formula_zi = NULL,
+  keep_XZ = FALSE,
   mixture.interactions = "noself",
   tree.params = c(0.95, 2),
   step.prob = c(0.25, 0.25, 0.25),
@@ -30,7 +32,7 @@ tdlmm(
 \item{formula}{object of class formula, a symbolic description of the fixed
 effect model to be fitted, e.g. y ~ a + b}
 
-\item{data}{data frome containing variables used in the formula}
+\item{data}{data frame containing variables used in the formula}
 
 \item{exposure.data}{named list containing equally sized numerical matrices
 of exposure data with same, having same length as data}
@@ -43,11 +45,17 @@ of exposure data with same, having same length as data}
 
 \item{n.thin}{integer thinning factor, i.e. keep every tenth iteration}
 
-\item{family}{'gaussian' for continuous response, or 'logit' for binomial
-response with logit link}
+\item{family}{'gaussian' for continuous response, 'logit' for binomial
+response with logit link, or 'zinb' for zero-inflated negative binomial with logit link}
 
 \item{binomial.size}{integer type scalar (if all equal, default = 1) or
 vector defining binomial size for 'logit' family}
+
+\item{formula_zi}{object of class formula, a symbolic description of the ZI
+model to be fitted, e.g. y ~ a + b. This only applies to ZINB where covariates for
+ZI model is different from NB model. This is same as the main formula by default}
+
+\item{keep_XZ}{false (default) or true: keep the model scale exposure and covariate data}
 
 \item{mixture.interactions}{'noself' (default) which estimates interactions
 only between two different exposures, 'all' which also allows

@@ -29,6 +29,10 @@
 #' response with logit link
 #' @param binomial.size integer type scalar (if all equal, default = 1) or
 #' vector defining binomial size for 'logit' family
+#' @param formula_zi object of class formula, a symbolic description of the ZI
+#' model to be fitted, e.g. y ~ a + b. This only applies to ZINB where covariates for
+#' ZI model is different from NB model. This is same as the main formula by default
+#' @param keep_XZ false (default) or true: keep the model scale exposure and covariate data
 #' @param tree.params numerical vector of alpha and beta hyperparameters
 #' controlling tree depth (see Bayesian CART, 1998), default: alpha = 0.95,
 #' beta = 2
@@ -67,6 +71,8 @@ tdlnm <- function(formula,
                   n.thin = 5,
                   family = "gaussian",
                   binomial.size = 1,
+                  formula_zi = NULL, 
+                  keep_XZ = FALSE,
                   tree.params = c(.95, 2),
                   step.prob = c(.25, .25),
                   time.split.prob = rep(1 / (ncol(exposure.data) - 1), ncol(exposure.data) - 1),
@@ -123,8 +129,8 @@ tdlnm <- function(formula,
     stop("n.* must be integer and > 0")
 
   # response type
-  if (!(family %in% c("gaussian", "logit")))
-    stop("`family` must be one of `gaussian`, or `logit`")
+  if (!(family %in% c("gaussian", "logit", "zinb")))
+    stop("`family` must be one of `gaussian`, `logit`, or `zinb`")
 
   # binomial size
   model$binomial <- 0
@@ -136,6 +142,13 @@ tdlnm <- function(formula,
       stop("`binomial.size` must be positive integer and same length as data")
     model$binomialSize <- force(binomial.size)
     model$binomial <- 1
+  }
+
+  # ZINB flag
+  model$zinb <- 0
+  if(family == "zinb"){
+    model$zinb <- 1
+    model$sigma2 <- 1
   }
 
   # tree parameters
@@ -213,13 +226,28 @@ tdlnm <- function(formula,
 
 
   # ---- Setup control and response variables ----
+  if(is.null(formula_zi)){
+    formula_zi <- formula
+  }
+
   model$formula <- force(as.formula(formula))
+  model$formula_zi <- force(as.formula(formula_zi)) 
+
   tf <- terms.formula(model$formula, data = data)
-  if (!attr(tf, "response"))
+  tf_zi <- terms.formula(model$formula_zi, data = data)
+
+  # Sanity check for response
+  if (!attr(tf, "response") & !attr(tf_zi, "response"))
     stop("no valid response in formula")
-  model$intercept <- force(ifelse(attr(tf, "intercept"), TRUE, FALSE))
-  if (length(which(attr(tf, "term.labels") %in% colnames(data))) == 0
-      & !model$intercept)
+
+  # Save if intercept is included in the model
+  model$intercept <- force(ifelse(attr(tf, "intercept"), TRUE, FALSE)) 
+  model$intercept_zi <- force(ifelse(attr(tf_zi, "intercept"), TRUE, FALSE)) 
+
+  # Sanity check for variables and the names
+  if (length(which(attr(tf, "term.labels") %in% colnames(data))) == 0 & 
+      length(which(attr(tf_zi, "term.labels") %in% colnames(data))) == 0 & 
+      !model$intercept & !model$intercept_zi) 
     stop("no valid variables in formula")
 
 
@@ -370,32 +398,68 @@ tdlnm <- function(formula,
   mf <- model.frame(model$formula, data = data,
                     drop.unused.levels = TRUE,
                     na.action = NULL)
-  if (any(is.na(mf)))
+  mf_zi <- model.frame(model$formula_zi, data = data,             
+                      drop.unused.levels = TRUE,
+                      na.action = NULL)
+  if (any(is.na(mf)) & any(is.na(mf_zi)))
     stop("missing values in model data, use `complete.cases()` to subset data")
-  model$Y <- force(model.response(mf))
-  model$Z <- force(model.matrix(model$formula, data = mf))
-  # QR <- qr(crossprod(model$Z))
-  model$Znames <- colnames(model$Z)#[QR$pivot[seq_len(QR$rank)]]
-  model$droppedCovar <- c()#colnames(model$Z)[QR$pivot[-seq_len(QR$rank)]]
-  # model$Z <- matrix(model$Z[,QR$pivot[seq_len(QR$rank)]], nrow(model$Z), QR$rank)
-  # model$Z <- force(scaleModelMatrix(model$Z))
-  # rm(QR)
+  
+  
+  
+  
+  # model$Y <- force(model.response(mf))
+  # model$Z <- force(model.matrix(model$formula, data = mf))
+  # # QR <- qr(crossprod(model$Z))
+  # model$Znames <- colnames(model$Z)#[QR$pivot[seq_len(QR$rank)]]
+  # model$droppedCovar <- c()#colnames(model$Z)[QR$pivot[-seq_len(QR$rank)]]
+  # # model$Z <- matrix(model$Z[,QR$pivot[seq_len(QR$rank)]], nrow(model$Z), QR$rank)
+  # # model$Z <- force(scaleModelMatrix(model$Z))
+  # # rm(QR)
+  
+  # Organize response variable & fixed effect variable
+  model$Y <- force(model.response(mf))                           
 
+  model$Z <- force(model.matrix(model$formula, data = mf))     
+  QR <- qr(crossprod(model$Z))                           
+  model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)])]      
+  model$droppedCovar <- colnames(model$Z)[QR$pivot[-seq_len(QR$rank)]]
+  model$Z <- force(scaleModelMatrix(model$Z))
+  rm(QR)
 
+  model$Z_zi <- force(model.matrix(model$formula_zi, data = mf_zi))   
+  QR_zi <- qr(crossprod(model$Z_zi)) 
+  model$Z_zi <- model$Z_zi[,sort(QR_zi$pivot[seq_len(QR_zi$rank)])]           
+  model$droppedCovar_zi <- colnames(model$Z_zi)[QR_zi$pivot[-seq_len(QR_zi$rank)]]
+  model$Z_zi <- force(scaleModelMatrix(model$Z_zi))
+  rm(QR_zi)
 
+  # Organize for different models
+  # Gaussian
   if (model$family == "gaussian") {
     model$Ymean <- sum(range(model$Y))/2
     model$Yscale <- sd(model$Y - model$Ymean)
     model$Y <- force((model$Y - model$Ymean) / model$Yscale)
-  } else {
+  } else { # For both logistic and ZINB,
     model$Yscale <- 1
     model$Ymean <- 0
     model$Y <- force(scale(model$Y, center = 0, scale = 1))
   }
+
+  # Store the processed values
   model$Y <- force(c(model$Y))
-  model$Zscale <- rep(1, ncol(model$Z))#attr(model$Z, "scaled:scale")
-  model$Zmean <- rep(0, ncol(model$Z))#attr(model$Z, "scaled:center")
-  # model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
+  # model$Zscale <- rep(1, ncol(model$Z))#attr(model$Z, "scaled:scale")
+  # model$Zmean <- rep(0, ncol(model$Z))#attr(model$Z, "scaled:center")
+  # # model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
+
+  model$Zscale <- attr(model$Z, "scaled:scale")
+  model$Zmean <- attr(model$Z, "scaled:center")
+  model$Znames <- colnames(model$Z)
+  model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
+
+  model$Zscale_zi <- attr(model$Z_zi, "scaled:scale")
+  model$Zmean_zi <- attr(model$Z_zi, "scaled:center")
+  model$Znames_zi <- colnames(model$Z_zi)
+  model$Z_zi <- force(matrix(model$Z_zi, nrow(model$Z_zi), ncol(model$Z_zi)))
 
 
   model$initParams <- rep(0, ncol(model$Z))
@@ -407,7 +471,6 @@ tdlnm <- function(formula,
       model$initParams[na] <- initial.params[na]
     }
   }
-
 
   # ---- Run model ----
   if (model$monotone) {
@@ -432,15 +495,38 @@ tdlnm <- function(formula,
     colnames(model$treeAccept) <- c("step", "success", "term", "treeMhr", "mhr")
   }
 
-  # rescale fixed effect estimates
+# Gaussian & Logistic fixed effect
   model$gamma <- sapply(1:ncol(model$gamma), function(i) {
-    model$gamma[,i] * model$Yscale / model$Zscale[i] })
+  model$gamma[,i] * model$Yscale / model$Zscale[i] })
+
+  # ZINB fixed effect (binary)
+  model$b1 <- sapply(1:ncol(model$b1), function(i) {
+  model$b1[,i] * model$Yscale / model$Zscale_zi[i] })
+
+  # ZINB fixed effect (NegBin)
+  model$b2 <- sapply(1:ncol(model$b2), function(i) {
+  model$b2[,i] * model$Yscale / model$Zscale[i] })
+
+  # # If intercept:
   if (model$intercept) {
     model$gamma[,1] <- model$gamma[,1] + model$Ymean
     if (ncol(model$Z) > 1)
       model$gamma[,1] <- model$gamma[,1] - model$gamma[,-1,drop=FALSE] %*% model$Zmean[-1]
+
+    model$b2[,1] <- model$b2[,1] + model$Ymean
+    if (ncol(model$Z) > 1)
+      model$b2[,1] <- model$b2[,1] - model$b2[,-1,drop=FALSE] %*% model$Zmean[-1]
   }
+
+  if (model$intercept_zi) {
+    model$b1[,1] <- model$b1[,1] + model$Ymean
+    if (ncol(model$Z_zi) > 1)
+      model$b1[,1] <- model$b1[,1] - model$b1[,-1,drop=FALSE] %*% model$Zmean_zi[-1]
+  }
+
   colnames(model$gamma) <- model$Znames
+  colnames(model$b1) <- model$Znames_zi
+  colnames(model$b2) <- model$Znames
 
 
   # rescale DLM estimates
@@ -461,11 +547,15 @@ tdlnm <- function(formula,
     } else model$Xsplits[i]
   })
 
+
   # Remove model and exposure data
-  model$X <- NULL
-  model$Tcalc <- NULL
-  model$Xcalc <- NULL
-  model$Z <- NULL
+  if(!keep_XZ){
+    model$X <- NULL
+    model$Tcalc <- NULL
+    model$Xcalc <- NULL
+    model$Z <- NULL
+    model$Z_zi <- NULL
+  }
 
   # Change env to list
   model.out <- lapply(names(model), function(i) model[[i]])

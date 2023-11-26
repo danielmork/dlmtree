@@ -4,7 +4,7 @@
 \alias{plot.summary.tdlnm}
 \title{plot.summary.tdlnm}
 \usage{
-\method{plot}{summary.tdlnm}(summary, plot.type = "mean", val = c(), time = c(), ...)
+\method{plot}{summary.tdlnm}(summary, plot.type = "mean", val = c(), time = c(), trueDLM = NULL, ...)
 }
 \arguments{
 \item{summary}{object of class 'summary.tdlnm', output of summary of 'tdlnm'}
