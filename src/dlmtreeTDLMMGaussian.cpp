@@ -839,7 +839,7 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
   // *** Propose new modifier tree ***
   switch (modTerm.size()) {
     case 1: step = 0;   break;
-    case 2: step = sampleInt(ctr->stepProbMod, 1 - ctr->stepProbMod[3]); break;
+    case 2: step = sampleInt(ctr->stepProbMod, 1 - ctr->stepProbMod[3]); break; // sampleInt(A vector of probability, total probability) // Fourth step is removed
     default: step = sampleInt(ctr->stepProbMod, 1);
   }
 
