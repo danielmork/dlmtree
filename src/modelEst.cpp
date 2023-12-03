@@ -158,7 +158,7 @@ void tdlmModelEst(modelCtr *ctr)
     (ctr->omega2).setOnes(); 
     for(int l = 0; l < ctr->nStar; l++){
       int idx_NB = (ctr->NBidx)[l];
-      (ctr->omega2)[idx_NB] = rcpp_pgdraw((ctr->Y0)[idx_NB] + ctr->r, eta2[idx_NB]);
+      (ctr->omega2)[idx_NB] = samplepg_na((ctr->Y0)[idx_NB] + ctr->r, eta2[idx_NB]);
     }
 
     // 4-2: Update Zstar, Zw, Vg, z2, R

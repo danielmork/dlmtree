@@ -202,6 +202,31 @@ std::vector<int> cppIntersection(const IntegerVector& A,
 }
 
 
+/**
+ * @brief Subset a vector only with given indices
+ * 
+ * @param original A vector to be subset
+ * @param indices A vector containing wanted indices
+ * @return A vector with values of given indices
+ */
+
+Eigen::VectorXd selectInd(Eigen::VectorXd original, std::vector<int> indices) {
+
+  int m = indices.size(); // Get the total number of index
+
+  Eigen::VectorXd subset; // define a subset
+  subset.resize(m);
+
+  // For loop to collect values with a corresponding index
+  for(int i = 0; i < m; i++){
+    int index = indices[i]; // Get an index from indices vector
+    double val = original(index); // Find the value corresponding to the index
+    subset(i) = val; // Save the value
+  }
+
+  return subset;
+}
+
 
 /**
  * @brief Subset a matrix only with given indices (rows)

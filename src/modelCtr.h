@@ -285,7 +285,7 @@ class exposureDat;
 class modDat;
 class NodeStruct;
 void tdlmModelEst(modelCtr *ctr);
-double rcpp_pgdraw(double, double); // Binomial / ZINB model
+double samplepg_na(double b, double c);
 VectorXd rcpp_pgdraw(VectorXd b, VectorXd c);
 double tdlmProposeTree(Node* tree, exposureDat* Exp = 0, 
                        modelCtr* ctr = 0, int step = 0,

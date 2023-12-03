@@ -13,7 +13,6 @@
 #' @param expList named list of exposure data
 #' @param ctnum number of counties
 #' @param week number of weeks for each county, must be between 1-561
-#' @param expList named list of exposure data
 #' @param data_zinb covariate data
 #' @param effect.size the effect size of the window of susceptibility, resulting in controlling the magnitude of the count outcome
 #' @param r dispersion parameter

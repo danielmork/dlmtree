@@ -5,17 +5,21 @@
 \title{sim.tdlmm}
 \usage{
 sim.tdlmm(
-  sim = 1,
+  sim = "A",
   error = 10,
   mean.p = 0.5,
   n.exp = 25,
   prop.active = 0.05,
   n = 5000,
-  expList = NULL
+  expList = NULL,
+  ctnum = 20,
+  week = 561,
+  data_zinb = NULL,
+  r = 1
 )
 }
 \arguments{
-\item{sim}{integer (1-4) specifying simulation scenario}
+\item{sim}{character (A - F) specifying simulation scenario}
 
 \item{error}{positive scalar specifying error variance}
 
@@ -30,6 +34,16 @@ three}
 \item{n}{sample size for simulation}
 
 \item{expList}{named list of exposure data}
+
+\item{ctnum}{number of counties}
+
+\item{week}{number of weeks for each county, must be between 1-561}
+
+\item{data_zinb}{covariate data}
+
+\item{r}{dispersion parameter}
+
+\item{effect.size}{the effect size of the window of susceptibility, resulting in controlling the magnitude of the count outcome}
 }
 \value{
 Simulated data and true parameters

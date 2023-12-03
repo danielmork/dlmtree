@@ -49,6 +49,7 @@ double truncgamma();
 double randinvg(double);
 double aterm(int, double, double);
 
+
 /**
  * @brief multiple draw polya gamma latent variable for var c[i] with size b[i]
  * 
@@ -77,6 +78,7 @@ Eigen::VectorXd rcpp_pgdraw(Eigen::VectorXd b, Eigen::VectorXd z) {
   }
   return y;
 }
+
 
 double ratio(double z)
 {

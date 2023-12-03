@@ -66,8 +66,8 @@ smoothing factor applied to each exposure measurement, defaults to sd(exposure.d
 
 \item{n.thin}{integer thinning factor, i.e. keep every fifth iteration}
 
-\item{family}{'gaussian' for continuous response, 'logit' for binomial
-response with logit link, 'zinb' for zero-inflated negative binomial model}
+\item{family}{'gaussian' for continuous response, or 'logit' for binomial
+response with logit link}
 
 \item{binomial.size}{integer type scalar (if all equal, default = 1) or
 vector defining binomial size for 'logit' family}

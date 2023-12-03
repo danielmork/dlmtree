@@ -1,4 +1,4 @@
-sim.dlmtree <- function(sim = "A",
+sim.hdlmm <- function(sim = "A",
                         error = 1,
                         n = 1000,
                         effect.size = 1,
