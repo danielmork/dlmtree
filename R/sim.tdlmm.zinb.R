@@ -18,7 +18,6 @@ sim.tdlmm.zinb <- function(sim = 1,
                            week = 561,
                            expList = NULL,
                            data_zinb = NULL,
-                           effect.size = 0.1,
                            r = 1) 
 {
   if (!(sim %in% 1:2))
@@ -50,6 +49,9 @@ sim.tdlmm.zinb <- function(sim = 1,
   # Model matrix construction for ZI & NB model
   data_zi <- model.matrix(~ fipscoor - 1, data = data_zinb)
   data_nb <- model.matrix(~ fipscoor + month + YOC, data = data_zinb)
+
+  # Effect size
+  effect.size = 0.1
 
   # Sim 1: A single exposure DLM
   if (sim == 1) {
