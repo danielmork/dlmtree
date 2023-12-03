@@ -2,7 +2,7 @@
 #'
 #' @description Simulation scenarios to accompany TDLM/TDLMM
 #'
-#' @param sim integer (1-6) specifying simulation scenario
+#' @param sim character (A - F) specifying simulation scenario
 #' @param error positive scalar specifying error variance
 #' @param mean.p scalar between zero and one specifying mean probability
 #' for simulation scenario one
@@ -21,12 +21,12 @@
 #' @return Simulated data and true parameters
 #' @export
 #'
-sim.tdlmm <- function(sim = 1,
-                      error = 10,           # Scn 2, 3, 4
-                      mean.p = 0.5,         # Scn 1
+sim.tdlmm <- function(sim = "A",
+                      error = 10,           # Scn B, C, D
+                      mean.p = 0.5,         # Scn A
                       n.exp = 25,           # Not in use
-                      prop.active = 0.05,   # Scn 3
-                      n = 5000,             # Scn 1, 2, 3, 4
+                      prop.active = 0.05,   # Scn C
+                      n = 5000,             # Scn A, B, C, D
                       expList = NULL,
                       # ZINB
                       ctnum = 20,           # n = ctnum * week for zinb (time series)
@@ -34,11 +34,11 @@ sim.tdlmm <- function(sim = 1,
                       data_zinb = NULL,
                       r = 1)
 {
-  if (!(sim %in% 1:6))
-    stop("`sim` must be an integer from 1-4")
+  if (!(sim %in% LETTERS[1:6]))
+    stop("`sim` must be an character from A-F")
 
   # TDLM/TDLMM (Dan)
-  if(sim %in% 1:4){
+  if(sim %in% LETTERS[1:4]){
     if (is.null(expList)) {
       data(exposureCov) # Covariace matrix of exposure data
       cholexp <- t(chol(exposureCov))
@@ -62,8 +62,8 @@ sim.tdlmm <- function(sim = 1,
     c <- c(data[,1:10] %*% params)                                # Compute c: zT * gamma (nx10) x (10x1) = (nx1)
 
 
-    # Sim 1: binary response with single exposure DLM
-    if (sim == 1) {
+    # Sim A: binary response with single exposure DLM
+    if (sim == "A") {
       # center/scale exposure data
       exposures <- lapply(expList, function(i) (i[idx,] - mean(i[idx,])) / sd(i[idx,]))
       # generate random starting time
@@ -88,9 +88,9 @@ sim.tdlmm <- function(sim = 1,
     }
 
 
-    # Sim 2: continuous response with main effect of PM2.5 and interaction
+    # Sim B: continuous response with main effect of PM2.5 and interaction
     # between PM2.5 and NO2
-    if (sim == 2) {
+    if (sim == "B") {
       exposures <- lapply(expList, function(i) i[idx,] / IQR(i[idx,]))
       start.time1 <- sample(1:(Lags - 7), 1)
       start.time2 <- sample(1:(Lags - 7), 1)
@@ -127,9 +127,9 @@ sim.tdlmm <- function(sim = 1,
     names(exp) <- paste0("e", 1:p)
 
 
-    # Sim 3: continuous response to test exposure selection using exposure
+    # Sim C: continuous response to test exposure selection using exposure
     # main effects
-    if (sim == 3) {
+    if (sim == "C") {
       # Draw active exposures and assign DLM effects
       active <- sample.int(p, round(prop.active * p))
       active.dlm <- list()
@@ -153,7 +153,7 @@ sim.tdlmm <- function(sim = 1,
 
     # Sim 4: continuous response to test exposure selection using one exposure
     # main effect and two interaction effects
-    if (sim == 4) {
+    if (sim == "D") {
       # Draw active exposures and assign DLM effects
       active <- sort(sample.int(p, 5))
       active.int <- c(paste0(names(exp)[active[2]], "-", names(exp)[active[3]]),
@@ -211,8 +211,8 @@ sim.tdlmm <- function(sim = 1,
     # Effect size
     effect.size = 0.1
 
-    # Sim 5: A single exposure DLM
-    if (sim == 5) {
+    # Sim E: A single exposure DLM
+    if (sim == "E") {
       exposures <- lapply(expList, function(i) (i[idx,] - mean(i[idx,])) / sd(i[idx,])) # center/scale exposure data
 
       # Sample starting time lag
@@ -268,8 +268,8 @@ sim.tdlmm <- function(sim = 1,
                   "zeroProportion" = zeroProp))
     }
 
-    # Sim 6: Two exposures with interaction
-    if(sim == 6){
+    # Sim F: Two exposures with interaction
+    if(sim == "F"){
       exposures <- lapply(expList, function(i) (i[idx,] - mean(i[idx,])) / sd(i[idx,]))     # centering and scaling
 
       start.time1 <- sample(1:(Lags - 7), 1)    # e1 starting time lag
