@@ -248,87 +248,91 @@ predict.dlmtree <- function(object, new.data, new.exposure.data, ...,
 
     }
 
-    # Interaction effect for a mixture setting
-    mark_mix <- ceiling(nrow(object$MIX) / 42)
-    if (verbose)
-      cat(paste0("\nReanalyzing trees for new.data (interaction): % complete\n",
-                "[0--------25--------50--------75--------100]\n '"))
 
-    # Exp i x Exp j (i > j) (mix_mcmc)
-    # mix_draws[[Exp x Exp]][lag x lag x n x mcmc]
-    mix_draws <- list()
-    draws <- lapply(1:object$mcmcIter, function(i) array(0.0, dim = c(object$pExp, object$pExp, n))) # Creates a list of which elements are empty pxpxn array    
-    for(mix in object$mixNames){
-      mix_draws[[mix]] <- draws
-    }
+    if(object$interaction != 0){
+      # Interaction effect for a mixture setting
+      mark_mix <- ceiling(nrow(object$MIX) / 42)
+      if (verbose)
+        cat(paste0("\nReanalyzing trees for new.data (interaction): % complete\n",
+                  "[0--------25--------50--------75--------100]\n '"))
 
-    mixCount = 1
-    for (i in sort(unique(object$MIX$exp1))) {
-      for (j in sort(unique(object$MIX$exp2))) {
-        # Subsetting matrix with exposure combination
-        mixname <- object$mixNames[mixCount]
-        newMIX = object$MIX[which(object$MIX$exp1 == i & object$MIX$exp2 == j), ]
+      # Exp i x Exp j (i > j) (mix_mcmc)
+      # mix_draws[[Exp x Exp]][lag x lag x n x mcmc]
+      mix_draws <- list()
+      draws <- lapply(1:object$mcmcIter, function(i) array(0.0, dim = c(object$pExp, object$pExp, n))) # Creates a list of which elements are empty pxpxn array    
+      for(mix in object$mixNames){
+        mix_draws[[mix]] <- draws
+      }
 
-        if(i == j){ # HDLMM only consider no-self interaction
-          next
-        }
-        
-        # MCMC draws with rules
-        for(k in 1:nrow(newMIX)){
-          if (verbose && k %% mark_mix == 0)
-            cat("'")
+      mixCount = 1
+      for (i in sort(unique(object$MIX$exp1))) {
+        for (j in sort(unique(object$MIX$exp2))) {
+          # Subsetting matrix with exposure combination
+          mixname <- object$mixNames[mixCount]
+          newMIX = object$MIX[which(object$MIX$exp1 == i & object$MIX$exp2 == j), ]
 
-          Iter <- newMIX$Iter[k]
-          Rule <- newMIX$Rule[k]
-
-          if (Rule == ""){
-            idx <- 1:n
-          } else {
-            idx <- which(eval(parse(text = Rule)))
-            if(length(idx) == 0){idx = 0} # avoid integer(0) problem when n = 1 for individualized dlm
+          if(i == j){ # HDLMM only consider no-self interaction
+            next
           }
           
-          t1range <- newMIX$tmin1[k]:newMIX$tmax1[k]
-          t2range <- newMIX$tmin2[k]:newMIX$tmax2[k]
-          est <- newMIX$est[k]
+          # MCMC draws with rules
+          for(k in 1:nrow(newMIX)){
+            if (verbose && k %% mark_mix == 0)
+              cat("'")
 
-          for(t1 in t1range){
-            for(t2 in t2range){
-              mix_draws[[mixname]][[Iter]][t1, t2, idx] <- mix_draws[[mixname]][[Iter]][t1, t2, idx] + est
+            Iter <- newMIX$Iter[k]
+            Rule <- newMIX$Rule[k]
+
+            if (Rule == ""){
+              idx <- 1:n
+            } else {
+              idx <- which(eval(parse(text = Rule)))
+              if(length(idx) == 0){idx = 0} # avoid integer(0) problem when n = 1 for individualized dlm
+            }
+            
+            t1range <- newMIX$tmin1[k]:newMIX$tmax1[k]
+            t2range <- newMIX$tmin2[k]:newMIX$tmax2[k]
+            est <- newMIX$est[k]
+
+            for(t1 in t1range){
+              for(t2 in t2range){
+                mix_draws[[mixname]][[Iter]][t1, t2, idx] <- mix_draws[[mixname]][[Iter]][t1, t2, idx] + est
+              }
             }
           }
-        }
 
-        mixCount = mixCount + 1
+          mixCount = mixCount + 1
+        }
+      }
+
+      # do.call generates c(draws)
+      # Convert from a list form of [[MCMC]](p x p x n) to (p x p x n x MCMC) 4D array form
+      # for each pairwise interaction
+      mix_draws <- lapply(mix_draws, function(draws) { array(do.call(c, draws), c(object$pExp, object$pExp, n, object$mcmcIter))})
+
+      # Return raw estimate of interaction effect
+      if (est.dlm) {
+        if (verbose)
+          cat("\nEstimating individualized DLM interaction effects...")
+        # 4D array calculation components
+        matMean <- function(array){apply(array, c(1, 2), mean)} # 3D array matrix slice mean
+        matQt <- function(mat, qt){apply(mat, c(1, 2), quantile, probs = qt)}
+        grid <- expand.grid(1:object$pExp, 1:object$pExp)
+        
+
+        # Output data structure
+        out$mixest <- vector("list", length = length(object$mixNames))
+        for (mix in object$mixNames){
+          out$mixest[[mix]] <- vector("list", length = n)
+          for(i in 1:n){
+            out$mixest[[mix]][[i]]$mixest <- matrix(mapply(function(x, y) {matMean(mix_draws[[mix]][x,y,i,,drop=F])}, c(grid$Var1), c(grid$Var2)), nrow = object$pExp)
+            out$mixest[[mix]][[i]]$mixest.lower <- matrix(mapply(function(x, y) {matQt(mix_draws[[mix]][x,y,i,,drop=F], 0.025)}, c(grid$Var1), c(grid$Var2)), nrow = object$pExp)
+            out$mixest[[mix]][[i]]$mixest.upper <- matrix(mapply(function(x, y) {matQt(mix_draws[[mix]][x,y,i,,drop=F], 0.975)}, c(grid$Var1), c(grid$Var2)), nrow = object$pExp)
+          }
+        }
       }
     }
 
-    # do.call generates c(draws)
-    # Convert from a list form of [[MCMC]](p x p x n) to (p x p x n x MCMC) 4D array form
-    # for each pairwise interaction
-    mix_draws <- lapply(mix_draws, function(draws) { array(do.call(c, draws), c(object$pExp, object$pExp, n, object$mcmcIter))})
-
-    # Return raw estimate of interaction effect
-    if (est.dlm) {
-      if (verbose)
-        cat("\nEstimating individualized DLM interaction effects...")
-      # 4D array calculation components
-      matMean <- function(array){apply(array, c(1, 2), mean)} # 3D array matrix slice mean
-      matQt <- function(mat, qt){apply(mat, c(1, 2), quantile, probs = qt)}
-      grid <- expand.grid(1:object$pExp, 1:object$pExp)
-      
-
-      # Output data structure
-      out$mixest <- vector("list", length = length(object$mixNames))
-      for (mix in object$mixNames){
-        out$mixest[[mix]] <- vector("list", length = n)
-        for(i in 1:n){
-          out$mixest[[mix]][[i]]$mixest <- matrix(mapply(function(x, y) {matMean(mix_draws[[mix]][x,y,i,,drop=F])}, c(grid$Var1), c(grid$Var2)), nrow = object$pExp)
-          out$mixest[[mix]][[i]]$mixest.lower <- matrix(mapply(function(x, y) {matQt(mix_draws[[mix]][x,y,i,,drop=F], 0.025)}, c(grid$Var1), c(grid$Var2)), nrow = object$pExp)
-          out$mixest[[mix]][[i]]$mixest.upper <- matrix(mapply(function(x, y) {matQt(mix_draws[[mix]][x,y,i,,drop=F], 0.975)}, c(grid$Var1), c(grid$Var2)), nrow = object$pExp)
-        }
-      }
-    }
 
     if (verbose)
       cat("\nCalculating predicted response...")
@@ -345,25 +349,30 @@ predict.dlmtree <- function(object, new.data, new.exposure.data, ...,
       fhat.draws <- fhat.draws + do.call(rbind, lapply(1:n, function(i) {t(t(main_draws[[exp]][i,,]) %*% new.exposure.data[[exp]][i,]) }))
     }
 
-    # Interaction effect
-    for(mix in names(mix_draws)){
-      e1 <- unlist(strsplit(mix, "-"))[[1]] # First exposure name
-      e2 <- unlist(strsplit(mix, "-"))[[2]] # Second exposure name
+    if(object$interaction != 0){
+      # Interaction effect
+      for(mix in names(mix_draws)){
+        e1 <- unlist(strsplit(mix, "-"))[[1]] # First exposure name
+        e2 <- unlist(strsplit(mix, "-"))[[2]] # Second exposure name
 
-      tmp <- do.call(rbind, lapply(1:n, function(i){ # (1 x p)(p x p)(p x 1) per MCMC
-            unlist(lapply(lapply(1:object$mcmcIter, function(j){t(new.exposure.data[[e2]][i, ]) %*% mix_draws[[mix]][,,i,j]}), function(iter){iter %*% new.exposure.data[[e1]][i, ]}))
-            # left = lapply(1:object$mcmcIter, function(j){t(new.exposure.data[[e2]][i, ]) %*% mix_draws[[mix]][,,i,j]})
-            # right = lapply(left, function(iter){iter %*% new.exposure.data[[e1]][i, ]})
-            # return(unlist(right))
-          }
+        tmp <- do.call(rbind, lapply(1:n, function(i){ # (1 x p)(p x p)(p x 1) per MCMC
+              unlist(lapply(lapply(1:object$mcmcIter, function(j){t(new.exposure.data[[e2]][i, ]) %*% mix_draws[[mix]][,,i,j]}), function(iter){iter %*% new.exposure.data[[e1]][i, ]}))
+              # left = lapply(1:object$mcmcIter, function(j){t(new.exposure.data[[e2]][i, ]) %*% mix_draws[[mix]][,,i,j]})
+              # right = lapply(left, function(iter){iter %*% new.exposure.data[[e1]][i, ]})
+              # return(unlist(right))
+            }
+          )
         )
-      )
 
-      #fhat.draws <- fhat.draws + matrix(do.call(c, tmp), nrow = n, ncol = object$mcmcIter)
-      fhat.draws <- fhat.draws + tmp
+        #fhat.draws <- fhat.draws + matrix(do.call(c, tmp), nrow = n, ncol = object$mcmcIter)
+        fhat.draws <- fhat.draws + tmp
+      }
+
+      rm(main_draws, mix_draws)
+    } else {
+      rm(main_draws)
     }
-
-    rm(main_draws, mix_draws)
+    
 
     # Final result
     out$fhat.draws <- fhat.draws
