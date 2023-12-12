@@ -480,6 +480,49 @@ bool Node::isGen2()
 
 
 
+void Node::replaceTree(Node* newTree)
+{
+  // Delete previous attributes
+  if (nodevals != 0) {
+      delete nodevals;
+      nodevals = 0;
+    }
+  if (nodestruct != 0) {
+    delete nodestruct;
+    nodestruct = 0;
+  }
+
+  if (c1 != 0) {
+    delete c1;
+    c1 = 0;
+  }
+
+  if (c2 != 0) {
+    delete c2;
+    c2 = 0;
+  }
+
+  if (proposed != 0) {
+    delete proposed;
+    proposed = 0;
+  }
+
+  parent = 0;
+
+  // Update to new information
+  depth = newTree->depth;
+  update = newTree->update;
+  nodestruct = (newTree->nodestruct)->clone();
+  if (newTree->nodevals != 0) {
+    nodevals = new NodeVals(*(newTree->nodevals));
+  }
+  if (newTree->c1 != 0) {
+    c1 = new Node(*(newTree->c1));
+    c2 = new Node(*(newTree->c2));
+    c1->parent = this;
+    c2->parent = this;
+  }
+}
 
 
 void Node::replaceNodeVals(Node* newTree)

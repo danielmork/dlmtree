@@ -157,8 +157,11 @@ sim.dlmtree <- function(sim = "A",
           e2_effect = sum(exposure.data[[2]][currentIdx, ] * effList$e2)
 
           f[currentIdx] = dat[currentIdx, , drop = F]$mod_scale * e1_effect + int.size * (e1_effect * e2_effect) # z1e1 + e1xe2 
+          #f[currentIdx] = e1_effect + int.size * (e1_effect * e2_effect) # z1e1 + e1xe2 (unscaled)
+
         } else {
           f[currentIdx] = dat[currentIdx, , drop = F]$mod_scale * sum(exposure.data[[1]][currentIdx, ] * dlmFun(dat[currentIdx, , drop = F])) # z1e1
+          #f[currentIdx] = sum(exposure.data[[1]][currentIdx, ] * dlmFun(dat[currentIdx, , drop = F])) # z1e1 (unscaled)
         } 
       }
     }

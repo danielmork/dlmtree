@@ -4,7 +4,7 @@ class NodeStruct;
 class Node;
 
 struct NodeVals {
-  NodeVals(int n, int pZ);
+  NodeVals(int n, int pZ); 
   NodeVals(int n);
   ~NodeVals();
   NodeVals(const NodeVals&);
@@ -57,6 +57,7 @@ public:
   bool isGen2();
 
   // nodevals and nodestruct functions
+  void replaceTree(Node* newTree);
   void replaceNodeVals(Node* n);
   void setUpdate(bool update);
   void setUpdateXmat(bool update);

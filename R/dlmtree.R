@@ -135,25 +135,7 @@ dlmtree <- function(formula,
 
   # print("Inserting model control arguments")
   # ---- Model control arguments ----
-  if(!(dlm.type == "hdlmm")){
-    model$nTrees <- n.trees
-  } else {
-    if(model$nExp == 1){
-      model$nTrees <- n.trees
-      model$comb1 <- rep(model$nExp, n.trees) - 1
-      model$comb2 <- rep(model$nExp, n.trees) - 1
-    } else {
-      # Each combination is assigned specified number of tree pairs
-      model$nTrees <- n.trees * (choose(model$nExp, 2)) # for hdlmm, we don't have swap step so we fix the exposures
-    
-      # Fixed tree exposure combination
-      combination <- expand.grid(1:model$nExp, 1:model$nExp)
-      model$comb1 <- rep(combination[combination$Var1 < combination$Var2, ]$Var1, n.trees) - 1 # (-1) for cpp index
-      model$comb2 <- rep(combination[combination$Var1 < combination$Var2, ]$Var2, n.trees) - 1 # (-1) for cpp index
-    }
-  }
-
-
+  model$nTrees <-   n.trees
   model$nBurn <-    n.burn
   model$nIter <-    n.iter
   model$nThin <-    n.thin
@@ -166,20 +148,10 @@ dlmtree <- function(formula,
   model$diagnostics <-   diagnostics
   model$treePriorMod <-  tree.params.mod
   model$treePriorTDLM <- tree.params.tdlm
-  model$stepProbMod <-   c(step.prob.mod[1], step.prob.mod[2],
-                           step.prob.mod[3], 1 - sum(step.prob.mod))
+  model$stepProbMod <-   c(step.prob.mod[1], step.prob.mod[2], step.prob.mod[3], 1 - sum(step.prob.mod))
   model$stepProbMod <-   model$stepProbMod / sum(model$stepProbMod)
-  model$stepProbTDLM <-  c(step.prob.tdlm[1], step.prob.tdlm[1],
-                           step.prob.tdlm[2])
+  model$stepProbTDLM <-  c(step.prob.tdlm[1], step.prob.tdlm[1], step.prob.tdlm[2])
   model$stepProbTDLM <-  model$stepProbTDLM / sum(model$stepProbTDLM)
-
-  # ---------------------------------------------------------------------------------------------------------
-  # We have extra transition step : Switch-exposure for exposure mixture
-  # Step probability is now a vector of length 4
-  if(dlm.type == "hdlmm"){
-    model$stepProbTDLM <-  step.prob.tdlm
-    model$stepProbTDLM <-  model$stepProbTDLM / sum(model$stepProbTDLM)
-  }
 
   # [Mixture parameters] SI 
   # print("Shrinkage & mixture")
@@ -187,7 +159,6 @@ dlmtree <- function(formula,
   model$shrinkage <- ifelse(shrinkage == "all", 3,
                             ifelse(shrinkage == "trees", 2,
                                    ifelse(shrinkage == "exposures", 1, 0)))
-  # ---------------------------------------------------------------------------------------------------------
 
   if (model$verbose)
     cat("Preparing data...\n")
