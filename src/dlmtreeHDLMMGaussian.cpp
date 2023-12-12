@@ -1,5 +1,5 @@
 /**
- * @file dlmtreeTDLMMGaussian.cpp
+ * @file dlmtreeHDLMMGaussian.cpp
  * @author Seongwon Im (seongwonim.github.io)
  * @brief Heterogeneous distributed lag mixture model 
  * @version 1.0
@@ -21,7 +21,7 @@ using namespace Rcpp;
 // MCMC updated
 // 1. Tree pair: Tree1 & Tree 2
 // 2. Exp object is a vector due to mixture setting
-void dlmtreeTDLMMGaussian_TreeMCMC(int t, 
+void dlmtreeHDLMMGaussian_TreeMCMC(int t, 
                                    Node* modTree, 
                                    Node* dlmTree1, Node* dlmTree2,
                                    dlmtreeCtr* ctr, dlmtreeLog *dgn,
@@ -37,7 +37,7 @@ treeMHR dlmtreeTDLMM_MHR(std::vector<Node*> modTerm,
                          double treeVar, double m1Var, double m2Var, double mixVar);
 
 // [[Rcpp::export]]
-Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){ 
+Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){ 
   // *** Set up general control variables ***
   dlmtreeCtr *ctr = new dlmtreeCtr;
 
@@ -304,7 +304,7 @@ Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){
 
     // For each dlmTree pair & Modifier tree, perform one MCMC iteration
     for (t = 0; t < ctr->nTrees; t++) {
-      dlmtreeTDLMMGaussian_TreeMCMC(t,                   
+      dlmtreeHDLMMGaussian_TreeMCMC(t,                   
                                     modTrees[t],          
                                     dlmTrees1[t],       
                                     dlmTrees2[t], 
@@ -551,11 +551,11 @@ Rcpp::List dlmtreeTDLMMGaussian(const Rcpp::List model){
                             //Named("treeModAccept") = wrap(modAccept),
                             Named("treeDLMAccept") = wrap(dlmAccept)));
 
-} // end dlmtreeTDLMMGaussian
+} // end dlmtreeHDLMMGaussian
 
 
 
-void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree, 
+void dlmtreeHDLMMGaussian_TreeMCMC(int t, Node* modTree, 
                                    Node* dlmTree1, Node* dlmTree2,
                                    dlmtreeCtr* ctr, dlmtreeLog *dgn,
                                    modDat* Mod, std::vector<exposureDat*> Exp)
@@ -1026,7 +1026,7 @@ void dlmtreeTDLMMGaussian_TreeMCMC(int t, Node* modTree,
   } // ctr->record > 0 end
   // Rcout << "TreeMCMC: Record finished ... \n";
 
-} // end dlmtreeTDLMMGaussian_TreeMCMC function
+} // end dlmtreeHDLMMGaussian_TreeMCMC function
 
 
 treeMHR dlmtreeTDLMM_MHR(std::vector<Node*> modTerm,  

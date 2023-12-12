@@ -988,7 +988,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
     delete trees2[s];
   }
 
-  return(Rcpp::List::create(Named("DLM") = wrap(DLM),
+  return(Rcpp::List::create(Named("TreeStructs") = wrap(DLM),
                             Named("MIX") = wrap(MIX),
                             Named("gamma") = wrap(gamma),
                             // Named("fhat") = wrap(fhat),

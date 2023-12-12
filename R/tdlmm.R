@@ -414,7 +414,6 @@ tdlmm <- function(formula,
     idx <- which(model$DLM$exp == (i - 1)) # Converting indices from cpp to R
     if (length(idx) > 0)
       model$DLM$est[idx] <- model$DLM$est[idx] * model$Yscale / model$X[[i]]$Xscale
-      model$DLM$est[idx] <- model$DLM$est[idx] * model$Yscale / model$X[[i]]$Xscale
 
     for (j in i:length(model$X)) {
 
