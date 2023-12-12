@@ -21,7 +21,7 @@ using namespace Rcpp;
 // MCMC updated
 // 1. Tree pair: Tree1 & Tree 2
 // 2. Exp object is a vector due to mixture setting
-void dlmtreeHDLMMGaussian_TreeMCMC(int t, 
+void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS,
                                    Node* modTree, 
                                    Node* dlmTree1, Node* dlmTree2,
                                    dlmtreeCtr* ctr, dlmtreeLog *dgn,
@@ -64,20 +64,21 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
   ctr->VgInv = (ctr->Z).transpose() * (ctr->Z); 
   ctr->VgInv.diagonal().array() += 1.0 / 100000.0;
   ctr->Vg = ctr->VgInv.inverse();  
-  ctr->VgChol = (ctr->Vg).llt().matrixL();
-  
-  // Binomial flag              
-  ctr->binomial = 0;             
+  ctr->VgChol = (ctr->Vg).llt().matrixL();      
 
-  // Diagnostics & messages
-  ctr->verbose = bool(model["verbose"]); 
-  ctr->diagnostics = bool(model["diagnostics"]);
+  // Binomial flag              
+  ctr->binomial = 0; 
 
   // Tree prior probabilities for the modifier tree and DLM tree
   ctr->stepProbMod = as<std::vector<double>>(model["stepProbMod"]);
   ctr->stepProb = as<std::vector<double>>(model["stepProbTDLM"]);
   ctr->treePriorMod = as<std::vector<double>>(model["treePriorMod"]); 
   ctr->treePrior = as<std::vector<double>>(model["treePriorTDLM"]);
+
+
+  // Diagnostics & messages
+  ctr->verbose = bool(model["verbose"]); 
+  ctr->diagnostics = bool(model["diagnostics"]);
 
   // [Mixture & Shrinkage] 
   // Store shrinkage: 
@@ -171,7 +172,7 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
   }
 
   delete modNS;
-  delete expNS;
+  // delete expNS;
 
   // *** Logs ***
   dlmtreeLog *dgn = new dlmtreeLog;
@@ -304,7 +305,7 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
 
     // For each dlmTree pair & Modifier tree, perform one MCMC iteration
     for (t = 0; t < ctr->nTrees; t++) {
-      dlmtreeHDLMMGaussian_TreeMCMC(t,                   
+      dlmtreeHDLMMGaussian_TreeMCMC(t, expNS,            
                                     modTrees[t],          
                                     dlmTrees1[t],       
                                     dlmTrees2[t], 
@@ -324,8 +325,8 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
     ctr->sumTermT2 = (ctr->sumTermT2Exp).sum();
     ctr->totTerm = (ctr->totTermExp).sum();
     if(ctr->interaction > 0) {
-      ctr->sumTermT2 += (ctr->sumTermT2Mix).sum();
       ctr->totTerm += (ctr->totTermMix).sum();
+      ctr->sumTermT2 += (ctr->sumTermT2Mix).sum();
     }
 
     // Update gamma
@@ -533,7 +534,7 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
                             Named("sigma2") = wrap(sigma2),
                             Named("nu") = wrap(nu),
                             Named("tau") = wrap(tau),
-                            Named("totTerm") = wrap(totTerm),
+                            //Named("totTerm") = wrap(totTerm),
                             Named("gamma") = wrap(gamma),
                             Named("termNodesMod") = wrap(termNodesMod),
                             Named("termNodesDLM1") = wrap(termNodesDLM1),
@@ -545,7 +546,7 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
                             //Named("mixInf") = wrap(mixInf),
                             //Named("mixCount") = wrap(mixCount),
                             Named("muExp") = wrap(muExp),
-                            //Named("muMix") = wrap(muMix),
+                            Named("muMix") = wrap(muMix),
                             Named("modCount") = wrap(modCount),
                             Named("modInf") = wrap(modInf),
                             //Named("treeModAccept") = wrap(modAccept),
@@ -555,7 +556,7 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
 
 
 
-void dlmtreeHDLMMGaussian_TreeMCMC(int t, Node* modTree, 
+void dlmtreeHDLMMGaussian_TreeMCMC(int t, Node* modTree, NodeStruct* expNS,
                                    Node* dlmTree1, Node* dlmTree2,
                                    dlmtreeCtr* ctr, dlmtreeLog *dgn,
                                    modDat* Mod, std::vector<exposureDat*> Exp)
@@ -604,6 +605,9 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, Node* modTree,
                           ctr, ZtR, treeVar, 
                           m1Var, m2Var, mixVar);
                         
+
+
+
   // [Tree pair update]
   // *** Propose a new TDLMM tree 1 ***
   newExp    = m1; 
@@ -612,28 +616,44 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, Node* modTree,
   stepMhr = 0;
   success = 0;
 
+  // *** Propose a new dlmtree 1 ***
+  step1 = 0; // always grow
+  Node* newTree1 = new Node(0, 1);
+  newTree1->nodestruct = expNS->clone();  
+  drawTree(newTree1, newTree1, ctr->treePrior[0], ctr->treePrior[1]);
+  newDlmTerm1 = newTree1->listTerminal(1); 
+  
+  Rcout << newDlmTerm1[0];
+  Rcout << " \n";
+  Rcout << newDlmTerm1[1];
+  Rcout << " \n";
+  Rcout << newDlmTerm1[2];
+  Rcout << " \n";
+
+
+
+
   // Choose a transition and update
   step1 = sampleInt(ctr->stepProb, 1);
   if ((dlmTerm1.size() == 1) && (step1 < 3)){
     step1 = 0;
   }
 
-  // This part is different from HDLM as we have multiple exposures now
   if(step1 < 3){ 
-    stepMhr = tdlmProposeTree(dlmTree1, Exp[m1], ctr, step1);
-    success = dlmTree1->isProposed(); 
-    newDlmTerm1 = dlmTree1->listTerminal(1); 
+    stepMhr = tdlmProposeTree(dlmTree1, Exp[m1], ctr, step1);     // Given current tree -> propose a new tree
+    success = dlmTree1->isProposed();                             // Update to proposed -> Proceed to MHR
+    newDlmTerm1 = dlmTree1->listTerminal(1);                      // If proposed, list the terminal nodes of the tree
   } else {
-    newExp = sampleInt(ctr->expProb);
-    if (newExp != m1) { 
-      success   = 1;             
-      newExpVar = ctr->muExp(newExp);       
-      newTree   = new Node(*dlmTree1);      
-      newTree->setUpdate(1);                
-      newDlmTerm1 = newTree->listTerminal();
+    newExp = sampleInt(ctr->expProb);         // Sample an exposure
+    if (newExp != m1) {                       // If new Exposure is not the same as the previous one,
+      success   = 1;                          // It is good
+      newExpVar = ctr->muExp(newExp);         // Find the exposure-specific variance for the new exposure
+      newTree   = new Node(*dlmTree1);        // We need a new tree for a new exposure
+      newTree->setUpdate(1);                  // Set an update flag + for children as well (This is used for "updateNodeVals" function)
+      newDlmTerm1 = newTree->listTerminal();  // List the terminal nodes of this new tree
 
-      for (Node* nt : newDlmTerm1)      
-        Exp[newExp]->updateNodeVals(nt);
+      for (Node* nt : newDlmTerm1)            // Go through the new terminal node
+        Exp[newExp]->updateNodeVals(nt);      // Update the math terms
 
       // Update the interaction using the new exposure as well for TDLMMns/all
       if ((ctr->interaction) && ((ctr->interaction == 2) || (newExp != m2))) {
@@ -648,13 +668,13 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, Node* modTree,
   }
 
   // * dlmTree 1 MHR 
-  // StepMHR: Transition ratio
+  // StepMHR: Transition ratio (We don't need this anymore as prior = proposed)
   // mhr0 & mhr: Likelihood of R
   // If successful, calculate MH ratio
   if (success) {  
     // If transition is successful, we have a new dlm terminal node.
-    newDlmTerm1 = dlmTree1->listTerminal(1);
-    modTree->setUpdateXmat(1);
+    // newDlmTerm1 = dlmTree1->listTerminal(1);
+    modTree->setUpdateXmat(1);        // X matrix would change for modifier trees
 
     // MH ratio with a new terminal and the exposure: newDlmTerm1, newExpVar
     mhr = dlmtreeTDLMM_MHR(modTerm, 
@@ -839,7 +859,7 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, Node* modTree,
   // *** Propose new modifier tree ***
   switch (modTerm.size()) {
     case 1: step = 0;   break;
-    case 2: step = sampleInt(ctr->stepProbMod, 1 - ctr->stepProbMod[3]); break;
+    case 2: step = sampleInt(ctr->stepProbMod, 1 - ctr->stepProbMod[3]); break; // sampleInt(A vector of probability, total probability) // Fourth step is removed
     default: step = sampleInt(ctr->stepProbMod, 1);
   }
 

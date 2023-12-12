@@ -251,6 +251,7 @@ predict.dlmtree <- function(object, new.data, new.exposure.data, ...,
 
     }
 
+
     if(object$interaction != 0){
       # Interaction effect for a mixture setting
       mark_mix <- ceiling(nrow(object$MIX) / 42)
@@ -374,6 +375,7 @@ predict.dlmtree <- function(object, new.data, new.exposure.data, ...,
     } else {
       rm(main_draws)
     }
+    
 
     # Final result
     out$fhat.draws <- fhat.draws
