@@ -482,6 +482,8 @@ bool Node::isGen2()
 }
 
 
+
+
 void Node::replaceTree(Node* newTree)
 {
   // Delete previous attributes
@@ -525,7 +527,6 @@ void Node::replaceTree(Node* newTree)
     c2->parent = this;
   }
 }
-
 
 
 void Node::replaceNodeVals(Node* newTree)

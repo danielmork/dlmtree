@@ -4,7 +4,7 @@ class NodeStruct;
 class Node;
 
 struct NodeVals {
-  NodeVals(int n, int pZ);
+  NodeVals(int n, int pZ); 
   NodeVals(int n);
   ~NodeVals();
   NodeVals(const NodeVals&);
