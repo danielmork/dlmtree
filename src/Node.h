@@ -62,6 +62,7 @@ public:
   bool isGen2(); // Check if the node is a Gen2 node
 
   // nodevals and nodestruct functions
+  void replaceTree(Node* newTree);
   void replaceNodeVals(Node* n); // Replace current node values and all child node values with those of node in input pointer
   void setUpdate(bool update); // Set update value for current and child nodes
   void setUpdateXmat(bool update); // set NodeVals updateXmat value for current and child nodes

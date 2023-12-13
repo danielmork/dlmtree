@@ -13,8 +13,8 @@ dlmtreeGPGaussian <- function(model) {
     .Call(`_dlmtree_dlmtreeGPGaussian`, model)
 }
 
-dlmtreeHDLMMGaussian <- function(model) {
-    .Call(`_dlmtree_dlmtreeHDLMMGaussian`, model)
+dlmtreeTDLMMGaussian <- function(model) {
+    .Call(`_dlmtree_dlmtreeTDLMMGaussian`, model)
 }
 
 dlmtreeTDLMFixedGaussian <- function(model) {

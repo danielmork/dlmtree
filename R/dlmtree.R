@@ -93,7 +93,9 @@ dlmtree <- function(formula,
 {
   options(stringsAsFactors = FALSE)
   model <- list()
+  model$data = data
 
+  print("Checking MCMC input...")
   # *** Check MCMC inputs ***
   if (all(sapply(list(n.trees, n.burn, n.iter, n.thin), function(i) is.integer(i) & i > 0)))
     stop("n.* must be integer and > 0")
@@ -101,7 +103,7 @@ dlmtree <- function(formula,
     stop("After thinning, you will be left with less than 10 MCMC samples,",
           " increase the number of iterations!")
   
-
+  print("Checking model specification...")
   # *** Check model specification ***
   if (!(dlm.type %in% c("gp", "shared", "nested", "tdlm", "tdlm2", "tdlmm", "hdlmm")))
     stop("`dlm.type` must be one of `gp`, `shared`, `nested`, `tdlm`, `tdlm2`, `tdlmm`, or `hdlmm`")
@@ -109,7 +111,11 @@ dlmtree <- function(formula,
   if (!(family %in% c("gaussian", "logit", "zinb"))) 
     stop("`family` must be one of `gaussian`, `logit`, or 'zinb'")
 
+  if(dlm.type == "hdlmm" & family == "zinb"){
+    stop("Zero-inflated negative binomial model is not available for HDLMM")
+  }
 
+  print("Checking data input...")
   # *** Check data inputs ***
   if (!is.data.frame(data))
       stop("`data` must be a data.frame")
@@ -121,14 +127,13 @@ dlmtree <- function(formula,
       stop("`data` and `exposure.data` must have same number of observations")
 
     model$pExp <- ncol(exposure.data) # lag
-  } else { # HDLMM [Exposure data] SI ----------------------------------------------------------------------
+  } else { # HDLMM, TDLMM
     if (!is.list(exposure.data))
       stop("`exposure.data` must be a list of named exposures")
 
     model$nExp <- length(exposure.data)       # Number of exposures
     model$expNames <- names(exposure.data)    # Exposure names
     model$pExp <- ncol(exposure.data[[1]])    # total lag
-
 
     if (is.null(model$expNames) || length(unique(model$expNames)) != model$nExp || any(model$expNames == ""))
       stop("`exposure.data` must be a named list with unique, non-empty names")
@@ -147,7 +152,7 @@ dlmtree <- function(formula,
   }
 
   
-
+  print("Checking response type...")
   # *** Check response type ***
   # binary
   model$binomial <- FALSE
@@ -168,7 +173,8 @@ dlmtree <- function(formula,
   }
 
   # [Mixture interactions]
-  if (!(mixture.interactions %in% c("none", "noself", "all", )))
+  print("Checking mixture interaction...")
+  if (!(mixture.interactions %in% c("none", "noself", "all")))
     stop("`mixture.interactions must be one of `none`, `noself`, `all`")
 
   if (mixture.interactions %in% c("marginal", "none")) {
@@ -183,6 +189,7 @@ dlmtree <- function(formula,
   }
 
   # *** Check tree parameters ***
+  print("Checking tree parameters...")
   # Prior splitting probability
   if (length(tree.params.mod) != 2 || length(tree.params.tdlm) != 2) {
     stop("tree.params.* must have length 2")
@@ -199,28 +206,10 @@ dlmtree <- function(formula,
     stop("step.prob.* components must be between zero and one")
 
   # print("Inserting model control arguments")
+  print("Checking model control parameters...")
   # ---- Model control arguments ----
-  if (dlm.type == "hdlmm") { # remove
-    if (model$nExp == 1) {
-      model$nTrees <- n.trees
-      model$comb1 <- rep(model$nExp, n.trees) - 1
-      model$comb2 <- rep(model$nExp, n.trees) - 1
-    } else {
-      # Each combination is assigned specified number of tree pairs
-      # For hdlmm, we don't have swap step so we fix the exposures
-      model$nTrees <- n.trees * choose(model$nExp, 2)
-      
-      # Fixed tree exposure combination
-      # (-1) for cpp index
-      combination <- expand.grid(1:model$nExp, 1:model$nExp)
-      model$comb1 <- rep(combination[combination$Var1 < combination$Var2, ]$Var1, n.trees) - 1 
-      model$comb2 <- rep(combination[combination$Var1 < combination$Var2, ]$Var2, n.trees) - 1 
-    }
-  } else {
-    model$nTrees <- n.trees
-  }
-
   # MCMC
+  model$nTrees <-   n.trees
   model$nBurn <-    n.burn
   model$nIter <-    n.iter
   model$nThin <-    n.thin
@@ -258,10 +247,11 @@ dlmtree <- function(formula,
   # if (is.null(subset))
   #   subset <- 1:nrow(data)
   # else
+  print("Checking subset...")
   if(!is.null(subset)){
     if(!(dlm.type %in% c("tdlmm", "hdlmm"))){
       if (!is.integer(subset) || any(subset < 1) || any(subset > nrow(data)))
-      stop("invalid subset, must be integers within range of data length")
+        stop("invalid subset, must be integers within range of data length")
       data <- data[subset,]
       exposure.data <- exposure.data[subset,]
     } else {
@@ -274,55 +264,50 @@ dlmtree <- function(formula,
 
 
   # ---- Setup fixed effect model ----
+  print("Setting fixed effect...")
   if(is.null(formula_zi)){
     formula_zi <- formula
   }
 
-  model$formula <- force(as.formula(formula))     
-  model$formula_zi <- force(as.formula(formula_zi)) 
-  tf <- terms.formula(model$formula, data = data) 
-  tf_zi <- terms.formula(model$formula_zi, data = data) 
+  model$formula <- as.formula(formula)
+  model$terms <- terms.formula(model$formula, data = data) 
 
-  # Sanity check for response
-  if (!attr(tf, "response") & !attr(tf_zi, "response"))
+  # Sanity check for response for variables and the names
+  if (!attr(model$terms, "response"))
     stop("no valid response in formula")
 
-  # Save if intercept is included in the model
-  model$intercept <- force(ifelse(attr(tf, "intercept"), TRUE, FALSE)) 
-  model$intercept_zi <- force(ifelse(attr(tf_zi, "intercept"), TRUE, FALSE)) 
-
-  # Sanity check for variables and the names
-  if (length(which(attr(tf, "term.labels") %in% colnames(data))) == 0 & 
-      length(which(attr(tf_zi, "term.labels") %in% colnames(data))) == 0 & 
-      !model$intercept & !model$intercept_zi) 
+  if (length(which(attr(model$terms, "term.labels") %in% colnames(data))) == 0) 
     stop("no valid variables in formula")
 
-  # if (!attr(model$terms, "response"))
-  #   stop("no valid response in formula")
-  # if (length(which(attr(model$terms, "term.labels") %in% colnames(data))) == 0)
-  #   stop("no valid variables in formula")
-  # mf <-               model.frame(model$terms, data = data,
-  #                                 na.action = NULL,
-  #                                 drop.unused.levels = TRUE)
-  # model$termLevels <- .getXlevels(delete.response(model$terms), mf)
-  # model$intercept <-  ifelse(attr(model$terms, "intercept"), TRUE, FALSE)
-  # if (any(is.na(mf)))
-  #   stop("missing values in model data, use `complete.cases()` to subset data")
-
-
-
-
-  # ---- Scale data and setup exposures ----
-  data <- droplevels(data)
   mf <- model.frame(model$formula, data = data,
                     drop.unused.levels = TRUE,
                     na.action = NULL)
-  mf_zi <- model.frame(model$formula_zi, data = data,               
-                      drop.unused.levels = TRUE,
-                      na.action = NULL)
-  if (any(is.na(mf)) & any(is.na(mf_zi)))
+  model$intercept <- ifelse(attr(model$terms, "intercept"), TRUE, FALSE)
+
+  if (any(is.na(mf)))
     stop("missing values in model data, use `complete.cases()` to subset data")
 
+  # If family = zinb
+  if (family == "zinb"){
+    model$formula_zi <- as.formula(formula_zi) 
+    model$terms_zi <- terms.formula(model$formula_zi, data = data) 
+
+    if(!attr(model$terms_zi, "response"))
+    stop("no valid response in formula for zero-inflation model")
+
+      if (length(which(attr(model$terms_zi, "term.labels") %in% colnames(data))) == 0) 
+    stop("no valid variables in formula for zero-inflation model")
+
+    mf_zi <- model.frame(model$formula_zi, data = data,               
+                      drop.unused.levels = TRUE,
+                      na.action = NULL)
+    model$intercept_zi <- ifelse(attr(model$terms_zi, "intercept"), TRUE, FALSE)
+
+    if (any(is.na(mf_zi)))
+      stop("missing values in model data, use `complete.cases()` to subset data")
+  }
+
+  # ---- Scale data and setup exposures ----
 
   # Dan's
   # model$Y <- force(model.response(mf))
@@ -335,8 +320,12 @@ dlmtree <- function(formula,
   # # rm(QR)
 
   # ---- Drop collinear variables ----
-  # print("Fixed effect variables")
+  print("Checking collinearity...")
+
+  # Response
   model$Y <-   model.response(mf)
+
+  # Covariates
   model$Z <-   model.matrix(model$terms, data = mf)
   model$QR <-        qr(crossprod(model$Z))
   model$droppedCovar <- colnames(model$Z)[ model$QR$pivot[ -seq_len(model$QR$rank) ] ]
@@ -346,58 +335,53 @@ dlmtree <- function(formula,
     warning("variables {", paste0(model$droppedCovar, collapse = ", "),
             "} dropped due to perfect collinearity\n")
 
-  # covariates for ZI model
-  model$Z_zi <- model.matrix(model$formula_zi, data = mf_zi)
-  model$QR_zi <- qr(crossprod(model$Z_zi))             
-  model$droppedCovar_zi <- colnames(model$Z_zi)[model$QR_zi$pivot[-seq_len(model$QR_zi$rank)]]                  
-  model$Z_zi <- model$Z_zi[,sort(model$QR_zi$pivot[seq_len(model$QR_zi$rank)])]           
-  model$Z_zi <- scaleModelMatrix(model$Z_zi)
-  if (length(model$droppedCovar_zi) > 0 & model$verbose)
-    warning("variables {", paste0(model$droppedCovar_zi, collapse = ", "),
-            "} dropped due to perfect collinearity\n")
-  
+  # Covariates for ZI model
+  print("Z_zi...")
+  if(family == "zinb"){
+    model$Z_zi <- model.matrix(model$formula_zi, data = mf_zi)
+    model$QR_zi <- qr(crossprod(model$Z_zi))             
+    model$droppedCovar_zi <- colnames(model$Z_zi)[model$QR_zi$pivot[-seq_len(model$QR_zi$rank)]]                  
+    model$Z_zi <- model$Z_zi[,sort(model$QR_zi$pivot[seq_len(model$QR_zi$rank)])]           
+    model$Z_zi <- scaleModelMatrix(model$Z_zi)
+    if (length(model$droppedCovar_zi) > 0 & model$verbose)
+      warning("variables {", paste0(model$droppedCovar_zi, collapse = ", "),
+              "} dropped due to perfect collinearity\n")
+  }
 
   # ---- Scale data ----
   # print("Scaling data")
+  print("Scaling data...")
   if (model$family == "gaussian") {
     model$Ymean <- sum(range(model$Y))/2
     model$Yscale <- sd(model$Y - model$Ymean)
-    model$Y <- force((model$Y - model$Ymean) / model$Yscale)
+    model$Y <- (model$Y - model$Ymean) / model$Yscale
   } else {
     model$Yscale <- 1
     model$Ymean <- 0
-    model$Y <- force(scale(model$Y, center = 0, scale = 1))
+    model$Y <- scale(model$Y, center = 0, scale = 1)
   }
+
   # Store the processed values
-  model$Y <- force(c(model$Y))
+  print("Storing the processed values...")
 
-  model$Zscale <- attr(model$Z, "scaled:scale")
-  model$Zmean <- attr(model$Z, "scaled:center")
-  model$Znames <- colnames(model$Z)
-  model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
+  model$Y <- c(model$Y)
 
-  model$Zscale_zi <- attr(model$Z_zi, "scaled:scale")
-  model$Zmean_zi <- attr(model$Z_zi, "scaled:center")
-  model$Znames_zi <- colnames(model$Z_zi)
-  model$Z_zi <- force(matrix(model$Z_zi, nrow(model$Z_zi), ncol(model$Z_zi)))
+  model$Zscale <-   attr(model$Z, "scaled:scale")
+  model$Zmean <-    attr(model$Z, "scaled:center")
+  model$Znames <-   colnames(model$Z)
+  model$Z <-        matrix(model$Z, nrow(model$Z), ncol(model$Z))
 
+  if(family == "zinb"){
+    model$Zscale_zi <- attr(model$Z_zi, "scaled:scale")
+    model$Zmean_zi <-  attr(model$Z_zi, "scaled:center")
+    model$Znames_zi <- colnames(model$Z_zi)
+    model$Z_zi <-      matrix(model$Z_zi, nrow(model$Z_zi), ncol(model$Z_zi))
+  }
   # model$Zscale <- rep(1, ncol(model$Z))#attr(model$Z, "scaled:scale")
   # model$Zmean <- rep(0, ncol(model$Z))#attr(model$Z, "scaled:center")
   # model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
 
-  # if (model$family == "gaussian") {
-  #   model$Ymean <-  sum(range(model$Y))/2
-  #   model$Yscale <- diff(range(model$Y - model$Ymean))
-  #   model$Y <-      (model$Y - model$Ymean) / model$Yscale
-  # } else {
-  #   model$Yscale <- 1
-  #   model$Ymean <-  0
-  #   model$Y <-      scale(model$Y, center = 0, scale = 1)
-  # }
-  # model$Y <-       c(model$Y)
-  # model$Zscale <-  rep(1, ncol(model$Z))#attr(model$Z, "scaled:scale")
-  # model$Zmean <-   rep(0, ncol(model$Z))#attr(model$Z, "scaled:center")
-  # model$Z <-       matrix(model$Z, nrow(model$Z), ncol(model$Z))
+  print("Initializing parameters...")
 
   model$initParams <- rep(0, ncol(model$Z))
   if (!is.null(initial.params)) {
@@ -410,8 +394,8 @@ dlmtree <- function(formula,
   }
 
 
-
   # ---- Exposure splits ----
+  print("Exposure split...")
   # print("Exposure data splits")
   model$timeProb <- rep(1 / (model$pExp - 1), model$pExp - 1)
   model$smooth <- FALSE
@@ -421,8 +405,8 @@ dlmtree <- function(formula,
   model$Xsplits <-    as.double(c())
   model$nSplits <-    0
 
-  # print("Exposure data storage hdlmm vs previous code")
-  if(!(dlm.type %in% c("tdlmm", "hdlmm"))){ # Original code
+  print("Exposure data storage hdlmm vs previous code")
+  if(!(dlm.type %in% c("tdlmm", "hdlmm"))){ 
     model$X <-        exposure.data
     model$Xrange <-   range(model$X)
     model$Xscale <-     sd(model$X)
@@ -583,17 +567,17 @@ dlmtree <- function(formula,
 
 
   # ---- Run model ----
-  # print("Choosing which model to run...")
+  print("Choosing which model to run...")
   if (is.null(fixed.tree.idx)) {
     if (model$dlmType %in% c("tdlm", "shared"))
       out <- dlmtreeTDLMGaussian(model)
-    else if(model$dlmType == "tdlmm")
-      out <- tdlmm_Cpp(model)
     else if (model$dlmType %in% c("tdlm2", "nested"))
       # if (ver == 2)
-        out <- dlmtreeTDLM_cpp(model)
+      out <- dlmtreeTDLM_cpp(model)
       # else if (ver == 1)
       #   out <- dlmtreeTDLMNestedGaussian(model)
+    else if (model$dlmType == "tdlmm")
+      out <- tdlmm_Cpp(model)
     else if (model$dlmType == "hdlmm")
       out <- dlmtreeHDLMMGaussian(model)
     else if (model$dlmType == "gp") {
@@ -625,7 +609,7 @@ dlmtree <- function(formula,
     }
   }
 
-  # print("Model finished running")
+  print("Model finished running")
   
   if (verbose)
     cat("\nCompiling results...\n")
@@ -634,7 +618,7 @@ dlmtree <- function(formula,
     model[[n]] <- out[[n]]
 
 
-  # print("Preparing output in dlmtree.R")
+  print("Preparing output in dlmtree.R")
   # ---- Prepare output ----
   model$Y <- model$Y * model$Yscale + model$Ymean  
   model$fhat <- model$fhat * model$Yscale    
@@ -788,7 +772,7 @@ dlmtree <- function(formula,
       }
 
       model$mixNames <- c()
-    # ---------------------------------------------------------------------------------------------------------
+    
     } else if (model$dlmType == "tdlmm"){
         # rescale DLM and Mixture estimates
       model$TreeStructs <- as.data.frame(model$TreeStructs)
