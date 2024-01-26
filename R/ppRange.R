@@ -16,20 +16,27 @@ ppRange <- function(r) {
   rAll <- rMin:rMax
   rMiss <- which(!(rAll %in% r))
 
-  if (length(rMiss) == 0)
+  if (length(rMiss) == 0){
     return(paste0(rMin, "-", rMax))
-
+  }
+    
   rOut <- ""
   rMiss <- c(0, rMiss, length(rAll) + 1)
   for (s in 1:(length(rMiss) - 1)) {
-    if (rMiss[s + 1] == rMiss[s] + 1)
+    if (rMiss[s + 1] == rMiss[s] + 1){
       next;
-    if (rMiss[s + 1] - rMiss[s] == 2)
+    }
+      
+    if (rMiss[s + 1] - rMiss[s] == 2) {
       rOut <- paste0(rOut, rAll[rMiss[s] + 1])
-    else
+    } else {
       rOut <- paste0(rOut, rAll[rMiss[s] + 1], "-", rAll[rMiss[s + 1] - 1])
-    if (s < length(rMiss) - 1)
+    }
+      
+    if (s < length(rMiss) - 1) {
       rOut <- paste0(rOut, ",")
+    }
   }
+  
   return(rOut)
 }

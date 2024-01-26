@@ -4,33 +4,12 @@
 \alias{summary.hdlmm}
 \title{summary.hdlmm}
 \usage{
-\method{summary}{hdlmm}(
-  object,
-  conf.level = 0.95,
-  marginalize = "mean",
-  log10BF.crit = 0.5,
-  verbose = TRUE,
-  keep.mcmc = FALSE,
-  ...
-)
+\method{summary}{hdlmm}(object, conf.level = 0.95)
 }
 \arguments{
-\item{object}{an object of type 'hdlmm', the output from hdlmm()}
+\item{object}{an object of class 'hdlmm'}
 
-\item{conf.level}{confidence level (default = 0.95)}
-
-\item{marginalize}{value(s) for calculating marginal DLMs, defaults to
-"mean", can also specify a percentile from 1-99 for all other exposures, or
-a named vector with specific values for each exposure}
-
-\item{log10BF.crit}{Bayes Factor criteria for selecting exposures and
-interactions, such that log10(BayesFactor) > x. Default = 0.5}
-
-\item{verbose}{show progress in console}
-
-\item{keep.mcmc}{keep all mcmc iterations (large memory requirement)}
-
-\item{...}{NA}
+\item{conf.level}{confidence level for computation of credible intervals}
 }
 \value{
 list of type 'summary.hdlmm'

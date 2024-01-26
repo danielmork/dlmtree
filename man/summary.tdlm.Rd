@@ -7,8 +7,7 @@
 \method{summary}{tdlm}(object, conf.level = 0.95)
 }
 \arguments{
-\item{object}{an object of class 'tdlm', result of a call to tdlnm using
-zero splits (i.e. a linear effect DLM)}
+\item{object}{an object of dlm class 'tdlm' (i.e. a linear effect DLM)}
 
 \item{conf.level}{confidence level for computation of credible intervals}
 }

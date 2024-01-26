@@ -1,15 +1,15 @@
-#' summary.hdlmm
+#' summary.hdlm
 #'
-#' @param object an object of class 'hdlmm'
+#' @param object an object of class 'hdlm'
 #' @param conf.level confidence level for computation of credible intervals
 #'
-#' @return list of type 'summary.hdlmm'
-#' @export summary.hdlmm
+#' @return list of type 'summary.hdlm'
+#' @export summary.hdlm
 #' @export
 #'
-summary.hdlmm <- function(object, conf.level = 0.95)
+summary.hdlm <- function(object, conf.level = 0.95)
 {
-  nLags <-     max(object$TreeStructs$tmax)
+  Lags <-     max(object$TreeStructs$tmax)
   Iter <-     max(object$TreeStructs$Iter)
   ci.lims <-  c((1 - conf.level) / 2, 1 - (1 - conf.level) / 2)
 
@@ -27,21 +27,16 @@ summary.hdlmm <- function(object, conf.level = 0.95)
                            n.thin =   object$nThin,
                            n.burn =   object$nBurn,
                            response = object$family),
-              "nLags" = nLags,
-              "nExp" = object$nExp,
-              "nMix" = object$nMix,
-              "interaction" = object$interaction,
-              "mixPrior" = object$mixPrior,
-              "modPrior" = object$zeta,
               "conf.level" =    conf.level,
               "sig.to.noise" =  ifelse(is.null(object$sigma2), NA,
                                         var(object$fhat) / mean(object$sigma2)),
+              "modPrior" = object$zeta,
               "pip" =           pip_df,
               "gamma.mean" =    gamma.mean,
               "gamma.ci" =      gamma.ci,
               "formula" =       object$formula)
 
-  class(ret) <- "summary.hdlmm"
+  class(ret) <- "summary.hdlm"
   
   return(ret)
 }

@@ -7,14 +7,13 @@
 #' @export
 
 
-pip <- function(object, type=1){
+pip <- function(object, type=1) {
   
   
-  if(type==1){ # main effect PIPs
-    
+  if (type == 1) { # main effect PIPs
     return(colMeans(object$modCount>0))
     
-  }else if(type==2){ # interaction PIPs
+  } else if (type == 2) { # interaction PIPs
     
     
     sp <- cbind.data.frame(Rule = object$termRules, object$TreeStructs[,2:4])
@@ -39,7 +38,8 @@ pip <- function(object, type=1){
         }
       }
     }
-    mean(do.call(rbind, treeMods)==4)
+    
+    mean(do.call(rbind, treeMods) == 4)
     sc <- do.call(bind_rows, lapply(splitCount, cbind.data.frame))
     sc.mean <- sort(colMeans(!is.na(sc)))
     sc.mat <- data.frame()
@@ -56,7 +56,7 @@ pip <- function(object, type=1){
     
     # this adds a zero for any combinations that did not appear
     sc.mat <- merge(expand.grid(var1=object$modNames, var2=object$modNames),sc.mat, by=c("var1","var2"), all=TRUE)
-    if(any(is.na(sc.mat$pip))){
+    if (any(is.na(sc.mat$pip))) {
       sc.mat$pip[which(is.na(sc.mat$pip))] <- 0
     }
     
@@ -65,7 +65,6 @@ pip <- function(object, type=1){
     
     return(sc.mat)
   }
-  
 }
 
 

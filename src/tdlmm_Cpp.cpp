@@ -569,8 +569,8 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
 
   // Tree parameters
   ctr->nTrees = as<int>(model["nTrees"]);                        
-  ctr->stepProb = as<std::vector<double> >(model["stepProb"]);
-  ctr->treePrior = as<std::vector<double> >(model["treePrior"]); 
+  ctr->stepProb = as<std::vector<double> >(model["stepProbTDLM"]);
+  ctr->treePrior = as<std::vector<double> >(model["treePriorTDLM"]); 
   ctr->verbose = as<bool>(model["verbose"]);                     
   ctr->diagnostics = as<bool>(model["diagnostics"]); 
 
@@ -598,7 +598,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   ctr->pZ = (ctr->Z).cols(); 
 
   // ZI model
-  ctr->Z1 = as<Eigen::MatrixXd>(model["Z_zi"]);  
+  ctr->Z1 = as<Eigen::MatrixXd>(model["Z.zi"]);  
   ctr->Zw1 = ctr->Z1; 
   ctr->pZ1 = (ctr->Z1).cols(); 
 

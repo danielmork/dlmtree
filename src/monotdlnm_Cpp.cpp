@@ -385,7 +385,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   ctr->thin =         as<int>(model["nThin"]);
   ctr->nRec =         floor(ctr->iter / ctr->thin);
   ctr->nTrees =       as<int>(model["nTrees"]);
-  ctr->stepProb =     as<std::vector<double> >(model["stepProb"]);
+  ctr->stepProb =     as<std::vector<double> >(model["stepProbTDLM"]);
   ctr->treePrior =    as<std::vector<double> >(model["treePriorTime"]);
   ctr->treePrior2 =   as<std::vector<double> >(model["treePriorExp"]);
   ctr->binomial =     as<bool>(model["binomial"]);

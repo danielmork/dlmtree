@@ -15,7 +15,7 @@ combine.models <- function(mlist) {
   out$tau <- do.call(rbind, lapply(mlist, function(l) l$tau))
   out$termNodes <- do.call(rbind, lapply(mlist, function(l) l$termNodes))
   out$gamma <- do.call(rbind, lapply(mlist, function(l) l$gamma))
-  if (out$monotone) {
+  if(out$monotone) {
     out$zirtGamma <- do.call(rbind, lapply(mlist, function(l) l$zirtGamma ))
     out$zirtCov <- do.call(rbind, lapply(mlist, function(l) l$zirtCov))
     out$timeProbs <- do.call(rbind, lapply(mlist, function(l) l$timeProbs))

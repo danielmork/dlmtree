@@ -8,7 +8,7 @@
 using namespace Rcpp;
 
 
-void dlmtreeTDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
+void dlmtreeHDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
                                    dlmtreeCtr* ctr, dlmtreeLog *dgn,
                                    modDat* Mod, exposureDat* Exp);
 
@@ -19,7 +19,7 @@ treeMHR dlmtreeTDLM_MHR(std::vector<Node*> modTerm,
 
 
 // [[Rcpp::export]]
-Rcpp::List dlmtreeTDLMGaussian(const Rcpp::List model)
+Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
 {
   int t;
   // ---- Set up general control variables ----
@@ -43,6 +43,7 @@ Rcpp::List dlmtreeTDLMGaussian(const Rcpp::List model)
   ctr->VgChol = (ctr->Vg).llt().matrixL();
   
   ctr->binomial = 0;
+  ctr->zinb = 0;
   ctr->verbose = bool (model["verbose"]);
   ctr->diagnostics = bool (model["diagnostics"]);
   ctr->stepProb = as<std::vector<double> >(model["stepProbTDLM"]);
@@ -188,7 +189,7 @@ Rcpp::List dlmtreeTDLMGaussian(const Rcpp::List model)
     ctr->modInf.setZero();
 
     for (t = 0; t < ctr->nTrees; t++) {
-      dlmtreeTDLMGaussian_TreeMCMC(t, modTrees[t], dlmTrees[t],
+      dlmtreeHDLMGaussian_TreeMCMC(t, modTrees[t], dlmTrees[t],
                                    ctr, dgn, Mod, Exp);
       ctr->fhat += (ctr->Rmat).col(t);
 
@@ -225,31 +226,18 @@ Rcpp::List dlmtreeTDLMGaussian(const Rcpp::List model)
     } // end modifier selection
 
     // -- Record --
-     Rcout << "-0- \n";
     if (ctr->record > 0) {
-      Rcout << "-1- \n";
       (dgn->gamma).col(ctr->record - 1) = ctr->gamma;
-      Rcout << "-2- \n";
       (dgn->sigma2)(ctr->record - 1) = ctr->sigma2;
-      Rcout << "-3- \n";
       (dgn->nu)(ctr->record - 1) = ctr->nu;
-      Rcout << "-4- \n";
       (dgn->tau).col(ctr->record - 1) = ctr->tau;
-      Rcout << "-5- \n";
       (dgn->termNodesDLM).col(ctr->record - 1) = ctr->nTerm;
-      Rcout << "-6- \n";
       (dgn->termNodesMod).col(ctr->record - 1) = ctr->nTermMod;
-      Rcout << "-7- \n";
       (dgn->modProb).col(ctr->record - 1) = Mod->modProb;
-      Rcout << "-8- \n";
       (dgn->modCount).col(ctr->record - 1) = ctr->modCount;
-      Rcout << "-9- \n";
       (dgn->modInf).col(ctr->record - 1) = ctr->modInf / ctr->modInf.maxCoeff();
-      Rcout << "-10- \n";
       (dgn->modKappa)(ctr->record - 1) = ctr->modKappa;
-      Rcout << "-11- \n";
       (dgn->totTerm)(ctr->record - 1) = ctr->totTerm;
-      Rcout << "-12- \n";
       dgn->fhat += ctr->fhat;
 
       // if (ctr->nSplits == 0)
@@ -328,11 +316,11 @@ Rcpp::List dlmtreeTDLMGaussian(const Rcpp::List model)
                             Named("treeModAccept") = wrap(modAccept),
                             Named("treeDLMAccept") = wrap(dlmAccept)));
 
-} // end dlmtreeTDLMGaussian
+} // end dlmtreeHDLMGaussian
 
 
 
-void dlmtreeTDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
+void dlmtreeHDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
                                    dlmtreeCtr* ctr, dlmtreeLog *dgn,
                                    modDat* Mod, exposureDat* Exp)
 {
@@ -481,7 +469,7 @@ void dlmtreeTDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
   } // end record
 
 
-} // end dlmtreeTDLMGaussian_TreeMCMC function
+} // end dlmtreeHDLMGaussian_TreeMCMC function
 
 
 treeMHR dlmtreeTDLM_MHR(std::vector<Node*> modTerm, 

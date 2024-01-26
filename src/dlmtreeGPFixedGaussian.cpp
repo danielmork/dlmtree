@@ -33,6 +33,7 @@ Rcpp::List dlmtreeGPFixedGaussian(const Rcpp::List model)
   ctr->modZeta = as<double>(model["zeta"]);
   ctr->modKappa = 100;
   ctr->binomial = 0;
+  ctr->zinb = 0;
 
   ctr->Z = as<Eigen::MatrixXd>(model["Z"]);
   ctr->Zw = ctr->Z;
@@ -162,10 +163,10 @@ Rcpp::List dlmtreeGPFixedGaussian(const Rcpp::List model)
                                       xiInv));
 
     if ((ctr->sigma2 != ctr->sigma2) || (ctr->nu != ctr->nu)) {
-      Rcout << "\n" << ctr->sigma2 << "\n" <<
-        ctr->nu << "\n" << ctr->totTerm << "\n" << ctr->sumTermT2 << "\n" <<
-        ctr->xiInvSigma2 << "\n" << xiInv << "\n" <<
-        ctr->tau;
+      // Rcout << "\n" << ctr->sigma2 << "\n" <<
+      //   ctr->nu << "\n" << ctr->totTerm << "\n" << ctr->sumTermT2 << "\n" <<
+      //   ctr->xiInvSigma2 << "\n" << xiInv << "\n" <<
+      //   ctr->tau;
       stop("\nNaN values occured during model run, rerun model.\n");
     }
     

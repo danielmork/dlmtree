@@ -40,7 +40,7 @@ plot.summary.tdlmm <- function(object,
     #cat("Plotting DLM marginal nonlinear effects:\n")
     #}
     for (ex.name in object$expNames) {
-      if (!cw.plots.only | any(object$DLM[[ex.name]]$marg.cw)) {
+      if (!cw.plots.only | any(object$TreeStructs[[ex.name]]$marg.cw)) {
         plot(plot.summary.tdlmm(object, type, ex.name, NULL, time1, time2, ...))
         readline(prompt = "Press [enter] to continue")
       }
@@ -71,8 +71,10 @@ plot.summary.tdlmm <- function(object,
   base_size <- ifelse(!is.null(args$base_size), args$base_size, 11)
 
   if (is.numeric(exposure1)) {
-    if (exposure1 > length(object$expNames))
+    if (exposure1 > length(object$expNames)) {
       stop("exposure1 incorrectly specified")
+    }
+      
     exposure1 <- object$expNames[exposure1]
   }
 
@@ -85,11 +87,10 @@ plot.summary.tdlmm <- function(object,
       main <- ifelse(!is.null(args$main), args$main,
                      paste0("Marginal effect: ", exposure1))
 
-      dat <- data.frame("Est" = object$DLM[[exposure1]]$marg.matfit,
-                        "CIMin" = object$DLM[[exposure1]]$marg.cilower,
-                        "CIMax" = object$DLM[[exposure1]]$marg.ciupper,
+      dat <- data.frame("Est" = object$TreeStructs[[exposure1]]$marg.matfit,
+                        "CIMin" = object$TreeStructs[[exposure1]]$marg.cilower,
+                        "CIMax" = object$TreeStructs[[exposure1]]$marg.ciupper,
                         "X" = Lags)
-
 
       if (!is.null(scale)) {  # Scaling for dlm
         dat[, c("Est", "CIMin", "CIMax")] <- exp(dat[, c("Est", "CIMin", "CIMax")])
@@ -106,7 +107,7 @@ plot.summary.tdlmm <- function(object,
     
 
 
-    if(!is.null(trueDLM)){ # draws an additional line of true DLM effect
+    if (!is.null(trueDLM)) { # draws an additional line of true DLM effect
       p <- ggplot(dat) +
         geom_hline(yintercept = ifelse(is.null(scale), 0, 1), color = "red", linetype = "dashed") +
         geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey") +
@@ -130,24 +131,26 @@ plot.summary.tdlmm <- function(object,
     return(p)
 
 
-
     # Plot Mixture
   } else {
     if (is.numeric(exposure2)) {
-      if (exposure2 > length(object$expNames))
+      if (exposure2 > length(object$expNames)){
         stop("exposure2 incorrectly specified")
+      }
+        
       exposure2 <- object$expNames[exposure2]
     }
 
     plotDat <- data.frame(x = rep(Lags, length(Lags)),
                           y = rep(Lags, each = length(Lags)))
 
-    if (paste0(exposure1, "-", exposure2) %in% names(object$MIX))
+    if (paste0(exposure1, "-", exposure2) %in% names(object$MIX)){
       mix.name <- paste0(exposure1, "-", exposure2)
-    else if (paste0(exposure2, "-", exposure1) %in% names(object$MIX))
+    } else if (paste0(exposure2, "-", exposure1) %in% names(object$MIX)){
       mix.name <- paste0(exposure2, "-", exposure1)
-    else
+    } else {
       stop("mixture not found, check exposures names or numbers")
+    }
 
     plotDat <- cbind.data.frame(plotDat,
                                 Effect = c(object$MIX[[mix.name]]$matfit),
@@ -156,6 +159,7 @@ plot.summary.tdlmm <- function(object,
     main <- ifelse(!is.null(args$main), args$main, "Interaction effect")
     xlab <- ifelse(!is.null(args$xlab), args$xlab, paste0("Time: ",exposure1))
     ylab <- ifelse(!is.null(args$ylab), args$ylab, paste0("Time: ",exposure2))
+
     if (!is.null(args$cw.point.range)) {
       cw.point.range <- args$cw.point.range
     } else {
@@ -168,12 +172,13 @@ plot.summary.tdlmm <- function(object,
       geom_tile() +
       scale_fill_viridis()
 
-    if (show.cw)
+    if (show.cw){
       p <- p + geom_point(data = plotDat[which(plotDat$CW != 0),],
                           aes(x = `x`, y = `y`, size = `CW`),
                           color = "red", show.legend = cw.lab.show) +
       scale_size_continuous(name = cw.lab, range = cw.point.range)
-
+    }
+      
     p <- p +
       theme_bw(base_size = base_size) +
       coord_equal() +

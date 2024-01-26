@@ -6,32 +6,31 @@
 \usage{
 sim.tdlmm(
   sim = "A",
+  n = 5000,
   error = 10,
   mean.p = 0.5,
   n.exp = 25,
   prop.active = 0.05,
-  n = 5000,
   expList = NULL,
   ctnum = 20,
   week = 561,
-  data_zinb = NULL,
+  data.zinb = NULL,
   r = 1
 )
 }
 \arguments{
 \item{sim}{character (A - F) specifying simulation scenario}
 
-\item{error}{positive scalar specifying error variance}
+\item{n}{sample size for simulation}
+
+\item{error}{positive scalar specifying error variance for Gaussian response}
 
 \item{mean.p}{scalar between zero and one specifying mean probability
-for simulation scenario one}
+for simulation scenario A}
 
 \item{n.exp}{number of exposures for simulation scenarios three and four}
 
-\item{prop.active}{proportion of active exposures for simulation scenario
-three}
-
-\item{n}{sample size for simulation}
+\item{prop.active}{proportion of active exposures for simulation scenario C}
 
 \item{expList}{named list of exposure data}
 
@@ -39,15 +38,24 @@ three}
 
 \item{week}{number of weeks for each county, must be between 1-561}
 
-\item{data_zinb}{covariate data}
+\item{data.zinb}{covariate data}
 
-\item{r}{dispersion parameter}
-
-\item{effect.size}{the effect size of the window of susceptibility, resulting in controlling the magnitude of the count outcome}
+\item{r}{dispersion parameter of negative binomial distribution}
 }
 \value{
 Simulated data and true parameters
 }
 \description{
-Simulation scenarios to accompany TDLM/TDLMM
+Simulation scenarios for TDLM & TDLMM
+}
+\details{
+Simulation scenarios:
+\itemize{
+\item Scenario A: Binary response with single exposure effect
+\item Scenario B: Continuous response with main effect of PM2.5 and interaction
+\item Scenario C: Continuous response to test exposure selection using exposure
+\item Scenario D: Continuous response to test exposure selection using one exposure of main effect and two interaction effects among four exposures
+\item Scenario E: Zero-inflated count response with single exposure effect
+\item Scenario F: Zero-inflated count response with single exposure effect with main effect of PM2.5 and interaction
+}
 }

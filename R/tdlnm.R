@@ -29,7 +29,7 @@
 #' response with logit link
 #' @param binomial.size integer type scalar (if all equal, default = 1) or
 #' vector defining binomial size for 'logit' family
-#' @param formula_zi object of class formula, a symbolic description of the ZI
+#' @param formula.zi object of class formula, a symbolic description of the ZI
 #' model to be fitted, e.g. y ~ a + b. This only applies to ZINB where covariates for
 #' ZI model is different from NB model. This is same as the main formula by default
 #' @param keep_XZ false (default) or true: keep the model scale exposure and covariate data
@@ -48,7 +48,8 @@
 #' @param verbose true (default) or false: print progress bar output
 #' @param diagnostics true or false (default) keep model diagnostic such as
 #' terminal nodes, acceptance details, etc.
-#' @param initial.params initial parameters for fixed effects model, FALSE = none (default), "glm" = generate using GLM, or user defined, length must equal number of parameters in fixed effects model
+#' @param initial.params initial parameters for fixed effects model, FALSE = none (default), 
+#' "glm" = generate using GLM, or user defined, length must equal number of parameters in fixed effects model
 #' @param debug if true, outputs debugging messages
 #' @param ... NA
 #'
@@ -71,7 +72,7 @@ tdlnm <- function(formula,
                   n.thin = 5,
                   family = "gaussian",
                   binomial.size = 1,
-                  formula_zi = NULL, 
+                  formula.zi = NULL, 
                   keep_XZ = FALSE,
                   tree.params = c(.95, 2),
                   step.prob = c(.25, .25),
@@ -175,9 +176,9 @@ tdlnm <- function(formula,
   model$family <- family
   model$verbose <- verbose
   model$diagnostics <- diagnostics
-  model$treePrior <- tree.params
+  model$treePriorTDLM <- tree.params
   model$stepProb <- c(step.prob[1], step.prob[1], step.prob[2])
-  model$stepProb <- model$stepProb / sum(model$stepProb)
+  model$stepProbTDLM <- model$stepProb / sum(model$stepProb)
   model$timeSplits0 = time.split.prob
   model$monotone = monotone
   model$shrinkage <- shrinkage
@@ -187,8 +188,6 @@ tdlnm <- function(formula,
   model$shape <- ifelse(!is.null(exposure.se), "Smooth",
                         ifelse(exposure.splits == 0, "Linear",
                                "Step Function"))
-  model$shape <- ifelse(!is.null(exposure.se), "Smooth",
-    ifelse(exposure.splits == 0, "Linear", "Step Function"))
 
 
   # Monotone model priors -----------------
@@ -226,28 +225,28 @@ tdlnm <- function(formula,
 
 
   # ---- Setup control and response variables ----
-  if(is.null(formula_zi)){
-    formula_zi <- formula
+  if(is.null(formula.zi)){
+    formula.zi <- formula
   }
 
   model$formula <- force(as.formula(formula))
-  model$formula_zi <- force(as.formula(formula_zi)) 
+  model$formula.zi <- force(as.formula(formula.zi)) 
 
   tf <- terms.formula(model$formula, data = data)
-  tf_zi <- terms.formula(model$formula_zi, data = data)
+  tf.zi <- terms.formula(model$formula.zi, data = data)
 
   # Sanity check for response
-  if (!attr(tf, "response") & !attr(tf_zi, "response"))
+  if (!attr(tf, "response") & !attr(tf.zi, "response"))
     stop("no valid response in formula")
 
   # Save if intercept is included in the model
   model$intercept <- force(ifelse(attr(tf, "intercept"), TRUE, FALSE)) 
-  model$intercept_zi <- force(ifelse(attr(tf_zi, "intercept"), TRUE, FALSE)) 
+  model$intercept.zi <- force(ifelse(attr(tf.zi, "intercept"), TRUE, FALSE)) 
 
   # Sanity check for variables and the names
   if (length(which(attr(tf, "term.labels") %in% colnames(data))) == 0 & 
-      length(which(attr(tf_zi, "term.labels") %in% colnames(data))) == 0 & 
-      !model$intercept & !model$intercept_zi) 
+      length(which(attr(tf.zi, "term.labels") %in% colnames(data))) == 0 & 
+      !model$intercept & !model$intercept.zi) 
     stop("no valid variables in formula")
 
 
@@ -398,10 +397,10 @@ tdlnm <- function(formula,
   mf <- model.frame(model$formula, data = data,
                     drop.unused.levels = TRUE,
                     na.action = NULL)
-  mf_zi <- model.frame(model$formula_zi, data = data,             
+  mf.zi <- model.frame(model$formula.zi, data = data,             
                       drop.unused.levels = TRUE,
                       na.action = NULL)
-  if (any(is.na(mf)) & any(is.na(mf_zi)))
+  if (any(is.na(mf)) & any(is.na(mf.zi)))
     stop("missing values in model data, use `complete.cases()` to subset data")
   
   
@@ -426,12 +425,12 @@ tdlnm <- function(formula,
   model$Z <- force(scaleModelMatrix(model$Z))
   rm(QR)
 
-  model$Z_zi <- force(model.matrix(model$formula_zi, data = mf_zi))   
-  QR_zi <- qr(crossprod(model$Z_zi)) 
-  model$Z_zi <- model$Z_zi[,sort(QR_zi$pivot[seq_len(QR_zi$rank)])]           
-  model$droppedCovar_zi <- colnames(model$Z_zi)[QR_zi$pivot[-seq_len(QR_zi$rank)]]
-  model$Z_zi <- force(scaleModelMatrix(model$Z_zi))
-  rm(QR_zi)
+  model$Z.zi <- force(model.matrix(model$formula.zi, data = mf.zi))   
+  QR.zi <- qr(crossprod(model$Z.zi)) 
+  model$Z.zi <- model$Z.zi[,sort(QR.zi$pivot[seq_len(QR.zi$rank)])]           
+  model$droppedCovar.zi <- colnames(model$Z.zi)[QR.zi$pivot[-seq_len(QR.zi$rank)]]
+  model$Z.zi <- force(scaleModelMatrix(model$Z.zi))
+  rm(QR.zi)
 
   # Organize for different models
   # Gaussian
@@ -456,10 +455,10 @@ tdlnm <- function(formula,
   model$Znames <- colnames(model$Z)
   model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
 
-  model$Zscale_zi <- attr(model$Z_zi, "scaled:scale")
-  model$Zmean_zi <- attr(model$Z_zi, "scaled:center")
-  model$Znames_zi <- colnames(model$Z_zi)
-  model$Z_zi <- force(matrix(model$Z_zi, nrow(model$Z_zi), ncol(model$Z_zi)))
+  model$Zscale.zi <- attr(model$Z.zi, "scaled:scale")
+  model$Zmean.zi <- attr(model$Z.zi, "scaled:center")
+  model$Znames.zi <- colnames(model$Z.zi)
+  model$Z.zi <- force(matrix(model$Z.zi, nrow(model$Z.zi), ncol(model$Z.zi)))
 
 
   model$initParams <- rep(0, ncol(model$Z))
@@ -501,7 +500,7 @@ tdlnm <- function(formula,
 
   # ZINB fixed effect (binary)
   model$b1 <- sapply(1:ncol(model$b1), function(i) {
-  model$b1[,i] * model$Yscale / model$Zscale_zi[i] })
+  model$b1[,i] * model$Yscale / model$Zscale.zi[i] })
 
   # ZINB fixed effect (NegBin)
   model$b2 <- sapply(1:ncol(model$b2), function(i) {
@@ -518,14 +517,14 @@ tdlnm <- function(formula,
       model$b2[,1] <- model$b2[,1] - model$b2[,-1,drop=FALSE] %*% model$Zmean[-1]
   }
 
-  if (model$intercept_zi) {
+  if (model$intercept.zi) {
     model$b1[,1] <- model$b1[,1] + model$Ymean
-    if (ncol(model$Z_zi) > 1)
-      model$b1[,1] <- model$b1[,1] - model$b1[,-1,drop=FALSE] %*% model$Zmean_zi[-1]
+    if (ncol(model$Z.zi) > 1)
+      model$b1[,1] <- model$b1[,1] - model$b1[,-1,drop=FALSE] %*% model$Zmean.zi[-1]
   }
 
   colnames(model$gamma) <- model$Znames
-  colnames(model$b1) <- model$Znames_zi
+  colnames(model$b1) <- model$Znames.zi
   colnames(model$b2) <- model$Znames
 
 
@@ -554,7 +553,7 @@ tdlnm <- function(formula,
     model$Tcalc <- NULL
     model$Xcalc <- NULL
     model$Z <- NULL
-    model$Z_zi <- NULL
+    model$Z.zi <- NULL
   }
 
   # Change env to list

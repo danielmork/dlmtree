@@ -36,6 +36,7 @@ Rcpp::List dlmtreeTDLMFixedGaussian(const Rcpp::List model)
   ctr->verbose = bool (model["verbose"]);
   ctr->diagnostics = bool (model["diagnostics"]);
   ctr->binomial = 0;
+  ctr->zinb = 0;
   ctr->stepProb = as<std::vector<double> >(model["stepProbTDLM"]);
   ctr->treePrior = as<std::vector<double> >(model["treePriorMod"]);
   
@@ -178,10 +179,10 @@ Rcpp::List dlmtreeTDLMFixedGaussian(const Rcpp::List model)
                                       xiInv));
 
     if ((ctr->sigma2 != ctr->sigma2) || (ctr->nu != ctr->nu)) {
-      Rcout << "\n" << ctr->sigma2 << "\n" <<
-        ctr->nu << "\n" << ctr->totTerm << "\n" << ctr->sumTermT2 << "\n" <<
-        ctr->xiInvSigma2 << "\n" << xiInv << "\n" <<
-        ctr->tau;
+      // Rcout << "\n" << ctr->sigma2 << "\n" <<
+      //   ctr->nu << "\n" << ctr->totTerm << "\n" << ctr->sumTermT2 << "\n" <<
+      //   ctr->xiInvSigma2 << "\n" << xiInv << "\n" <<
+      //   ctr->tau;
       stop("\nNaN values occured during model run, rerun model.\n");
     }
     
@@ -233,7 +234,7 @@ Rcpp::List dlmtreeTDLMFixedGaussian(const Rcpp::List model)
                             Named("gamma") = wrap(gamma),
                             Named("phi") = wrap(phi)));
 
-} // end dlmtreeTDLMGaussian
+} // end dlmtreeHDLMGaussian
 
 
 

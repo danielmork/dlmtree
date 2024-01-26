@@ -382,6 +382,7 @@ Rcpp::List dlmtreeTDLM_cpp(const Rcpp::List model)
   ctr->verbose =      as<bool>(model["verbose"]);
   ctr->diagnostics =  as<bool>(model["diagnostics"]);
   ctr->binomial =     as<bool>(model["binomial"]);
+  ctr->zinb =         as<bool>(model["zinb"]);
   ctr->stepProb =     as<std::vector<double> >(model["stepProbTDLM"]);
   ctr->stepProbMod =  as<std::vector<double> >(model["stepProbMod"]);
   ctr->treePrior =    as<std::vector<double> >(model["treePriorMod"]);

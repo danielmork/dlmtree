@@ -43,6 +43,7 @@ Rcpp::List dlmtreeGPGaussian(const Rcpp::List model)
   ctr->VgChol = (ctr->Vg).llt().matrixL();
   
   ctr->binomial = 0;
+  ctr->zinb = 0;
   ctr->verbose = bool (model["verbose"]);
   ctr->diagnostics = bool (model["diagnostics"]);
   ctr->stepProbMod = as<std::vector<double> >(model["stepProbMod"]);

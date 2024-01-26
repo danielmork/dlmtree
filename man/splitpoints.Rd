@@ -2,19 +2,20 @@
 % Please edit documentation in R/splitpoints.R
 \name{splitpoints}
 \alias{splitpoints}
-\title{Determine split points for continuous modifiers}
+\title{splitpoints}
 \usage{
 splitpoints(object, var, round = NULL)
 }
 \arguments{
-\item{object}{An object of class dlmtree.}
+\item{object}{An object of class dlmtree with dlmtype hdlm/hdlmm}
 
-\item{var}{The name of a continuous variable for which the split points will be reported.}
+\item{var}{The name of a continuous variable for which the split points will be reported}
 
-\item{round}{The number of decimal places to round the variable (var) to. No rounding occurs if round=NULL (default). For positive integer values of round, the variable will be rounded and split points will be reported at the resulting level.}
+\item{round}{The number of decimal places to round the variable (var) to. No rounding occurs if round=NULL (default)
+For positive integer values of round, the variable will be rounded and split points will be reported at the resulting level}
 }
 \value{
-A data.frame with split points and the probability that a split point was >= that split point value.
+A data frame with split points and the probability that a split point was >= that split point value
 }
 \description{
 Determine split points for continuous modifiers

@@ -1,7 +1,14 @@
 #' sim.tdlnm
 #'
-#' @param effect character (A - D) indicating simulation scenario
+#' @param effect character (A - D) specifying simulation scenario
 #' @param error.to.signal scalar value setting error: sigma^2/var(f)
+#'
+#' @details Simulation scenarios:
+#' - Scenario A: Piecewise constant effect
+#' - Scenario B: Linear effect
+#' - Scenario C: Logistic effect, piecewise in time
+#' - Scenario D: Logistic effect, smooth in time
+#' @md
 #'
 #' @return Simulated data and true parameters
 #' @export
@@ -11,7 +18,6 @@ sim.tdlnm <- function(effect = "A", error.to.signal = 1)
   data("pm25Exposures")
   pm25Exposures <- log(pm25Exposures[which(pm25Exposures$S == "Colorado"),-c(1:2)])[,1:37]
   n.samp <- nrow(pm25Exposures)
-
   data <- cbind(matrix(rnorm(5*n.samp), n.samp, 5),
                 matrix(rbinom(5*n.samp, 1, .5), n.samp, 5))
   colnames(data) <- c(paste0("c", 1:5), paste0("b", 1:5))
@@ -97,9 +103,8 @@ sim.tdlnm <- function(effect = "A", error.to.signal = 1)
   e <- rnorm(length(f), 0, sqrt(var(f) * error.to.signal))
   y <- c + f + e
 
-
   return(list("dat" = cbind.data.frame(y, data),
-              "exposure" = as.matrix(pm25Exposures),
+              "exposures" = as.matrix(pm25Exposures),
               "dlnm.fun" = dlnm.fun,
               "cenval" = cenval,
               "params" = params,

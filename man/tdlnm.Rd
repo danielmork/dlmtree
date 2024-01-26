@@ -16,7 +16,7 @@ tdlnm(
   n.thin = 5,
   family = "gaussian",
   binomial.size = 1,
-  formula_zi = NULL,
+  formula.zi = NULL,
   keep_XZ = FALSE,
   tree.params = c(0.95, 2),
   step.prob = c(0.25, 0.25),
@@ -72,7 +72,7 @@ response with logit link}
 \item{binomial.size}{integer type scalar (if all equal, default = 1) or
 vector defining binomial size for 'logit' family}
 
-\item{formula_zi}{object of class formula, a symbolic description of the ZI
+\item{formula.zi}{object of class formula, a symbolic description of the ZI
 model to be fitted, e.g. y ~ a + b. This only applies to ZINB where covariates for
 ZI model is different from NB model. This is same as the main formula by default}
 
@@ -100,7 +100,8 @@ probability of each step for tree updates}
 \item{diagnostics}{true or false (default) keep model diagnostic such as
 terminal nodes, acceptance details, etc.}
 
-\item{initial.params}{initial parameters for fixed effects model, FALSE = none (default), "glm" = generate using GLM, or user defined, length must equal number of parameters in fixed effects model}
+\item{initial.params}{initial parameters for fixed effects model, FALSE = none (default), 
+"glm" = generate using GLM, or user defined, length must equal number of parameters in fixed effects model}
 
 \item{debug}{if true, outputs debugging messages}
 

@@ -1,16 +1,16 @@
-#' print.summary.tdlnm
+#' print.summary.monotone
 #'
-#' @param object an object of type 'summary.tdlnm', result of call to summary.tdlnm()
+#' @param object an object of type 'summary.monotone', result of call to summary.monotone()
 #' @param digits integer number of digits to round
 #'
 #' @return output in R console
-#' @export print.summary.tdlnm
+#' @export print.summary.monotone
 #' @export
 #'
-print.summary.tdlnm <- function(object, digits = 3)
+print.summary.monotone <- function(object, digits = 3)
 {
   cat("---\n")
-  cat("TDLNM summary\n\n")
+  cat("monotone-TDLNM summary\n\n")
 
   cat("Model run info:\n")
   # Print ZI and NB part separately for ZINB
@@ -39,8 +39,10 @@ print.summary.tdlnm <- function(object, digits = 3)
     print(gamma.out)
     cat("---\n")
     cat("* = CI does not contain zero\n")
-  } else {  # zinb
-    # Print fixed effect coefficient results (ZINB - Binary)
+  }
+
+  # Print fixed effect coefficient results (ZINB - Binary)
+  if (object$ctr$response == "zinb") {
     cat("\nFixed effects (ZI model):\n")
     if (length(object$droppedCovar) > 0) {
       cat("dropped collinear covariates:", paste(object$droppedCovar, collapse = ", "),"\n")
@@ -48,7 +50,7 @@ print.summary.tdlnm <- function(object, digits = 3)
 
     b1.out <- data.frame("Mean" = round(object$b1.mean, digits),
                          "Lower" = round(object$b1.ci[1,], digits),
-                         "Upper" = round(object$b1.ci[2,], digits))
+                          "Upper" = round(object$b1.ci[2,], digits))
     row.names(b1.out) <-
       ifelse(object$b1.ci[1,] > 0 | object$b1.ci[2,] < 0,
             paste0("*", names(object$b1.mean)),
@@ -63,8 +65,8 @@ print.summary.tdlnm <- function(object, digits = 3)
     }
 
     b2.out <- data.frame("Mean" = round(object$b2.mean, digits),
-                         "Lower" = round(object$b2.ci[1,], digits),
-                         "Upper" = round(object$b2.ci[2,], digits))
+                          "Lower" = round(object$b2.ci[1,], digits),
+                          "Upper" = round(object$b2.ci[2,], digits))
     row.names(b2.out) <-
       ifelse(object$b2.ci[1,] > 0 | object$b2.ci[2,] < 0,
             paste0("*", names(object$b2.mean)),
@@ -80,8 +82,8 @@ print.summary.tdlnm <- function(object, digits = 3)
     }
 
     r.out <- data.frame("Mean" = round(object$r.mean, digits),
-                        "Lower" = round(object$r.ci[1], digits),
-                        "Upper" = round(object$r.ci[2], digits))
+                          "Lower" = round(object$r.ci[1], digits),
+                          "Upper" = round(object$r.ci[2], digits))
     row.names(r.out) <- "Dispersion"
       #ifelse(object$r.ci[1,] > 0 | object$b2.ci[2,] < 0,
       #      paste0("*", names(object$b2.mean)),
@@ -99,7 +101,9 @@ print.summary.tdlnm <- function(object, digits = 3)
   }
 
   cat("\ncritical windows: ")
-  cw <- ppRange(which((colSums(object$cilower > 0) + colSums(object$ciupper < 0)) > 0))
+  if (object$ctr$monotone) {
+    cw <- ppRange(which(object$splitProb >= object$conf.level))
+  }
 
   cat(cw, "\n")
 }

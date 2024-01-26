@@ -1,43 +1,51 @@
 #' sim.tdlmm
 #'
-#' @description Simulation scenarios to accompany TDLM/TDLMM
+#' @description Simulation scenarios for TDLM & TDLMM
 #'
 #' @param sim character (A - F) specifying simulation scenario
-#' @param error positive scalar specifying error variance
+#' @param error positive scalar specifying error variance for Gaussian response
 #' @param mean.p scalar between zero and one specifying mean probability
-#' for simulation scenario one
+#' for simulation scenario A
 #' @param n.exp number of exposures for simulation scenarios three and four
-#' @param prop.active proportion of active exposures for simulation scenario
-#' three
+#' @param prop.active proportion of active exposures for simulation scenario C
 #' @param n sample size for simulation
 #' @param expList named list of exposure data
 #' @param ctnum number of counties
 #' @param week number of weeks for each county, must be between 1-561
-#' @param data_zinb covariate data
-#' @param effect.size the effect size of the window of susceptibility, resulting in controlling the magnitude of the count outcome
-#' @param r dispersion parameter
+#' @param data.zinb covariate data
+#' @param r dispersion parameter of negative binomial distribution
+#'
+#' @details Simulation scenarios:
+#' - Scenario A: Binary response with single exposure effect
+#' - Scenario B: Continuous response with main effect of PM2.5 and interaction
+#' - Scenario C: Continuous response to test exposure selection using exposure
+#' - Scenario D: Continuous response to test exposure selection using one exposure of main effect and two interaction effects among four exposures
+#' - Scenario E: Zero-inflated count response with single exposure effect
+#' - Scenario F: Zero-inflated count response with single exposure effect with main effect of PM2.5 and interaction
+#' @md
 #'
 #' @return Simulated data and true parameters
 #' @export
 #'
 sim.tdlmm <- function(sim = "A",
+                      n = 5000,             # Scn A, B, C, D
                       error = 10,           # Scn B, C, D
                       mean.p = 0.5,         # Scn A
                       n.exp = 25,           # Not in use
                       prop.active = 0.05,   # Scn C
-                      n = 5000,             # Scn A, B, C, D
                       expList = NULL,
                       # ZINB
-                      ctnum = 20,           # n = ctnum * week for zinb (time series)
+                      ctnum = 20,           # n = ctnum * week for zinb (time series design)
                       week = 561,
-                      data_zinb = NULL,
+                      data.zinb = NULL,
                       r = 1)
 {
-  if (!(sim %in% LETTERS[1:6]))
-    stop("`sim` must be an character from A-F")
+  if (!(sim %in% LETTERS[1:6])) {
+    stop("`sim` must be an character from A - F")
+  }
 
   # TDLM/TDLMM (Dan)
-  if(sim %in% LETTERS[1:4]){
+  if (sim %in% LETTERS[1:4]) {
     if (is.null(expList)) {
       data(exposureCov) # Covariace matrix of exposure data
       cholexp <- t(chol(exposureCov))
@@ -180,8 +188,8 @@ sim.tdlmm <- function(sim = "A",
     }
   } else { 
     # ZINB (Seongwon)
-    if (week > length(which(data_zinb$fipscoor == unique(data_zinb$fipscoor)[1]))){
-      stop(paste0("Week must be less than ", length(which(data_zinb$fipscoor == unique(data_zinb$fipscoor)[1]))))
+    if (week > length(which(data.zinb$fipscoor == unique(data.zinb$fipscoor)[1]))) {
+      stop(paste0("Week must be less than ", length(which(data.zinb$fipscoor == unique(data.zinb$fipscoor)[1]))))
     }
 
     # Setup
@@ -190,22 +198,22 @@ sim.tdlmm <- function(sim = "A",
     n.samp <- min(nrow(expList[[1]]), n)    # minimum between {observation and the number of required sampling}
 
     # Sample counties
-    fips <- sample(unique(data_zinb$fipscoor), ctnum, replace = FALSE)
+    fips <- sample(unique(data.zinb$fipscoor), ctnum, replace = FALSE)
     
     # Sample weeks from each county
     idx = c()
-    for(code in fips){
-      fips_idx = sample(which(data_zinb$fipscoor == code), week, replace = FALSE)
-      idx = c(idx, fips_idx)
+    for (code in fips) {
+      fips.idx = sample(which(data.zinb$fipscoor == code), week, replace = FALSE)
+      idx = c(idx, fips.idx)
     }
     
     # Data setup
-    data_zinb <- data_zinb[idx, ]
-    data_zinb$fipscoor <- droplevels(data_zinb$fipscoor)
+    data.zinb <- data.zinb[idx, ]
+    data.zinb$fipscoor <- droplevels(data.zinb$fipscoor)
 
     # Model matrix construction for ZI & NB model
-    data_zi <- model.matrix(~ fipscoor - 1, data = data_zinb)
-    data_nb <- model.matrix(~ fipscoor + month + YOC, data = data_zinb)
+    data.zi <- model.matrix(~ fipscoor - 1, data = data.zinb)
+    data.nb <- model.matrix(~ fipscoor + month + YOC, data = data.zinb)
 
     # Effect size
     effect.size = 0.1
@@ -223,21 +231,21 @@ sim.tdlmm <- function(sim = "A",
       y <- rep(0, n.samp)
 
       # ZI regression coefficients
-      beta1 <- rnorm(ncol(data_zi), mean = 0, sd = 1)   # sample true beta1 from a standard normal
-      eta1 <- c(data_zi[, 1:ncol(data_zi)] %*% beta1)   # ZI model fixed effect    
+      beta1 <- rnorm(ncol(data.zi), mean = 0, sd = 1)   # sample true beta1 from a standard normal
+      eta1 <- c(data.zi[, 1:ncol(data.zi)] %*% beta1)   # ZI model fixed effect    
 
       pi <- 1 / (1 + exp(-eta1))                        # inverse-logit
       w <- rbinom(n.samp, 1, pi)                        # ZI indicator variable
       nStar <- n.samp - sum(w)                          # number of NB observations
 
       # NB regression coefficients
-      beta2 <- rnorm(ncol(data_nb))                             # sample true beta2 from a standard normal
-      eta2 <- c(data_nb[w == 0, 1:ncol(data_nb)] %*% beta2)     # NB model fixed effect
+      beta2 <- rnorm(ncol(data.nb))                             # sample true beta2 from a standard normal
+      eta2 <- c(data.nb[w == 0, 1:ncol(data.nb)] %*% beta2)     # NB model fixed effect
 
       # Update f to use only NB observations
       f <- exposures[[1]][w == 0, ] %*% eff1     # NB model exposure effect
-      eta2_dlm <- effect.size * (eta2 + f)       # scaled NB model exposure effect
-      psi <- 1 / (1 + exp(-eta2_dlm))            # probability of success in NB model
+      eta2.dlm <- effect.size * (eta2 + f)       # scaled NB model exposure effect
+      psi <- 1 / (1 + exp(-eta2.dlm))            # probability of success in NB model
 
       # Draw y with eta1, eta2, and f
       y[w == 0] <- rnbinom(nStar, r, prob = 1 - psi) 
@@ -253,7 +261,7 @@ sim.tdlmm <- function(sim = "A",
       zeroProp <- length(y[y == 0])/n           # Proportion of zeros
 
       # Return the result
-      return(list("data" = cbind.data.frame(y, data_zinb),
+      return(list("data" = cbind.data.frame(y, data.zinb),
                   "exposures" = exposures, 
                   "start.time1" = start.time1,
                   "eff1" = eff1,
@@ -268,7 +276,7 @@ sim.tdlmm <- function(sim = "A",
     }
 
     # Sim F: Two exposures with interaction
-    if(sim == "F"){
+    if (sim == "F") {
       exposures <- lapply(expList, function(i) (i[idx,] - mean(i[idx,])) / sd(i[idx,]))     # centering and scaling
 
       start.time1 <- sample(1:(Lags - 7), 1)    # e1 starting time lag
@@ -282,16 +290,16 @@ sim.tdlmm <- function(sim = "A",
       y <- rep(0, n.samp)
 
       # ZI regression coefficients
-      beta1 <- rnorm(ncol(data_zi), mean = 0, sd = 1)         # Sample true beta1 from a standard normal
-      eta1 <- c(data_zi[, 1:ncol(data_zi)] %*% beta1)         # ZI model fixed effect
+      beta1 <- rnorm(ncol(data.zi), mean = 0, sd = 1)         # Sample true beta1 from a standard normal
+      eta1 <- c(data.zi[, 1:ncol(data.zi)] %*% beta1)         # ZI model fixed effect
 
       pi <- 1 / (1 + exp(-eta1))           # 1 - P(ZI zero)
       w <- rbinom(n.samp, 1, pi)           # ZI indicator variable
       nStar <- n.samp - sum(w)                 
 
       # NB regression coefficients
-      beta2 <- rnorm(ncol(data_nb))                             # Sample true beta2 from a standard normal
-      eta2 <- c(data_nb[w == 0, 1:ncol(data_nb)] %*% beta2)     # NB model fixed effect
+      beta2 <- rnorm(ncol(data.nb))                             # Sample true beta2 from a standard normal
+      eta2 <- c(data.nb[w == 0, 1:ncol(data.nb)] %*% beta2)     # NB model fixed effect
 
       # Compute f with interaction
       truth1Sums <- exposures[[1]][w == 0, ] %*% eff1     # e1 exposure effect
@@ -301,8 +309,8 @@ sim.tdlmm <- function(sim = "A",
       f <- truth1Sums + (int.effect * truth1Sums * truth2Sums)  # e1 main effect + e1xe2 interaction effect
 
       # NB with fixed and exposure effect
-      eta2_dlm <- effect.size * (eta2 + f)
-      psi <- 1 / (1 + exp(-eta2_dlm))            # Probability of success in negative binomial
+      eta2.dlm <- effect.size * (eta2 + f)
+      psi <- 1 / (1 + exp(-eta2.dlm))            # Probability of success in negative binomial
 
       # Draw y with eta1, eta2, and f
       y[w == 0] <- rnbinom(nStar, r, prob = 1 - psi)
@@ -318,13 +326,13 @@ sim.tdlmm <- function(sim = "A",
       nonzero <- length(y[y != 0])/n            # y is not zero
       zeroProp <- length(y[y == 0])/n           # Proportion of zeros
 
-      return(list("data" = cbind.data.frame(y, data_zinb),
+      return(list("data" = cbind.data.frame(y, data.zinb),
                   "exposures" = exposures,
                   "eff1" = eff1, "eff2" = eff2,
                   "start.time1" = start.time1, "start.time2" = start.time2,
                   "margDLM1" = margDLM1, "margDLM2" = margDLM2,
                   "f" = f, "w" = w, "psi" = psi, "r" = r,
-                  "eta1" = eta1, "eta2" = eta2_dlm,
+                  "eta1" = eta1, "eta2" = eta2.dlm,
                   "b1" = beta1, "b2" = beta2 * effect.size,
                   "zeroStr" = zeroStr,
                   "zeroAr" = zeroAr,

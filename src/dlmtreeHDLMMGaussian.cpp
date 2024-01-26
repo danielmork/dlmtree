@@ -67,13 +67,15 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
   ctr->VgChol = (ctr->Vg).llt().matrixL();      
 
   // Binomial flag              
-  ctr->binomial = 0; 
+  ctr->binomial = as<bool>(model["binomial"]);  
+  ctr->zinb = as<bool>(model["zinb"]);  
 
   // Tree prior probabilities for the modifier tree and DLM tree
   ctr->stepProbMod = as<std::vector<double>>(model["stepProbMod"]);
   ctr->stepProb = as<std::vector<double>>(model["stepProbTDLM"]);
   ctr->treePriorMod = as<std::vector<double>>(model["treePriorMod"]); 
   ctr->treePrior = as<std::vector<double>>(model["treePriorTDLM"]);
+
 
   // Diagnostics & messages
   ctr->verbose = bool(model["verbose"]); 
@@ -550,7 +552,7 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
                             //Named("treeModAccept") = wrap(modAccept),
                             Named("treeDLMAccept") = wrap(dlmAccept)));
 
-} // end dlmtreeHDLMMGaussian
+} // end dlmtreeTDLMMGaussian
 
 
 
@@ -849,6 +851,16 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
   newExp = sampleInt(ctr->expProb);       // Sample an exposure for the new tree
   newExpVar = ctr->muExp(newExp);         // Find the exposure-specific variance for the new exposure
 
+  // Update the interaction using the new exposure as well for HDLMMns/all
+  if ((ctr->interaction) && ((ctr->interaction == 2) || (newExp != m2))) {
+    if (newExp <= m2)
+      newMixVar = ctr->muMix(m2, newExp); 
+    else
+      newMixVar = ctr->muMix(newExp, m2); 
+  } else {
+    newMixVar = 0;
+  }
+
   // *** Create a new tree for proposal ***
   newTree = new Node(0, 1);               // Start from the root
   newTree->nodestruct = expNS->clone();   // Construct nodestruct
@@ -858,25 +870,14 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
   for (Node* nt : newDlmTerm1) {          // Go through the new terminal node
     Exp[newExp]->updateNodeVals(nt);      // Update the calculations
   }
-
-  // HDLMMns
-  // Update the interaction using the new exposure as well for TDLMMns/all
-  if ((ctr->interaction) && ((ctr->interaction == 2) || (newExp != m2))) {
-    if (newExp <= m2)
-      newMixVar = ctr->muMix(m2, newExp); 
-    else
-      newMixVar = ctr->muMix(newExp, m2); 
-  } else {
-    newMixVar = 0;
-  }
   
   // MH ratio
   modTree->setUpdateXmat(1);
 
   // MH ratio with a new terminal and the exposure: newDlmTerm1, newExpVar
   mhr = dlmtreeHDLMM_MHR(modTerm, 
-                          newDlmTerm1, dlmTerm2, ctr, ZtR, treeVar, 
-                          newExpVar, m2Var, newMixVar);
+                        newDlmTerm1, dlmTerm2, ctr, ZtR, treeVar, 
+                        newExpVar, m2Var, newMixVar);
 
   // MH ratio - dlmTree 
   if (RtR < 0) {
@@ -890,12 +891,12 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
           (0.5 * (ctr->n + 1.0) *
           (log(0.5 * (RtR - RtZVgZtR - mhr.beta) + ctr->xiInvSigma2) -
           log(0.5 * (RtR - RtZVgZtR - mhr0.beta) + ctr->xiInvSigma2))) -
-          (0.5 * ((mhr.nTerm1 * mhr0.nModTerm * log(treeVar * newExpVar)) -
-          (mhr0.nTerm1 * mhr0.nModTerm * log(treeVar * m1Var)))); 
+          (0.5 * (((mhr.nTerm1 + mhr.nTerm2) * mhr0.nModTerm * log(treeVar * newExpVar)) -
+          ((mhr0.nTerm1 + mhr0.nTerm2) * mhr0.nModTerm * log(treeVar * m1Var)))); 
 
   // Interaction
   if (newMixVar != 0){ 
-    ratio -= 0.5 * log(treeVar * newMixVar) * mhr.nTerm1 * mhr0.nTerm2 * mhr0.nModTerm;
+    ratio -= 0.5 * log(treeVar * newMixVar) * mhr.nTerm1 * mhr.nTerm2 * mhr.nModTerm;
   }
 
   if (mixVar != 0){ 
@@ -949,20 +950,22 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
   stepMhr = 0;
   success = 1;
 
-  // *** Propose a new dlmtree 1 ***
-  step2 = 0;                              // Always propose
-  newExp = sampleInt(ctr->expProb);       // Sample an exposure for the new tree
-  newExpVar = ctr->muExp(newExp);         // Find the exposure-specific variance for the new exposure
-
   // *** Create a new tree for proposal ***
   newTree = new Node(0, 1);               // Start from the root
-  newTree->nodestruct = expNS->clone();   // Construct ndoestruct
+  newTree->nodestruct = expNS->clone();   // Construct nodestruct
   drawTree(newTree, newTree, ctr->treePrior[0], ctr->treePrior[1]); // Grow a tree structure from the root
   newTree->setUpdate(1);                  // Update
   newDlmTerm2 = newTree->listTerminal();  // List the number of terminal nodes for the new tree
   for (Node* nt : newDlmTerm2) {          // Go through the new terminal node
     Exp[newExp]->updateNodeVals(nt);      // Update the calculations
   }
+
+  // *** Propose a new dlmtree 1 ***
+  step2 = 0;                              // Always propose
+  newExp = sampleInt(ctr->expProb);       // Sample an exposure for the new tree
+  newExpVar = ctr->muExp(newExp);         // Find the exposure-specific variance for the new exposure
+
+
 
   // HDLMMns
   // Update the interaction using the new exposure as well for TDLMMns/all
@@ -994,12 +997,12 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
           (0.5 * (ctr->n + 1.0) *
           (log(0.5 * (RtR - RtZVgZtR - mhr.beta) + ctr->xiInvSigma2) -
           log(0.5 * (RtR - RtZVgZtR - mhr0.beta) + ctr->xiInvSigma2))) -
-          (0.5 * ((mhr.nTerm2 * mhr0.nModTerm * log(treeVar * newExpVar)) -
-          (mhr0.nTerm2 * mhr0.nModTerm * log(treeVar * m2Var))));
+          (0.5 * (((mhr.nTerm1 + mhr.nTerm2) * mhr0.nModTerm * log(treeVar * newExpVar)) -
+          ((mhr0.nTerm1 + mhr0.nTerm2) * mhr0.nModTerm * log(treeVar * m2Var))));
 
   // Interaction
   if (newMixVar != 0){ 
-    ratio -= 0.5 * log(treeVar * newMixVar) * mhr0.nTerm1 * mhr.nTerm2 * mhr0.nModTerm;
+    ratio -= 0.5 * log(treeVar * newMixVar) * mhr.nTerm1 * mhr.nTerm2 * mhr.nModTerm;
   }
 
   if (mixVar != 0){ 
@@ -1465,7 +1468,7 @@ treeMHR dlmtreeHDLMM_MHR(std::vector<Node*> modTerm,
     if (interaction) {
       drawMixTemp = drawTemp.tail(pXDlm - pXDlm1 - pXDlm2);
       out.mixT2 += (drawMixTemp).dot(drawMixTemp);
-      out.nTermMix = drawMixTemp.size();
+      out.nTermMix = double(pXDlm - pXDlm1 - pXDlm2);
     }
 
     // Calculate fitted for each modifier terminal

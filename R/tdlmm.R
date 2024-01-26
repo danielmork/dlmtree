@@ -23,7 +23,7 @@
 #' response with logit link, or 'zinb' for zero-inflated negative binomial with logit link
 #' @param binomial.size integer type scalar (if all equal, default = 1) or
 #' vector defining binomial size for 'logit' family
-#' @param formula_zi object of class formula, a symbolic description of the ZI
+#' @param formula.zi object of class formula, a symbolic description of the ZI
 #' model to be fitted, e.g. y ~ a + b. This only applies to ZINB where covariates for
 #' ZI model is different from NB model. This is same as the main formula by default
 #' @param keep_XZ false (default) or true: keep the model scale exposure and covariate data
@@ -64,7 +64,7 @@ tdlmm <- function(formula,
                   n.thin = 5,
                   family = "gaussian",
                   binomial.size = 1,
-                  formula_zi = NULL, 
+                  formula.zi = NULL, 
                   keep_XZ = FALSE,
                   mixture.interactions = "noself",
                   tree.params = c(.95, 2),
@@ -150,7 +150,7 @@ tdlmm <- function(formula,
 
   # ZINB flag
   model$zinb <- 0
-  if(family == "zinb"){
+  if (family == "zinb") {
     model$zinb <- 1
     model$sigma2 <- 1
   }
@@ -226,27 +226,27 @@ tdlmm <- function(formula,
 
 
   # ---- [Setup control and response variables] ----
-  if(is.null(formula_zi)){
-    formula_zi <- formula
+  if (is.null(formula.zi)) {
+    formula.zi <- formula
   }
 
   model$formula <- force(as.formula(formula))     
-  model$formula_zi <- force(as.formula(formula_zi)) 
+  model$formula.zi <- force(as.formula(formula.zi)) 
   tf <- terms.formula(model$formula, data = data) 
-  tf_zi <- terms.formula(model$formula_zi, data = data) 
+  tf.zi <- terms.formula(model$formula.zi, data = data) 
 
   # Sanity check for response
-  if (!attr(tf, "response") & !attr(tf_zi, "response"))
+  if (!attr(tf, "response") & !attr(tf.zi, "response"))
     stop("no valid response in formula")
 
   # Save if intercept is included in the model
   model$intercept <- force(ifelse(attr(tf, "intercept"), TRUE, FALSE)) 
-  model$intercept_zi <- force(ifelse(attr(tf_zi, "intercept"), TRUE, FALSE)) 
+  model$intercept.zi <- force(ifelse(attr(tf.zi, "intercept"), TRUE, FALSE)) 
 
   # Sanity check for variables and the names
   if (length(which(attr(tf, "term.labels") %in% colnames(data))) == 0 & 
-      length(which(attr(tf_zi, "term.labels") %in% colnames(data))) == 0 & 
-      !model$intercept & !model$intercept_zi) 
+      length(which(attr(tf.zi, "term.labels") %in% colnames(data))) == 0 & 
+      !model$intercept & !model$intercept.zi) 
     stop("no valid variables in formula")
 
   # ---- [Exposure splits] ----
@@ -275,10 +275,10 @@ tdlmm <- function(formula,
   mf <- model.frame(model$formula, data = data,                
                     drop.unused.levels = TRUE,
                     na.action = NULL)
-  mf_zi <- model.frame(model$formula_zi, data = data,               
+  mf.zi <- model.frame(model$formula.zi, data = data,               
                       drop.unused.levels = TRUE,
                       na.action = NULL)
-  if (any(is.na(mf)) & any(is.na(mf_zi)))
+  if (any(is.na(mf)) & any(is.na(mf.zi)))
     stop("missing values in model data, use `complete.cases()` to subset data")
 
 
@@ -305,12 +305,12 @@ tdlmm <- function(formula,
   rm(QR)
 
   # covariates for ZI model
-  model$Z_zi <- force(model.matrix(model$formula_zi, data = mf_zi))  
-  QR_zi <- qr(crossprod(model$Z_zi))                                 
-  model$Z_zi <- model$Z_zi[,sort(QR_zi$pivot[seq_len(QR_zi$rank)])]           
-  model$droppedCovar_zi <- colnames(model$Z_zi)[QR_zi$pivot[-seq_len(QR_zi$rank)]]
-  model$Z_zi <- force(scaleModelMatrix(model$Z_zi))
-  rm(QR_zi)
+  model$Z.zi <- force(model.matrix(model$formula.zi, data = mf.zi))  
+  QR.zi <- qr(crossprod(model$Z.zi))                                 
+  model$Z.zi <- model$Z.zi[,sort(QR.zi$pivot[seq_len(QR.zi$rank)])]           
+  model$droppedCovar.zi <- colnames(model$Z.zi)[QR.zi$pivot[-seq_len(QR.zi$rank)]]
+  model$Z.zi <- force(scaleModelMatrix(model$Z.zi))
+  rm(QR.zi)
 
   # Organize for different models
   # Gaussian
@@ -332,10 +332,10 @@ tdlmm <- function(formula,
   model$Znames <- colnames(model$Z)
   model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
 
-  model$Zscale_zi <- attr(model$Z_zi, "scaled:scale")
-  model$Zmean_zi <- attr(model$Z_zi, "scaled:center")
-  model$Znames_zi <- colnames(model$Z_zi)
-  model$Z_zi <- force(matrix(model$Z_zi, nrow(model$Z_zi), ncol(model$Z_zi)))
+  model$Zscale.zi <- attr(model$Z.zi, "scaled:scale")
+  model$Zmean.zi <- attr(model$Z.zi, "scaled:center")
+  model$Znames.zi <- colnames(model$Z.zi)
+  model$Z.zi <- force(matrix(model$Z.zi, nrow(model$Z.zi), ncol(model$Z.zi)))
 
   
   
@@ -374,7 +374,7 @@ tdlmm <- function(formula,
 
   # ZINB fixed effect (binary)
   model$b1 <- sapply(1:ncol(model$b1), function(i) {
-  model$b1[,i] * model$Yscale / model$Zscale_zi[i] })
+  model$b1[,i] * model$Yscale / model$Zscale.zi[i] })
 
   # ZINB fixed effect (NegBin)
   model$b2 <- sapply(1:ncol(model$b2), function(i) {
@@ -391,14 +391,14 @@ tdlmm <- function(formula,
       model$b2[,1] <- model$b2[,1] - model$b2[,-1,drop=FALSE] %*% model$Zmean[-1]
   }
 
-  if (model$intercept_zi) {
+  if (model$intercept.zi) {
     model$b1[,1] <- model$b1[,1] + model$Ymean
-    if (ncol(model$Z_zi) > 1)
-      model$b1[,1] <- model$b1[,1] - model$b1[,-1,drop=FALSE] %*% model$Zmean_zi[-1]
+    if (ncol(model$Z.zi) > 1)
+      model$b1[,1] <- model$b1[,1] - model$b1[,-1,drop=FALSE] %*% model$Zmean.zi[-1]
   }
 
   colnames(model$gamma) <- model$Znames
-  colnames(model$b1) <- model$Znames_zi
+  colnames(model$b1) <- model$Znames.zi
   colnames(model$b2) <- model$Znames
 
   # rescale DLM and Mixture estimates
@@ -449,11 +449,11 @@ tdlmm <- function(formula,
   }
 
   # Remove model and exposure data
-  if(!keep_XZ){
+  if (!keep_XZ) {
     for (i in 1:length(model$X))
       model$X[[i]]$X <- model$X[[i]]$Tcalc <- NULL
     model$Z <- NULL
-    model$Z_zi <- NULL
+    model$Z.zi <- NULL
   }
 
 

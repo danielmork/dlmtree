@@ -285,7 +285,7 @@ void dlmtreeTDLMNestedGaussian_TreeMCMC(int t, Node* modTree, NodeStruct* expNS,
   } // end record
 
 
-} // end dlmtreeTDLMGaussian_TreeMCMC function
+} // end dlmtreeHDLMGaussian_TreeMCMC function
 
 // [[Rcpp::export]]
 Rcpp::List dlmtreeTDLMNestedGaussian(const Rcpp::List model)
@@ -304,6 +304,7 @@ Rcpp::List dlmtreeTDLMNestedGaussian(const Rcpp::List model)
   ctr->modKappa = 100;
   
   ctr->binomial = 0;
+  ctr->zinb = 0;
   ctr->verbose = bool (model["verbose"]);
   ctr->diagnostics = bool (model["diagnostics"]);
   ctr->stepProb = as<std::vector<double> >(model["stepProbTDLM"]);
@@ -545,4 +546,4 @@ Rcpp::List dlmtreeTDLMNestedGaussian(const Rcpp::List model)
                             Named("treeModAccept") = wrap(modAccept),
                             Named("treeDLMAccept") = wrap(dlmAccept)));
 
-} // end dlmtreeTDLMGaussian
+} // end dlmtreeHDLMGaussian

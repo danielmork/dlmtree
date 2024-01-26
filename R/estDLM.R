@@ -2,15 +2,34 @@ estDLM <- function(object,
                    new.data,
                    group.index,
                    conf.level = 0.95,
+                   exposure = NULL,
                    cenval = 0,
                    return.mcmc = FALSE,
                    mem.safe = FALSE,
                    verbose = TRUE)
 {
-  if (class(object) != 'dlmtree')
-    stop("`object` must be return from model `dlmtree`")
-  if (!all(object$modNames %in% colnames(new.data)))
+  if (!(class(object) %in% c("hdlm", "hdlmm", "dlmtree"))) {
+    stop("`object` must be one of `hdlm` or `hdlmm`")
+  }
+
+  if (class(object) %in% c("hdlmm", "dlmtree")){
+    if(!(exposure %in% object$expNames || is.null(exposure))){
+      stop("exposure must match the exposure names in the model")
+    } 
+
+    if(is.null(exposure)){
+      exposure <- object$expNames[1]
+      warning(paste0("'exposure' has not been selected. Running with the first exposure: ", exposure))
+    }
+
+    TreeStructs <- object$TreeStructs[(object$TreeStructs$exp + 1) == which(object$expNames == exposure), ]
+  } else {
+    TreeStructs <- object$TreeStructs
+  }
+    
+  if (!all(object$modNames %in% colnames(new.data))) {
     stop("`new.data` must have the same colunm names as the original model")
+  }
 
   out <- list()
   class(out) <- "estDLM"
@@ -30,81 +49,108 @@ estDLM <- function(object,
     }
     new.data[[m]]
   })
+  
   names(mod) <- object$modNames
 
+  out$mod <- mod
+
   # Name group indices
-  if (!is.list(group.index))
+  if (!is.list(group.index)) {
     group.index <- list(group.index)
-  if (is.null(names(group.index)))
+  }
+    
+  if (is.null(names(group.index))) {
     names(group.index) <- 1:length(group.index)
-  if (any(sapply(group.index, function(x) any(x > nrow(new.data)))))
+  }
+    
+  if (any(sapply(group.index, function(x) any(x > nrow(new.data))))) {
     stop("at least one item of `group.index` exceeds range of data")
+  }
+    
   out$n <- lapply(group.index, length)
   out$groupIndex <- group.index
 
-  tempMod <- data.frame(Rule = unique(object$TreeStructs$Rule))
+  tempMod <- data.frame(Rule = unique(TreeStructs$Rule))
   rules <- strsplit(tempMod$Rule, " & ", T)
   mark <- ceiling(length(rules) / 42)
 
   # Analyze trees for each group index list
   for (i in 1:length(group.index)) {
-    if (names(group.index)[i] == "")
+    if (names(group.index)[i] == "") {
       names(group.index[i]) <- i
-    if (verbose)
+    }
+      
+    if (verbose) {
       cat(paste0("Reanalyzing trees for group ", names(group.index)[i], "\n",
                  "% complete\n[0--------25--------50--------75--------100]\n '"))
+    }
+      
     modDat <- lapply(mod, function(k) k[group.index[[i]]])
     names(modDat) <- names(mod)
     ri <- ruleIdx(modDat, mem.safe)
     tempMod[[paste0("Weight", i)]] <- sapply(1:length(rules), function(i) {
-      if (verbose && (i %% mark == 0))
+      if (verbose && (i %% mark == 0)) {
         cat("'")
+      }
+        
       ri$returnWeight(rules[[i]])
     })
     rm(ri)
-    if (verbose)
+
+    if (verbose) {
       cat("\n")
+    }
+      
   }
 
-  if (verbose)
+  if (verbose) {
     cat("Calcuating DLMs...")
-  DLM <- merge.data.frame(object$TreeStructs, tempMod, by = "Rule")
-  if (return.mcmc)
+  }
+    
+  DLM <- merge.data.frame(TreeStructs, tempMod, by = "Rule")
+  if (return.mcmc) {
     out$mcmc <- list()
+  }
+    
   out$dlmMean <- list()
   out$dlmCI <- list()
   out$dlmCum <- list()
 
 
-  # ---- dlmType: GP ----
-  if (object$dlmType == "gp") {
-    for (i in 1:length(group.index)) {
-      gDLM <- DLM[,5:(4 + object$pExp)] * DLM[[paste0("Weight", i)]]
-      mcmc <-
-        sapply(1:max(DLM$Iter), function(i) {
-          rowSums(
-            sapply(1:max(DLM$Tree), function(t) {
-              colSums(gDLM[which(DLM$Iter == i & DLM$Tree == t),, drop = F])
-            })
-          )
-        })
-      if (return.mcmc)
-        out$mcmc[[names(group.index)[i]]] <- mcmc
-      out$dlmMean[[names(group.index)[i]]] <- rowMeans(mcmc)
-      out$dlmCI[[names(group.index)[i]]] <- apply(mcmc, 1, quantile, probs = ci.lims)
-      out$dlmCum[[names(group.index)[i]]] <- c(mean = mean(rowMeans(mcmc)), quantile(colSums(mcmc), probs = ci.lims))
-    }
-    out$dlFunction <- "dlm"
+  # # ---- dlmType: GP ----
+  # if (object$dlmType == "gp") {
+  #   for (i in 1:length(group.index)) {
+  #     gDLM <- DLM[,5:(4 + object$pExp)] * DLM[[paste0("Weight", i)]]
+  #     mcmc <-
+  #       sapply(1:max(DLM$Iter), function(i) {
+  #         rowSums(
+  #           sapply(1:max(DLM$Tree), function(t) {
+  #             colSums(gDLM[which(DLM$Iter == i & DLM$Tree == t),, drop = F])
+  #           })
+  #         )
+  #       })
+  #     if (return.mcmc) {
+  #       out$mcmc[[names(group.index)[i]]] <- mcmc
+  #     }
+        
+  #     out$dlmMean[[names(group.index)[i]]] <- rowMeans(mcmc)
+  #     out$dlmCI[[names(group.index)[i]]] <- apply(mcmc, 1, quantile, probs = ci.lims)
+  #     out$dlmCum[[names(group.index)[i]]] <- c(mean = mean(rowMeans(mcmc)), quantile(colSums(mcmc), probs = ci.lims))
+  #   }
+  #   out$dlFunction <- "dlm"
 
 
   # ---- dlmType: TDLM ----
-  } else if (object$dlFunction == "dlm") {
+  # } else if (object$dlFunction == "dlm") {
+  # } else {
     for (i in 1:length(group.index)) {
       DLM$w.est <- DLM$est * DLM[[paste0("Weight", i)]]
       mcmc <- dlmEst(as.matrix(DLM[,c("Iter", "Tree", "tmin", "tmax", "w.est")]),
                      object$pExp, object$mcmcIter)
-      if (return.mcmc)
+      if (return.mcmc) {
         out$mcmc[[names(group.index)[i]]] <- mcmc
+      }
+
       out$dlmMean[[names(group.index)[i]]] <- rowMeans(mcmc)
       out$dlmCI[[names(group.index)[i]]] <- apply(mcmc, 1, quantile, probs = ci.lims)
       out$dlmCum[[names(group.index)[i]]] <- c(mean = mean(rowMeans(mcmc)), quantile(colSums(mcmc), probs = ci.lims))
@@ -112,7 +158,7 @@ estDLM <- function(object,
     out$dlFunction <- "dlm"
 
   # ---- dlmType: TDLNM ----
-  } #else {
+  # } #else {
   #   for (i in 1:length(group.index)) {
   #     DLM$w.est <- DLM$est * DLM[[paste0("Weight", i)]]
   #     if (is.na(object$SE[1])) {
@@ -142,8 +188,7 @@ estDLM <- function(object,
 
 
 
-ruleIdx <- function(mod, mem.safe = FALSE)
-{
+ruleIdx <- function(mod, mem.safe = FALSE) {
   self <- environment()
   n <- length(mod[[1]])
   idxList <- list()

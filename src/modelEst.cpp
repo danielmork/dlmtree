@@ -32,23 +32,24 @@ using Eigen::Upper;
 void tdlmModelEst(modelCtr *ctr)
 { 
   if(!(ctr->zinb)){ 
-    const Eigen::VectorXd ZR = ctr->Zw.transpose() * ctr->R; 
+    const VectorXd ZR = ctr->Zw.transpose() * ctr->R; 
     ctr->gamma = ctr->Vg * ZR; 
     
     // * Update sigma^2 and xi_sigma2
     if (!(ctr->binomial)) {
       rHalfCauchyFC(&(ctr->sigma2), (double)ctr->n + (double)ctr->totTerm, 
                     ctr->R.dot(ctr->R) - ZR.dot(ctr->gamma) + ctr->sumTermT2 / ctr->nu, &(ctr->xiInvSigma2));
-      if ((ctr->sigma2 != ctr->sigma2)) {// ! stop if infinte or nan variance
-      Rcout << ctr->sigma2 << " " << ctr->totTerm << " " << 
-        ctr->R.dot(ctr->R) << " " << ZR.dot(ctr->gamma) << " " <<
-        ctr->sumTermT2 / ctr->nu << " " << ctr->xiInvSigma2;
-      stop("\nNaN values (sigma) occured during model run, rerun model.\n");
+
+      if ((ctr->sigma2 != ctr->sigma2)) {// ! stop if infinite or nan variance
+        // Rcout << ctr->sigma2 << " " << ctr->totTerm << " " << 
+        //   ctr->R.dot(ctr->R) << " " << ZR.dot(ctr->gamma) << " " << ctr->R << " " <<
+        //   " " << ctr->Z << " " << ZR << " " << (ctr->gamma) << " " << ctr->sumTermT2 / ctr->nu << " " << ctr->xiInvSigma2;
+        stop("\nNaN values (sigma) occured during model run, rerun model.\n");
       }
     }
 
     // * Draw fixed effect coefficients' variance
-    ctr->gamma.noalias() += ctr->VgChol * as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2))); 
+    ctr->gamma.noalias() += ctr->VgChol * as<VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2))); 
 
     // * Update polya gamma vars
     if (ctr->binomial) {

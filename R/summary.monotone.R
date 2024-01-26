@@ -1,6 +1,6 @@
-#' summary.tdlnm
+#' summary.monotone
 #'
-#' @param object an object of class 'tdlnm', result of a call to tdlnm
+#' @param object an object of class 'monotone'
 #' @param pred.at numerical vector of exposure values to make predictions for
 #' at each time period
 #' @param cenval scalar exposure value that acts as a reference point for
@@ -8,17 +8,17 @@
 #' @param conf.level confidence level for computation of credible intervals
 #' @param exposure.se scalar smoothing factor, if different from model
 #'
-#' @return Summary of tdlnm fit
-#' @export summary.tdlnm
+#' @return Summary of monotone fit
+#' @export summary.monotone
 #' @export
 #'
-summary.tdlnm <- function(object,
-                          pred.at = NULL,
-                          cenval = 0,
-                          conf.level = 0.95,
-                          exposure.se = NULL,
-                          mcmc = FALSE,
-                          verbose = TRUE)
+summary.monotone <- function(object,
+                             pred.at = NULL,
+                             cenval = 0,
+                             conf.level = 0.95,
+                             exposure.se = NULL,
+                             mcmc = FALSE,
+                             verbose = TRUE)
 {
   Iter <- object$mcmcIter
   Lags <- object$pExp
@@ -59,14 +59,10 @@ summary.tdlnm <- function(object,
   }
 
   # Bayes factor
-  splitIter <- matrix(1, Lags, Iter)
-  splitProb <- rep(0, Lags)
-  # if (object$monotone) {
-  #   splitIter <- t(object$zirtSplitCounts)
-  #   splitProb <- rowMeans(splitIter > 0)
-  #   # logBF <- log10(splitProb) - log10(1 - splitProb) -
-  #   #   (log10(1 - (1 - object$zirtGamma0)) - log10((1 - object$zirtGamma0)))
-  # }
+  splitIter <- t(object$zirtSplitCounts)
+  splitProb <- rowMeans(splitIter > 0)
+  # logBF <- log10(splitProb) - log10(1 - splitProb) -
+  #   (log10(1 - (1 - object$zirtGamma0)) - log10((1 - object$zirtGamma0)))
 
   # Generate cumulative estimtes
   cumexp <- as.data.frame(t(sapply(1:length(pred.at), function(i) {
@@ -81,7 +77,7 @@ summary.tdlnm <- function(object,
   cilower <-  matrix(0, length(pred.at), Lags)
   ciupper <-  matrix(0, length(pred.at), Lags)
   rownames(matfit) <- rownames(cilower) <- rownames(ciupper) <- pred.at
-  colnames(plot.dat) <-  c("Tmin", "Tmax", "Xmin", "Xmax", "PredVal", "Est", "SD", "CIMin", "CIMax", "Effect")
+  colnames(plot.dat) <- c("Tmin", "Tmax", "Xmin", "Xmax", "PredVal", "Est", "SD", "CIMin", "CIMax", "Effect")
   for (i in 1:Lags) {
     for (j in 1:length(pred.at)) {
       # if (object$monotone & zirt.cond) {
@@ -95,16 +91,16 @@ summary.tdlnm <- function(object,
       # } else {
       coordest <- dlmest[i,j,]  
       # }
-      me <- mean(coordest)
-      s <- sd(coordest)
-      ci <- quantile(coordest, ci.lims)
-      effect <- ifelse(min(ci) > 0, 1, ifelse(max(ci) < 0, -1, 0))
+      me <-       mean(coordest)
+      s <-        sd(coordest)
+      ci <-       quantile(coordest, ci.lims)
+      effect <-   ifelse(min(ci) > 0, 1, ifelse(max(ci) < 0, -1, 0))
       plot.dat[(i - 1) * length(pred.at) + j, ] <-
         c(i - 1, i, edge.vals[j], edge.vals[j + 1], pred.at[j],
           me, s, ci, effect)
-      matfit[j, i] <- mean(coordest)
-      cilower[j, i] <- ci[1]
-      ciupper[j, i] <- ci[2]
+      matfit[j, i] <-   mean(coordest)
+      cilower[j, i] <-  ci[1]
+      ciupper[j, i] <-  ci[2]
     }
   }
   plot.dat$Effect <- factor(plot.dat$Effect, levels = c(-1, 0, 1), labels = c("-", " ", "+"))

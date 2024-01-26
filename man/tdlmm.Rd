@@ -14,7 +14,7 @@ tdlmm(
   n.thin = 5,
   family = "gaussian",
   binomial.size = 1,
-  formula_zi = NULL,
+  formula.zi = NULL,
   keep_XZ = FALSE,
   mixture.interactions = "noself",
   tree.params = c(0.95, 2),
@@ -51,7 +51,7 @@ response with logit link, or 'zinb' for zero-inflated negative binomial with log
 \item{binomial.size}{integer type scalar (if all equal, default = 1) or
 vector defining binomial size for 'logit' family}
 
-\item{formula_zi}{object of class formula, a symbolic description of the ZI
+\item{formula.zi}{object of class formula, a symbolic description of the ZI
 model to be fitted, e.g. y ~ a + b. This only applies to ZINB where covariates for
 ZI model is different from NB model. This is same as the main formula by default}
 

@@ -204,7 +204,7 @@ void tdlnmTreeMCMC(int t, Node *tree, tdlmCtr *ctr, tdlmLog *dgn,
                 mhr0.termT2 / (ctr->sigma2 * ctr->nu));
 
   if ((ctr->tau)(t) != (ctr->tau)(t)) {
-    Rcout << ctr->gamma << "\n" << ctr->sigma2 << " " << ctr->tau << "\n" << ctr->Omega.mean();
+    // Rcout << ctr->gamma << "\n" << ctr->sigma2 << " " << ctr->tau << "\n" << ctr->Omega.mean();
     stop("\nNaN values occured during model run, rerun model.\n");
   }
 
@@ -269,14 +269,16 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   ctr->diagnostics = as<bool>(model["diagnostics"]);
 
   ctr->binomial = as<bool>(model["binomial"]);
-  ctr->zinb = as<bool>(model["zinb"]); // ZINB flag
-  ctr->stepProb = as<std::vector<double> >(model["stepProb"]);
-  ctr->treePrior = as<std::vector<double> >(model["treePrior"]);
+  ctr->zinb = as<bool>(model["zinb"]); 
+  ctr->stepProb = as<std::vector<double> >(model["stepProbTDLM"]);
+  ctr->treePrior = as<std::vector<double> >(model["treePriorTDLM"]);
   ctr->shrinkage = as<int>(model["shrinkage"]);
   ctr->modKappa = 1.0;
   
   // * Set up model data
-  ctr->Y0 = as<VectorXd>(model["Y"]);       
+  ctr->Y0 = as<VectorXd>(model["Y"]);    
+  ctr->Ystar = as<Eigen::VectorXd>(model["Y"]);
+  
   ctr->n = (ctr->Y0).size();                
 
   ctr->Z = as<MatrixXd>(model["Z"]);
@@ -284,7 +286,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   ctr->pZ = (ctr->Z).cols();
 
   // ZI model
-  ctr->Z1 = as<Eigen::MatrixXd>(model["Z_zi"]);  
+  ctr->Z1 = as<Eigen::MatrixXd>(model["Z.zi"]);  
   ctr->Zw1 = ctr->Z1; 
   ctr->pZ1 = (ctr->Z1).cols(); 
 
@@ -481,7 +483,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     tdlmModelEst(ctr);
     rHalfCauchyFC(&(ctr->nu), ctr->totTerm, ctr->sumTermT2 / ctr->sigma2);
     if ((ctr->sigma2 != ctr->sigma2) || (ctr->nu != ctr->nu)) {
-      Rcout << ctr->gamma << "\n" << ctr->sigma2 << " " << ctr->nu << "\n" << ctr->Omega.mean() << " " << ctr->Y.mean();
+      // Rcout << ctr->gamma << "\n" << ctr->sigma2 << " " << ctr->nu << "\n" << ctr->Omega.mean() << " " << ctr->Y.mean();
       stop("\nNaN values occured during model run, rerun model.\n");
       }
 
@@ -535,7 +537,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   for (s = 0; s < trees.size(); ++s)
     delete trees[s];
 
-  return(Rcpp::List::create(Named("DLM")    = wrap(DLM),
+  return(Rcpp::List::create(Named("TreeStructs")    = wrap(DLM),
                             Named("fhat")   = wrap(fhat),
                             Named("Yhat") = wrap(YhatOut),
                             Named("sigma2") = wrap(sigma2),
