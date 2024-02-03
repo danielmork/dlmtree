@@ -721,10 +721,10 @@ shiny.hdlm <- function(fit)
               names(list_num) <- names(dlm_list) <- names(dlm_lower_list) <- names(dlm_upper_list) <- comb$comb
               
               for(cat in mod1_cat){
-                list_num[[paste0(cat, " & ", sub_mod2, " < ", mid_loc2)]] <- fit$data[fit$data[, sub_mod2] < mid_loc1 & fit$data[, sub_mod1] == cat, ] %>% 
-                  sample_n(sample_size) %>% mutate(Var1 = mod1_num[1])
-                list_num[[paste0(cat, " & ", mid_loc2, " =< ", sub_mod2)]] <- fit$data[fit$data[, sub_mod2] >= mid_loc1 & fit$data[, sub_mod1]  == cat, ] %>% 
-                  sample_n(sample_size) %>% mutate(Var1 = mod1_num[2])
+                list_num[[paste0(cat, " & ", sub_mod2, " < ", mid_loc2)]] <- fit$data[fit$data[, sub_mod2] < mid_loc2 & fit$data[, sub_mod1] == cat, ] %>% 
+                  sample_n(sample_size) %>% mutate(Var1 = mod2_num[1])
+                list_num[[paste0(cat, " & ", mid_loc2, " =< ", sub_mod2)]] <- fit$data[fit$data[, sub_mod2] >= mid_loc2 & fit$data[, sub_mod1]  == cat, ] %>% 
+                  sample_n(sample_size) %>% mutate(Var1 = mod2_num[2])
               }
               
               withProgress(message = 'Calculating...', value = 0, {
