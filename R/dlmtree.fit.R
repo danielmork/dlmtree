@@ -96,12 +96,11 @@
 #'
 #' # Example 1: TDLNM
 #' # Gaussian
-#' D <- sim.tdlnm(effect = "A", error.to.signal = 1) 
-#' splits <- seq(min(D$exposure), max(D$exposure), length.out = 52)
-#' fit <- dlmtree.fit(formula = y ~ ., 
-#'                    data = D$dat, 
-#'                    exposure.data = as.matrix(D$exposure),
-#'                    tdlnm.exposure.splits = splits,
+#' D <- sim.tdlnm(effect = "A", error.to.signal = 1)
+#' fit <- dlmtree.fit(formula = y ~ .,
+#'                    data = D$dat,
+#'                    exposure.data = as.matrix(D$exposures),
+#'                    exposure.splits = 20,
 #'                    dlm.type = "nonlinear",
 #'                    family = "gaussian",
 #'                    mixture = FALSE,
@@ -109,7 +108,7 @@
 #'
 #' # Example 2: TDLM
 #' # Binary
-#' D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 5000)
+#' D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
 #' fit <- dlmtree.fit(formula = y ~ .,
 #'                    data = D$dat, 
 #'                    exposure.data = D$exposures[[1]],
@@ -121,7 +120,7 @@
 #'
 #' # Example 3: HDLM
 #' # Gaussian (Shared DLM tree)
-#' D <- sim.hdlmm(sim = "A", n = 5000)
+#' D <- sim.hdlmm(sim = "A", n = 1000)
 #' fit <- dlmtree.fit(y ~ ., 
 #'                    data = D$dat,
 #'                    exposure.data = D$exposure,
@@ -132,7 +131,7 @@
 #'                    hdlm.dlmtree.type = "shared")
 #'
 #' # Gaussian (Nested DLM tree)
-#' D <- sim.hdlmm(sim = "A", n = 5000)
+#' D <- sim.hdlmm(sim = "A", n = 1000)
 #' fit <- dlmtree.fit(y ~ ., 
 #'                    data = D$dat,
 #'                    exposure.data = D$exposure,
@@ -144,7 +143,7 @@
 #'
 #' # Example 4: TDLMM
 #' # Binary
-#' D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 5000)
+#' D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
 #' fit <- dlmtree.fit(formula = y ~ .,
 #'                    data = D$dat,
 #'                    exposure.data = D$exposures,
@@ -157,7 +156,7 @@
 #'                    hdlm.modifiers = "all")
 #'
 #' # Gaussian
-#' D <- sim.tdlmm(sim = "B", error = 1, n = 5000)
+#' D <- sim.tdlmm(sim = "B", error = 1, n = 1000)
 #' fit <- dlmtree.fit(formula = y ~ .,
 #'                    data = D$dat,
 #'                    exposure.data = D$exposures,
@@ -170,10 +169,10 @@
 #'
 #' # Example 5: HDLMM
 #' # Gaussian
-#' D <- sim.hdlmm(sim = "D", n = 5000)
+#' D <- sim.hdlmm(sim = "D", n = 1000)
 #' fit <- dlmtree.fit(formula = y ~ ., 
 #'                    data = D$dat,
-#'                    xposure.data = D$exposures,
+#'                    exposure.data = D$exposures,
 #'                    dlm.type = "linear",
 #'                    family = "gaussian",
 #'                    mixture = TRUE,

@@ -13,9 +13,10 @@ void dlmtreeHDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
                                    modDat* Mod, exposureDat* Exp);
 
 treeMHR dlmtreeTDLM_MHR(std::vector<Node*> modTerm,
-                   std::vector<Node*> dlmTerm,
-                   dlmtreeCtr* ctr, Eigen::VectorXd ZtR, 
-                   double treevar);
+                        std::vector<Node*> dlmTerm,
+                        dlmtreeCtr* ctr, 
+                        Eigen::VectorXd ZtR, 
+                        double treevar);
 
 
 // [[Rcpp::export]]
@@ -441,7 +442,7 @@ void dlmtreeHDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
     // -- Update DLM partial estimate --
     std::string rule;
     Eigen::VectorXd rec(9);
-    Eigen::VectorXd draw(ctr->pX);
+    // Eigen::VectorXd draw(ctr->pX);
     for (s = 0; s < modTerm.size(); ++s) {
       rule = modRuleStr(modTerm[s], Mod);
       for (std::size_t s2 = 0; s2 < dlmTerm.size(); ++s2) {
@@ -450,15 +451,15 @@ void dlmtreeHDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
           (dlmTerm[s2]->nodestruct)->get(2), // Exposure maximum value
           (dlmTerm[s2]->nodestruct)->get(3), // tmin
           (dlmTerm[s2]->nodestruct)->get(4), // tmax
-          mhr0.draw(s * mhr0.nDlmTerm + s2);
+          mhr0.draw[s * mhr0.nDlmTerm + s2];
         dgn->termRule.push_back(rule);
         dgn->DLMexp.push_back(rec);
         
-        if (ctr->nSplits == 0) {
-          for (int t2 = dlmTerm[s2]->nodestruct->get(3) - 1;
-              t2 < dlmTerm[s2]->nodestruct->get(4); ++t2)
-            draw(t2) = mhr0.draw(s * mhr0.nDlmTerm + s2);
-        }
+        // if (ctr->nSplits == 0) {
+        //   for (int t2 = dlmTerm[s2]->nodestruct->get(3) - 1; t2 < dlmTerm[s2]->nodestruct->get(4); ++t2){
+        //     draw(t2) = mhr0.draw(s * mhr0.nDlmTerm + s2);
+        //   }
+        // }
       } // end loop over tdlm nodes
       
       // if (ctr->nSplits == 0) {

@@ -1185,7 +1185,7 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
         rec[5] = m1;                                  
         rec[6] = (dlmTerm1[i]->nodestruct)->get(3);   
         rec[7] = (dlmTerm1[i]->nodestruct)->get(4);   
-        rec[8] = mhr0.drawAll(s * mhr0.nDlmTerm + i); 
+        rec[8] = mhr0.drawAll[s * mhr0.nDlmTerm + i]; 
         rec[9] = (ctr->tau)(t) * m1Var;               
 
         (dgn->termRule).push_back(rule); 
@@ -1199,7 +1199,7 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
             rec[5] = m2;                                  
             rec[6] = (dlmTerm2[j]->nodestruct)->get(3);   
             rec[7] = (dlmTerm2[j]->nodestruct)->get(4);   
-            rec[8] = mhr0.drawAll(s * mhr0.nDlmTerm + mhr0.nTerm1 + j);
+            rec[8] = mhr0.drawAll[s * mhr0.nDlmTerm + mhr0.nTerm1 + j];
             rec[9] = (ctr->tau)(t) * m2Var;
             
             (dgn->termRule).push_back(rule);
@@ -1223,7 +1223,7 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
               mix[4] = (dlmTerm2[j]->nodestruct)->get(3); 
               mix[5] = (dlmTerm2[j]->nodestruct)->get(4);
             }
-            mix[9] = mhr0.drawAll(s * mhr0.nDlmTerm + mhr0.nTerm1 + mhr0.nTerm2 + k);
+            mix[9] = mhr0.drawAll[s * mhr0.nDlmTerm + mhr0.nTerm1 + mhr0.nTerm2 + k];
             
             (dgn->termRuleMIX).push_back(rule); 
             (dgn->MIXexp).push_back(mix);       

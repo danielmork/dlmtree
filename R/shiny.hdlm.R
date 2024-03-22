@@ -191,7 +191,7 @@ shiny.hdlm <- function(fit)
                                         
                                         plotOutput(outputId = "subgroupDLM", height = "600px"), # Individualized DLM effect
                                         tags$hr(),
-                                        plotOutput(outputId = "subgroupWeight", height = "1000px")
+                                        plotOutput(outputId = "subgroupWeight", height = "1000px") # Subgroup effect
                                       )
                             )#,
                             # tabPanel("Model diagnostics",
