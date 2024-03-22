@@ -40,7 +40,7 @@ plot.summary.tdlmm <- function(object,
     #cat("Plotting DLM marginal nonlinear effects:\n")
     #}
     for (ex.name in object$expNames) {
-      if (!cw.plots.only | any(object$TreeStructs[[ex.name]]$marg.cw)) {
+      if (!cw.plots.only | any(object$DLM[[ex.name]]$marg.cw)) {
         plot(plot.summary.tdlmm(object, type, ex.name, NULL, time1, time2, ...))
         readline(prompt = "Press [enter] to continue")
       }
@@ -87,9 +87,9 @@ plot.summary.tdlmm <- function(object,
       main <- ifelse(!is.null(args$main), args$main,
                      paste0("Marginal effect: ", exposure1))
 
-      dat <- data.frame("Est" = object$TreeStructs[[exposure1]]$marg.matfit,
-                        "CIMin" = object$TreeStructs[[exposure1]]$marg.cilower,
-                        "CIMax" = object$TreeStructs[[exposure1]]$marg.ciupper,
+      dat <- data.frame("Est" = object$DLM[[exposure1]]$marg.matfit,
+                        "CIMin" = object$DLM[[exposure1]]$marg.cilower,
+                        "CIMax" = object$DLM[[exposure1]]$marg.ciupper,
                         "X" = Lags)
 
       if (!is.null(scale)) {  # Scaling for dlm
@@ -170,7 +170,7 @@ plot.summary.tdlmm <- function(object,
 
     p <- ggplot(plotDat, aes(x = `x`, y = `y`, z = `Effect`, fill = `Effect`)) +
       geom_tile() +
-      scale_fill_viridis()
+      scale_fill_gradientn(colors = viridis::viridis(10))
 
     if (show.cw){
       p <- p + geom_point(data = plotDat[which(plotDat$CW != 0),],

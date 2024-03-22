@@ -13,12 +13,11 @@
 #' 'start.time' which sets the first time value
 #'
 #' @import ggplot2
-#' @import viridis
 #' @export plot.summary.tdlnm
 #' @export
 #'
 plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(), trueDLM = NULL, ...) {
-  if (summary$ctr$dl.function == "tdlm" & plot.type == "mean"){
+  if (summary$ctr$class == "tdlm" & plot.type == "mean"){
     plot.type = "dlm"
   }
 
@@ -35,7 +34,8 @@ plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(
                                       ymin = Xmin,
                                       ymax = Xmax, fill = Est)) +
           geom_rect() +
-          scale_color_viridis(aesthetics = "fill", option = "D") +
+          #scale_color_viridis(aesthetics = "fill", option = "D") +
+          scale_fill_gradientn(colors = viridis::viridis(10)) +
           scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
           theme_bw() +
           labs(x = xlab, y = ylab, fill = flab, title = main)
@@ -46,7 +46,8 @@ plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(
                                       ymin = Xmin,
                                       ymax = Xmax, fill = SD)) +
           geom_rect() +
-          scale_color_viridis(aesthetics = "fill", option = "B") +
+          #scale_color_viridis(aesthetics = "fill", option = "B") +
+          scale_fill_gradientn(colors = viridis::viridis(10)) +
           scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
           theme_bw() +
           labs(x = xlab, y = ylab, fill = flab, title = main)
@@ -56,7 +57,8 @@ plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(
                                       ymin = Xmin,
                                       ymax = Xmax, fill = CIMin)) +
           geom_rect() +
-          scale_color_viridis(aesthetics = "fill", option = "A") +
+          #scale_color_viridis(aesthetics = "fill", option = "A") +
+          scale_fill_gradientn(colors = viridis::viridis(10)) +
           scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
           theme_bw() +
           labs(x = xlab, y = ylab, fill = flab, title = main)
@@ -67,7 +69,8 @@ plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(
                                       ymin = Xmin,
                                       ymax = Xmax, fill = CIMax)) +
           geom_rect() +
-          scale_color_viridis(aesthetics = "fill", option = "A") +
+          # scale_color_viridis(aesthetics = "fill", option = "A") +
+          scale_fill_gradientn(colors = viridis::viridis(10)) +
           scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
           theme_bw() +
           labs(x = xlab, y = ylab, fill = flab, title = main)

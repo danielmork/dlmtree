@@ -24,7 +24,6 @@ S3method(shiny, hdlm)
 S3method(shiny, hdlmm)
 
 import(ggplot2)
-import(viridis)
 import(shiny)
 import(shinythemes)
 
