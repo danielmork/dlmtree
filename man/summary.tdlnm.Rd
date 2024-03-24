@@ -26,6 +26,10 @@ predictions at all other exposure values}
 \item{conf.level}{confidence level for computation of credible intervals}
 
 \item{exposure.se}{scalar smoothing factor, if different from model}
+
+\item{mcmc}{true or false (default): return MCMC samplers}
+
+\item{verbose}{true (default) or false: print output}
 }
 \value{
 Summary of tdlnm fit

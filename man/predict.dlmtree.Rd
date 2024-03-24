@@ -8,13 +8,13 @@
   object,
   new.data,
   new.exposure.data,
-  ...,
   ci.level = 0.95,
   type = "response",
   outcome = NULL,
   fixed.idx = list(),
   est.dlm = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  ...
 )
 }
 \arguments{
@@ -35,6 +35,8 @@
 \item{est.dlm}{flag for estimating dlm effect}
 
 \item{verbose}{true (default) or false: print output}
+
+\item{...}{additional parameters}
 }
 \value{
 Posterior predictive distribution draws

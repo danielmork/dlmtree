@@ -8,6 +8,7 @@
 #' exposure values (requires package gganimate)
 #' @param val exposure value for slice plot
 #' @param time time value for slice plot
+#' @param trueDLM A vector of true effects that can be obtained from the simulated data. Only applicable for simulation studies
 #' @param ... additional parameters to alter plots: 'main', 'xlab', 'ylab',
 #' 'flab' which sets the effect label for surface plots,
 #' 'start.time' which sets the first time value
@@ -35,7 +36,7 @@ plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(
                                       ymax = Xmax, fill = Est)) +
           geom_rect() +
           #scale_color_viridis(aesthetics = "fill", option = "D") +
-          scale_fill_gradientn(colors = viridis::viridis(10)) +
+          scale_fill_viridis_c() +
           scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
           theme_bw() +
           labs(x = xlab, y = ylab, fill = flab, title = main)
@@ -47,7 +48,7 @@ plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(
                                       ymax = Xmax, fill = SD)) +
           geom_rect() +
           #scale_color_viridis(aesthetics = "fill", option = "B") +
-          scale_fill_gradientn(colors = viridis::viridis(10)) +
+          scale_fill_viridis_c() +
           scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
           theme_bw() +
           labs(x = xlab, y = ylab, fill = flab, title = main)
@@ -58,7 +59,7 @@ plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(
                                       ymax = Xmax, fill = CIMin)) +
           geom_rect() +
           #scale_color_viridis(aesthetics = "fill", option = "A") +
-          scale_fill_gradientn(colors = viridis::viridis(10)) +
+          scale_fill_viridis_c() +
           scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
           theme_bw() +
           labs(x = xlab, y = ylab, fill = flab, title = main)
@@ -70,7 +71,7 @@ plot.summary.tdlnm <- function(summary, plot.type = "mean", val = c(), time = c(
                                       ymax = Xmax, fill = CIMax)) +
           geom_rect() +
           # scale_color_viridis(aesthetics = "fill", option = "A") +
-          scale_fill_gradientn(colors = viridis::viridis(10)) +
+          scale_fill_viridis_c() +
           scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
           theme_bw() +
           labs(x = xlab, y = ylab, fill = flab, title = main)

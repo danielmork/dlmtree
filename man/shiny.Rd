@@ -8,6 +8,8 @@ shiny(x, ...)
 }
 \arguments{
 \item{x}{an object to which S3method is applied}
+
+\item{...}{additional parameters}
 }
 \description{
 shiny generic function for S3method

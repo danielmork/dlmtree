@@ -2,3 +2,4 @@
 ^\.Rproj\.user$
 vignettes
 .vscode
+^\.Rproj\.yml$

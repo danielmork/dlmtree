@@ -12,9 +12,9 @@ dlmtree.fit(
   family = "gaussian",
   mixture = FALSE,
   het = FALSE,
-  n.trees = 20,
-  n.burn = 2000,
-  n.iter = 5000,
+  n.trees = 10,
+  n.burn = 1000,
+  n.iter = 2000,
   n.thin = 5,
   shrinkage = "all",
   dlmtree.params = c(0.95, 2),
@@ -39,12 +39,9 @@ dlmtree.fit(
   subset = 1:nrow(data),
   save.data = TRUE,
   lowmem = FALSE,
-  max.threads = 0,
   verbose = TRUE,
   diagnostics = FALSE,
-  initial.params = NULL,
-  debug = FALSE,
-  ...
+  initial.params = NULL
 )
 }
 \arguments{
@@ -163,7 +160,7 @@ Convergence can be checked by re-running the model and validating consistency
 of results. Examples are provided below for the syntax for running different types of models.
 
 'dlmtree' function offers:\tabular{lcccc}{
-   \link{Model} \tab \link{DLM type} \tab \link{Family} \tab \link{Mixture} \tab \link{Heterogeneity} \cr
+   Model \tab DLM type \tab Family \tab Mixture \tab Heterogeneity \cr
    Treed distributed lag model (TDLM) \tab Linear \tab Gaussian \tab X \tab X \cr
     \tab  \tab Binary \tab X \tab X \cr
     \tab  \tab ZINB \tab X \tab X \cr
@@ -175,93 +172,4 @@ of results. Examples are provided below for the syntax for running different typ
    Treed distributed non-linear lag model (TDLNM) \tab Non-linear \tab Gaussian \tab X \tab X \cr
    Zero-inflated monotone regression tree \tab Monotone \tab Gaussian \tab X \tab X \cr
 }
-}
-\examples{
-
-# Example 1: TDLNM
-# Gaussian
-D <- sim.tdlnm(effect = "A", error.to.signal = 1)
-fit <- dlmtree.fit(formula = y ~ .,
-                   data = D$dat,
-                   exposure.data = as.matrix(D$exposures),
-                   exposure.splits = 20,
-                   dlm.type = "nonlinear",
-                   family = "gaussian",
-                   mixture = FALSE,
-                   het = FALSE)
-
-# Example 2: TDLM
-# Binary
-D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
-fit <- dlmtree.fit(formula = y ~ .,
-                   data = D$dat, 
-                   exposure.data = D$exposures[[1]],
-                   dlm.type = "linear",
-                   family = "logit",
-                   mixture = FALSE,
-                   het = FALSE,
-                   binomial.size = 1)
-
-# Example 3: HDLM
-# Gaussian (Shared DLM tree)
-D <- sim.hdlmm(sim = "A", n = 1000)
-fit <- dlmtree.fit(y ~ ., 
-                   data = D$dat,
-                   exposure.data = D$exposure,
-                   dlm.type = "linear",
-                   family = "gaussian",
-                   mixture = FALSE,
-                   het = TRUE,
-                   hdlm.dlmtree.type = "shared")
-
-# Gaussian (Nested DLM tree)
-D <- sim.hdlmm(sim = "A", n = 1000)
-fit <- dlmtree.fit(y ~ ., 
-                   data = D$dat,
-                   exposure.data = D$exposure,
-                   dlm.type = "linear",
-                   family = "gaussian",
-                   mixture = FALSE,
-                   het = TRUE,
-                   hdlm.dlmtree.type = "nested")
-
-# Example 4: TDLMM
-# Binary
-D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
-fit <- dlmtree.fit(formula = y ~ .,
-                   data = D$dat,
-                   exposure.data = D$exposures,
-                   dlm.type = "linear",
-                   family = "logit",
-                   mixture = TRUE,
-                   het = FALSE,
-                   binomial.size = 1,
-                   mixture.interactions = "noself",
-                   hdlm.modifiers = "all")
-
-# Gaussian
-D <- sim.tdlmm(sim = "B", error = 1, n = 1000)
-fit <- dlmtree.fit(formula = y ~ .,
-                   data = D$dat,
-                   exposure.data = D$exposures,
-                   dlm.type = "linear",
-                   family = "gaussian",
-                   mixture = TRUE,
-                   het = FALSE,
-                   mixture.interactions = "noself",
-                   hdlm.modifiers = "all")
-
-# Example 5: HDLMM
-# Gaussian
-D <- sim.hdlmm(sim = "D", n = 1000)
-fit <- dlmtree.fit(formula = y ~ ., 
-                   data = D$dat,
-                   exposure.data = D$exposures,
-                   dlm.type = "linear",
-                   family = "gaussian",
-                   mixture = TRUE,
-                   het = TRUE,
-                   mixture.interactions = "noself",
-                   hdlm.modifiers = "all")
-
 }

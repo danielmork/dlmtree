@@ -14,7 +14,7 @@ Description: The 'dlmtree' R package provides a set of versatile tools for estim
   lag linear and nonlinear models. The tools can also incorporate mixture exposure and heterogeneity. 
 License: GPL (>= 3)
 Encoding: UTF-8
-LazyData: true
+LazyData: false
 Depends: R (>= 3.5.0)
 Imports: Rcpp (>= 1.0.4), ggplot2, shiny, shinythemes
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen
@@ -22,3 +22,4 @@ RoxygenNote: 7.2.3
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+

@@ -29,7 +29,10 @@ import(shinythemes)
 
 importFrom("stats", "as.formula", "model.frame", "model.matrix",
            "model.response", "pnorm", "quantile", "rbinom", "rnorm",
-           "sd", "terms.formula", "var", "IQR", "median", "runif", "toeplitz")
+           "sd", "terms.formula", "var", "IQR", "median", "runif", "toeplitz",
+           "aggregate", "complete.cases", "delete.response",
+           "dnorm", "na.fail", "reorder", "rnbinom", "setNames", "step", "time")
+
 importFrom("utils", "combn", "data")
 
 # export(tdlnm)

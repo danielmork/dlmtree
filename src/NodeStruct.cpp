@@ -19,14 +19,13 @@ bool NodeStruct::proposeSplit() {return(0);}
 void NodeStruct::dropSplit() {}
 void NodeStruct::printStruct() {}
 int NodeStruct::get(int a) {return(0);}
-std::vector<int> NodeStruct::get2(int a)
-  { std::vector<int> b; return(b); }
+std::vector<int> NodeStruct::get2(int a){ std::vector<int> b; return(b); }
 std::vector<std::vector<int> > NodeStruct::get3(int a)
   { std::vector<std::vector<int> > b; return(b); }
 bool NodeStruct::checkEqual(NodeStruct* n) {return(0);}
 void NodeStruct::setTimeRange(int lower, int upper) {}
 void NodeStruct::setTimeProbs(Eigen::VectorXd newProbs) {}
-Eigen::VectorXd NodeStruct::getTimeProbs() {}
+Eigen::VectorXd NodeStruct::getTimeProbs() {Eigen::VectorXd a; return(a);}
 
 /**
  * @brief Construct a new DLNMStruct::DLNMStruct object

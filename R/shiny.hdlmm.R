@@ -9,7 +9,7 @@
 #' @export
 shiny.hdlmm <- function(fit)
 {
-  if(class(fit) != "hdlmm"){
+  if(!inherits(fit, "hdlmm")){
     stop("The class of the model fit must be 'hdlmm'")
   }
 

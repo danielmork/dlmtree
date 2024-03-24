@@ -14,6 +14,8 @@
 #' @param show.cw indicate location of critical windows in interaction plot
 #' with red points
 #' @param cw.plots.only show only plots with critical windows
+#' @param trueDLM A vector of true effects that can be obtained from the simulated data. Only applicable for simulation studies
+#' @param scale default = NULL, if scale is not NULL, the effects are exponentiated
 #' @param ... additional plotting parameters for manipulating title and labels
 #'
 #' @return ggplot
@@ -170,7 +172,7 @@ plot.summary.tdlmm <- function(object,
 
     p <- ggplot(plotDat, aes(x = `x`, y = `y`, z = `Effect`, fill = `Effect`)) +
       geom_tile() +
-      scale_fill_gradientn(colors = viridis::viridis(10))
+      scale_fill_viridis_c()
 
     if (show.cw){
       p <- p + geom_point(data = plotDat[which(plotDat$CW != 0),],

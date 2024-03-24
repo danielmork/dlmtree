@@ -11,19 +11,21 @@
 #' @param fixed.idx fixed index
 #' @param est.dlm flag for estimating dlm effect
 #' @param verbose true (default) or false: print output
+#' @param ... additional parameters
 #'
 #' @return Posterior predictive distribution draws
 #' @export
 
 predict.dlmtree <- function(object, 
                             new.data, 
-                            new.exposure.data, ...,
+                            new.exposure.data,
                             ci.level = 0.95, 
                             type = "response", 
                             outcome = NULL,
                             fixed.idx = list(), 
                             est.dlm = FALSE, 
-                            verbose = TRUE)
+                            verbose = TRUE,
+                            ...)
 { 
   `%notin%` <- Negate(`%in%`)
   out <- list()

@@ -38,6 +38,10 @@ with red points}
 
 \item{cw.plots.only}{show only plots with critical windows}
 
+\item{trueDLM}{A vector of true effects that can be obtained from the simulated data. Only applicable for simulation studies}
+
+\item{scale}{default = NULL, if scale is not NULL, the effects are exponentiated}
+
 \item{...}{additional plotting parameters for manipulating title and labels}
 }
 \value{

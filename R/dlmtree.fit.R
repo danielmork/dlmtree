@@ -75,7 +75,7 @@
 #'
 #' 'dlmtree' function offers: 
 #'
-#' |[Model]                                                     |[DLM type]     |      [Family]  |[Mixture]       |[Heterogeneity] |
+#' |Model                                                       |DLM type       |      Family    |Mixture         |Heterogeneity   |
 #' |:-----------------------------------------------------------|:-------------:|:--------------:|:--------------:|:--------------:|
 #' | Treed distributed lag model (TDLM)                         | Linear        |      Gaussian  | X              | X              |
 #' |                                                            |               |      Binary    | X              | X              |
@@ -92,94 +92,6 @@
 #'
 #' @return object of class 'dlmtree'
 #'
-#' @examples
-#'
-#' # Example 1: TDLNM
-#' # Gaussian
-#' D <- sim.tdlnm(effect = "A", error.to.signal = 1)
-#' fit <- dlmtree.fit(formula = y ~ .,
-#'                    data = D$dat,
-#'                    exposure.data = as.matrix(D$exposures),
-#'                    exposure.splits = 20,
-#'                    dlm.type = "nonlinear",
-#'                    family = "gaussian",
-#'                    mixture = FALSE,
-#'                    het = FALSE)
-#'
-#' # Example 2: TDLM
-#' # Binary
-#' D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
-#' fit <- dlmtree.fit(formula = y ~ .,
-#'                    data = D$dat, 
-#'                    exposure.data = D$exposures[[1]],
-#'                    dlm.type = "linear",
-#'                    family = "logit",
-#'                    mixture = FALSE,
-#'                    het = FALSE,
-#'                    binomial.size = 1)
-#'
-#' # Example 3: HDLM
-#' # Gaussian (Shared DLM tree)
-#' D <- sim.hdlmm(sim = "A", n = 1000)
-#' fit <- dlmtree.fit(y ~ ., 
-#'                    data = D$dat,
-#'                    exposure.data = D$exposure,
-#'                    dlm.type = "linear",
-#'                    family = "gaussian",
-#'                    mixture = FALSE,
-#'                    het = TRUE,
-#'                    hdlm.dlmtree.type = "shared")
-#'
-#' # Gaussian (Nested DLM tree)
-#' D <- sim.hdlmm(sim = "A", n = 1000)
-#' fit <- dlmtree.fit(y ~ ., 
-#'                    data = D$dat,
-#'                    exposure.data = D$exposure,
-#'                    dlm.type = "linear",
-#'                    family = "gaussian",
-#'                    mixture = FALSE,
-#'                    het = TRUE,
-#'                    hdlm.dlmtree.type = "nested")
-#'
-#' # Example 4: TDLMM
-#' # Binary
-#' D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
-#' fit <- dlmtree.fit(formula = y ~ .,
-#'                    data = D$dat,
-#'                    exposure.data = D$exposures,
-#'                    dlm.type = "linear",
-#'                    family = "logit",
-#'                    mixture = TRUE,
-#'                    het = FALSE,
-#'                    binomial.size = 1,
-#'                    mixture.interactions = "noself",
-#'                    hdlm.modifiers = "all")
-#'
-#' # Gaussian
-#' D <- sim.tdlmm(sim = "B", error = 1, n = 1000)
-#' fit <- dlmtree.fit(formula = y ~ .,
-#'                    data = D$dat,
-#'                    exposure.data = D$exposures,
-#'                    dlm.type = "linear",
-#'                    family = "gaussian",
-#'                    mixture = TRUE,
-#'                    het = FALSE,
-#'                    mixture.interactions = "noself",
-#'                    hdlm.modifiers = "all")
-#'
-#' # Example 5: HDLMM
-#' # Gaussian
-#' D <- sim.hdlmm(sim = "D", n = 1000)
-#' fit <- dlmtree.fit(formula = y ~ ., 
-#'                    data = D$dat,
-#'                    exposure.data = D$exposures,
-#'                    dlm.type = "linear",
-#'                    family = "gaussian",
-#'                    mixture = TRUE,
-#'                    het = TRUE,
-#'                    mixture.interactions = "noself",
-#'                    hdlm.modifiers = "all")
-#'
 #' @export
 #'
 dlmtree.fit <- function(formula,
@@ -190,9 +102,9 @@ dlmtree.fit <- function(formula,
                         mixture = FALSE,
                         het = FALSE,                
                         # MCMC
-                        n.trees = 20,
-                        n.burn = 2000,
-                        n.iter = 5000,
+                        n.trees = 10,
+                        n.burn = 1000,
+                        n.iter = 2000,
                         n.thin = 5,
                         # Shared hyperparameters
                         shrinkage = "all", 
@@ -224,14 +136,14 @@ dlmtree.fit <- function(formula,
                         subset = 1:nrow(data),
                         save.data = TRUE,
                         lowmem = FALSE,
-                        max.threads = 0,
+                        #max.threads = 0,
                         verbose = TRUE,
                         diagnostics = FALSE,
-                        initial.params = NULL,
-                        debug = FALSE,
+                        initial.params = NULL)
+                        # debug = FALSE,
                         # ver = 1,
                         # covariance.type = "exponential", # Gaussian process
-                        ...)
+                        #...)
 {
   options(stringsAsFactors = FALSE)
   piecewise.linear = FALSE
@@ -282,7 +194,7 @@ dlmtree.fit <- function(formula,
       }
     }
 
-    if(dlm.type %in% c("nonlinear", "monotone") & tdlnm.exposure.splits == 0){
+    if(dlm.type %in% c("nonlinear", "monotone") & sum(tdlnm.exposure.splits) == 0){
       stop("Exposure split cannot be set as zero for non-linear or monotone models. 
             Set dlm.type to 'linear', which will result in running the TDLM model")
     }
@@ -474,8 +386,8 @@ dlmtree.fit <- function(formula,
 
   # Diagnostics
   model$lowmem <-       lowmem
-  model$maxThreads <-   max.threads
-  model$debug <-        debug
+  #model$maxThreads <-   max.threads
+  #model$debug <-        debug
   model$verbose <-      verbose
   model$diagnostics <-  diagnostics
   

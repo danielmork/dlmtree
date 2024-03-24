@@ -20,7 +20,6 @@ tdlnm(
   keep_XZ = FALSE,
   tree.params = c(0.95, 2),
   step.prob = c(0.25, 0.25),
-  time.split.prob = rep(1/(ncol(exposure.data) - 1), ncol(exposure.data) - 1),
   monotone = FALSE,
   monotone.gamma0 = rep(0, ncol(exposure.data)),
   monotone.sigma = diag(ncol(exposure.data)) * 1.502^2,
@@ -30,7 +29,6 @@ tdlnm(
   shrinkage = ifelse(monotone, F, T),
   subset = NULL,
   lowmem = FALSE,
-  max.threads = 0,
   verbose = TRUE,
   diagnostics = FALSE,
   initial.params = NULL,
@@ -88,6 +86,16 @@ probability of each step for tree updates}
 
 \item{monotone}{false (default) or true: estimate monotone effects}
 
+\item{monotone.gamma0}{---------UPDATE---------}
+
+\item{monotone.sigma}{---------UPDATE---------}
+
+\item{monotone.tree.time.params}{---------UPDATE---------}
+
+\item{monotone.tree.exp.params}{---------UPDATE---------}
+
+\item{monotone.time.kappa}{---------UPDATE---------}
+
 \item{shrinkage}{int, 1 (default) turn on tree-specific shrinkage priors,
 0 turn off}
 
@@ -106,8 +114,6 @@ terminal nodes, acceptance details, etc.}
 \item{debug}{if true, outputs debugging messages}
 
 \item{...}{NA}
-
-\item{zirt.p0}{probability of effect at any given time t (monotone model only), default = 0.5}
 }
 \value{
 object of class 'tdlnm' or 'tdlm'

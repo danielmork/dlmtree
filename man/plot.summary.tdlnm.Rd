@@ -19,6 +19,8 @@ exposure values (requires package gganimate)}
 
 \item{time}{time value for slice plot}
 
+\item{trueDLM}{A vector of true effects that can be obtained from the simulated data. Only applicable for simulation studies}
+
 \item{...}{additional parameters to alter plots: 'main', 'xlab', 'ylab',
 'flab' which sets the effect label for surface plots,
 'start.time' which sets the first time value}
