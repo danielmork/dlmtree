@@ -5,7 +5,7 @@
 \title{plot.summary.tdlmm}
 \usage{
 \method{plot}{summary.tdlmm}(
-  object,
+  x,
   type = "marginal",
   exposure1 = NULL,
   exposure2 = NULL,
@@ -19,7 +19,7 @@
 )
 }
 \arguments{
-\item{object}{object of type 'summary.tdlmm' from summary.tdlmm() output}
+\item{x}{an object of type 'summary.tdlmm' from summary.tdlmm() output}
 
 \item{type}{plot type, 'marginal' (default)}
 
@@ -27,14 +27,11 @@
 
 \item{exposure2}{exposure paired with 'exposure1' for plotting interaction}
 
-\item{time1}{plot a cross section from an interaction plot at specific time
-for 'exposure1'}
+\item{time1}{plot a cross section from an interaction plot at specific time for 'exposure1'}
 
-\item{time2}{plot a cross section from an interaction plot at specific time
-for 'exposure2'}
+\item{time2}{plot a cross section from an interaction plot at specific time for 'exposure2'}
 
-\item{show.cw}{indicate location of critical windows in interaction plot
-with red points}
+\item{show.cw}{indicate location of critical windows in interaction plot with red points}
 
 \item{cw.plots.only}{show only plots with critical windows}
 
@@ -42,7 +39,7 @@ with red points}
 
 \item{scale}{default = NULL, if scale is not NULL, the effects are exponentiated}
 
-\item{...}{additional plotting parameters for manipulating title and labels}
+\item{...}{additional plotting parameters for title and labels}
 }
 \value{
 ggplot

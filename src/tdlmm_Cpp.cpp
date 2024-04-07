@@ -549,12 +549,13 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
   }
 } // end function tdlmmTreeMCMC
 
-/**
- * @brief 
- * 
- * @param model 
- * @return Rcpp::List 
- */
+
+
+//' dlmtree model with tdlmm approach
+//'
+//' @param model A list of parameter and data contained for the model fitting
+//' @return A list of dlmtree model fit, mainly posterior mcmc samples
+//' @export
 // [[Rcpp::export]]
 Rcpp::List tdlmm_Cpp(const Rcpp::List model)
 {

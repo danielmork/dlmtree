@@ -9,7 +9,7 @@
 #' interactions, such that log10(BayesFactor) > x. Default = 0.5
 #' @param verbose show progress in console
 #' @param keep.mcmc keep all mcmc iterations (large memory requirement)
-#' @param ... NA
+#' @param ... additional parameters
 #'
 #' @return list of type 'summary.tdlmm'
 #' @export summary.tdlmm
@@ -23,27 +23,27 @@ summary.tdlmm <- function(object,
                           keep.mcmc = FALSE,
                           ...)
 {
-  res <- list()
-  res$nIter <-        object$nIter
-  res$nThin <-        object$nThin
-  res$mcmcIter <-     floor(res$nIter / res$nThin)
-  res$nBurn <-        object$nBurn
-  res$nTrees <-       object$nTrees
-  res$treePrior <-    object$treePriorTDLM
-  res$nLags <-        max(object$TreeStructs$tmax)
-  res$nExp <-         object$nExp
-  res$nMix <-         object$nMix
-  res$expNames <-     object$expNames
-  res$mixNames <-     object$mixNames
-  res$interaction <-  object$interaction
-  res$mixPrior <-     object$mixPrior
-  res$formula <-      object$formula
-  res$formula.zi <-   object$formula.zi
-  res$family <-       object$family
-  res$droppedCovar <- object$droppedCovar
-  res$conf.level <-   conf.level
-  res$ci.lims <-      c((1 - conf.level) / 2, 1 - (1 - conf.level) / 2)
-  res$log10BF.crit <- log10BF.crit
+  res               <- list()
+  res$nIter         <- object$nIter
+  res$nThin         <- object$nThin
+  res$mcmcIter      <- floor(res$nIter / res$nThin)
+  res$nBurn         <- object$nBurn
+  res$nTrees        <- object$nTrees
+  res$treePrior     <- object$treePriorTDLM
+  res$nLags         <- max(object$TreeStructs$tmax)
+  res$nExp          <- object$nExp
+  res$nMix          <- object$nMix
+  res$expNames      <- object$expNames
+  res$mixNames      <- object$mixNames
+  res$interaction   <- object$interaction
+  res$mixPrior      <- object$mixPrior
+  res$formula       <- object$formula
+  res$formula.zi    <- object$formula.zi
+  res$family        <- object$family
+  res$droppedCovar  <- object$droppedCovar
+  res$conf.level    <- conf.level
+  res$ci.lims       <- c((1 - conf.level) / 2, 1 - (1 - conf.level) / 2)
+  res$log10BF.crit  <- log10BF.crit
 
 
   # ---- Set levels for marginaliztion ----
@@ -63,7 +63,7 @@ summary.tdlmm <- function(object,
 
 
   # ---- Bayes factor variable selection ----
-  res$expSel <- rep(FALSE, res$nExp)
+  res$expSel        <- rep(FALSE, res$nExp)
   names(res$expSel) <- res$expNames
   if (res$mixPrior > 0) {
     # individual exposures
@@ -75,8 +75,8 @@ summary.tdlmm <- function(object,
              log10(colMeans(object$expCount == 0))) -
       (log10(priorProbInc) - log10(1 - priorProbInc))
 
-    res$expBF <- 10^BF
-    res$expSel <- (BF > log10BF.crit)
+    res$expBF   <- 10^BF
+    res$expSel  <- (BF > log10BF.crit)
   }
 
   # ---- Main effect MCMC samples ----
@@ -92,15 +92,16 @@ summary.tdlmm <- function(object,
                          "marg" = array(0, dim(est)),
                          "name" = object$expNames[i])
   }
-  names(res$DLM) <- res$expNames
-  iqr_plus_mean <- function(i) c(quantile(i, 0.25), mean(i), quantile(i, 0.75))
-  res$expInc <- apply(object$expCount > 0, 2, mean)
+  names(res$DLM)  <- res$expNames
+  iqr_plus_mean   <- function(i) c(quantile(i, 0.25), mean(i), quantile(i, 0.75))
+  res$expInc      <- apply(object$expCount > 0, 2, mean)
+
   if (res$nExp == 1) {
     res$expVar <- apply(object$mixCount > 0, 2, mean)
     #names(res$expVar) <- names(res$expInc)
   } else {
     res$expVar <- apply((apply(object$muExp * object$expInf, 1, rank) - 1),
-                        1, iqr_plus_mean) / (res$nExp - 1)
+                                1, iqr_plus_mean) / (res$nExp - 1)
   }
 
 
@@ -110,7 +111,7 @@ summary.tdlmm <- function(object,
   }
     
   res$MIX <- list()
-  nMix <- 1
+  nMix    <- 1
   for (i in sort(unique(object$MIX$exp1))) {
     for (j in sort(unique(object$MIX$exp2))) {
       if (verbose) {
@@ -118,22 +119,21 @@ summary.tdlmm <- function(object,
         if (nMix == ceiling(0.5 * res$nMix)) {cat("50%...")}
         if (nMix == ceiling(0.75 * res$nMix)) {cat("75%...")}
         if (nMix == res$nMix) {cat("100%\n")}
-        nMix = nMix + 1
+        nMix <- nMix + 1
       }
+
       idx <- which(object$MIX$exp1 == i & object$MIX$exp2 == j)
       if (length(idx) > 0) {
-        est <- mixEst(as.matrix(object$MIX[idx,,drop = F]),
-                      res$nLags, res$mcmcIter)
-
-        m <- paste0(object$expNames[i + 1], "-", object$expNames[j + 1])
+        est <- mixEst(as.matrix(object$MIX[idx,,drop = F]), res$nLags, res$mcmcIter)
+        m   <- paste0(object$expNames[i + 1], "-", object$expNames[j + 1])
         res$MIX[[m]] <-
-          list("matfit"  =  sapply(1:res$nLags, function(k) rowMeans(est[,k,])),
-               "cilower" =  sapply(1:res$nLags, function(k) {
+          list("matfit"   =  sapply(1:res$nLags, function(k) rowMeans(est[,k,])),
+               "cilower"  =  sapply(1:res$nLags, function(k) {
                               apply(est[,k,], 1, quantile, probs = res$ci.lims[1]) }),
-               "ciupper" =  sapply(1:res$nLags, function(k) {
+               "ciupper"  =  sapply(1:res$nLags, function(k) {
                               apply(est[,k,], 1, quantile, probs = res$ci.lims[2]) }),
-               "rows" =     object$expNames[i + 1],
-               "cols" =     object$expNames[j + 1])
+               "rows"     = object$expNames[i + 1],
+               "cols"     = object$expNames[j + 1])
 
         if (keep.mcmc) {
           res$MIX[[m]]$mcmc <- est
@@ -156,23 +156,18 @@ summary.tdlmm <- function(object,
             array(upper.tri(diag(res$nLags), diag = T), dim(est))
           
           if (keep.mcmc) {
-            res$MIX[[m]]$mcmc <- est
+            res$MIX[[m]]$mcmc   <- est
           }
 
-          res$MIX[[m]]$matfit <- sapply(1:res$nLags, function(k) {
-            rowMeans(est[,k,]) })
-          res$MIX[[m]]$cilower <- sapply(1:res$nLags, function(k) {
-            apply(est[,k,], 1, quantile, probs = res$ci.lims[1]) })
-          res$MIX[[m]]$ciupper <- sapply(1:res$nLags, function(k) {
-            apply(est[,k,], 1, quantile, probs = res$ci.lims[2]) })
+          res$MIX[[m]]$matfit   <- sapply(1:res$nLags, function(k) {rowMeans(est[,k,]) })
+          res$MIX[[m]]$cilower  <- sapply(1:res$nLags, function(k) {apply(est[,k,], 1,  quantile, probs = res$ci.lims[1]) })
+          res$MIX[[m]]$ciupper  <- sapply(1:res$nLags, function(k) {apply(est[,k,], 1, quantile, probs = res$ci.lims[2]) })
         }
 
         res$MIX[[m]]$cw <- (res$MIX[[m]]$cilower > 0 | res$MIX[[m]]$ciupper < 0)
 
         # Range of confidence levels for plots
-        mixCIs <- lapply(1:res$nLags, function(k) {
-          apply(est[,k,], 1, quantile, probs = c(1:10/200, 190:199/200))
-        })
+        mixCIs <- lapply(1:res$nLags, function(k) {apply(est[,k,], 1, quantile, probs = c(1:10/200, 190:199/200))})
 
         ciProbs <- c(99:90/100, 0)
         res$MIX[[m]]$cw.plot <-
@@ -218,15 +213,15 @@ summary.tdlmm <- function(object,
       res$DLM[[ex.name]]$marg <- NULL
     }
 
-    res$DLM[[ex.name]]$marg.matfit <-   apply(marg, 1, mean)
-    res$DLM[[ex.name]]$marg.cilower <-  apply(marg, 1, quantile, probs = res$ci.lims[1])
-    res$DLM[[ex.name]]$marg.ciupper <-  apply(marg, 1, quantile, probs = res$ci.lims[2])
-    res$DLM[[ex.name]]$marg.cw <- (res$DLM[[ex.name]]$marg.cilower > 0 | res$DLM[[ex.name]]$marg.ciupper < 0)
+    res$DLM[[ex.name]]$marg.matfit  <- apply(marg, 1, mean)
+    res$DLM[[ex.name]]$marg.cilower <- apply(marg, 1, quantile, probs = res$ci.lims[1])
+    res$DLM[[ex.name]]$marg.ciupper <- apply(marg, 1, quantile, probs = res$ci.lims[2])
+    res$DLM[[ex.name]]$marg.cw      <- (res$DLM[[ex.name]]$marg.cilower > 0 | res$DLM[[ex.name]]$marg.ciupper < 0)
 
     # Cumulative effects
     cumulative <- colSums(marg)
     res$DLM[[ex.name]]$cumulative <-
-      list("mean" =     mean(cumulative),
+      list("mean"     = mean(cumulative),
            "ci.lower" = quantile(cumulative, res$ci.lims[1]),
            "ci.upper" = quantile(cumulative, res$ci.lims[2]))
 
@@ -270,21 +265,21 @@ summary.tdlmm <- function(object,
   }
   if (!object$zinb) {
     # Gaussian / Logistic
-    res$gamma.mean <- colMeans(object$gamma)
-    res$gamma.ci <-   apply(object$gamma, 2, quantile, probs = res$ci.lims)
+    res$gamma.mean  <- colMeans(object$gamma)
+    res$gamma.ci    <- apply(object$gamma, 2, quantile, probs = res$ci.lims)
   } else {
     # ZINB
     # binary
-    res$b1.mean <-  colMeans(object$b1)
-    res$b1.ci <-    apply(object$b1, 2, quantile, probs = res$ci.lims)
+    res$b1.mean <- colMeans(object$b1)
+    res$b1.ci   <- apply(object$b1, 2, quantile, probs = res$ci.lims)
 
     # count
-    res$b2.mean <-  colMeans(object$b2)
-    res$b2.ci <-    apply(object$b2, 2, quantile, probs = res$ci.lims)
+    res$b2.mean <- colMeans(object$b2)
+    res$b2.ci   <- apply(object$b2, 2, quantile, probs = res$ci.lims)
 
     # Dispersion parameter
-    res$r.mean <- mean(object$r)
-    res$r.ci <-   quantile(object$r, probs = res$ci.lims)
+    res$r.mean  <- mean(object$r)
+    res$r.ci    <- quantile(object$r, probs = res$ci.lims)
   }
 
   # ---- Return ----

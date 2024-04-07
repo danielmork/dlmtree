@@ -8,19 +8,20 @@
 #' @return character string of values representing 'r'
 #'
 ppRange <- function(r) {
-  if (length(r) <= 1)
+  if (length(r) <= 1){
     return(paste0(r))
+  }
 
-  rMin <- min(r)
-  rMax <- max(r)
-  rAll <- rMin:rMax
+  rMin  <- min(r)
+  rMax  <- max(r)
+  rAll  <- rMin:rMax
   rMiss <- which(!(rAll %in% r))
 
   if (length(rMiss) == 0){
     return(paste0(rMin, "-", rMax))
   }
     
-  rOut <- ""
+  rOut  <- ""
   rMiss <- c(0, rMiss, length(rAll) + 1)
   for (s in 1:(length(rMiss) - 1)) {
     if (rMiss[s + 1] == rMiss[s] + 1){

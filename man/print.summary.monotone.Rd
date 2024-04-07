@@ -4,12 +4,14 @@
 \alias{print.summary.monotone}
 \title{print.summary.monotone}
 \usage{
-\method{print}{summary.monotone}(object, digits = 3)
+\method{print}{summary.monotone}(x, digits = 3, ...)
 }
 \arguments{
-\item{object}{an object of type 'summary.monotone', result of call to summary.monotone()}
+\item{x}{an object of type 'summary.monotone', result of call to summary.monotone()}
 
 \item{digits}{integer number of digits to round}
+
+\item{...}{additional parameters}
 }
 \value{
 output in R console

@@ -4,12 +4,14 @@
 \alias{print.summary.tdlm}
 \title{print.summary.tdlm}
 \usage{
-\method{print}{summary.tdlm}(object, digits = 3)
+\method{print}{summary.tdlm}(x, digits = 3, ...)
 }
 \arguments{
-\item{object}{an object of type 'summary.tdlnm', result of call to summary.tdlnm()}
+\item{x}{an object of type 'summary.tdlnm', result of call to summary.tdlnm()}
 
 \item{digits}{integer number of digits to round}
+
+\item{...}{additional parameters}
 }
 \value{
 output in R console

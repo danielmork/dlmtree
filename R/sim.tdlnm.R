@@ -15,18 +15,19 @@
 #'
 sim.tdlnm <- function(effect = "A", error.to.signal = 1)
 {
-  data("pm25Exposures")
-  pm25Exposures <- log(pm25Exposures[which(pm25Exposures$S == "Colorado"),-c(1:2)])[,1:37]
-  n.samp <- nrow(pm25Exposures)
-  data <- cbind(matrix(rnorm(5*n.samp), n.samp, 5),
-                matrix(rbinom(5*n.samp, 1, .5), n.samp, 5))
-  colnames(data) <- c(paste0("c", 1:5), paste0("b", 1:5))
-  params <- rnorm(10)
-  c <- c(data[,1:10] %*% params)
+  data("pm25Exposures", envir = environment())
+  pm25Exposures   <- log(pm25Exposures[which(pm25Exposures$S == "Colorado"),-c(1:2)])[,1:37]
+  n.samp          <- nrow(pm25Exposures)
+  data            <- cbind(matrix(rnorm(5*n.samp), n.samp, 5), 
+                         matrix(rbinom(5*n.samp, 1, .5), n.samp, 5))
+  colnames(data)  <- c(paste0("c", 1:5), paste0("b", 1:5))
+  params          <- rnorm(10)
+  c               <- c(data[,1:10] %*% params)
 
   # Piecewise constant effect ----
   if (effect == "A") {
-    cenval = 1
+    cenval <- 1
+
     dlnm.fun <- function(exposure.data, cenval, sum = T) {
       if (sum) {
         -rowSums(exposure.data[, 11:15] > 2)
@@ -42,7 +43,8 @@ sim.tdlnm <- function(effect = "A", error.to.signal = 1)
 
   # Linear effect ----
   } else if (effect == "B") {
-    cenval = 1
+    cenval <- 1
+
     dlnm.fun <- function(exposure.data, cenval, sum = T) {
       if (sum) {
         rowSums((cenval - exposure.data[, 11:15]))
@@ -58,7 +60,8 @@ sim.tdlnm <- function(effect = "A", error.to.signal = 1)
 
   # Logistic effect, piecewise in time ----
   } else if (effect == "C") {
-    cenval = 1
+    cenval <- 1
+
     dlnm.fun <- function(exposure.data, cenval, sum = T) {
       flogistic <- function(x) ((1/(1+exp(5*(x-2.5)))) - 1)
 
@@ -76,13 +79,12 @@ sim.tdlnm <- function(effect = "A", error.to.signal = 1)
 
   # Logistic effect - smooth in time ----
   } else if (effect == "D") {
-    cenval = 1
+    cenval <- 1
+
     dlnm.fun <- function(exposure.data, cenval, sum = T) {
       flogistic <- function(x) ((1/(1+exp(5*(x-2.5)))) - 1)
-
-      ftime <- function(t) (exp(-.0025 * (t-13)^4))
-
-      f <- function(x, t) (flogistic(x) * ftime(t))
+      ftime     <- function(t) (exp(-.0025 * (t-13)^4))
+      f         <- function(x, t) (flogistic(x) * ftime(t))
 
       if (sum) {
         sapply(1:nrow(exposure.data), function(i) {

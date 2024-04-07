@@ -13,21 +13,22 @@
 
 splitpoints <- function(object, var, round=NULL) {
   
-  sp2 <- object$TreeStructs$Rule[!duplicated(object$TreeStructs[,2:4])]
-  treeRules <- object$TreeStructs %>% group_by(Iter, Tree) %>% 
+  sp2         <- object$TreeStructs$Rule[!duplicated(object$TreeStructs[,2:4])]
+  treeRules   <- object$TreeStructs %>% group_by(Iter, Tree) %>% 
     summarize(Rules = paste0(Rule, collapse = " & "))
   splitRules2 <- table(do.call(c, lapply(strsplit(treeRules$Rules, " & ", T), unique)))
   
   # check if continuous
   categorical <- length(splitRules2[str_detect(names(splitRules2), var) & 
-                                      str_detect(names(splitRules2), "%in%")])>0
+                        str_detect(names(splitRules2), "%in%")])>0
+                        
   if (categorical) {
     stop("var is categorical. Split points only works with continuous variables")
   } else {
     varsp <- sort(splitRules2[str_detect(names(splitRules2), var) & 
                                 str_detect(names(splitRules2), ">=")]) /
-      sum(sort(splitRules2[str_detect(names(splitRules2), var) & 
-                             str_detect(names(splitRules2), ">=")]))
+              sum(sort(splitRules2[str_detect(names(splitRules2), var) & 
+                                    str_detect(names(splitRules2), ">=")]))
     
     splits <- data.frame(loc = as.numeric(sapply(strsplit(names(varsp), " >= ", T), function(i) i[2])),
                          val = as.numeric(varsp))

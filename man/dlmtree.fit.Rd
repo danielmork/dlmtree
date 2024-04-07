@@ -12,9 +12,9 @@ dlmtree.fit(
   family = "gaussian",
   mixture = FALSE,
   het = FALSE,
-  n.trees = 10,
-  n.burn = 1000,
-  n.iter = 2000,
+  n.trees = 20,
+  n.burn = 2000,
+  n.iter = 5000,
   n.thin = 5,
   shrinkage = "all",
   dlmtree.params = c(0.95, 2),
@@ -117,15 +117,19 @@ which eliminates all interactions and estimates only main effects of each exposu
 
 \item{mixture.prior}{positive scalar hyperparameter for sparsity of exposures}
 
-\item{monotone.gamma0}{---------UPDATE---------}
+\item{monotone.gamma0}{vector (with length equal to number of lags) of means for logit-transformed prior probability of split at each lag;
+e.g., gamma_0l = 0 implies mean prior probability of split at lag l = 0.5}
 
-\item{monotone.sigma}{---------UPDATE---------}
+\item{monotone.sigma}{symmetric matrix (usually with only diagonal elements) corresponding to gamma_0 to define variances on prior probability of split;
+e.g., gamma_0l=0 with lth diagonal element of sigma=2.701 implies that 95\% of the time the prior probability of split is between 0.005 and 0.995,
+as a second example setting gamma_0l=4.119 and the corresponding diagonal element of sigma=0.599 implies that 95\% of the time the prior probability of a split is between 0.8 and 0.99}
 
-\item{monotone.tree.time.params}{---------UPDATE---------}
+\item{monotone.tree.time.params}{BART parameters for monotone time tree}
 
-\item{monotone.tree.exp.params}{---------UPDATE---------}
+\item{monotone.tree.exp.params}{BART parameters for monotone exposure tree}
 
-\item{monotone.time.kappa}{---------UPDATE---------}
+\item{monotone.time.kappa}{scaling factor in dirichlet prior that goes alongside \code{time.split.prob} to
+control the amount of prior information given to the model for deciding probabilities of splits between adjacent lags}
 
 \item{subset}{integer vector to analyze only a subset of data and exposures}
 

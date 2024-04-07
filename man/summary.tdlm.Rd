@@ -4,12 +4,14 @@
 \alias{summary.tdlm}
 \title{summary.tdlm}
 \usage{
-\method{summary}{tdlm}(object, conf.level = 0.95)
+\method{summary}{tdlm}(object, conf.level = 0.95, ...)
 }
 \arguments{
 \item{object}{an object of dlm class 'tdlm' (i.e. a linear effect DLM)}
 
 \item{conf.level}{confidence level for computation of credible intervals}
+
+\item{...}{additional parameters}
 }
 \value{
 Summary of tdlm fit

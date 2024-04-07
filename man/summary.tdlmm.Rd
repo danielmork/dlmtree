@@ -30,7 +30,7 @@ interactions, such that log10(BayesFactor) > x. Default = 0.5}
 
 \item{keep.mcmc}{keep all mcmc iterations (large memory requirement)}
 
-\item{...}{NA}
+\item{...}{additional parameters}
 }
 \value{
 list of type 'summary.tdlmm'

@@ -4,12 +4,14 @@
 \alias{summary.hdlmm}
 \title{summary.hdlmm}
 \usage{
-\method{summary}{hdlmm}(object, conf.level = 0.95)
+\method{summary}{hdlmm}(object, conf.level = 0.95, ...)
 }
 \arguments{
 \item{object}{an object of class 'hdlmm'}
 
 \item{conf.level}{confidence level for computation of credible intervals}
+
+\item{...}{additional parameters}
 }
 \value{
 list of type 'summary.hdlmm'

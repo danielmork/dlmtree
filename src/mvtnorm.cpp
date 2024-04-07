@@ -30,14 +30,14 @@ extern "C" {
                       int* inform);
 }
 
-/**
- * @brief integrate (0,inf) over multivariate normal 
- * 
- * @param mu vector of mean parameters
- * @param sigma covariance matrix
- * @return double 
- */
- // [[Rcpp::export]]
+
+//' integrate (0,inf) over multivariate normal 
+//'
+//' @param mu vector of mean parameters
+//' @param sigma covariance matrix
+//' @return double 
+//' @export
+// [[Rcpp::export]]
 double zeroToInfNormCDF(Eigen::VectorXd mu, Eigen::MatrixXd sigma) {
   // Returns log P(X>0) for X~MVN(mean,sigma)
   int n = mu.size();
@@ -49,15 +49,15 @@ double zeroToInfNormCDF(Eigen::VectorXd mu, Eigen::MatrixXd sigma) {
     // multivariate
   } else {
     // vars for Fortran code
-    int nu_ = 0;
-    int maxpts_ = n * 1000;
-    double abseps_ = 0.0001;
-    double releps_ = 0;
+    int nu_         = 0;
+    int maxpts_     = n * 1000;
+    double abseps_  = 0.0001;
+    double releps_  = 0;
 
-    double* lower = new double[n];
-    double* upper = new double[n];
-    int* infin = new int[n];
-    double* delta = new double[n];
+    double* lower   = new double[n];
+    double* upper   = new double[n];
+    int* infin      = new int[n];
+    double* delta   = new double[n];
     double* corrTri = new double[n * (n-1) / 2];
 
     // fill bounds, calculate lower tri correlation matrix
@@ -79,7 +79,7 @@ double zeroToInfNormCDF(Eigen::VectorXd mu, Eigen::MatrixXd sigma) {
 
     double error_ = 0.0;
     double value_ = 0.0;
-    int inform_ = 0;
+    int inform_   = 0;
 
     mvtdst_(&n, &nu_, lower, upper, infin, corrTri, delta,
             &maxpts_, &abseps_, &releps_, &error_, &value_, &inform_);
@@ -248,15 +248,16 @@ double rtuvnorm(double a, double b) {
   }
   return(x);
 }
-                                                   
-/**
- * @brief truncated multivariate normal sampler, mean mu, cov sigma, truncated (0, Inf)
- * 
- * @param mu vector of mean parameters
- * @param sigma covariance matrix
- * @return VectorXd 
- */
- // [[Rcpp::export]]
+
+
+//' truncated multivariate normal sampler, mean mu, cov sigma, truncated (0, Inf)
+//'
+//' @param mu vector of mean parameters
+//' @param sigma covariance matrix
+//' @param iter number of iterations
+//' @return VectorXd
+//' @export
+// [[Rcpp::export]]
 Eigen::VectorXd rtmvnorm(Eigen::VectorXd mu, Eigen::MatrixXd sigma, int iter) 
 {
   int n = mu.size();

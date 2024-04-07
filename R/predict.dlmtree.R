@@ -15,7 +15,6 @@
 #'
 #' @return Posterior predictive distribution draws
 #' @export
-
 predict.dlmtree <- function(object, 
                             new.data, 
                             new.exposure.data,
@@ -28,7 +27,7 @@ predict.dlmtree <- function(object,
                             ...)
 { 
   `%notin%` <- Negate(`%in%`)
-  out <- list()
+  out       <- list()
 
   if (object$dlmType != "hdlmm") {
     new.exposure.data <- matrix(new.exposure.data, ncol = object$pExp)
@@ -56,18 +55,22 @@ predict.dlmtree <- function(object,
     ci.lims <- c((1 - ci.level) / 2, 1 - (1 - ci.level) / 2)
 
   # ---- Setup covariate matrix and modifiers ----
-  new.mf <- model.frame(delete.response(object$terms), new.data,
-                        na.action = na.fail, drop.unused.levels = TRUE,
-                        xlev = object$termLevels)
-  z <-      model.matrix(delete.response(object$terms), new.mf,
+  new.mf  <- model.frame(delete.response(object$terms), 
+                         new.data,
+                         na.action = na.fail, 
+                         drop.unused.levels = TRUE,
                          xlev = object$termLevels)
+  z       <- model.matrix(delete.response(object$terms), 
+                         new.mf,
+                         xlev = object$termLevels)
+
   # z <-      z[, sort(object$QR$pivot[ seq_len(object$QR$rank) ]) ]
   # if (length(object$droppedCovar) > 0 & object$verbose)
   #   warning("variables {", paste0(object$droppedCovar, collapse = ", "),
   #           "} dropped from original due to perfect collinearity\n")
 
-  n <-      nrow(z)
-  mod <-    lapply(object$modNames, function(m) {
+  n   <- nrow(z)
+  mod <- lapply(object$modNames, function(m) {
     if (!is.numeric(object$MoUnique[[m]])) {
       if (!all(unique(new.data[[m]]) %in% object$MoUnique[[m]])) {
         stop("column ", m, " of `new.data` contains additional categories not in original dataset")
@@ -79,15 +82,16 @@ predict.dlmtree <- function(object,
         }
       }
     }
-      new.data[[m]]
-    })
+    new.data[[m]]
+    }
+  )
 
   names(mod) <- object$modNames
 
   # ---- Predict z^T * gamma ----
-  ztg.draws <- z %*% t(object$gamma)
-  out$ztg <- rowMeans(ztg.draws)
-  out$ztg.lims <- apply(ztg.draws, 1, quantile, probs = ci.lims)
+  ztg.draws     <- z %*% t(object$gamma)
+  out$ztg       <- rowMeans(ztg.draws)
+  out$ztg.lims  <- apply(ztg.draws, 1, quantile, probs = ci.lims)
 
   # ---- Predict DLMs ----
   mark <- ceiling(nrow(object$TreeStructs) / 42)
@@ -116,7 +120,7 @@ predict.dlmtree <- function(object,
         est <- matrix(rep(as.numeric(object$TreeStructs[i, -c(1:4)]), each = length(idx)), length(idx), object$pExp)
         draws[[Iter]][idx,] <- draws[[Iter]][idx,] + est
       } else { # TDLM
-        t <- object$TreeStructs$tmin[i]:object$TreeStructs$tmax[i] # Get the time
+        t   <- object$TreeStructs$tmin[i]:object$TreeStructs$tmax[i] # Get the time
         est <- object$TreeStructs$est[i] # Get the effect
         draws[[Iter]][idx, t] <- draws[[Iter]][idx, t] + est # Add to matrix
       }
@@ -127,14 +131,14 @@ predict.dlmtree <- function(object,
         cat("'")
       }
        
-      Iter <- object$TreeStructs$Iter[i]
-      idx <- fixed.idx[[object$TreeStructs$fixedIdx[i] + 1]]
+      Iter  <- object$TreeStructs$Iter[i]
+      idx   <- fixed.idx[[object$TreeStructs$fixedIdx[i] + 1]]
 
       if (object$dlmType == "gp") {
         est <- matrix(rep(as.numeric(object$TreeStructs[i, -c(1:4)]), each = length(idx)), length(idx), object$pExp)
         draws[[Iter]][idx,] <- draws[[Iter]][idx,] + est
       } else {
-        t <- object$TreeStructs$tmin[i]:object$TreeStructs$tmax[i]
+        t   <- object$TreeStructs$tmin[i]:object$TreeStructs$tmax[i]
         est <- object$TreeStructs$est[i]
         draws[[Iter]][idx, t] <- draws[[Iter]][idx, t] + est
       }
@@ -173,7 +177,7 @@ predict.dlmtree <- function(object,
     fhat.draws <- do.call(rbind, lapply(1:n, function(i) {
       t(t(draws[i,,]) %*% new.exposure.data[i,])
     }))
-    out$fhat <- rowMeans(fhat.draws) # fhat mean for all observation
+    out$fhat      <- rowMeans(fhat.draws) # fhat mean for all observation
     out$fhat.lims <- apply(fhat.draws, 1, quantile, probs = ci.lims) # fhat quantiles for all observation
 
   } else { # HDLMM
@@ -200,19 +204,24 @@ predict.dlmtree <- function(object,
     ci.lims <- c((1 - ci.level) / 2, 1 - (1 - ci.level) / 2)
 
     # ---- Setup covariate matrix and modifiers ----
-    new.mf <- model.frame(delete.response(object$terms), new.data,
-                          na.action = na.fail, drop.unused.levels = TRUE,
-                          xlev = object$termLevels)
-    z <-      model.matrix(delete.response(object$terms), new.mf,
-                          xlev = object$termLevels)
-    z <-      z[, sort(object$QR$pivot[ seq_len(object$QR$rank) ]) ]
-    if (length(object$droppedCovar) > 0 & object$verbose)
+    new.mf  <- model.frame(delete.response(object$terms), 
+                           new.data,
+                           na.action = na.fail, 
+                           drop.unused.levels = TRUE,
+                           xlev = object$termLevels)
+    z       <- model.matrix(delete.response(object$terms), 
+                            new.mf,
+                            xlev = object$termLevels)
+    z <- z[, sort(object$QR$pivot[ seq_len(object$QR$rank) ]) ]
+
+    if (length(object$droppedCovar) > 0 & object$verbose){
       warning("variables {", paste0(object$droppedCovar, collapse = ", "),
               "} dropped from original due to perfect collinearity\n")
-    z <- scaleModelMatrix(z)
-    
-    n <-      nrow(z)
-    mod <-    lapply(object$modNames, function(m) {
+    }
+
+    z   <- scaleModelMatrix(z)
+    n   <- nrow(z)
+    mod <- lapply(object$modNames, function(m) {
       if (!is.numeric(object$MoUnique[[m]])) {
         if (!all(unique(new.data[[m]]) %in% object$MoUnique[[m]])) {
           stop("column ", m, " of `new.data` contains additional categories not in original dataset")
@@ -225,13 +234,14 @@ predict.dlmtree <- function(object,
         }
       }
       new.data[[m]]
-    })
+      }
+    )
     names(mod) <- object$modNames
 
     # ---- Predict z^T * gamma ----
-    ztg.draws <- z %*% t(object$gamma)
-    out$ztg <- rowMeans(ztg.draws)
-    out$ztg.lims <- apply(ztg.draws, 1, quantile, probs = ci.lims)
+    ztg.draws     <- z %*% t(object$gamma)
+    out$ztg       <- rowMeans(ztg.draws)
+    out$ztg.lims  <- apply(ztg.draws, 1, quantile, probs = ci.lims)
 
     # ---- Predict DLMs ----
     # Main effect
@@ -242,8 +252,8 @@ predict.dlmtree <- function(object,
     }
       
     # Main effect for mixture
-    main_draws <- list()
-    draws <- lapply(1:object$mcmcIter, function(i) matrix(0.0, n, object$pExp)) # Creates a list of which elements are empty n x p matrix    
+    main_draws  <- list()
+    draws       <- lapply(1:object$mcmcIter, function(i) matrix(0.0, n, object$pExp)) # Creates a list of which elements are empty n x p matrix    
     for (exp in object$expNames) {
       main_draws[[exp]] <- draws
     }
@@ -270,7 +280,7 @@ predict.dlmtree <- function(object,
             idx <- which(eval(parse(text = rule)))
           }
 
-          t <- object$TreeStructs$tmin[i]:object$TreeStructs$tmax[i]
+          t   <- object$TreeStructs$tmin[i]:object$TreeStructs$tmax[i]
           est <- object$TreeStructs$est[i]
           main_draws[[exp]][[Iter]][idx, t] <- main_draws[[exp]][[Iter]][idx, t] + est
         }
@@ -282,11 +292,11 @@ predict.dlmtree <- function(object,
             cat("'")
           }
 
-          Iter <- object$TreeStructs$Iter[i]
-          idx <- fixed.idx[[object$TreeStructs$fixedIdx[i] + 1]]
+          Iter  <- object$TreeStructs$Iter[i]
+          idx   <- fixed.idx[[object$TreeStructs$fixedIdx[i] + 1]]
 
-          t <- object$TreeStructs$tmin[i]:object$TreeStructs$tmax[i]
-          est <- object$TreeStructs$est[i]
+          t     <- object$TreeStructs$tmin[i]:object$TreeStructs$tmax[i]
+          est   <- object$TreeStructs$est[i]
           main_draws[[exp]][[Iter]][idx, t] <- main_draws[[exp]][[Iter]][idx, t] + est
         }
       }
@@ -306,12 +316,11 @@ predict.dlmtree <- function(object,
       out$dlmest <- vector("list", length = object$nExp)
       for (exp in object$expNames) {
         out$dlmest[[exp]] <- list()
-        out$dlmest[[exp]][["dlmest"]] <- sapply(1:object$pExp, function(t) {rowMeans(main_draws[[exp]][,t,,drop=F])}) # (n x p)
-        out$dlmest[[exp]][["dlmest.lower"]] <- sapply(1:object$pExp, function(t) {apply(main_draws[[exp]][,t,,drop=F], 1, quantile, probs = 0.025)}) # (n x p)
-        out$dlmest[[exp]][["dlmest.upper"]] <- sapply(1:object$pExp, function(t) {apply(main_draws[[exp]][,t,,drop=F], 1, quantile, probs = 0.975)}) # (n x p)
+        out$dlmest[[exp]][["dlmest"]]       <- sapply(1:object$pExp, function(t) {rowMeans(main_draws[[exp]][,t,,drop=F])}) 
+        out$dlmest[[exp]][["dlmest.lower"]] <- sapply(1:object$pExp, function(t) {apply(main_draws[[exp]][,t,,drop=F], 1, quantile, probs = 0.025)})
+        out$dlmest[[exp]][["dlmest.upper"]] <- sapply(1:object$pExp, function(t) {apply(main_draws[[exp]][,t,,drop=F], 1, quantile, probs = 0.975)})
       }
     }
-
 
     if (object$interaction != 0) {
       # Interaction effect for a mixture setting
@@ -324,7 +333,7 @@ predict.dlmtree <- function(object,
       # Exp i x Exp j (i > j) (mix_mcmc)
       # mix_draws[[Exp x Exp]][lag x lag x n x mcmc]
       mix_draws <- list()
-      draws <- lapply(1:object$mcmcIter, function(i) array(0.0, dim = c(object$pExp, object$pExp, n))) # Creates a list of which elements are empty pxpxn array    
+      draws     <- lapply(1:object$mcmcIter, function(i) array(0.0, dim = c(object$pExp, object$pExp, n))) 
       for (mix in object$mixNames) {
         mix_draws[[mix]] <- draws
       }
@@ -334,7 +343,7 @@ predict.dlmtree <- function(object,
         for (j in sort(unique(object$MIX$exp2))) {
           # Subsetting matrix with exposure combination
           mixname <- object$mixNames[mixCount]
-          newMIX = object$MIX[which(object$MIX$exp1 == i & object$MIX$exp2 == j), ]
+          newMIX  <- object$MIX[which(object$MIX$exp1 == i & object$MIX$exp2 == j), ]
 
           if (i == j) { # HDLMM only consider no-self interaction
             next
@@ -359,7 +368,7 @@ predict.dlmtree <- function(object,
             
             t1range <- newMIX$tmin1[k]:newMIX$tmax1[k]
             t2range <- newMIX$tmin2[k]:newMIX$tmax2[k]
-            est <- newMIX$est[k]
+            est     <- newMIX$est[k]
 
             for (t1 in t1range) {
               for (t2 in t2range) {
@@ -387,15 +396,15 @@ predict.dlmtree <- function(object,
 
         # 4D array calculation components
         matMean <- function(array) {apply(array, c(1, 2), mean)} # 3D array matrix slice mean
-        matQt <- function(mat, qt) {apply(mat, c(1, 2), quantile, probs = qt)}
-        grid <- expand.grid(1:object$pExp, 1:object$pExp)
+        matQt   <- function(mat, qt) {apply(mat, c(1, 2), quantile, probs = qt)}
+        grid    <- expand.grid(1:object$pExp, 1:object$pExp)
         
         # Output data structure
         out$mixest <- vector("list", length = length(object$mixNames))
         for (mix in object$mixNames) {
           out$mixest[[mix]] <- vector("list", length = n)
           for (i in 1:n) {
-            out$mixest[[mix]][[i]]$mixest <- matrix(mapply(function(x, y) {matMean(mix_draws[[mix]][x,y,i,,drop=F])}, c(grid$Var1), c(grid$Var2)), nrow = object$pExp)
+            out$mixest[[mix]][[i]]$mixest       <- matrix(mapply(function(x, y) {matMean(mix_draws[[mix]][x,y,i,,drop=F])}, c(grid$Var1), c(grid$Var2)), nrow = object$pExp)
             out$mixest[[mix]][[i]]$mixest.lower <- matrix(mapply(function(x, y) {matQt(mix_draws[[mix]][x,y,i,,drop=F], 0.025)}, c(grid$Var1), c(grid$Var2)), nrow = object$pExp)
             out$mixest[[mix]][[i]]$mixest.upper <- matrix(mapply(function(x, y) {matQt(mix_draws[[mix]][x,y,i,,drop=F], 0.975)}, c(grid$Var1), c(grid$Var2)), nrow = object$pExp)
           }
@@ -424,8 +433,8 @@ predict.dlmtree <- function(object,
     if (object$interaction != 0) {
       # Interaction effect
       for (mix in names(mix_draws)) {
-        e1 <- unlist(strsplit(mix, "-"))[[1]] # First exposure name
-        e2 <- unlist(strsplit(mix, "-"))[[2]] # Second exposure name
+        e1  <- unlist(strsplit(mix, "-"))[[1]] # First exposure name
+        e2  <- unlist(strsplit(mix, "-"))[[2]] # Second exposure name
 
         tmp <- do.call(rbind, lapply(1:n, function(i) { # (1 x p)(p x p)(p x 1) per MCMC
               unlist(lapply(lapply(1:object$mcmcIter, function(j) {t(new.exposure.data[[e2]][i, ]) %*% mix_draws[[mix]][,,i,j]}), function(iter) {iter %*% new.exposure.data[[e1]][i, ]}))
@@ -436,7 +445,6 @@ predict.dlmtree <- function(object,
           )
         )
 
-        #fhat.draws <- fhat.draws + matrix(do.call(c, tmp), nrow = n, ncol = object$mcmcIter)
         fhat.draws <- fhat.draws + tmp
       }
 
@@ -447,18 +455,17 @@ predict.dlmtree <- function(object,
     
 
     # Final result
-    out$fhat.draws <- fhat.draws
-    out$fhat <- rowMeans(fhat.draws)
-    out$fhat.lims <- apply(fhat.draws, 1, quantile, probs = ci.lims)  
+    out$fhat.draws  <- fhat.draws
+    out$fhat        <- rowMeans(fhat.draws)
+    out$fhat.lims   <- apply(fhat.draws, 1, quantile, probs = ci.lims)  
   }
 
   # ---- Outcome predictions ----
   # fixed effect + DLM + normal error
   if (type == "response") {
-    y.draws <- ztg.draws + fhat.draws +
-      sapply(1:object$mcmcIter, function(i) rnorm(nrow(ztg.draws), 0, sqrt(object$sigma2[i])))
-    out$y <- rowMeans(y.draws)
-    out$y.lims <- apply(y.draws, 1, quantile, probs = ci.lims)
+    y.draws     <- ztg.draws + fhat.draws + sapply(1:object$mcmcIter, function(i) rnorm(nrow(ztg.draws), 0, sqrt(object$sigma2[i])))
+    out$y       <- rowMeans(y.draws)
+    out$y.lims  <- apply(y.draws, 1, quantile, probs = ci.lims)
 
     return(out)
   } else if (type == "waic") {
@@ -467,7 +474,7 @@ predict.dlmtree <- function(object,
     }
 
     probs <- sapply(1:object$mcmcIter, function(i) dnorm(outcome, ztg.draws[,i] + fhat.draws[,i], sqrt(object$sigma2[i])))
-    LPD <- sum(log(rowMeans(probs)))
+    LPD   <- sum(log(rowMeans(probs)))
     pwaic <- sum(apply(log(probs), 1, var))
     return(list(waic = -2 * (LPD - pwaic), 
                 LPD = LPD, 

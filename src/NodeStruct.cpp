@@ -27,6 +27,7 @@ void NodeStruct::setTimeRange(int lower, int upper) {}
 void NodeStruct::setTimeProbs(Eigen::VectorXd newProbs) {}
 Eigen::VectorXd NodeStruct::getTimeProbs() {Eigen::VectorXd a; return(a);}
 
+
 /**
  * @brief Construct a new DLNMStruct::DLNMStruct object
  * 
@@ -40,28 +41,37 @@ Eigen::VectorXd NodeStruct::getTimeProbs() {Eigen::VectorXd a; return(a);}
 DLNMStruct::DLNMStruct(int xmin_in, int xmax_in, int tmin_in, int tmax_in,
                        Eigen::VectorXd Xp_in, Eigen::VectorXd Tp_in)
 {
-  xmin = xmin_in; xmax = xmax_in; tmin = tmin_in; tmax = tmax_in;
-  Xp = Xp_in; Tp = Tp_in;
-  xsplit = 0; tsplit = 0;
-  totXp = Xp.segment(xmin, xmax - xmin - 1).array().sum();
-  totTp = Tp.segment(tmin - 1, tmax - tmin).array().sum();
+  xmin    = xmin_in; 
+  xmax    = xmax_in; 
+  tmin    = tmin_in; 
+  tmax    = tmax_in;
+  Xp      = Xp_in; 
+  Tp      = Tp_in;
+  xsplit  = 0; 
+  tsplit  = 0;
+  totXp   = Xp.segment(xmin, xmax - xmin - 1).array().sum();
+  totTp   = Tp.segment(tmin - 1, tmax - tmin).array().sum();
 }
 
 DLNMStruct::~DLNMStruct() {}
 
 DLNMStruct::DLNMStruct(const DLNMStruct& ns)
 {
-  xmin = ns.xmin; xmax = ns.xmax; tmin = ns.tmin; tmax = ns.tmax;
-  Xp = ns.Xp; Tp = ns.Tp; xsplit = ns.xsplit; tsplit = ns.tsplit;
-  totXp = Xp.segment(xmin, xmax - xmin - 1).array().sum();
-  totTp = Tp.segment(tmin - 1, tmax - tmin).array().sum();
+  xmin    = ns.xmin; 
+  xmax    = ns.xmax; 
+  tmin    = ns.tmin; 
+  tmax    = ns.tmax;
+  Xp      = ns.Xp; 
+  Tp      = ns.Tp; 
+  xsplit  = ns.xsplit; 
+  tsplit  = ns.tsplit;
+  totXp   = Xp.segment(xmin, xmax - xmin - 1).array().sum();
+  totTp   = Tp.segment(tmin - 1, tmax - tmin).array().sum();
 }
 
 
 Eigen::VectorXd DLNMStruct::getTimeProbs()  { return(this->Tp); }
 void DLNMStruct::setTimeProbs(Eigen::VectorXd newProbs) { Tp = newProbs; }
-
-
 
 
 bool DLNMStruct::proposeSplit()
@@ -162,7 +172,6 @@ NodeStruct* DLNMStruct::subStruct(bool left)
   if (left) {
     if (xsplit > 0) {
       ns = new DLNMStruct(xmin, xsplit, tmin, tmax, Xp, Tp);
-
     } else {
       ns = new DLNMStruct(xmin, xmax, tmin, tsplit, Xp, Tp);
     }
@@ -170,7 +179,6 @@ NodeStruct* DLNMStruct::subStruct(bool left)
   } else {
     if (xsplit > 0) {
       ns = new DLNMStruct(xsplit, xmax, tmin, tmax, Xp, Tp);
-
     } else {
       ns = new DLNMStruct(xmin, xmax, tsplit + 1, tmax, Xp, Tp);
     }
@@ -181,7 +189,6 @@ NodeStruct* DLNMStruct::subStruct(bool left)
 
 
 NodeStruct* DLNMStruct::clone() { return new DLNMStruct(*this); }
-
 
 
 double DLNMStruct::logPRule()
@@ -220,21 +227,20 @@ int DLNMStruct::get(int a)
 
 
 
-
 ModStruct::ModStruct(modDat* md)
 {
-  modFncs = md;
-  availMod = md->availMod;
-  splitVal = -1;
-  splitVar = -1;
+  modFncs   = md;
+  availMod  = md->availMod;
+  splitVal  = -1;
+  splitVar  = -1;
 }
 
 ModStruct::ModStruct(modDat* md, std::vector<std::vector<int> > am)
 {
-  modFncs = md;
-  availMod = am;
-  splitVal = -1;
-  splitVar = -1;
+  modFncs   = md;
+  availMod  = am;
+  splitVal  = -1;
+  splitVar  = -1;
 }
 
 // Delete (do not delete modDat object, set pointer to zero)
@@ -246,11 +252,11 @@ ModStruct::~ModStruct()
 // Clone function
 ModStruct::ModStruct(const ModStruct& ns)
 {
-  modFncs = ns.modFncs;
-  availMod = ns.availMod;
-  splitVal = ns.splitVal;
-  splitVar = ns.splitVar;
-  splitVec = ns.splitVec;
+  modFncs   = ns.modFncs;
+  availMod  = ns.availMod;
+  splitVal  = ns.splitVal;
+  splitVar  = ns.splitVar;
+  splitVec  = ns.splitVec;
 }
 
 // Proposed new split based on availMod

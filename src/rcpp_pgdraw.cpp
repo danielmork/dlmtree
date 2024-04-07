@@ -50,14 +50,13 @@ double randinvg(double);
 double aterm(int, double, double);
 
 
-/**
- * @brief multiple draw polya gamma latent variable for var c[i] with size b[i]
- * 
- * @param b vector of binomial sizes
- * @param c vector of parameters
- * @return Eigen::VectorXd 
- */
- // [[Rcpp::export]]
+//' multiple draw polya gamma latent variable for var c[i] with size b[i]
+//'
+//' @param b vector of binomial sizes
+//' @param z vector of parameters
+//' @return Eigen::VectorXd 
+//' @export
+// [[Rcpp::export]]
 Eigen::VectorXd rcpp_pgdraw(Eigen::VectorXd b, Eigen::VectorXd z) {
   int n = z.size();
   Eigen::VectorXd y(n);
@@ -68,6 +67,7 @@ Eigen::VectorXd rcpp_pgdraw(Eigen::VectorXd b, Eigen::VectorXd z) {
       double c = 0.5 * fabs(z(i));
       double r = ratio(c);
       double K = c*c/2.0 + MATH_PI2/8.0;
+      
       y(i) = 0.0;
       for (int j = 0; j < b(i); ++j) {
         y(i) += samplepg(c, r, K);
@@ -90,16 +90,17 @@ double ratio(double z)
   
   // Compute p, q and the ratio q / (q + p)
   // (derived from scratch; derivation is not in the original paper)
-  double K = z*z/2.0 + MATH_PI2/8.0;
+  double K    = z*z/2.0 + MATH_PI2/8.0;
   double logA = (double)std::log(4.0) - MATH_LOG_PI - z;
   double logK = (double)std::log(K);
-  double Kt = K * t;
-  double w = (double)std::sqrt(MATH_PI_2);
+  double Kt   = K * t;
+  double w    = (double)std::sqrt(MATH_PI_2);
   
-  double logf1 = logA + R::pnorm(w*(t*z - 1),0.0,1.0,1,1) + logK + Kt;
-  double logf2 = logA + 2*z + R::pnorm(-w*(t*z+1),0.0,1.0,1,1) + logK + Kt;
+  double logf1    = logA + R::pnorm(w*(t*z - 1),0.0,1.0,1,1) + logK + Kt;
+  double logf2    = logA + 2*z + R::pnorm(-w*(t*z+1),0.0,1.0,1,1) + logK + Kt;
   double p_over_q = (double)std::exp(logf1) + (double)std::exp(logf2);
-  double ratio = 1.0 / (1.0 + p_over_q); 
+  double ratio    = 1.0 / (1.0 + p_over_q); 
+
   return ratio;
 }
 
@@ -117,24 +118,22 @@ double samplepg(double z, double ratio, double K)
   {
     // Step 1: Sample X ? g(x|z)
     u = R::runif(0.0,1.0);
-    if(u < ratio) {
+    if (u < ratio) {
       // truncated exponential
       X = t + exprnd(1.0)/K;
-    }
-    else {
+    } else {
       // truncated Inverse Gaussian
       X = tinvgauss(z, t);
     }
 
     // Step 2: Iteratively calculate Sn(X|z), starting at S1(X|z), until U ? Sn(X|z) for an odd n or U > Sn(X|z) for an even n
-    int i = 1;
+    int i     = 1;
     double Sn = aterm(0, X, t);
-    double U = R::runif(0.0,1.0) * Sn;
-    int asgn = -1;
+    double U  = R::runif(0.0,1.0) * Sn;
+    int asgn  = -1;
     bool even = false;
 
-    while(1)
-    {
+    while(1){
       Sn = Sn + asgn * aterm(i, X, t);
 
       // Accept if n is odd
@@ -162,12 +161,12 @@ double samplepg_na(double b, double z) {
   double E_y, sigma2_y;
   z = 0.5 * fabs(z);
   if (z > 1e-12) {
-    E_y = b * tanh(z) / z;
-    sigma2_y = (b+1) * b * pow(tanh(z)/z,2) + b * ((tanh(z)-z)/pow(z,3));
+    E_y       = b * tanh(z) / z;
+    sigma2_y  = (b+1) * b * pow(tanh(z)/z,2) + b * ((tanh(z)-z)/pow(z,3));
     
   } else {
-    E_y = b * (1 - (1.0/3) * pow(z,2) + (2.0/15) * pow(z,4) - (17.0/315) * pow(z,6));
-    sigma2_y = (b+1) * b * pow(1 - (1.0/3) * pow(z,2) + (2.0/15) * pow(z,4) - (17.0/315) * pow(z,6), 2) +
+    E_y       = b * (1 - (1.0/3) * pow(z,2) + (2.0/15) * pow(z,4) - (17.0/315) * pow(z,6));
+    sigma2_y  = (b+1) * b * pow(1 - (1.0/3) * pow(z,2) + (2.0/15) * pow(z,4) - (17.0/315) * pow(z,6), 2) +
 	    b * ((-1.0/3) + (2.0/15) * pow(z,2) - (17.0/315) * pow(z,4));             
   }
   // Rcout << z << " " << E_y << " " << sigma2_y;
@@ -175,8 +174,7 @@ double samplepg_na(double b, double z) {
 }
 
 // Generate exponential distribution random variates
-double exprnd(double mu)
-{
+double exprnd(double mu){
   return -mu * log(1.0 - R::runif(0.0,1.0));
 }
 
@@ -192,40 +190,38 @@ double aterm(int n, double x, double t)
   double f = 0;
   if(x <= t) {
     f = MATH_LOG_PI + log(n + 0.5) + 1.5*(M_LOG_2_PI-log(x)) - 2*(n + 0.5)*(n + 0.5)/x;
-  }
-  else {
+  } else {
     f = MATH_LOG_PI + log(n + 0.5) - x * MATH_PI2_2 * (n + 0.5)*(n + 0.5);
   }
+
   return exp(f);
 }
 
 // Generate inverse gaussian random variates
-double randinvg(double mu)
-{
+double randinvg(double mu) {
   // sampling
-  double u = R::rnorm(0.0,1.0);
-  double V = u*u;
-  double out = mu + 0.5*mu * ( mu*V - sqrt(4*mu*V + mu*mu * V*V) );
+  double u    = R::rnorm(0.0,1.0);
+  double V    = u*u;
+  double out  = mu + 0.5*mu * ( mu*V - sqrt(4*mu*V + mu*mu * V*V) );
 
   if(R::runif(0.0,1.0) > mu /(mu+out)) {
     out = mu*mu / out;
   }
+
   return out;
 }
 
 // Sample truncated gamma random variates
 // Ref: Chung, Y.: Simulation of truncated gamma variables
 // Korean Journal of Computational & Applied Mathematics, 1998, 5, 601-610
-double truncgamma()
-{
+double truncgamma(){
   double c = MATH_PI_2;
   double X, gX;
 
   bool done = false;
-  while(!done)
-  {
-    X = exprnd(1.0) * 2.0 + c;
-    gX = M_SQRT_PI_2 / sqrt(X);
+  while(!done){
+    X   = exprnd(1.0) * 2.0 + c;
+    gX  = M_SQRT_PI_2 / sqrt(X);
 
     if(R::runif(0.0,1.0) <= gX) {
       done = true;

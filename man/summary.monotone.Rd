@@ -11,7 +11,8 @@
   conf.level = 0.95,
   exposure.se = NULL,
   mcmc = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  ...
 )
 }
 \arguments{
@@ -30,6 +31,8 @@ predictions at all other exposure values}
 \item{mcmc}{true or false (default): return MCMC samplers}
 
 \item{verbose}{true (default) or false: print output}
+
+\item{...}{additional parameters}
 }
 \value{
 Summary of monotone fit

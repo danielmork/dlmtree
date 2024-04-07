@@ -4,14 +4,16 @@
 \alias{print.summary.tdlmm}
 \title{print.summary.tdlmm}
 \usage{
-\method{print}{summary.tdlmm}(object, digits = 4, cw.only = TRUE)
+\method{print}{summary.tdlmm}(x, digits = 3, cw.only = TRUE, ...)
 }
 \arguments{
-\item{object}{an object of type 'summary.tdlmm', result of call to summary.tdlmm()}
+\item{x}{an object of type 'summary.tdlmm', result of call to summary.tdlmm()}
 
 \item{digits}{integer number of digits to round}
 
 \item{cw.only}{print only results for exposures with critical windows}
+
+\item{...}{additional parameters}
 }
 \value{
 output in R console

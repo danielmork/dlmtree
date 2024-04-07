@@ -54,11 +54,15 @@
 #' different exposures, 'all' which also allows interactions within the same exposure, or 'none' 
 #' which eliminates all interactions and estimates only main effects of each exposure
 #' @param mixture.prior positive scalar hyperparameter for sparsity of exposures
-#' @param monotone.gamma0 ---------UPDATE---------
-#' @param monotone.sigma ---------UPDATE---------
-#' @param monotone.tree.time.params ---------UPDATE---------
-#' @param monotone.tree.exp.params ---------UPDATE---------
-#' @param monotone.time.kappa ---------UPDATE---------
+#' @param monotone.gamma0 vector (with length equal to number of lags) of means for logit-transformed prior probability of split at each lag; 
+#' e.g., gamma_0l = 0 implies mean prior probability of split at lag l = 0.5
+#' @param monotone.sigma symmetric matrix (usually with only diagonal elements) corresponding to gamma_0 to define variances on prior probability of split; 
+#' e.g., gamma_0l=0 with lth diagonal element of sigma=2.701 implies that 95% of the time the prior probability of split is between 0.005 and 0.995, 
+#' as a second example setting gamma_0l=4.119 and the corresponding diagonal element of sigma=0.599 implies that 95% of the time the prior probability of a split is between 0.8 and 0.99
+#' @param monotone.tree.time.params BART parameters for monotone time tree
+#' @param monotone.tree.exp.params BART parameters for monotone exposure tree
+#' @param monotone.time.kappa scaling factor in dirichlet prior that goes alongside `time.split.prob` to 
+#' control the amount of prior information given to the model for deciding probabilities of splits between adjacent lags
 #' @param subset integer vector to analyze only a subset of data and exposures
 #' @param save.data true (default): save data used for fitting the model
 #' @param lowmem false (default) / true: turn on memory saver for DLNM, slower computation time
@@ -102,9 +106,9 @@ dlmtree.fit <- function(formula,
                         mixture = FALSE,
                         het = FALSE,                
                         # MCMC
-                        n.trees = 10,
-                        n.burn = 1000,
-                        n.iter = 2000,
+                        n.trees = 20,
+                        n.burn = 2000,
+                        n.iter = 5000,
                         n.thin = 5,
                         # Shared hyperparameters
                         shrinkage = "all", 
@@ -271,7 +275,6 @@ dlmtree.fit <- function(formula,
     }
   }
 
-
   # print("Checking response type...")
   # *** Check response type ***
   # Binary flag
@@ -293,8 +296,8 @@ dlmtree.fit <- function(formula,
   # Zero-inflated negative binomial flag
   model$zinb <- FALSE
   if (family == "zinb") {
-    model$zinb <- TRUE
-    model$sigma2 <- 1
+    model$zinb    <- TRUE
+    model$sigma2  <- 1
   }
 
   # Mixture interactions
@@ -305,13 +308,13 @@ dlmtree.fit <- function(formula,
 
   if (mixture.interactions %in% c("marginal", "none")) {
     model$interaction <- 0     
-    model$nMix <- 0   
+    model$nMix        <- 0   
   } else if (mixture.interactions == "noself") { 
     model$interaction <- 1  
-    model$nMix <- model$nExp * (model$nExp - 1) / 2 
+    model$nMix        <- model$nExp * (model$nExp - 1) / 2 
   } else { 
     model$interaction <- 2   
-    model$nMix <- model$nExp * (model$nExp + 1) / 2 
+    model$nMix        <- model$nExp * (model$nExp + 1) / 2 
   }
 
   # *** Check tree parameters ***
@@ -337,36 +340,36 @@ dlmtree.fit <- function(formula,
   # print("Checking model control parameters...")
   # *** Model control arguments ***
   # MCMC
-  model$nTrees    <-    n.trees
-  model$nBurn     <-    n.burn
-  model$nIter     <-    n.iter
-  model$nThin     <-    n.thin
-  model$mcmcIter  <-    floor(n.iter / n.thin)
+  model$nTrees    <- n.trees
+  model$nBurn     <- n.burn
+  model$nIter     <- n.iter
+  model$nThin     <- n.thin
+  model$mcmcIter  <- floor(n.iter / n.thin)
   
   # Model specification
-  model$family    <-    family
-  model$mixture   <-    mixture
-  model$het       <-    het
+  model$family    <- family
+  model$mixture   <- mixture
+  model$het       <- het
 
   # dlmtree
-  model$treePriorTDLM <-    dlmtree.params
-  model$stepProbTDLM  <-    prop.table(c(dlmtree.step.prob[1], dlmtree.step.prob[1], dlmtree.step.prob[2]))
+  model$treePriorTDLM <- dlmtree.params
+  model$stepProbTDLM  <- prop.table(c(dlmtree.step.prob[1], dlmtree.step.prob[1], dlmtree.step.prob[2]))
 
   # modtree
-  model$treePriorMod  <-    hdlm.modtree.params
-  model$stepProbMod   <-    prop.table(c(hdlm.modtree.step.prob[1], hdlm.modtree.step.prob[2], hdlm.modtree.step.prob[3], 1 - sum(hdlm.modtree.step.prob)))
+  model$treePriorMod  <- hdlm.modtree.params
+  model$stepProbMod   <- prop.table(c(hdlm.modtree.step.prob[1], hdlm.modtree.step.prob[2], hdlm.modtree.step.prob[3], 1 - sum(hdlm.modtree.step.prob)))
 
   # Monotone model priors
-  model$timeSplits0 <-   rep(1/(ncol(exposure.data) - 1), ncol(exposure.data) - 1)
-  model$shape       <-   ifelse(!is.null(tdlnm.exposure.se), "Smooth",
+  model$timeSplits0 <- rep(1/(ncol(exposure.data) - 1), ncol(exposure.data) - 1)
+  model$shape       <- ifelse(!is.null(tdlnm.exposure.se), "Smooth",
                               ifelse(tdlnm.exposure.splits == 0, "Linear", "Step Function"))
                                
   if (dlm.type == "monotone") {
-    model$zirtGamma0 <-       monotone.gamma0
-    model$zirtSigma <-        monotone.sigma
-    model$treePriorTime <-    monotone.tree.time.params
-    model$treePriorExp <-     monotone.tree.exp.params
-    model$timeKappa <-        ifelse(is.null(monotone.time.kappa), 1.0, monotone.time.kappa)
+    model$zirtGamma0      <-  monotone.gamma0
+    model$zirtSigma       <-  monotone.sigma
+    model$treePriorTime   <-  monotone.tree.time.params
+    model$treePriorExp    <-  monotone.tree.exp.params
+    model$timeKappa       <-  ifelse(is.null(monotone.time.kappa), 1.0, monotone.time.kappa)
     model$updateTimeKappa <-  ifelse(is.null(monotone.time.kappa), TRUE, FALSE)
   }
 
@@ -381,15 +384,15 @@ dlmtree.fit <- function(formula,
     stop("`shrinkage` must be one of `all`, `trees`, `exposures`, or `none`")
   }
 
-  model$mixPrior <-   mixture.prior # Exposure selection sparsity
+  model$mixPrior  <- mixture.prior # Exposure selection sparsity
   model$shrinkage <- switch(shrinkage, "all" = 3, "trees" = 2, "exposures" = 1, "none" = 0)
 
   # Diagnostics
-  model$lowmem <-       lowmem
+  model$lowmem      <- lowmem
   #model$maxThreads <-   max.threads
   #model$debug <-        debug
-  model$verbose <-      verbose
-  model$diagnostics <-  diagnostics
+  model$verbose     <- verbose
+  model$diagnostics <- diagnostics
   
   if (model$verbose) {
     cat("Preparing data...\n")
@@ -425,8 +428,8 @@ dlmtree.fit <- function(formula,
     formula.zi <- formula
   }
 
-  model$formula <-  as.formula(formula)
-  model$terms <-    terms.formula(model$formula, data = data) 
+  model$formula <- as.formula(formula)
+  model$terms   <- terms.formula(model$formula, data = data) 
 
   # Sanity check for response for variables and the names
   if (!attr(model$terms, "response")) {
@@ -437,9 +440,7 @@ dlmtree.fit <- function(formula,
     stop("no valid variables in formula")
   }
 
-  mf <- model.frame(model$terms, data = data,
-                    drop.unused.levels = TRUE,
-                    na.action = NULL)
+  mf <- model.frame(model$terms, data = data, drop.unused.levels = TRUE, na.action = NULL)
   model$intercept <- ifelse(attr(model$terms, "intercept"), TRUE, FALSE)
 
   if (any(is.na(mf))) {
@@ -447,8 +448,8 @@ dlmtree.fit <- function(formula,
   }
 
   # If family = zinb
-  model$formula.zi <-   as.formula(formula.zi) 
-  model$terms.zi <-     terms.formula(model$formula.zi, data = data) 
+  model$formula.zi  <- as.formula(formula.zi) 
+  model$terms.zi    <- terms.formula(model$formula.zi, data = data) 
 
   if (!attr(model$terms.zi, "response")) {
     stop("no valid response in formula for zero-inflation model")
@@ -458,9 +459,7 @@ dlmtree.fit <- function(formula,
     stop("no valid variables in formula for zero-inflation model")
   }
 
-  mf.zi <- model.frame(model$terms.zi, data = data,               
-                        drop.unused.levels = TRUE,
-                        na.action = NULL)
+  mf.zi <- model.frame(model$terms.zi, data = data, drop.unused.levels = TRUE, na.action = NULL)
   model$intercept.zi <- ifelse(attr(model$terms.zi, "intercept"), TRUE, FALSE)
 
   if (any(is.na(mf.zi))) {
@@ -471,7 +470,7 @@ dlmtree.fit <- function(formula,
   # print("Checking collinearity...")
 
   # Response
-  model$Y <-   model.response(mf)
+  model$Y <- model.response(mf)
 
   # Check response & model specification
   # Binary response
@@ -504,55 +503,49 @@ dlmtree.fit <- function(formula,
   }
 
   # Covariates for main model
-  model$Z <-              model.matrix(model$formula, data = mf)
-  model$QR <-             qr(crossprod(model$Z))
-  model$droppedCovar <-   colnames(model$Z)[ model$QR$pivot[ -seq_len(model$QR$rank) ] ]
-  model$Z <-              model$Z[, sort(model$QR$pivot[ seq_len(model$QR$rank) ]) ]
-  model$Z <-              scaleModelMatrix(model$Z)
+  model$Z             <- model.matrix(model$formula, data = mf)
+  model$QR            <- qr(crossprod(model$Z))
+  model$droppedCovar  <- colnames(model$Z)[ model$QR$pivot[ -seq_len(model$QR$rank) ] ]
+  model$Z             <- model$Z[, sort(model$QR$pivot[ seq_len(model$QR$rank) ]) ]
+  model$Z             <- scaleModelMatrix(model$Z)
   if (length(model$droppedCovar) > 0 & model$verbose) {
-    warning("variables {", paste0(model$droppedCovar, collapse = ", "),
-            "} dropped due to perfect collinearity\n")
+    warning("variables {", paste0(model$droppedCovar, collapse = ", "), "} dropped due to perfect collinearity\n")
   }
 
   # Covariates for ZI model
-  model$Z.zi <-             model.matrix(model$formula.zi, data = mf.zi)
-  model$QR.zi <-            qr(crossprod(model$Z.zi))             
-  model$droppedCovar.zi <-  colnames(model$Z.zi)[model$QR.zi$pivot[-seq_len(model$QR.zi$rank)]]                  
-  model$Z.zi <-             model$Z.zi[,sort(model$QR.zi$pivot[seq_len(model$QR.zi$rank)])]           
-  model$Z.zi <-             scaleModelMatrix(model$Z.zi)
+  model$Z.zi            <- model.matrix(model$formula.zi, data = mf.zi)
+  model$QR.zi           <- qr(crossprod(model$Z.zi))             
+  model$droppedCovar.zi <- colnames(model$Z.zi)[model$QR.zi$pivot[-seq_len(model$QR.zi$rank)]]                  
+  model$Z.zi            <- model$Z.zi[,sort(model$QR.zi$pivot[seq_len(model$QR.zi$rank)])]           
+  model$Z.zi            <- scaleModelMatrix(model$Z.zi)
   if (length(model$droppedCovar.zi) > 0 & model$verbose) {
-    warning("variables {", paste0(model$droppedCovar.zi, collapse = ", "),
-            "} dropped due to perfect collinearity\n")
+    warning("variables {", paste0(model$droppedCovar.zi, collapse = ", "), "} dropped due to perfect collinearity\n")
   }
 
   # *** Scale data ***
   # print("Scaling data...")
   if (model$family == "gaussian") {
-    model$Ymean <-    sum(range(model$Y))/2
-    model$Yscale <-   diff(range(model$Y - model$Ymean))
-    model$Y <-        (model$Y - model$Ymean) / model$Yscale
+    model$Ymean   <- sum(range(model$Y))/2
+    model$Yscale  <- diff(range(model$Y - model$Ymean))
+    model$Y       <- (model$Y - model$Ymean) / model$Yscale
   } else {
-    model$Yscale <-   1
-    model$Ymean <-    0
-    model$Y <-        scale(model$Y, center = 0, scale = 1)
+    model$Yscale  <- 1
+    model$Ymean   <- 0
+    model$Y       <- scale(model$Y, center = 0, scale = 1)
   }
 
   # Store the processed values
   model$Y <- c(model$Y)
 
-  model$Zscale <-     attr(model$Z, "scaled:scale")
-  model$Zmean <-      attr(model$Z, "scaled:center")
-  model$Znames <-     colnames(model$Z)
-  model$Z <-          matrix(model$Z, nrow(model$Z), ncol(model$Z))
+  model$Zscale  <- attr(model$Z, "scaled:scale")
+  model$Zmean   <- attr(model$Z, "scaled:center")
+  model$Znames  <- colnames(model$Z)
+  model$Z       <- matrix(model$Z, nrow(model$Z), ncol(model$Z))
 
-  model$Zscale.zi <-  attr(model$Z.zi, "scaled:scale")
-  model$Zmean.zi <-   attr(model$Z.zi, "scaled:center")
-  model$Znames.zi <-  colnames(model$Z.zi)
-  model$Z.zi <-       matrix(model$Z.zi, nrow(model$Z.zi), ncol(model$Z.zi))
-  
-  # model$Zscale <- rep(1, ncol(model$Z))#attr(model$Z, "scaled:scale")
-  # model$Zmean <- rep(0, ncol(model$Z))#attr(model$Z, "scaled:center")
-  # model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
+  model$Zscale.zi   <- attr(model$Z.zi, "scaled:scale")
+  model$Zmean.zi    <- attr(model$Z.zi, "scaled:center")
+  model$Znames.zi   <- colnames(model$Z.zi)
+  model$Z.zi        <- matrix(model$Z.zi, nrow(model$Z.zi), ncol(model$Z.zi))
 
   # print("Initializing parameters...")
   # TDLMM
@@ -568,113 +561,109 @@ dlmtree.fit <- function(formula,
 
   # *** Exposure splits ***
   # print("Exposure split...")
-  model$splitProb <-  as.double(c())
-  model$timeProb <-   rep(1 / (model$pExp - 1), model$pExp - 1)
-  model$nSplits <-    0
+  model$splitProb <- as.double(c())
+  model$timeProb  <- rep(1 / (model$pExp - 1), model$pExp - 1)
+  model$nSplits   <- 0
 
   # print("Exposure data storage hdlmm vs previous code")
   if (dlm.type == "linear") {
     if (mixture) { # TDLMM, HDLMM
       model$class <- ifelse(het, "hdlmm", "tdlmm")
-      model$X <- list() 
+      model$X     <- list() 
       for(i in 1:model$nExp) { # For each exposure,
-        model$X[[i]] <-         force(list(Xscale = sd(exposure.data[[i]]),                                
-                                  X = exposure.data[[i]]))
-        model$X[[i]]$X <-       force(model$X[[i]]$X / model$X[[i]]$Xscale)  
-        model$X[[i]]$Xrange <-  force(range(model$X[[i]]$X)) 
-        model$X[[i]]$Xquant <-  force(quantile(model$X[[i]]$X, 0:100/100) *  model$X[[i]]$Xscale)
-        model$X[[i]]$intX <-    force(mean(model$X[[i]]$X)) 
-        model$X[[i]]$Tcalc <-   force(sapply(1:ncol(model$X[[i]]$X), function(j) { 
-                                  rowSums(model$X[[i]]$X[, 1:j, drop = F]) }))       
+        model$X[[i]]        <- force(list(Xscale = sd(exposure.data[[i]]), X = exposure.data[[i]]))
+        model$X[[i]]$X      <- force(model$X[[i]]$X / model$X[[i]]$Xscale)  
+        model$X[[i]]$Xrange <- force(range(model$X[[i]]$X)) 
+        model$X[[i]]$Xquant <- force(quantile(model$X[[i]]$X, 0:100/100) *  model$X[[i]]$Xscale)
+        model$X[[i]]$intX   <- force(mean(model$X[[i]]$X)) 
+        model$X[[i]]$Tcalc  <- force(sapply(1:ncol(model$X[[i]]$X), function(j) {rowSums(model$X[[i]]$X[, 1:j, drop = F])}))       
       }
-      names(model$X) <-         model$expNames
-      model$expProb <-          force(rep(1/length(model$X), length(model$X)))
+      names(model$X)        <- model$expNames
+      model$expProb         <- force(rep(1/length(model$X), length(model$X)))
 
     } else {
       if (het) { # HDLM
-        model$class <-      "hdlm"
-        model$X <-          exposure.data
-        model$Xrange <-     range(model$X)
-        model$Xscale <-     sd(model$X)
-        model$X <-          model$X / model$Xscale
-        model$Tcalc <-      sapply(1:ncol(model$X), function(i) rowSums(model$X[, 1:i, drop = F]))
+        model$class   <- "hdlm"
+        model$X       <- exposure.data
+        model$Xrange  <- range(model$X)
+        model$Xscale  <- sd(model$X)
+        model$X       <- model$X / model$Xscale
+        model$Tcalc   <- sapply(1:ncol(model$X), function(i) rowSums(model$X[, 1:i, drop = F]))
       } else { # TDLM
-        model$class <-      "tdlm"
-        model$X <-          force(exposure.data)
-        model$Xrange <-     force(range(exposure.data))
+        model$class   <- "tdlm"
+        model$X       <- force(exposure.data)
+        model$Xrange  <- force(range(exposure.data))
         if (is.null(tdlnm.exposure.se)) {
-          model$smooth <- FALSE
-          model$SE <-     matrix(0.0, 0, 0)
+          model$smooth  <- FALSE
+          model$SE      <- matrix(0.0, 0, 0)
         } else {
-          model$smooth <- TRUE
-          model$SE <-     force(tdlnm.exposure.se)
+          model$smooth  <- TRUE
+          model$SE      <- force(tdlnm.exposure.se)
         }
-        model$splitProb <-    as.double(c())
-        model$Xsplits <-      as.double(c())
-        model$nSplits <-      0
-        model$Xscale <-       force(sd(model$X))
-        model$X <-            force(model$X / model$Xscale)
-        model$Tcalc <-        force(sapply(1:ncol(model$X), function(i) rowSums(model$X[, 1:i, drop = F])))
+        model$splitProb <- as.double(c())
+        model$Xsplits   <- as.double(c())
+        model$nSplits   <- 0
+        model$Xscale    <- force(sd(model$X))
+        model$X         <- force(model$X / model$Xscale)
+        model$Tcalc     <- force(sapply(1:ncol(model$X), function(i) rowSums(model$X[, 1:i, drop = F])))
       }
     }
   } else {
-    model$class <-    ifelse(dlm.type == "nonlinear", "tdlnm", "monotone")
+    model$class     <- ifelse(dlm.type == "nonlinear", "tdlnm", "monotone")
 
-    model$X <-        force(exposure.data)
-    model$Xrange <-   force(range(exposure.data))
+    model$X         <- force(exposure.data)
+    model$Xrange    <- force(range(exposure.data))
     if (is.null(tdlnm.exposure.se)) {
-      model$smooth <- FALSE
-      model$SE <-     matrix(0.0, 0, 0)
+      model$smooth  <- FALSE
+      model$SE      <- matrix(0.0, 0, 0)
     } else {
-      model$smooth <- TRUE
-      model$SE <-     force(tdlnm.exposure.se)
+      model$smooth  <- TRUE
+      model$SE      <- force(tdlnm.exposure.se)
     }
 
     if (length(tdlnm.exposure.splits) == 1) {
       if (is.list(tdlnm.exposure.splits)) {
         stop("tdlnm.exposure.splits must be a scalar or list with two inputs: 'type' and 'split.vals'")
       } else {
-        model$Xsplits <-    force(sort(unique(quantile(model$X, (1:(tdlnm.exposure.splits - 1)) / tdlnm.exposure.splits))))
-        model$nSplits <-    force(length(model$Xsplits))
-        model$splitProb <-  force(rep(1 / model$nSplits, model$nSplits))
+        model$Xsplits   <- force(sort(unique(quantile(model$X, (1:(tdlnm.exposure.splits - 1)) / tdlnm.exposure.splits))))
+        model$nSplits   <- force(length(model$Xsplits))
+        model$splitProb <- force(rep(1 / model$nSplits, model$nSplits))
       }
     # splits defined by specific values or quantiles
-    } else {
-      # if tdlnm.exposure.splits entered incorrectly, infer user input and inform
-      if (!is.list(tdlnm.exposure.splits)) {
+    } else { 
+      if (!is.list(tdlnm.exposure.splits)) { # if tdlnm.exposure.splits entered incorrectly, infer user input and inform
         if (any(tdlnm.exposure.splits > 1 | tdlnm.exposure.splits < 0)) {
           if (verbose) {
             cat("tdlnm.exposure.splits entered as numeric vector, assuming values are exposure splitting points\n")
           }
-          tdlnm.exposure.splits <- list("type" = "values", 
-                                        "split.vals" = tdlnm.exposure.splits)
+          tdlnm.exposure.splits <- list("type" = "values", "split.vals" = tdlnm.exposure.splits)
         } else {
           if (verbose) {
             cat("tdlnm.exposure.splits entered as numeric vector, assuming values are exposure splitting quantiles\n")
           }
-          tdlnm.exposure.splits <- list("type" = "quantiles", 
-                                        "split.vals" = tdlnm.exposure.splits)
+          tdlnm.exposure.splits <- list("type" = "quantiles", "split.vals" = tdlnm.exposure.splits)
         }
       }
 
       # use specific values as splitting points
       if (tdlnm.exposure.splits$type == "values") {
         model$Xsplits <- force(sort(unique(tdlnm.exposure.splits$split.vals)))
-        model$Xsplits <- force(model$Xsplits[which(model$Xsplits > min(model$X) &
-                                                  model$Xsplits < max(model$X))])
+        model$Xsplits <- force(model$Xsplits[which(model$Xsplits > min(model$X) & model$Xsplits < max(model$X))])
 
       # use specific quantiles as splitting points
       } else if (tdlnm.exposure.splits$type == "quantiles") {
-        if (any(tdlnm.exposure.splits$split.vals > 1 | tdlnm.exposure.splits$split.vals < 0))
+        if (any(tdlnm.exposure.splits$split.vals > 1 | tdlnm.exposure.splits$split.vals < 0)) {
           stop("`tdlnm.exposure.splits$split.vals` must be between zero and one if using quantiles")
-
+        }
         model$Xsplits <- force(sort(unique(quantile(model$X, tdlnm.exposure.splits$split.vals))))
         model$Xsplits <- force(model$Xsplits[which(model$Xsplits > min(model$X) & model$Xsplits < max(model$X))])
+
       } else {
         stop("`tdlnm.exposure.splits$type` must be one of `values` or `quantiles`")
       }
 
       model$nSplits <- force(length(model$Xsplits))
+
       if (model$nSplits == 0) {
         stop("no exposure splits specified, please check `tdlnm.exposure.splits` input")
       }
@@ -683,8 +672,7 @@ dlmtree.fit <- function(formula,
       
       # memory warning
       if (prod(dim(model$X)) * model$nSplits * 8 > 1024^3 & model$verbose) {
-        warning(paste0("Model run will require at least ", 
-                        round(prod(dim(model$X)) * model$nSplits * 8 / 1024^3, 1),
+        warning(paste0("Model run will require at least ", round(prod(dim(model$X)) * model$nSplits * 8 / 1024^3, 1),
                         " GB of memory. Use `lowmem = TRUE` option to reduce memory usage."))
       }
     }
@@ -692,8 +680,8 @@ dlmtree.fit <- function(formula,
 
   # Precalculate counts below each splitting values
   if (length(model$Xsplits) > 0) {
-    model$Xscale <- 1
-    model$Tcalc <- force(sapply(1:ncol(model$X), function(i) {
+    model$Xscale  <- 1
+    model$Tcalc   <- force(sapply(1:ncol(model$X), function(i) {
       rep(i / model$Xscale, nrow(model$X)) }))
     if (model$smooth) {
       model$Xcalc <- force(sapply(model$Xsplits, function(i) {
@@ -704,11 +692,9 @@ dlmtree.fit <- function(formula,
     }
   }
   
-
-  
-  # *** Setup modifier variables (for HDLM, HDLMM)***
+  # *** Setup modifier variables (for HDLM, HDLMM) ***
   if (het) {
-    model$modNames <- hdlm.modifiers  # hdlm.modifiers default = "all"
+    model$modNames <- hdlm.modifiers 
 
     if (length(model$modNames) == 1) {
       if (model$modNames == "all") {
@@ -725,35 +711,34 @@ dlmtree.fit <- function(formula,
     }
 
     model$MoUnique <- lapply(model$modNames, function(m) {
-                                if (!is.numeric(data[[m]]))
+                                if (!is.numeric(data[[m]])){
                                   sort(unique(data[[m]]))
-                                else
+                                } else {
                                   range(data[[m]])
+                                }
                               }
                             )
     names(model$Mo) <- names(model$MoUnique) <- model$modNames
-    model$pM <- length(model$Mo)
+    model$pM        <- length(model$Mo)
 
     # Use quantiles of modifiers as possible splits
-    model$modIsNum <-         sapply(model$Mo, function(i) (is.numeric(i) || is.logical(i)))
-    model$modSplitValRef <-   list()
-    model$modSplitValIdx <-   list()
-    model$modSplitIdx <-      list()
-    model$fullIdx <-          0:(nrow(data) - 1)
+    model$modIsNum        <- sapply(model$Mo, function(i) (is.numeric(i) || is.logical(i)))
+    model$modSplitValRef  <- list()
+    model$modSplitValIdx  <- list()
+    model$modSplitIdx     <- list()
+    model$fullIdx         <- 0:(nrow(data) - 1)
 
     for(i in 1:model$pM) {
       if (model$modIsNum[i]) {
         if (length(unique(model$Mo[[i]])) < hdlm.modifier.splits) {
-          uniqueVals <- sort(unique(model$Mo[[i]]))
+          uniqueVals                <- sort(unique(model$Mo[[i]]))
           model$modSplitValRef[[i]] <- rowMeans(cbind(uniqueVals[-length(uniqueVals)], uniqueVals[-1]))
         } else {
-          uniqueVals <- sort(unique(quantile(
-            model$Mo[[i]], 1:hdlm.modifier.splits/(hdlm.modifier.splits + 1))))
-          model$modSplitValRef[[i]] <-
-            uniqueVals[which(uniqueVals > min(model$Mo[[i]]) & uniqueVals < max(model$Mo[[i]]))]
+          uniqueVals                <- sort(unique(quantile(model$Mo[[i]], 1:hdlm.modifier.splits/(hdlm.modifier.splits + 1))))
+          model$modSplitValRef[[i]] <- uniqueVals[which(uniqueVals > min(model$Mo[[i]]) & uniqueVals < max(model$Mo[[i]]))]
         }
-        model$modSplitValIdx[[i]] <- 0:(length(model$modSplitValRef[[i]]) - 1)
-        model$modSplitIdx[[i]]    <- lapply(model$modSplitValRef[[i]], function(j) which(model$Mo[[i]] < j) - 1)
+        model$modSplitValIdx[[i]]   <- 0:(length(model$modSplitValRef[[i]]) - 1)
+        model$modSplitIdx[[i]]      <- lapply(model$modSplitValRef[[i]], function(j) which(model$Mo[[i]] < j) - 1)
       } else {
         if (length(unique(model$Mo[[i]])) != length(unique(model$Mo[[i]]))) {
           warning("one or more modifier categories not present in data subset")
@@ -764,7 +749,6 @@ dlmtree.fit <- function(formula,
       }
     }
   }
-
 
   # *** Run model ***
   if (verbose) {
@@ -787,7 +771,6 @@ dlmtree.fit <- function(formula,
                 "tdlnm" = tdlnm_Cpp(model),
                 "monotone"  = monotdlnm_Cpp(model))
   
-
 
   # # print("Choosing which model to run...")
   # if (is.null(fixed.tree.idx)) {
@@ -852,9 +835,9 @@ dlmtree.fit <- function(formula,
 
   # *** Prepare output ***
   # print("Preparing output in dlmtree.R")
-  model$Y <-        model$Y * model$Yscale + model$Ymean  
-  model$fhat <-     model$fhat * model$Yscale    
-  model$sigma2 <-   model$sigma2 * (model$Yscale^2)     
+  model$Y       <- model$Y * model$Yscale + model$Ymean  
+  model$fhat    <- model$fhat * model$Yscale    
+  model$sigma2  <- model$sigma2 * (model$Yscale^2)     
 
 
   # Coefficients
@@ -885,8 +868,8 @@ dlmtree.fit <- function(formula,
       }
     }
 
-    colnames(model$b1) <-   model$Znames.zi
-    colnames(model$b2) <-   model$Znames
+    colnames(model$b1) <- model$Znames.zi
+    colnames(model$b2) <- model$Znames
 
   } else { # Gaussian & Logistic fixed effect
     model$gamma <- sapply(1:ncol(model$gamma), function(i) {
@@ -903,12 +886,10 @@ dlmtree.fit <- function(formula,
     colnames(model$gamma) <- model$Znames
   }
 
-
-
   # Tree information data frames for models
   if (model$class == "tdlmm") {
     # rescale DLM and Mixture estimates
-    model$TreeStructs <- as.data.frame(model$TreeStructs)
+    model$TreeStructs           <- as.data.frame(model$TreeStructs)
     colnames(model$TreeStructs) <- c("Iter", "Tree", "TreePair", "exp", "tmin", "tmax", "est", "kappa")
 
     model$MIX <- as.data.frame(model$MIX)
@@ -936,52 +917,90 @@ dlmtree.fit <- function(formula,
     }
 
     # Exposure names
-    colnames(model$expProb) <- colnames(model$expCount) <-
-      colnames(model$expInf) <- colnames(model$muExp) <- model$expNames
+    colnames(model$expProb) <- colnames(model$expCount) <- colnames(model$expInf) <- colnames(model$muExp) <- model$expNames
     if (model$interaction > 0) {
-      colnames(model$mixInf) <- colnames(model$muMix) <-
-        colnames(model$mixCount) <- model$mixNames
+      colnames(model$mixInf) <- colnames(model$muMix) <- colnames(model$mixCount) <- model$mixNames
     }
 
     if (model$diagnostics) {
-      model$treeAccept <- as.data.frame(model$treeAccept)
-      colnames(model$treeAccept) <- c("tree", "step", "success", "exp", "term", "treeMhr", "mhr")
-      model$treeAccept$step <-  factor(model$treeAccept$step,
-                                        levels = 0:3,
-                                        labels = c("Grow", "Prune", "Change", "SwitchExposure"))
-      model$treeAccept$exp <-   factor(model$treeAccept$exp + 1,
-                                        levels = 1:model$nExp,
-                                        labels = model$expNames)
+      model$treeAccept            <- as.data.frame(model$treeAccept)
+      colnames(model$treeAccept)  <- c("tree", "step", "success", "exp", "term", "treeMhr", "mhr")
+      model$treeAccept$step       <- factor(model$treeAccept$step,
+                                            levels = 0:3,
+                                            labels = c("Grow", "Prune", "Change", "SwitchExposure"))
+      model$treeAccept$exp        <- factor(model$treeAccept$exp + 1,
+                                            levels = 1:model$nExp,
+                                            labels = model$expNames)
     }
 
   } else if (model$class %in% c("tdlm", "tdlnm")) {
     # rescale DLM estimates
-    model$TreeStructs <-              as.data.frame(model$TreeStructs)
-    colnames(model$TreeStructs) <-    c("Iter", "Tree", "xmin", "xmax", "tmin", "tmax", "est", "intcp")
-    model$TreeStructs$est <-          model$TreeStructs$est * model$Yscale / model$Xscale
-    model$TreeStructs$xmin <-         sapply(model$TreeStructs$xmin, function(i) {
-                                                if (i == 0) {
-                                                  if (piecewise.linear) {min(model$X)}
-                                                  else {-Inf}
-                                                } else {model$Xsplits[i]}
-                                              }
-                                            )
-    model$TreeStructs$xmax <-         sapply(model$TreeStructs$xmax, function(i) {
-                                                if (i == (length(model$Xsplits) + 1)) {
-                                                  if (piecewise.linear) {max(model$X)}
-                                                  else {Inf}
-                                                } else {model$Xsplits[i]}
-                                              }
-                                            )
+    model$TreeStructs           <- as.data.frame(model$TreeStructs)
+    colnames(model$TreeStructs) <- c("Iter", "Tree", "xmin", "xmax", "tmin", "tmax", "est", "intcp")
+    model$TreeStructs$est       <- model$TreeStructs$est * model$Yscale / model$Xscale
+    model$TreeStructs$xmin      <- sapply(model$TreeStructs$xmin, function(i) {
+                                              if (i == 0) {
+                                                if (piecewise.linear) {min(model$X)}
+                                                else {-Inf}
+                                              } else {model$Xsplits[i]}
+                                            }
+                                          )
+    model$TreeStructs$xmax      <- sapply(model$TreeStructs$xmax, function(i) {
+                                              if (i == (length(model$Xsplits) + 1)) {
+                                                if (piecewise.linear) {max(model$X)}
+                                                else {Inf}
+                                              } else {model$Xsplits[i]}
+                                            }
+                                          )
   } else {
     # Modifier output
     # if (is.null(fixed.tree.idx)) {
-      colnames(model$modProb) <- colnames(model$modCount) <-
-        colnames(model$modInf) <- names(model$Mo)
+    colnames(model$modProb) <- colnames(model$modCount) <- colnames(model$modInf) <- names(model$Mo)
+    modNames    <- names(model$Mo)                     
+    splitRules  <- strsplit(model$termRules, "&", T)
 
-      modNames <- names(model$Mo)                     
-      splitRules <- strsplit(model$termRules, "&", T) 
-      rule <- sapply(splitRules, function(str) {
+    rule <- sapply(splitRules, function(str) {
+              paste0(lapply(sort(str), function(rule) {
+                # no rule
+                if (length(rule) == 0) {
+                  return("")
+                # *** Continuous ***
+                # >=
+                } else if (length(spl <- strsplit(rule, ">=", T)[[1]]) == 2) {
+                  return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1], "']] >= ",
+                                model$modSplitValRef[[as.numeric(spl[1]) + 1]][
+                                  as.numeric(spl[2]) + 1]))
+                # >
+                } else if (length(spl <- strsplit(rule, "<", T)[[1]]) == 2) {
+                  return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1], "']] < ",
+                                model$modSplitValRef[[as.numeric(spl[1]) + 1]][
+                                  as.numeric(spl[2]) + 1]))
+                # *** Categorical ***
+                # in
+                } else if (length(spl <- strsplit(rule, "[]", T)[[1]]) == 2) {
+                  inList <- paste0("c('", paste0(model$modSplitValRef[[
+                    as.numeric(spl[1]) + 1]][
+                      eval(parse(text = paste0("c(", spl[2], ")"))) + 1
+                    ], collapse = "','"), "')")
+                  return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1],
+                                "']] %in% ", inList))
+                # not in
+                } else if (length(spl <- strsplit(rule, "][", T)[[1]]) == 2) {
+                  inList <- paste0("c('", paste0(model$modSplitValRef[[
+                    as.numeric(spl[1]) + 1]][
+                      eval(parse(text = paste0("c(", spl[2], ")"))) + 1
+                    ], collapse = "','"), "')")
+                  return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1],
+                                "']] %notin% ", inList))
+                } else {
+                  return("")
+                }
+              }), collapse = " & ")})
+
+    # Mixture interaction for hdlmm
+    if (model$class == "hdlmm" & model$interaction > 0) {
+      splitRulesMIX <- strsplit(model$termRuleMIX, "&", T) 
+      ruleMIX <- sapply(splitRulesMIX, function(str) {
                 paste0(lapply(sort(str), function(rule) {
                   # no rule
                   if (length(rule) == 0) {
@@ -1018,123 +1037,80 @@ dlmtree.fit <- function(formula,
                     return("")
                   }
                 }), collapse = " & ")})
-      if (model$class == "hdlmm" & model$interaction > 0) {
-        splitRulesMIX <- strsplit(model$termRuleMIX, "&", T) 
-        ruleMIX <- sapply(splitRulesMIX, function(str) {
-                  paste0(lapply(sort(str), function(rule) {
-                    # no rule
-                    if (length(rule) == 0) {
-                      return("")
-                    # *** Continuous ***
-                    # >=
-                    } else if (length(spl <- strsplit(rule, ">=", T)[[1]]) == 2) {
-                      return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1], "']] >= ",
-                                    model$modSplitValRef[[as.numeric(spl[1]) + 1]][
-                                      as.numeric(spl[2]) + 1]))
-                    # >
-                    } else if (length(spl <- strsplit(rule, "<", T)[[1]]) == 2) {
-                      return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1], "']] < ",
-                                    model$modSplitValRef[[as.numeric(spl[1]) + 1]][
-                                      as.numeric(spl[2]) + 1]))
-                    # *** Categorical ***
-                    # in
-                    } else if (length(spl <- strsplit(rule, "[]", T)[[1]]) == 2) {
-                      inList <- paste0("c('", paste0(model$modSplitValRef[[
-                        as.numeric(spl[1]) + 1]][
-                          eval(parse(text = paste0("c(", spl[2], ")"))) + 1
-                        ], collapse = "','"), "')")
-                      return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1],
-                                    "']] %in% ", inList))
-                    # not in
-                    } else if (length(spl <- strsplit(rule, "][", T)[[1]]) == 2) {
-                      inList <- paste0("c('", paste0(model$modSplitValRef[[
-                        as.numeric(spl[1]) + 1]][
-                          eval(parse(text = paste0("c(", spl[2], ")"))) + 1
-                        ], collapse = "','"), "')")
-                      return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1],
-                                    "']] %notin% ", inList))
-                    } else {
-                      return("")
-                    }
-                  }), collapse = " & ")})
-      } else {
-        ruleMIX = NA
-      }
-          
-      model$modPairs <- sort(table(do.call(c, lapply(splitRules, function(r) {
-        if (length(r) == 0) {
-          return(NA)
-        }
-
-        m <- sapply(strsplit(r, ">=|<|\\[\\]|\\]\\["), function(i) as.numeric(i[1]))
+    } else {
+      ruleMIX = NA
+    }
         
-        if (length(m) < 2) {
-          return(modNames[m + 1])
-        }
-          
-        c <- combn(length(m), 2)
-        return(unique(sapply(1:ncol(c), function(i) paste0(modNames[sort(m[c[,i]]) + 1], collapse = "-"))))
-      })))) / (model$nTrees * model$mcmcIter)
-
-
-      # *** Combine the rules and the exposure data frames for HDLM, HDLMM ***
-      if (model$class == "hdlmm") {
-        # Combine DLM with rules with colnames
-        model$TreeStructs <-            cbind.data.frame(rule, model$TreeStructs)
-        colnames(model$TreeStructs) <-  c("Rule", "Iter", "Tree", "Mod", "dlmPair", "dlmTerm", "exp", "tmin", "tmax", "est", "kappa")
-        
-        # Default of model$MIX is a vector of zeros
-        if (model$interaction != 0) {
-          model$MIX <-            as.data.frame(model$MIX)
-          model$MIX <-            cbind.data.frame(ruleMIX, model$MIX)
-          colnames(model$MIX) <-  c("Rule", "Iter", "Tree", "Mod", "exp1", "tmin1", "tmax1", "exp2", "tmin2", "tmax2", "est")
-        }
-
-        model$mixNames <- c()
-
-      } else {
-        model$TreeStructs <- cbind.data.frame(rule, model$TreeStructs)
+    model$modPairs <- sort(table(do.call(c, lapply(splitRules, function(r) {
+      if (length(r) == 0) {
+        return(NA)
       }
 
-      model$modSplitIdx <- NULL
-      model$fullIdx <- NULL
+      m <- sapply(strsplit(r, ">=|<|\\[\\]|\\]\\["), function(i) as.numeric(i[1]))
+      
+      if (length(m) < 2) {
+        return(modNames[m + 1])
+      }
+        
+      c <- combn(length(m), 2)
+      return(unique(sapply(1:ncol(c), function(i) paste0(modNames[sort(m[c[,i]]) + 1], collapse = "-"))))
+    })))) / (model$nTrees * model$mcmcIter)
 
-      if (model$class == "gp") {
-        colnames(model$TreeStructs) <- c("Rule", "Iter", "Tree", "modTerm",
-                                        paste0("Lag", 1:model$pExp))
-        model$TreeStructs[,-c(1:4)] <- model$TreeStructs[,-c(1:4)] *
-          model$Yscale / model$Xscale
-      } else if (model$class != "hdlmm") {
-        colnames(model$TreeStructs) <- c("Rule", "Iter", "Tree", "modTerm", "dlnmTerm",
-                                        "xmin", "xmax", "tmin", "tmax", "est")
-        model$TreeStructs$est <-  model$TreeStructs$est * model$Yscale / model$Xscale
-        model$TreeStructs$xmin <- sapply(model$TreeStructs$xmin, function(i) {
-          if (i == 0) {-Inf}
-          else {model$Xsplits[i]}
-        })
-        model$TreeStructs$xmax <- sapply(model$TreeStructs$xmax, function(i) {
-          if (i == (length(model$Xsplits) + 1)) {Inf}
-          else {model$Xsplits[i]}
-        })
-      } else { # hdlmm
-        # Rescale: Iterate through modifiers and exposures to summarize TreeStruct and MIX
-        for(i in 1:length(model$X)) {
-          idx <- which(model$TreeStructs$exp == (i - 1)) # Converting indices from cpp to R
-          if (length(idx) > 0)
-            model$TreeStructs$est[idx] <- model$TreeStructs$est[idx] * model$Yscale / model$X[[i]]$Xscale
 
-          for(j in i:length(model$X)) {
-            if ((model$interaction > 1) || (j > i))
-              model$mixNames <- c(model$mixNames,
-                                  paste0(model$expNames[i], "-", model$expNames[j]))
+    # *** Combine the rules and the exposure data frames for HDLM, HDLMM ***
+    if (model$class == "hdlmm") {
+      # Combine DLM with rules with colnames
+      model$TreeStructs           <- cbind.data.frame(rule, model$TreeStructs)
+      colnames(model$TreeStructs) <- c("Rule", "Iter", "Tree", "Mod", "dlmPair", "dlmTerm", "exp", "tmin", "tmax", "est", "kappa")
+      
+      # Default of model$MIX is a vector of zeros
+      if (model$interaction != 0) {
+        model$MIX           <- as.data.frame(model$MIX)
+        model$MIX           <- cbind.data.frame(ruleMIX, model$MIX)
+        colnames(model$MIX) <- c("Rule", "Iter", "Tree", "Mod", "exp1", "tmin1", "tmax1", "exp2", "tmin2", "tmax2", "est")
+      }
 
-            idx <- which(model$MIX$exp1 == (i - 1) & model$MIX$exp2 == (j - 1))
-            if (length(idx) > 0) {
-              model$MIX$est[idx] <- model$MIX$est[idx] * model$Yscale / (model$X[[i]]$Xscale * model$X[[j]]$Xscale)
-            }
+      model$mixNames <- c()
+
+    } else {
+      model$TreeStructs <- cbind.data.frame(rule, model$TreeStructs)
+    }
+
+    model$modSplitIdx <- NULL
+    model$fullIdx     <- NULL
+
+    if (model$class == "gp") {
+      colnames(model$TreeStructs) <- c("Rule", "Iter", "Tree", "modTerm", paste0("Lag", 1:model$pExp))
+      model$TreeStructs[,-c(1:4)] <- model$TreeStructs[,-c(1:4)] * model$Yscale / model$Xscale
+    } else if (model$class != "hdlmm") {
+      colnames(model$TreeStructs) <- c("Rule", "Iter", "Tree", "modTerm", "dlnmTerm", "xmin", "xmax", "tmin", "tmax", "est")
+      model$TreeStructs$est       <-  model$TreeStructs$est * model$Yscale / model$Xscale
+      model$TreeStructs$xmin      <- sapply(model$TreeStructs$xmin, function(i) {
+        if (i == 0) {-Inf}
+        else {model$Xsplits[i]}
+      })
+      model$TreeStructs$xmax <- sapply(model$TreeStructs$xmax, function(i) {
+        if (i == (length(model$Xsplits) + 1)) {Inf}
+        else {model$Xsplits[i]}
+      })
+    } else { # hdlmm
+      # Rescale: Iterate through modifiers and exposures to summarize TreeStruct and MIX
+      for(i in 1:length(model$X)) {
+        idx <- which(model$TreeStructs$exp == (i - 1)) # Converting indices from cpp to R
+        if (length(idx) > 0)
+          model$TreeStructs$est[idx] <- model$TreeStructs$est[idx] * model$Yscale / model$X[[i]]$Xscale
+
+        for(j in i:length(model$X)) {
+          if ((model$interaction > 1) || (j > i))
+            model$mixNames <- c(model$mixNames, paste0(model$expNames[i], "-", model$expNames[j]))
+
+          idx <- which(model$MIX$exp1 == (i - 1) & model$MIX$exp2 == (j - 1))
+          if (length(idx) > 0) {
+            model$MIX$est[idx] <- model$MIX$est[idx] * model$Yscale / (model$X[[i]]$Xscale * model$X[[j]]$Xscale)
           }
         }
       }
+    }
 
     # # Fixed tree index
     # } else {
@@ -1153,26 +1129,26 @@ dlmtree.fit <- function(formula,
   # Remove model and exposure data
   if (!save.data) {
     if (!(model$class %in% c("tdlmm", "hdlmm"))) {
-      model$X <-      NULL
-      model$Tcalc <-  NULL
-      model$Xcalc <-  NULL
-      model$Z <-      NULL
-      model$Mo <-     NULL
+      model$X     <- NULL
+      model$Tcalc <- NULL
+      model$Xcalc <- NULL
+      model$Z     <- NULL
+      model$Mo    <- NULL
     } else {
       for(i in 1:length(model$X)) {
         model$X[[i]]$X <- model$X[[i]]$Tcalc <- NULL
       }
-      model$Z <-      NULL
-      model$Z.zi <-   NULL
+      model$Z     <- NULL
+      model$Z.zi  <- NULL
     }
   }
 
   # Change env to list
-  model.out <-          lapply(names(model), function(i) model[[i]])
-  names(model.out) <-   names(model)
+  model.out         <- lapply(names(model), function(i) model[[i]])
+  names(model.out)  <- names(model)
   rm(model)
   gc()
   
-  class(model.out) <-   model.out$class
+  class(model.out)  <- model.out$class
   return(model.out)
 }

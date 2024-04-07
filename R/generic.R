@@ -10,10 +10,9 @@ globalVariables(c("lower", "upper", "est", "Modifier", "PIP", "location", "propo
 #'
 #' @description shiny generic function for S3method
 #'
-#' @param x an object to which S3method is applied
-#' @param ... additional parameters
+#' @param fit an object to which S3method is applied
 #'
 #' @export shiny
-shiny <- function(x, ...) {
+shiny <- function(fit) {
   UseMethod("shiny")
 }

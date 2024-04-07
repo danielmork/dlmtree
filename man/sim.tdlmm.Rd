@@ -9,7 +9,6 @@ sim.tdlmm(
   n = 5000,
   error = 10,
   mean.p = 0.5,
-  n.exp = 25,
   prop.active = 0.05,
   expList = NULL,
   ctnum = 20,
@@ -25,10 +24,7 @@ sim.tdlmm(
 
 \item{error}{positive scalar specifying error variance for Gaussian response}
 
-\item{mean.p}{scalar between zero and one specifying mean probability
-for simulation scenario A}
-
-\item{n.exp}{number of exposures for simulation scenarios three and four}
+\item{mean.p}{scalar between zero and one specifying mean probability for simulation scenario A}
 
 \item{prop.active}{proportion of active exposures for simulation scenario C}
 

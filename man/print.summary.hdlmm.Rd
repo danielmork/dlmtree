@@ -4,14 +4,16 @@
 \alias{print.summary.hdlmm}
 \title{print.summary.hdlmm}
 \usage{
-\method{print}{summary.hdlmm}(object, digits = 4, cw.only = TRUE)
+\method{print}{summary.hdlmm}(x, digits = 3, cw.only = TRUE, ...)
 }
 \arguments{
-\item{object}{an object of type 'summary.hdlmm', result of call to summary.hdlmm()}
+\item{x}{an object of type 'summary.hdlmm', result of call to summary.hdlmm()}
 
 \item{digits}{integer number of digits to round}
 
 \item{cw.only}{print only results for exposures with critical windows}
+
+\item{...}{additional parameters}
 }
 \value{
 output in R console

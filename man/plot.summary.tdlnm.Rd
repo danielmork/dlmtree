@@ -4,10 +4,10 @@
 \alias{plot.summary.tdlnm}
 \title{plot.summary.tdlnm}
 \usage{
-\method{plot}{summary.tdlnm}(summary, plot.type = "mean", val = c(), time = c(), trueDLM = NULL, ...)
+\method{plot}{summary.tdlnm}(x, plot.type = "mean", val = c(), time = c(), trueDLM = NULL, ...)
 }
 \arguments{
-\item{summary}{object of class 'summary.tdlnm', output of summary of 'tdlnm'}
+\item{x}{object of class 'summary.tdlnm', output of summary of 'tdlnm'}
 
 \item{plot.type}{string indicating plot type, options are 'mean' (default)
 which shows mean exposure-time response surface, 'se', 'ci-min', 'ci-max',
@@ -21,7 +21,7 @@ exposure values (requires package gganimate)}
 
 \item{trueDLM}{A vector of true effects that can be obtained from the simulated data. Only applicable for simulation studies}
 
-\item{...}{additional parameters to alter plots: 'main', 'xlab', 'ylab',
+\item{...}{additional plotting parameters for title and labels
 'flab' which sets the effect label for surface plots,
 'start.time' which sets the first time value}
 }

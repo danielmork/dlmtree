@@ -4,25 +4,28 @@ using namespace Rcpp;
 
 #define MATH_SQRT1_2   0.707106781186547524400844362104849039284835937688474036588
 
-
-double phi2(double x1, double x2)
-{
+double phi2(double x1, double x2){
   return (erf(x2 * MATH_SQRT1_2) - erf(x1 * MATH_SQRT1_2)) * 0.5;
 }
 
+
+//' Calculates the distributed lag effect with DLM matrix for non-linear models.
+//'
+//' @param dlnm A numeric matrix containing the model fit information
+//' @param predAt Number of splits in the model
+//' @param nlags total number of lags
+//' @param nsamp number of mcmc iterations
+//' @param center center parameter
+//' @param se Standard error parameter
+//' @return A cube object of lag effect x lag x mcmc
+//' @export
 // [[Rcpp::export]]
-SEXP dlnmEst(arma::dmat dlnm,
-             arma::dvec predAt,
-             int nlags,
-             int nsamp,
-             double center,
-             double se)
-{
-  int rows = dlnm.n_rows;
+SEXP dlnmEst(arma::dmat dlnm, arma::dvec predAt, int nlags, int nsamp, double center, double se){
+  int rows    = dlnm.n_rows;
   int nsplits;
   bool smooth = 0;
-  nsplits = predAt.n_elem;
-  arma::dcube C(nlags, nsplits, nsamp); C.fill(0.0);
+  nsplits     = predAt.n_elem;
+  arma::dcube C(nlags, nsplits, nsamp);   C.fill(0.0);
   arma::dmat centerMat(nlags, nsamp);
 
   if (se > 0) {
@@ -34,13 +37,12 @@ SEXP dlnmEst(arma::dmat dlnm,
 
   // Fill in estimates
   for (int i = 0; i < rows; i++) {
-
-    int iter = dlnm(i, 0) - 1;
+    int iter    = dlnm(i, 0) - 1;
     double xmin = dlnm(i, 2);
     double xmax = dlnm(i, 3);
-    int tmin = dlnm(i, 4) - 1;
-    int tmax = dlnm(i, 5);
-    double est = dlnm(i, 6);
+    int tmin    = dlnm(i, 4) - 1;
+    int tmax    = dlnm(i, 5);
+    double est  = dlnm(i, 6);
 
     for (int t = tmin; t < tmax; t++) {
       for (int x = 0; x < nsplits; x++) {
@@ -78,13 +80,19 @@ SEXP dlnmEst(arma::dmat dlnm,
   return wrap(C);
 }
 
+
+//' Calculates the posterior includsion probability (PIP).
+//'
+//' @param dlnm A numeric matrix containing the model fit information
+//' @param nlags total number of lags
+//' @param niter number of mcmc iterations
+//'
+//' @return A matrix of split counts per mcmc
+//' @export
 // [[Rcpp::export]]
-arma::mat splitPIP(arma::dmat dlnm,
-              int nlags,
-              int niter)
-{
+arma::mat splitPIP(arma::dmat dlnm, int nlags, int niter){
   int rows = dlnm.n_rows;
-  int tree = 0;
+  // int tree = 0;
   int iter = 0;
   arma::mat splitCount(nlags, niter);
   arma::vec splitIter(nlags);
@@ -96,8 +104,9 @@ arma::mat splitPIP(arma::dmat dlnm,
       iter = dlnm(i, 0) - 1;
     }
     for (int t = dlnm(i, 4) - 1; t < dlnm(i, 5); ++t) {
-      if (splitIter(t) == 0)
+      if (splitIter(t) == 0){
         splitIter(t) = 1.0;
+      }
     }
   }
   splitCount.col(iter) = splitIter;
@@ -105,37 +114,45 @@ arma::mat splitPIP(arma::dmat dlnm,
   return splitCount;
 }
 
+//' Calculates the distributed lag effect with DLM matrix for non-linear models.
+//'
+//' @param dlnm A numeric matrix containing the model fit information
+//' @param predAt Number of splits in the model
+//' @param nlags total number of lags
+//' @param nsamp number of mcmc iterations
+//' @param center center parameter
+//'
+//' @return A cube object of lag effect x lag x mcmc
+//' @export
 // [[Rcpp::export]]
-SEXP dlnmPLEst(arma::dmat dlnm,
-               arma::dvec predAt,
-               int nlags,
-               int nsamp,
-               double center)
-{
-  int rows = dlnm.n_rows;
+SEXP dlnmPLEst(arma::dmat dlnm, arma::dvec predAt, int nlags, int nsamp, double center){
+  int rows  = dlnm.n_rows;
   int nsplits;
-  bool smooth = 0;
-  nsplits = predAt.n_elem;
+  // bool smooth = 0;
+  nsplits   = predAt.n_elem;
   arma::dcube C(nlags, nsplits, nsamp); C.fill(0.0);
   arma::dmat centerMat(nlags, nsamp);
   center--;
-  double prevEst = 0.0;
-  int iter = dlnm(0, 0);
-  int tree = dlnm(0, 0);
+
+  double prevEst  = 0.0;
+  int iter        = dlnm(0, 0);
+  int tree        = dlnm(0, 0);
 
   // Fill in estimates
   for (int i = 0; i < rows; i++) {
     if ((int(dlnm(i, 0) - 1) != iter) || (int(dlnm(i, 1)) != tree)) {
       prevEst = 0.0;
     }
+
     iter = dlnm(i, 0) - 1;
     tree = dlnm(i, 1);
+
     double xmin = dlnm(i, 2);
     double xmax = dlnm(i, 3);
-    double den = xmax - xmin;
-    int tmin = dlnm(i, 4) - 1;
-    int tmax = dlnm(i, 5);
-    double est = dlnm(i, 6);
+    double den  = xmax - xmin;
+    int tmin    = dlnm(i, 4) - 1;
+    int tmax    = dlnm(i, 5);
+    double est  = dlnm(i, 6);
 
     for (int t = tmin; t < tmax; t++) {
       for (int x = 0; x < nsplits; x++) {
@@ -162,20 +179,25 @@ SEXP dlnmPLEst(arma::dmat dlnm,
 }
 
 
+//' Calculates the distributed lag effect with DLM matrix for linear models.
+//'
+//' @param dlm A numeric matrix containing the model fit information
+//' @param nlags total number of lags
+//' @param nsamp number of mcmc iterations
+//' @return A cube object of lag effect x lag x mcmc
+//' @export
 // [[Rcpp::export]]
-SEXP dlmEst(arma::dmat dlm,
-            int nlags,
-            int nsamp)
-{
+SEXP dlmEst(arma::dmat dlm, int nlags, int nsamp){
   int rows = dlm.n_rows;
   arma::dmat C(nlags, nsamp); C.fill(0.0);
 
   // Fill in estimates
   for (int i = 0; i < rows; i++) {
-    int iter = dlm(i, 0) - 1;
-    int tmin = dlm(i, 2) - 1;
-    int tmax = dlm(i, 3);
-    double est = dlm(i, 4);
+    int iter    = dlm(i, 0) - 1;
+    int tmin    = dlm(i, 2) - 1;
+    int tmax    = dlm(i, 3);
+    double est  = dlm(i, 4);
+
     for (int t = tmin; t < tmax; t++) {
       C(t, iter) += est;
     }
@@ -184,11 +206,15 @@ SEXP dlmEst(arma::dmat dlm,
   return wrap(C);
 }
 
+//' Calculates the lagged interaction effects with MIX matrix for linear models.
+//'
+//' @param dlm A numeric matrix containing the model fit information
+//' @param nlags total number of lags
+//' @param nsamp number of mcmc iterations
+//' @return A cube object of interaction effect x lag x mcmc
+//' @export
 // [[Rcpp::export]]
-SEXP mixEst(arma::dmat dlm,
-            int nlags,
-            int nsamp)
-{
+SEXP mixEst(arma::dmat dlm, int nlags, int nsamp){
   int rows = dlm.n_rows;
   arma::dcube C(nlags, nlags, nsamp); C.fill(0.0);
 
@@ -197,11 +223,12 @@ SEXP mixEst(arma::dmat dlm,
   // This function is the same as the part in 
   // predict.dlmtree.R code except for modifier part
   for (i = 0; i < rows; i++) {
-    iter = dlm(i, 0) - 1;
+    iter  = dlm(i, 0) - 1;
     tmin1 = dlm(i, 3) - 1;
     tmax1 = dlm(i, 4);
     tmin2 = dlm(i, 6) - 1;
     tmax2 = dlm(i, 7);
+    
     double est = dlm(i, 8);
     for (t1 = tmin1; t1 < tmax1; t1++) {
       for (t2 = tmin2; t2 < tmax2; t2++) {

@@ -9,6 +9,7 @@
 #' @param exposure.se scalar smoothing factor, if different from model
 #' @param mcmc true or false (default): return MCMC samplers
 #' @param verbose true (default) or false: print output
+#' @param ... additional parameters
 #'
 #' @return Summary of monotone fit
 #' @export summary.monotone
@@ -20,15 +21,13 @@ summary.monotone <- function(object,
                              conf.level = 0.95,
                              exposure.se = NULL,
                              mcmc = FALSE,
-                             verbose = TRUE)
+                             verbose = TRUE, 
+                             ...)
 {
-  Iter <- object$mcmcIter
-  Lags <- object$pExp
-  # if (object$monotone) {
-  #   ci.lims <- c((1 - conf.level), 1)
-  # } else {
+  Iter    <- object$mcmcIter
+  Lags    <- object$pExp
   ci.lims <- c((1 - conf.level) / 2, 1 - (1 - conf.level) / 2)
-  # }
+
   if (is.null(exposure.se) && !is.na(object$SE[1])) {
     exposure.se <- mean(as.matrix(object$SE))
   } else if (is.null(exposure.se)) {
@@ -52,12 +51,11 @@ summary.monotone <- function(object,
   # if (object$shape == "Piecewise Linear") {
   #   dlmest <- dlnmPLEst(as.matrix(object$TreeStructs), pred.at, Lags, Iter, cen.quant)
   # } else 
+
   if (exposure.se == 0) {
-    dlmest <- dlnmEst(as.matrix(object$TreeStructs), pred.at, Lags, Iter,
-                      cen.quant, exposure.se)
+    dlmest <- dlnmEst(as.matrix(object$TreeStructs), pred.at, Lags, Iter, cen.quant, exposure.se)
   } else {
-    dlmest <- dlnmEst(as.matrix(object$TreeStructs), pred.at, Lags, Iter,
-                      cenval, exposure.se)
+    dlmest <- dlnmEst(as.matrix(object$TreeStructs), pred.at, Lags, Iter, cenval, exposure.se)
   }
 
   # Bayes factor
@@ -74,11 +72,11 @@ summary.monotone <- function(object,
   colnames(cumexp) <- c("vals", "mean", "lower", "upper")
 
   # Matrix of DLNM surface means and CIs, and plot data
-  plot.dat <- as.data.frame(matrix(0, (Lags * length(pred.at)), 10))
-  matfit <-   matrix(0, length(pred.at), Lags)
-  cilower <-  matrix(0, length(pred.at), Lags)
-  ciupper <-  matrix(0, length(pred.at), Lags)
-  rownames(matfit) <- rownames(cilower) <- rownames(ciupper) <- pred.at
+  plot.dat           <- as.data.frame(matrix(0, (Lags * length(pred.at)), 10))
+  matfit             <- matrix(0, length(pred.at), Lags)
+  cilower            <- matrix(0, length(pred.at), Lags)
+  ciupper            <- matrix(0, length(pred.at), Lags)
+  rownames(matfit)   <- rownames(cilower) <- rownames(ciupper) <- pred.at
   colnames(plot.dat) <- c("Tmin", "Tmax", "Xmin", "Xmax", "PredVal", "Est", "SD", "CIMin", "CIMax", "Effect")
   for (i in 1:Lags) {
     for (j in 1:length(pred.at)) {
@@ -91,57 +89,58 @@ summary.monotone <- function(object,
       #   }
       #   coordest <- dlmest[i,j,which(splitIter[,i] == 1)]
       # } else {
-      coordest <- dlmest[i,j,]  
+      coordest  <- dlmest[i,j,]  
       # }
-      me <-       mean(coordest)
-      s <-        sd(coordest)
-      ci <-       quantile(coordest, ci.lims)
-      effect <-   ifelse(min(ci) > 0, 1, ifelse(max(ci) < 0, -1, 0))
+      me        <- mean(coordest)
+      s         <- sd(coordest)
+      ci        <- quantile(coordest, ci.lims)
+      effect    <- ifelse(min(ci) > 0, 1, ifelse(max(ci) < 0, -1, 0))
       plot.dat[(i - 1) * length(pred.at) + j, ] <-
         c(i - 1, i, edge.vals[j], edge.vals[j + 1], pred.at[j],
           me, s, ci, effect)
-      matfit[j, i] <-   mean(coordest)
-      cilower[j, i] <-  ci[1]
-      ciupper[j, i] <-  ci[2]
+
+      matfit[j, i]  <- mean(coordest)
+      cilower[j, i] <- ci[1]
+      ciupper[j, i] <- ci[2]
     }
   }
   plot.dat$Effect <- factor(plot.dat$Effect, levels = c(-1, 0, 1), labels = c("-", " ", "+"))
 
   # Fixed effect estimates
-  gamma.mean <- colMeans(object$gamma)
-  gamma.ci <-   apply(object$gamma, 2, quantile, probs = ci.lims)
+  gamma.mean  <- colMeans(object$gamma)
+  gamma.ci    <- apply(object$gamma, 2, quantile, probs = ci.lims)
 
   # Return
-  ret <- list("ctr" = list(class =    object$class,
-                           n.trees =  object$nTrees,
-                           n.iter =   object$nIter,
-                           n.thin =   object$nThin,
-                           n.burn =   object$nBurn,
+  ret <- list("ctr" = list(class    = object$class,
+                           n.trees  = object$nTrees,
+                           n.iter   = object$nIter,
+                           n.thin   = object$nThin,
+                           n.burn   = object$nBurn,
                            response = object$family),
-              "conf.level" =    conf.level,
-              "sig.to.noise" =  ifelse(is.null(object$sigma2), NA,
-                                        var(object$fhat) / mean(object$sigma2)),
-              "plot.dat" =          plot.dat,
-              "matfit" =            matfit,
-              "cilower" =           cilower,
-              "ciupper" =           ciupper,
-              "cenval" =            cenval,
+              "conf.level"        = conf.level,
+              "sig.to.noise"      = ifelse(is.null(object$sigma2), NA,
+                                       var(object$fhat) / mean(object$sigma2)),
+              "plot.dat"          = plot.dat,
+              "matfit"            = matfit,
+              "cilower"           = cilower,
+              "ciupper"           = ciupper,
+              "cenval"            = cenval,
               "cumulative.effect" = cumexp,
-              "pred.at" =           pred.at,
-              "gamma.mean" =        gamma.mean,
-              "gamma.ci" =          gamma.ci,
+              "pred.at"           = pred.at,
+              "gamma.mean"        = gamma.mean,
+              "gamma.ci"          = gamma.ci,
               # "logBF" = logBF,
-              "splitProb" =         splitProb,
-              "splitIter" =         splitIter,
-              "formula" =           object$formula,
-              "formula.zi" =        object$formula.zi)
+              "splitProb"         = splitProb,
+              "splitIter"         = splitIter,
+              "formula"           = object$formula,
+              "formula.zi"        = object$formula.zi)
+
 
   class(ret) <- "summary.tdlnm"
   
   if (mcmc) {
-    ret$dlm_mcmc <- dlmest
-    ret$cumulative_mcmc <- sapply(1:length(pred.at), function(i) {
-      colSums(dlmest[,i,]) })
+    ret$dlm_mcmc                  <- dlmest
+    ret$cumulative_mcmc           <- sapply(1:length(pred.at), function(i) { colSums(dlmest[,i,]) })
     colnames(ret$cumulative_mcmc) <- as.character(pred.at)
   }
   

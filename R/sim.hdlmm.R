@@ -29,10 +29,10 @@ sim.hdlmm <- function(sim = "A",
   # Exposure data availability check
   if (is.null(exposure.data)) {
     if (sim %in% c("A", "B", "C")) {
-      data("pm25Exposures")
-      exposure.data = sapply(3:39, function(i) pm25Exposures[,i])
+      data("pm25Exposures", envir = environment())
+      exposure.data <- sapply(3:39, function(i) pm25Exposures[,i])
     } else {
-      data("coExp")
+      data("coExp", envir = environment())
       if (sim == "D") {
         exposure.data <- list("e1" = coExp[,1:37],
                               "e2" = coExp[,38:74],
@@ -47,13 +47,13 @@ sim.hdlmm <- function(sim = "A",
   # Exposure effect 
   if (sim %in% c("A", "B", "C")) {
     exposure.data <- (exposure.data - mean(exposure.data)) / sd(exposure.data)
-    pX <- ncol(exposure.data)
-    n.samp <- min(nrow(exposure.data), n)
+    pX            <- ncol(exposure.data)
+    n.samp        <- min(nrow(exposure.data), n)
     exposure.data <- exposure.data[sample(nrow(exposure.data), n.samp),]
   } else { # Multiple exposures
-    pX <- ncol(exposure.data[[1]])
-    n.samp <- min(nrow(exposure.data[[1]]), n)
-    idx <- sample(nrow(exposure.data[[1]]), size = n.samp)
+    pX            <- ncol(exposure.data[[1]])
+    n.samp        <- min(nrow(exposure.data[[1]]), n)
+    idx           <- sample(nrow(exposure.data[[1]]), size = n.samp)
     exposure.data <- lapply(exposure.data, function(i) (i[idx, ] - mean(i[idx, ])) / sd(i[idx, ]))
   } 
 
@@ -61,11 +61,10 @@ sim.hdlmm <- function(sim = "A",
   dat <- data.frame(rnorm(n.samp), rbinom(n.samp, 1, 0.5), runif (n.samp),
                     matrix(rnorm(n.samp * 5), n.samp, 5),
                     matrix(rbinom(n.samp * 5, 1, 0.5), n.samp, 5))
-  colnames(dat) <- c("mod_num", "mod_bin", "mod_scale",
-                     paste0("c", 1:5), paste0("b", 1:5))
+  colnames(dat) <- c("mod_num", "mod_bin", "mod_scale", paste0("c", 1:5), paste0("b", 1:5))
 
-  sd.f <- 1
-  dlmFun <- function() {}
+  sd.f   <- 1
+  dlmFun <- function(dat.row) {}
   if (sim == "A") {
     dlmFun <- function(dat.row) {
       if (dat.row$mod_num > 0) {  
@@ -129,15 +128,15 @@ sim.hdlmm <- function(sim = "A",
                      which(dat$mod_num < 0))               
 
   } else if (sim == "E") {
-    start.time11 <- sample(1:(pX - 7), 1) # Subgroup 1 - main t4
-    start.time12 <- sample(1:(pX - 7), 1) # Subgroup 1 - interaction t6
-    start.time2 <- sample(1:(pX - 7), 1)  # Subgroup 2 - main t5
+    start.time11  <- sample(1:(pX - 7), 1)  # Subgroup 1 - main t4
+    start.time12  <- sample(1:(pX - 7), 1)  # Subgroup 1 - interaction t6
+    start.time2   <- sample(1:(pX - 7), 1)  # Subgroup 2 - main t5
     
     eff11 <- eff12 <- eff2 <- rep(0, pX)
-    eff11[start.time11:(start.time11 + 7)] <- effect.size
-    eff12[start.time12:(start.time12 + 7)] <- effect.size
-    eff2[start.time2:(start.time2 + 7)] <- effect.size
-    int.size = 0.025
+    eff11[start.time11:(start.time11 + 7)]  <- effect.size
+    eff12[start.time12:(start.time12 + 7)]  <- effect.size
+    eff2[start.time2:(start.time2 + 7)]     <- effect.size
+    int.size <- 0.025
 
     dlmFun <- function(dat.row) {
       if (dat.row$mod_num > 0) {  
@@ -151,58 +150,59 @@ sim.hdlmm <- function(sim = "A",
                      which(dat$mod_num <= 0)) 
   } 
 
-  f = rep(NA, n.samp)
-
   # Calculate the DLM effect, f
+  f <- rep(NA, n.samp)
+
   if (!(sim %in% c("D", "E"))) {
     f <- sapply(1:n.samp, function(i) sum(exposure.data[i,] * dlmFun(dat[i, , drop = F])))
 
   } else if (sim == "D") {
     for (group in 1:length(fixedIdx)) { 
-      indices = fixedIdx[[group]]
-      n.group = length(indices)
+      indices <- fixedIdx[[group]]
+      n.group <- length(indices)
       
       for (i in 1:n.group) {
-        currentIdx = indices[i]
-        f[currentIdx] = sum(exposure.data[[group]][currentIdx, ] * dlmFun(dat[currentIdx, , drop = F]))
+        currentIdx    <- indices[i]
+        f[currentIdx] <- sum(exposure.data[[group]][currentIdx, ] * dlmFun(dat[currentIdx, , drop = F]))
       } 
     }
   } else if (sim == "E") {
     for (group in 1:length(fixedIdx)) { 
-      indices = fixedIdx[[group]]
-      n.group = length(indices)
+      indices <- fixedIdx[[group]]
+      n.group <- length(indices)
       
       for (i in 1:n.group) {
-        currentIdx = indices[i]
+        currentIdx <- indices[i]
 
         if (group == 1) {
-          effList = dlmFun(dat[currentIdx, , drop = F])
+          effList   <- dlmFun(dat[currentIdx, , drop = F])
 
-          e1_effect = sum(exposure.data[[1]][currentIdx, ] * effList$e1)
-          e2_effect = sum(exposure.data[[2]][currentIdx, ] * effList$e2)
+          e1_effect <- sum(exposure.data[[1]][currentIdx, ] * effList$e1)
+          e2_effect <- sum(exposure.data[[2]][currentIdx, ] * effList$e2)
 
-          f[currentIdx] = dat[currentIdx, , drop = F]$mod_scale * e1_effect + int.size * (e1_effect * e2_effect) # z1e1 + e1xe2 
-
+          f[currentIdx] <- dat[currentIdx, , drop = F]$mod_scale * e1_effect + int.size * (e1_effect * e2_effect) # z1e1 + e1xe2 
         } else {
-          f[currentIdx] = dat[currentIdx, , drop = F]$mod_scale * sum(exposure.data[[1]][currentIdx, ] * dlmFun(dat[currentIdx, , drop = F])) # z1e1
+          f[currentIdx] <- dat[currentIdx, , drop = F]$mod_scale * sum(exposure.data[[1]][currentIdx, ] * dlmFun(dat[currentIdx, , drop = F])) # z1e1
         } 
       }
     }
   } 
 
   # Scale f
-  sd.f <- sd(f)
-  f <- f / sd.f
+  sd.f  <- sd(f)
+  f     <- f / sd.f
 
   # y sample
-  params <- rnorm(13)
-  c <- as.matrix(dat) %*% params
+  params  <- rnorm(13)
+  c       <- as.matrix(dat) %*% params
+  dat$y   <- c + f + rnorm(n.samp, sd = sqrt(error))
 
-  dat$y <- c + f + rnorm(n.samp, sd = sqrt(error))
-
-  return(list("dat" = dat, "exposures" = exposure.data,
-              "f" = f, "c" = c,
-              "params" = params, "sd.f" = sd.f,
+  return(list("dat" = dat, 
+              "exposures" = exposure.data,
+              "f" = f, 
+              "c" = c,
+              "params" = params, 
+              "sd.f" = sd.f,
               "fixedIdx" = fixedIdx,
               "dlmFun" = dlmFun))
 }
