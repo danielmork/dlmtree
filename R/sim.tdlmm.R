@@ -29,7 +29,7 @@ sim.tdlmm <- function(sim = "A",
                       n = 5000,             # Scn A, B, C, D
                       error = 10,           # Scn B, C, D
                       mean.p = 0.5,         # Scn A
-                      # n.exp = 25,           # Not in use (number of exposures for simulation scenarios three and four)
+                      # n.exp = 25,         # Not in use (number of exposures for simulation scenarios three and four)
                       prop.active = 0.05,   # Scn C
                       expList = NULL,
                       # ZINB
