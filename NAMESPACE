@@ -16,6 +16,7 @@ S3method(print, summary.hdlm)
 S3method(print, summary.hdlmm)
 S3method(print, summary.monotone)
 
+S3method(plot, summary.tdlm)
 S3method(plot, summary.tdlnm)
 S3method(plot, summary.tdlmm)
 S3method(predict, dlmtree)
@@ -37,7 +38,7 @@ importFrom("utils", "combn", "data")
 
 # export(tdlnm)
 # export(tdlmm)
-export(dlmtree.fit)
+export(dlmtree)
 
 export(sim.tdlnm)
 export(sim.tdlmm)

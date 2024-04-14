@@ -18,9 +18,6 @@
 #' @export
 #'
 plot.summary.tdlnm <- function(x, plot.type = "mean", val = c(), time = c(), trueDLM = NULL, ...) {
-  if (x$ctr$class == "tdlm" & plot.type == "mean"){
-    plot.type = "dlm"
-  }
 
   args        <- list(...)
   main        <- ifelse(!is.null(args$main), args$main, "")
@@ -102,7 +99,8 @@ plot.summary.tdlnm <- function(x, plot.type = "mean", val = c(), time = c(), tru
               scale_fill_manual(breaks = c("+", "-", " "),
                                 values = c("+" = "dodgerblue1", "-" = "tomato1", " " = "white")) +
               labs(x = xlab, y = ylab, fill = flab, title = main)
-  } else if (plot.type == "slice") {
+  #} else if (plot.type == "slice") {
+  } else {
     if (length(val) != 0) {
       main  <- ifelse(!is.null(args$main), args$main, paste0("Exposure = ", val))
       xlab  <- ifelse(!is.null(args$xlab), args$xlab, "Time")
@@ -128,42 +126,7 @@ plot.summary.tdlnm <- function(x, plot.type = "mean", val = c(), time = c(), tru
             scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
             labs(x = xlab, y = ylab, title = main)
     }
-  } else if (plot.type == "dlm") {
-    main <- ifelse(!is.null(args$main), args$main, "DLM")
-    xlab <- ifelse(!is.null(args$xlab), args$xlab, "Time")
-    ylab <- ifelse(!is.null(args$ylab), args$ylab, "Effect")
-    if (!is.null(trueDLM)) {
-      d <- data.frame("Est" = x$matfit, 
-                      "CIMin" = x$cilower,
-                      "CIMax" = x$ciupper,
-                      "X" = start.time:(start.time + length(x$matfit) - 1),
-                      "trueDLM" = trueDLM)
-    } else {
-      d <- data.frame("Est" = x$matfit, 
-                      "CIMin" = x$cilower,
-                      "CIMax" = x$ciupper,
-                      "X" = start.time:(start.time + length(x$matfit) - 1))
-    }
-    
-    if (!is.null(trueDLM)) {
-      p <- ggplot(d) +
-            geom_hline(yintercept = 0, color = "red") +
-            geom_ribbon(aes(x = X, ymin = CIMin, ymax = CIMax), fill = "grey") +
-            geom_line(aes(x = X, y = Est)) +
-            geom_line(aes(x = X, y = trueDLM), col = "blue", linetype = "dashed") + # SI
-            theme_bw() +
-            scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
-            labs(x = xlab, y = ylab, title = main)
-    } else {
-      p <- ggplot(d) +
-            geom_hline(yintercept = 0, color = "red") +
-            geom_ribbon(aes(x = X, ymin = CIMin, ymax = CIMax), fill = "grey") +
-            geom_line(aes(x = X, y = Est)) +
-            theme_bw() +
-            scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
-            labs(x = xlab, y = ylab, title = main)
-    }
-  }
+  } 
   
   return(p)
 }

@@ -98,56 +98,56 @@
 #'
 #' @export
 #'
-dlmtree.fit <- function(formula,
-                        data,
-                        exposure.data,
-                        dlm.type = "linear",
-                        family = "gaussian",
-                        mixture = FALSE,
-                        het = FALSE,                
-                        # MCMC
-                        n.trees = 20,
-                        n.burn = 2000,
-                        n.iter = 5000,
-                        n.thin = 5,
-                        # Shared hyperparameters
-                        shrinkage = "all", 
-                        dlmtree.params = c(.95, 2),          
-                        dlmtree.step.prob = c(.25, .25, .25, .25),
-                        # Family parameters
-                        binomial.size = 1,  
-                        formula.zi = NULL,  
-                        # TDLNM parameters
-                        tdlnm.exposure.splits = 20, 
-                        tdlnm.exposure.se = NULL, 
-                        # HDLM/HDLMM parameters
-                        hdlm.modifiers = "all",                   
-                        hdlm.modifier.splits = 20,                
-                        hdlm.modtree.params = c(.95, 2),    
-                        hdlm.modtree.step.prob = c(.25, .25, .25), 
-                        hdlm.dlmtree.type = "shared",      
-                        hdlm.selection.prior = 0.5,
-                        # HDLM/HDLMM parameters
-                        mixture.interactions = "noself",  
-                        mixture.prior = 1,     
-                        # Monotone parameters
-                        monotone.gamma0 = rep(0, ncol(exposure.data)),        
-                        monotone.sigma = diag(ncol(exposure.data)) * 1.502^2,
-                        monotone.tree.time.params = c(.95, 2),          
-                        monotone.tree.exp.params = c(.95, 2), 
-                        monotone.time.kappa = NULL, 
-                        # Diagnostic parameters
-                        subset = 1:nrow(data),
-                        save.data = TRUE,
-                        lowmem = FALSE,
-                        #max.threads = 0,
-                        verbose = TRUE,
-                        diagnostics = FALSE,
-                        initial.params = NULL)
-                        # debug = FALSE,
-                        # ver = 1,
-                        # covariance.type = "exponential", # Gaussian process
-                        #...)
+dlmtree <- function(formula,
+                    data,
+                    exposure.data,
+                    dlm.type = "linear",
+                    family = "gaussian",
+                    mixture = FALSE,
+                    het = FALSE,                
+                    # MCMC
+                    n.trees = 20,
+                    n.burn = 2000,
+                    n.iter = 5000,
+                    n.thin = 5,
+                    # Shared hyperparameters
+                    shrinkage = "all", 
+                    dlmtree.params = c(.95, 2),          
+                    dlmtree.step.prob = c(.25, .25, .25, .25),
+                    # Family parameters
+                    binomial.size = 1,  
+                    formula.zi = NULL,  
+                    # TDLNM parameters
+                    tdlnm.exposure.splits = 20, 
+                    tdlnm.exposure.se = NULL, 
+                    # HDLM/HDLMM parameters
+                    hdlm.modifiers = "all",                   
+                    hdlm.modifier.splits = 20,                
+                    hdlm.modtree.params = c(.95, 2),    
+                    hdlm.modtree.step.prob = c(.25, .25, .25), 
+                    hdlm.dlmtree.type = "shared",      
+                    hdlm.selection.prior = 0.5,
+                    # HDLM/HDLMM parameters
+                    mixture.interactions = "noself",  
+                    mixture.prior = 1,     
+                    # Monotone parameters
+                    monotone.gamma0 = rep(0, ncol(exposure.data)),        
+                    monotone.sigma = diag(ncol(exposure.data)) * 1.502^2,
+                    monotone.tree.time.params = c(.95, 2),          
+                    monotone.tree.exp.params = c(.95, 2), 
+                    monotone.time.kappa = NULL, 
+                    # Diagnostic parameters
+                    subset = 1:nrow(data),
+                    save.data = TRUE,
+                    lowmem = FALSE,
+                    #max.threads = 0,
+                    verbose = TRUE,
+                    diagnostics = FALSE,
+                    initial.params = NULL)
+                    # debug = FALSE,
+                    # ver = 1,
+                    # covariance.type = "exponential", # Gaussian process
+                    #...)
 {
   options(stringsAsFactors = FALSE)
   piecewise.linear = FALSE
