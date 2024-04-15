@@ -40,6 +40,7 @@
 #' @param tdlnm.exposure.se numerical matrix of exposure standard errors with same
 #' size as exposure.data or a scalar smoothing factor representing a uniform
 #' smoothing factor applied to each exposure measurement, defaults to sd(exposure.data)/2
+#' @param tdlnm.time.split.prob probability vector of a spliting probabilities for time lags. The default is uniform probabilities.
 #' @param hdlm.modifiers string vector containing desired modifiers to be included in a modifier tree.
 #' The strings in the vector must match the names of the columns of the data. By default, a modifier tree considers all covariates as modifiers unless stated otherwise.
 #' @param hdlm.modifier.splits integer value to determine the possible number of splitting points that will be used for a modifier tree
@@ -61,7 +62,7 @@
 #' as a second example setting gamma_0l=4.119 and the corresponding diagonal element of sigma=0.599 implies that 95% of the time the prior probability of a split is between 0.8 and 0.99
 #' @param monotone.tree.time.params BART parameters for monotone time tree
 #' @param monotone.tree.exp.params BART parameters for monotone exposure tree
-#' @param monotone.time.kappa scaling factor in dirichlet prior that goes alongside `time.split.prob` to 
+#' @param monotone.time.kappa scaling factor in dirichlet prior that goes alongside `tdlnm.time.split.prob` to 
 #' control the amount of prior information given to the model for deciding probabilities of splits between adjacent lags
 #' @param subset integer vector to analyze only a subset of data and exposures
 #' @param save.data true (default): save data used for fitting the model
@@ -118,7 +119,8 @@ dlmtree <- function(formula,
                     binomial.size = 1,  
                     formula.zi = NULL,  
                     # TDLNM parameters
-                    tdlnm.exposure.splits = 20, 
+                    tdlnm.exposure.splits = 20,
+                    tdlnm.time.split.prob = NULL
                     tdlnm.exposure.se = NULL, 
                     # HDLM/HDLMM parameters
                     hdlm.modifiers = "all",                   
@@ -360,7 +362,7 @@ dlmtree <- function(formula,
   model$stepProbMod   <- prop.table(c(hdlm.modtree.step.prob[1], hdlm.modtree.step.prob[2], hdlm.modtree.step.prob[3], 1 - sum(hdlm.modtree.step.prob)))
 
   # Monotone model priors
-  model$timeSplits0 <- rep(1/(ncol(exposure.data) - 1), ncol(exposure.data) - 1)
+  model$timeSplits0 <- if(is.null(tdlnm.time.split.prob), rep(1/(ncol(exposure.data) - 1), ncol(exposure.data) - 1), tdlnm.time.split.prob)
   model$shape       <- ifelse(!is.null(tdlnm.exposure.se), "Smooth",
                               ifelse(tdlnm.exposure.splits == 0, "Linear", "Step Function"))
                                
