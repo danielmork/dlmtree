@@ -15,7 +15,7 @@
 #' @param scale default = NULL, if scale is not NULL, the effects are exponentiated
 #' @param ... additional plotting parameters for title and labels
 #'
-#' @return ggplot
+#' @returns ggplot
 #' @export
 #'
 plot.summary.tdlmm <- function(x,

@@ -11,8 +11,16 @@
 #' @param verbose true (default) or false: print output
 #' @param ... additional parameters
 #'
-#' @return Summary of tdlnm fit
-#' @export summary.tdlnm
+#' @examples
+#' D <- sim.tdlnm(effect = "A", error.to.signal = 1)
+#' fit <- dlmtree(formula = y ~ .,
+#'                data = D$dat,
+#'                exposure.data = as.matrix(D$exposures),
+#'                dlm.type = "nonlinear",
+#'                family = "gaussian")
+#' summary(fit)
+#'
+#' @returns Summary of tdlnm fit
 #' @export
 #'
 summary.tdlnm <- function(object,

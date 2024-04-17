@@ -41,7 +41,7 @@ using Eigen::Lower;
  * @param var nu*tau
  * @param tree pointer to top of tree
  * @param newTree if true, recalculate node-specific values
- * @return treeMHR 
+ * @returns treeMHR 
  */
 treeMHR dlnmMHR(std::vector<Node*> nodes, tdlmCtr *ctr,
                 VectorXd ZtR, double var, Node* tree, bool newTree)
@@ -242,7 +242,7 @@ void tdlnmTreeMCMC(int t, Node *tree, tdlmCtr *ctr, tdlmLog *dgn,
 //' dlmtree model with tdlnm approach
 //'
 //' @param model A list of parameter and data contained for the model fitting
-//' @return A list of dlmtree model fit, mainly posterior mcmc samples
+//' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 //' @export
 // [[Rcpp::export]]
 Rcpp::List tdlnm_Cpp(const Rcpp::List model)

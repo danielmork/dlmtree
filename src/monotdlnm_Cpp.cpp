@@ -353,7 +353,7 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn, exposure
 //' dlmtree model with monotone tdlnm approach
 //'
 //' @param model A list of parameter and data contained for the model fitting
-//' @return A list of dlmtree model fit, mainly posterior mcmc samples
+//' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 //' @export
 // [[Rcpp::export]]
 Rcpp::List monotdlnm_Cpp(const Rcpp::List model)

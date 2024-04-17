@@ -26,3 +26,7 @@ Simulation scenarios:
 \item Scenario D: Logistic effect, smooth in time
 }
 }
+\examples{
+sim.tdlnm(effect = "A", error.to.signal = 1)
+
+}

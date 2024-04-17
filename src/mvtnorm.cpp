@@ -35,7 +35,7 @@ extern "C" {
 //'
 //' @param mu vector of mean parameters
 //' @param sigma covariance matrix
-//' @return double 
+//' @returns double 
 //' @export
 // [[Rcpp::export]]
 double zeroToInfNormCDF(Eigen::VectorXd mu, Eigen::MatrixXd sigma) {
@@ -101,7 +101,7 @@ double zeroToInfNormCDF(Eigen::VectorXd mu, Eigen::MatrixXd sigma) {
  * @brief univariate sampling of truncated [a, infinity)
  * 
  * @param a lower
- * @return double 
+ * @returns double 
  */
 double rtnorm1(double a) {
   double x = 0.0;
@@ -136,7 +136,7 @@ double rtnorm1(double a) {
  * 
  * @param a lower
  * @param b upper
- * @return double 
+ * @returns double 
  */
 double rtnorm2(double a, double b) {
   double x = 0.0;
@@ -163,7 +163,7 @@ double rtnorm2(double a, double b) {
  * 
  * @param a lower
  * @param b upper
- * @return double 
+ * @returns double 
  */
 double rtnorm3(double a, double b) {
   double x = 0.0;
@@ -214,7 +214,7 @@ double rtnorm3(double a, double b) {
  * 
  * @param a lower truncation
  * @param b upper trancation
- * @return double 
+ * @returns double 
  */
 double rtuvnorm(double a, double b) {
   double x = 0.0;
@@ -255,7 +255,7 @@ double rtuvnorm(double a, double b) {
 //' @param mu vector of mean parameters
 //' @param sigma covariance matrix
 //' @param iter number of iterations
-//' @return VectorXd
+//' @returns VectorXd
 //' @export
 // [[Rcpp::export]]
 Eigen::VectorXd rtmvnorm(Eigen::VectorXd mu, Eigen::MatrixXd sigma, int iter) 

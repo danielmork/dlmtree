@@ -38,3 +38,13 @@ list of type 'summary.tdlmm'
 \description{
 summary.tdlmm
 }
+\examples{
+D <- sim.tdlmm(sim = "B", error = 25, n = 1000)
+fit <- dlmtree(y ~ .,
+               data = D$dat, exposure.data = D$exposures,
+               mixture.interactions = "noself", 
+               dlm.type = "linear", family = "gaussian",
+               mixture = TRUE)
+summary(fit)
+
+}

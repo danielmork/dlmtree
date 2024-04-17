@@ -13,7 +13,7 @@
 #' @param verbose true (default) or false: print output
 #' @param ... additional parameters
 #'
-#' @return Posterior predictive distribution draws
+#' @returns Posterior predictive distribution draws
 #' @export
 predict.dlmtree <- function(object, 
                             new.data, 

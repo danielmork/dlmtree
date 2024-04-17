@@ -32,7 +32,7 @@ using namespace Eigen;
  * @param mixVar 
  * @param tree 
  * @param newTree 
- * @return treeMHR 
+ * @returns treeMHR 
  */
 treeMHR mixMHR(std::vector<Node*> nodes1, std::vector<Node*> nodes2,
                   tdlmCtr *ctr, Eigen::VectorXd ZtR,
@@ -554,7 +554,7 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
 //' dlmtree model with tdlmm approach
 //'
 //' @param model A list of parameter and data contained for the model fitting
-//' @return A list of dlmtree model fit, mainly posterior mcmc samples
+//' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 //' @export
 // [[Rcpp::export]]
 Rcpp::List tdlmm_Cpp(const Rcpp::List model)

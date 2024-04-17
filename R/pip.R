@@ -3,7 +3,7 @@
 #' @param object An object of class dlmtree.
 #' @param type Type=1 indicates single modifier PIPs. Type=2 indicates joint modifier PIPs for two modifiers.
 #'
-#' @return A vector (type=1) or data.frame (type=2) of PIPs.
+#' @returns A vector (type=1) or data.frame (type=2) of PIPs.
 #' @export
 pip <- function(object, type=1) {
   if (type == 1) { # main effect PIPs

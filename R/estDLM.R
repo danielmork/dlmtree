@@ -11,7 +11,7 @@
 #' @param mem.safe boolean memory parameter for rule index
 #' @param verbose true (default) or false: print output
 #'
-#' @return A list of distributed lag effects per subgroups
+#' @returns A list of distributed lag effects per subgroups
 #' @export 
 #'
 estDLM <- function(object,
@@ -207,7 +207,7 @@ estDLM <- function(object,
 #' @param mod a list of modifier splitting rules
 #' @param mem.safe boolean memory parameter
 #'
-#' @return A list of weights per rule with modifiers
+#' @returns A list of weights per rule with modifiers
 #' @export 
 #'
 ruleIdx <- function(mod, mem.safe = FALSE) {

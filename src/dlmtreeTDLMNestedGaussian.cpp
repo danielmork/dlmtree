@@ -295,7 +295,7 @@ void dlmtreeTDLMNestedGaussian_TreeMCMC(int t, Node* modTree, NodeStruct* expNS,
 //' dlmtree model with nested Gaussian approach
 //'
 //' @param model A list of parameter and data contained for the model fitting
-//' @return A list of dlmtree model fit, mainly posterior mcmc samples
+//' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 //' @export
 // [[Rcpp::export]]
 Rcpp::List dlmtreeTDLMNestedGaussian(const Rcpp::List model)

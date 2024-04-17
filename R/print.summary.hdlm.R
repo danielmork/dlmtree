@@ -5,7 +5,7 @@
 #' @param cw.only print only results for exposures with critical windows
 #' @param ... additional parameters
 #'
-#' @return output in R console
+#' @returns output in R console
 #' @export print.summary.hdlm
 #' @export
 #'

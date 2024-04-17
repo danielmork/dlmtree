@@ -21,7 +21,7 @@ treeMHR dlmtreeGP_MHR(std::vector<Node*> modTerm,
 //' dlmtree model with Gaussian process approach
 //'
 //' @param model A list of parameter and data contained for the model fitting
-//' @return A list of dlmtree model fit, mainly posterior mcmc samples
+//' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 //' @export
 // [[Rcpp::export]]
 Rcpp::List dlmtreeGPGaussian(const Rcpp::List model)

@@ -17,7 +17,7 @@ double phi2(double x1, double x2){
 //' @param nsamp number of mcmc iterations
 //' @param center center parameter
 //' @param se Standard error parameter
-//' @return A cube object of lag effect x lag x mcmc
+//' @returns A cube object of lag effect x lag x mcmc
 //' @export
 // [[Rcpp::export]]
 SEXP dlnmEst(arma::dmat dlnm, arma::dvec predAt, int nlags, int nsamp, double center, double se){
@@ -87,7 +87,7 @@ SEXP dlnmEst(arma::dmat dlnm, arma::dvec predAt, int nlags, int nsamp, double ce
 //' @param nlags total number of lags
 //' @param niter number of mcmc iterations
 //'
-//' @return A matrix of split counts per mcmc
+//' @returns A matrix of split counts per mcmc
 //' @export
 // [[Rcpp::export]]
 arma::mat splitPIP(arma::dmat dlnm, int nlags, int niter){
@@ -122,7 +122,7 @@ arma::mat splitPIP(arma::dmat dlnm, int nlags, int niter){
 //' @param nsamp number of mcmc iterations
 //' @param center center parameter
 //'
-//' @return A cube object of lag effect x lag x mcmc
+//' @returns A cube object of lag effect x lag x mcmc
 //' @export
 // [[Rcpp::export]]
 SEXP dlnmPLEst(arma::dmat dlnm, arma::dvec predAt, int nlags, int nsamp, double center){
@@ -184,7 +184,7 @@ SEXP dlnmPLEst(arma::dmat dlnm, arma::dvec predAt, int nlags, int nsamp, double 
 //' @param dlm A numeric matrix containing the model fit information
 //' @param nlags total number of lags
 //' @param nsamp number of mcmc iterations
-//' @return A cube object of lag effect x lag x mcmc
+//' @returns A cube object of lag effect x lag x mcmc
 //' @export
 // [[Rcpp::export]]
 SEXP dlmEst(arma::dmat dlm, int nlags, int nsamp){
@@ -211,7 +211,7 @@ SEXP dlmEst(arma::dmat dlm, int nlags, int nsamp){
 //' @param dlm A numeric matrix containing the model fit information
 //' @param nlags total number of lags
 //' @param nsamp number of mcmc iterations
-//' @return A cube object of interaction effect x lag x mcmc
+//' @returns A cube object of interaction effect x lag x mcmc
 //' @export
 // [[Rcpp::export]]
 SEXP mixEst(arma::dmat dlm, int nlags, int nsamp){

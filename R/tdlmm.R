@@ -52,7 +52,7 @@
 #' Convergence can be checked by re-running the model and validating consistency
 #' of results.
 #'
-#' @return object of class 'tdlmm'
+#' @returns object of class 'tdlmm'
 #' @export
 #'
 tdlmm <- function(formula,

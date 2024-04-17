@@ -2,17 +2,15 @@
 #'
 #' @description Determine split points for continuous modifiers
 #'
-#' @param object An object of class dlmtree with dlmtype hdlm/hdlmm
+#' @param object An object of class dlmtree with DLM type hdlm & hdlmm
 #' @param var The name of a continuous variable for which the split points will be reported
 #' @param round The number of decimal places to round the variable (var) to. No rounding occurs if round=NULL (default)
 #' For positive integer values of round, the variable will be rounded and split points will be reported at the resulting level
 #'
-#' @return A data frame with split points and the probability that a split point was >= that split point value
+#' @returns A data frame with split points and the probability that a split point was >= that split point value
 #' @export
-
-
-splitpoints <- function(object, var, round=NULL) {
-  
+splitpoints <- function(object, var, round = NULL) 
+{
   sp2         <- object$TreeStructs$Rule[!duplicated(object$TreeStructs[,2:4])]
   treeRules   <- object$TreeStructs %>% group_by(Iter, Tree) %>% 
     summarize(Rules = paste0(Rule, collapse = " & "))

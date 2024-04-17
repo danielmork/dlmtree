@@ -4,7 +4,7 @@
 #'
 #' @param fit an object of class 'hdlm'
 #'
-#' @return A shinyapp interface 
+#' @returns A shinyapp interface 
 #' @export shiny.hdlm
 #' @export
 shiny.hdlm <- function(fit)

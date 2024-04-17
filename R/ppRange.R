@@ -5,7 +5,7 @@
 #'
 #' @param r set of integers to make 'pretty'
 #'
-#' @return character string of values representing 'r'
+#' @returns character string of values representing 'r'
 #'
 ppRange <- function(r) {
   if (length(r) <= 1){

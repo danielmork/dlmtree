@@ -7,7 +7,7 @@
 splitpoints(object, var, round = NULL)
 }
 \arguments{
-\item{object}{An object of class dlmtree with dlmtype hdlm/hdlmm}
+\item{object}{An object of class dlmtree with DLM type hdlm & hdlmm}
 
 \item{var}{The name of a continuous variable for which the split points will be reported}
 

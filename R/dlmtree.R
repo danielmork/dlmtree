@@ -95,7 +95,7 @@
 #' 
 #' @md
 #'
-#' @return object of class 'dlmtree'
+#' @returns object of class 'dlmtree'
 #'
 #' @export
 #'
@@ -107,10 +107,10 @@ dlmtree <- function(formula,
                     mixture = FALSE,
                     het = FALSE,                
                     # MCMC
-                    n.trees = 20,
-                    n.burn = 2000,
-                    n.iter = 5000,
-                    n.thin = 5,
+                    n.trees = 10,
+                    n.burn = 1000,
+                    n.iter = 2000,
+                    n.thin = 2,
                     # Shared hyperparameters
                     shrinkage = "all", 
                     dlmtree.params = c(.95, 2),          
@@ -120,7 +120,7 @@ dlmtree <- function(formula,
                     formula.zi = NULL,  
                     # TDLNM parameters
                     tdlnm.exposure.splits = 20,
-                    tdlnm.time.split.prob = NULL
+                    tdlnm.time.split.prob = NULL,
                     tdlnm.exposure.se = NULL, 
                     # HDLM/HDLMM parameters
                     hdlm.modifiers = "all",                   
@@ -362,7 +362,7 @@ dlmtree <- function(formula,
   model$stepProbMod   <- prop.table(c(hdlm.modtree.step.prob[1], hdlm.modtree.step.prob[2], hdlm.modtree.step.prob[3], 1 - sum(hdlm.modtree.step.prob)))
 
   # Monotone model priors
-  model$timeSplits0 <- if(is.null(tdlnm.time.split.prob), rep(1/(ncol(exposure.data) - 1), ncol(exposure.data) - 1), tdlnm.time.split.prob)
+  model$timeSplits0 <- ifelse(is.null(tdlnm.time.split.prob), rep(1/(ncol(exposure.data) - 1), ncol(exposure.data) - 1), tdlnm.time.split.prob)
   model$shape       <- ifelse(!is.null(tdlnm.exposure.se), "Smooth",
                               ifelse(tdlnm.exposure.splits == 0, "Linear", "Step Function"))
                                

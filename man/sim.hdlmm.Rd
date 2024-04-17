@@ -40,3 +40,7 @@ Simulation scenarios:
 while the second group is only associated with the scaled main effect, no interaction.
 }
 }
+\examples{
+sim.hdlmm(sim = "A", n = 1000)
+
+}

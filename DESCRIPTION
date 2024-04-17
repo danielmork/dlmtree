@@ -5,18 +5,20 @@ Version: 0.9.0.1
 Authors@R: c(
     person("Daniel", "Mork", 
             email = "dmork@hsph.harvard.edu", 
-            role = c("aut", "cre")),
+            role = c("aut", "cre", "cph"),
+            comment = c(ORCID = "0000-0002-7924-0706")),
     person("Seongwon", "Im", 
             email = "Seongwon.Im@colostate.edu", 
-            role = "aut"))
-Description: The 'dlmtree' R package provides a set of versatile tools for estimating distributed lag effects based 
-  on the Bayesian Additive Regression Trees (BART) framework. This package provides a set of tools for estimating distributed
-  lag linear and nonlinear models. The tools can also incorporate mixture exposure and heterogeneity. 
+            role = "aut",
+            comment = c(ORCID = "0009-0000-8447-5852")))
+Description: The 'dlmtree' R package provides constrained distributed lag models (DLMs) using a regression tree approach 
+  within the Bayesian additive regression trees (BART) framework, referred to as treed DLMs. The package includes various extensions of treed DLMs, 
+  allowing for the incorporation of different scenarios like linear/non-linear associations, mixture exposures, and heterogeneous exposure effects.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: false
 Depends: R (>= 3.5.0)
-Imports: Rcpp (>= 1.0.4), ggplot2, shiny, shinythemes
+Imports: Rcpp (>= 1.0.4), dplyr, ggplot2, shiny, shinythemes
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen
 RoxygenNote: 7.2.3
 SystemRequirements: C++17

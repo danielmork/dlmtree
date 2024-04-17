@@ -264,7 +264,7 @@ void progressMeter::printMark()
  * @param Exp pointer to exposureDat containing exposure data
  * @param ctr pointer to model control
  * @param step grow (0), prune (1), change (2)
- * @return double MH ratio of current proposal
+ * @returns double MH ratio of current proposal
  */
 double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step, double depth){
   int no          = 0;
@@ -359,7 +359,7 @@ double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step, do
  * @param Mod pointer to modDat, containing modifier functions
  * @param ctr pointer to model control data
  * @param step grow (0), prune (1), change (2), or swap (3)
- * @return double MH ratio for current proposal
+ * @returns double MH ratio for current proposal
  */
 double modProposeTree(Node* tree, modDat* Mod, dlmtreeCtr* ctr, int step){
   int no          = 0;
@@ -489,7 +489,7 @@ double modProposeTree(Node* tree, modDat* Mod, dlmtreeCtr* ctr, int step){
  * 
  * @param n pointer to node
  * @param Mod pointer to modDat
- * @return std::string 
+ * @returns std::string 
  */
 std::string modRuleStr(Node* n, modDat* Mod){
   std::string rule = "";
@@ -532,7 +532,7 @@ std::string modRuleStr(Node* n, modDat* Mod){
  * 
  * @param tree pointer to tree
  * @param Mod pointer to modDat
- * @return VectorXd 
+ * @returns VectorXd 
  */
 VectorXd countMods(Node* tree, modDat* Mod){
   VectorXd modCount(Mod->nMods);      modCount.setZero();

@@ -5,7 +5,7 @@
 #'
 #' @param A sorted integer vector A
 #' @param B sorted integer vector B
-#' @return vector of resulting intersection
+#' @returns vector of resulting intersection
 #' @export
 cppIntersection <- function(A, B) {
     .Call(`_dlmtree_cppIntersection`, A, B)
@@ -14,7 +14,7 @@ cppIntersection <- function(A, B) {
 #' dlmtree model with fixed Gaussian process approach
 #'
 #' @param model A list of parameter and data contained for the model fitting
-#' @return A list of dlmtree model fit, mainly posterior mcmc samples
+#' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 #' @export
 dlmtreeGPFixedGaussian <- function(model) {
     .Call(`_dlmtree_dlmtreeGPFixedGaussian`, model)
@@ -23,7 +23,7 @@ dlmtreeGPFixedGaussian <- function(model) {
 #' dlmtree model with Gaussian process approach
 #'
 #' @param model A list of parameter and data contained for the model fitting
-#' @return A list of dlmtree model fit, mainly posterior mcmc samples
+#' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 #' @export
 dlmtreeGPGaussian <- function(model) {
     .Call(`_dlmtree_dlmtreeGPGaussian`, model)
@@ -32,7 +32,7 @@ dlmtreeGPGaussian <- function(model) {
 #' dlmtree model with shared HDLM approach
 #'
 #' @param model A list of parameter and data contained for the model fitting
-#' @return A list of dlmtree model fit, mainly posterior mcmc samples
+#' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 #' @export
 dlmtreeHDLMGaussian <- function(model) {
     .Call(`_dlmtree_dlmtreeHDLMGaussian`, model)
@@ -41,7 +41,7 @@ dlmtreeHDLMGaussian <- function(model) {
 #' dlmtree model with HDLMM approach
 #'
 #' @param model A list of parameter and data contained for the model fitting
-#' @return A list of dlmtree model fit, mainly posterior mcmc samples
+#' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 #' @export
 dlmtreeHDLMMGaussian <- function(model) {
     .Call(`_dlmtree_dlmtreeHDLMMGaussian`, model)
@@ -50,7 +50,7 @@ dlmtreeHDLMMGaussian <- function(model) {
 #' dlmtree model with fixed Gaussian approach
 #'
 #' @param model A list of parameter and data contained for the model fitting
-#' @return A list of dlmtree model fit, mainly posterior mcmc samples
+#' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 #' @export
 dlmtreeTDLMFixedGaussian <- function(model) {
     .Call(`_dlmtree_dlmtreeTDLMFixedGaussian`, model)
@@ -59,7 +59,7 @@ dlmtreeTDLMFixedGaussian <- function(model) {
 #' dlmtree model with nested Gaussian approach
 #'
 #' @param model A list of parameter and data contained for the model fitting
-#' @return A list of dlmtree model fit, mainly posterior mcmc samples
+#' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 #' @export
 dlmtreeTDLMNestedGaussian <- function(model) {
     .Call(`_dlmtree_dlmtreeTDLMNestedGaussian`, model)
@@ -68,7 +68,7 @@ dlmtreeTDLMNestedGaussian <- function(model) {
 #' dlmtree model with nested HDLM approach
 #'
 #' @param model A list of parameter and data contained for the model fitting
-#' @return A list of dlmtree model fit, mainly posterior mcmc samples
+#' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 #' @export
 dlmtreeTDLM_cpp <- function(model) {
     .Call(`_dlmtree_dlmtreeTDLM_cpp`, model)
@@ -82,7 +82,7 @@ dlmtreeTDLM_cpp <- function(model) {
 #' @param nsamp number of mcmc iterations
 #' @param center center parameter
 #' @param se Standard error parameter
-#' @return A cube object of lag effect x lag x mcmc
+#' @returns A cube object of lag effect x lag x mcmc
 #' @export
 dlnmEst <- function(dlnm, predAt, nlags, nsamp, center, se) {
     .Call(`_dlmtree_dlnmEst`, dlnm, predAt, nlags, nsamp, center, se)
@@ -94,7 +94,7 @@ dlnmEst <- function(dlnm, predAt, nlags, nsamp, center, se) {
 #' @param nlags total number of lags
 #' @param niter number of mcmc iterations
 #'
-#' @return A matrix of split counts per mcmc
+#' @returns A matrix of split counts per mcmc
 #' @export
 splitPIP <- function(dlnm, nlags, niter) {
     .Call(`_dlmtree_splitPIP`, dlnm, nlags, niter)
@@ -108,7 +108,7 @@ splitPIP <- function(dlnm, nlags, niter) {
 #' @param nsamp number of mcmc iterations
 #' @param center center parameter
 #'
-#' @return A cube object of lag effect x lag x mcmc
+#' @returns A cube object of lag effect x lag x mcmc
 #' @export
 dlnmPLEst <- function(dlnm, predAt, nlags, nsamp, center) {
     .Call(`_dlmtree_dlnmPLEst`, dlnm, predAt, nlags, nsamp, center)
@@ -119,7 +119,7 @@ dlnmPLEst <- function(dlnm, predAt, nlags, nsamp, center) {
 #' @param dlm A numeric matrix containing the model fit information
 #' @param nlags total number of lags
 #' @param nsamp number of mcmc iterations
-#' @return A cube object of lag effect x lag x mcmc
+#' @returns A cube object of lag effect x lag x mcmc
 #' @export
 dlmEst <- function(dlm, nlags, nsamp) {
     .Call(`_dlmtree_dlmEst`, dlm, nlags, nsamp)
@@ -130,7 +130,7 @@ dlmEst <- function(dlm, nlags, nsamp) {
 #' @param dlm A numeric matrix containing the model fit information
 #' @param nlags total number of lags
 #' @param nsamp number of mcmc iterations
-#' @return A cube object of interaction effect x lag x mcmc
+#' @returns A cube object of interaction effect x lag x mcmc
 #' @export
 mixEst <- function(dlm, nlags, nsamp) {
     .Call(`_dlmtree_mixEst`, dlm, nlags, nsamp)
@@ -139,7 +139,7 @@ mixEst <- function(dlm, nlags, nsamp) {
 #' dlmtree model with monotone tdlnm approach
 #'
 #' @param model A list of parameter and data contained for the model fitting
-#' @return A list of dlmtree model fit, mainly posterior mcmc samples
+#' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 #' @export
 monotdlnm_Cpp <- function(model) {
     .Call(`_dlmtree_monotdlnm_Cpp`, model)
@@ -149,7 +149,7 @@ monotdlnm_Cpp <- function(model) {
 #'
 #' @param mu vector of mean parameters
 #' @param sigma covariance matrix
-#' @return double 
+#' @returns double 
 #' @export
 zeroToInfNormCDF <- function(mu, sigma) {
     .Call(`_dlmtree_zeroToInfNormCDF`, mu, sigma)
@@ -160,7 +160,7 @@ zeroToInfNormCDF <- function(mu, sigma) {
 #' @param mu vector of mean parameters
 #' @param sigma covariance matrix
 #' @param iter number of iterations
-#' @return VectorXd
+#' @returns VectorXd
 #' @export
 rtmvnorm <- function(mu, sigma, iter) {
     .Call(`_dlmtree_rtmvnorm`, mu, sigma, iter)
@@ -170,7 +170,7 @@ rtmvnorm <- function(mu, sigma, iter) {
 #'
 #' @param b vector of binomial sizes
 #' @param z vector of parameters
-#' @return Eigen::VectorXd 
+#' @returns Eigen::VectorXd 
 #' @export
 rcpp_pgdraw <- function(b, z) {
     .Call(`_dlmtree_rcpp_pgdraw`, b, z)
@@ -179,7 +179,7 @@ rcpp_pgdraw <- function(b, z) {
 #' dlmtree model with tdlmm approach
 #'
 #' @param model A list of parameter and data contained for the model fitting
-#' @return A list of dlmtree model fit, mainly posterior mcmc samples
+#' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 #' @export
 tdlmm_Cpp <- function(model) {
     .Call(`_dlmtree_tdlmm_Cpp`, model)
@@ -188,7 +188,7 @@ tdlmm_Cpp <- function(model) {
 #' dlmtree model with tdlnm approach
 #'
 #' @param model A list of parameter and data contained for the model fitting
-#' @return A list of dlmtree model fit, mainly posterior mcmc samples
+#' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 #' @export
 tdlnm_Cpp <- function(model) {
     .Call(`_dlmtree_tdlnm_Cpp`, model)

@@ -7,7 +7,7 @@ using namespace Rcpp;
  * @brief Method to sample integer using probabilities p
  * @param probs vector of probabilities
  * @param totP sum of p
- * @return integer from 0 to length of p minus 1
+ * @returns integer from 0 to length of p minus 1
  */
 int sampleInt(const std::vector<double> &probs, double totP = 1) {
   double u    = R::runif(0, totP);
@@ -26,7 +26,7 @@ int sampleInt(const std::vector<double> &probs, double totP = 1) {
  * sampleInt
  * @brief Method to sample integer using probabilities p
  * @param probs vector of probabilities 
- * @return integer from 0 to length of p minus 1
+ * @returns integer from 0 to length of p minus 1
  */
 int sampleInt(const Eigen::VectorXd &probs){
   double totP = probs.sum();
@@ -48,7 +48,7 @@ int sampleInt(const Eigen::VectorXd &probs){
  * @param beta parameter > 0
  * @param depth depth of split (begins at zero)
  * @param terminal if true returns log(1-p)
- * @return log probability
+ * @returns log probability
  */
 double logPSplit(double alpha, double beta, int depth, bool terminal){
   double p = alpha * pow(1.0 + (double)depth, -beta);
@@ -66,7 +66,7 @@ double logPSplit(double alpha, double beta, int depth, bool terminal){
  * @param tmin 
  * @param tmax 
  * @param term 
- * @return double 
+ * @returns double 
  */
 double logZIPSplit(Eigen::VectorXd timeProbs, int tmin, int tmax, int nTrees, bool term) {
   double timeprob = 1.0 / (1.0 + exp(-timeProbs.segment(tmin - 1, tmax - tmin + 1).mean()));
@@ -83,7 +83,7 @@ double logZIPSplit(Eigen::VectorXd timeProbs, int tmin, int tmax, int nTrees, bo
  * @brief log probability of Dirichlet with values x and parameters alpha
  * @param x vector of values
  * @param alpha vector of parameters
- * @return log probability
+ * @returns log probability
  */
 double logDirichletDensity(const Eigen::VectorXd &x, const Eigen::VectorXd &alpha){
   if (x.size() != alpha.size()){ // ! incorrect sizes
@@ -103,7 +103,7 @@ double logDirichletDensity(const Eigen::VectorXd &x, const Eigen::VectorXd &alph
  * rDirichlet
  * @brief random draw from Dirichlet distribution with parameters alpha
  * @param alpha parameters
- * @return vector containing draw from Dirichlet
+ * @returns vector containing draw from Dirichlet
  */
 Eigen::VectorXd rDirichlet(const Eigen::VectorXd &alpha) {
   Eigen::VectorXd out(alpha.size());
@@ -123,7 +123,7 @@ Eigen::VectorXd rDirichlet(const Eigen::VectorXd &alpha) {
  * @param a additional IG component for x^2 full conditional
  * @param b additional IG component for x^2 full conditional
  * @param yInv pointer to update 1/y
- * @return double x^2 draw from full conditional
+ * @returns double x^2 draw from full conditional
  */
 void rHalfCauchyFC(double* x2, double a, double b, double* yInv){
   double yi = R::rgamma(1.0, *x2 / (*x2 + 1.0));
@@ -140,7 +140,7 @@ void rHalfCauchyFC(double* x2, double a, double b, double* yInv){
  of origVec to newVec
  * @param origVec starting vector of sorted integers
  * @param newVec vector of unsorted integers to be compared to origVec
- * @return std vector with 2 elements: intersection and difference
+ * @returns std vector with 2 elements: intersection and difference
  */
 // std::vector<std::vector<int> > 
 std::pair<std::vector<int>, std::vector<int> >
@@ -194,7 +194,7 @@ std::pair<std::vector<int>, std::vector<int> >
 //'
 //' @param A sorted integer vector A
 //' @param B sorted integer vector B
-//' @return vector of resulting intersection
+//' @returns vector of resulting intersection
 //' @export
 // [[Rcpp::export]]
 std::vector<int> cppIntersection(const IntegerVector& A, const IntegerVector& B) {
@@ -211,7 +211,7 @@ std::vector<int> cppIntersection(const IntegerVector& A, const IntegerVector& B)
  * 
  * @param original A vector to be subset
  * @param indices A vector containing wanted indices
- * @return A vector with values of given indices
+ * @returns A vector with values of given indices
  */
 
 Eigen::VectorXd selectInd(Eigen::VectorXd original, std::vector<int> indices) {
@@ -237,7 +237,7 @@ Eigen::VectorXd selectInd(Eigen::VectorXd original, std::vector<int> indices) {
  * 
  * @param original A vector to be subset
  * @param indices A vector containing wanted indices of row
- * @return A vector with values of given indices
+ * @returns A vector with values of given indices
  */
 
 Eigen::MatrixXd selectIndM(Eigen::MatrixXd original, std::vector<int> indices) {

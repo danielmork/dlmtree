@@ -40,3 +40,13 @@ Summary of tdlnm fit
 \description{
 summary.tdlnm
 }
+\examples{
+D <- sim.tdlnm(effect = "A", error.to.signal = 1)
+fit <- dlmtree(formula = y ~ .,
+               data = D$dat,
+               exposure.data = as.matrix(D$exposures),
+               dlm.type = "nonlinear",
+               family = "gaussian")
+summary(fit)
+
+}

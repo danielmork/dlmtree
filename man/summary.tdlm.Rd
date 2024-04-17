@@ -19,3 +19,14 @@ Summary of tdlm fit
 \description{
 summary.tdlm
 }
+\examples{
+D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
+fit <- dlmtree(y ~ ., 
+               data = D$dat, 
+               exposure.data = D$exposures[[1]],
+               dlm.type = "linear",
+               family = "logit",
+               binomial.size = 1)
+summary(fit)
+
+}

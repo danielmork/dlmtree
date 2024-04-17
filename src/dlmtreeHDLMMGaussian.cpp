@@ -39,7 +39,7 @@ treeMHR dlmtreeHDLMM_MHR(std::vector<Node*> modTerm,
 //' dlmtree model with HDLMM approach
 //'
 //' @param model A list of parameter and data contained for the model fitting
-//' @return A list of dlmtree model fit, mainly posterior mcmc samples
+//' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 //' @export
 // [[Rcpp::export]]
 Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){ 

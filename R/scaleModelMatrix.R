@@ -4,7 +4,7 @@
 #'
 #' @param M a matrix to center and scale
 #'
-#' @return a scaled matrix
+#' @returns a scaled matrix
 #' @export
 #'
 scaleModelMatrix <- function(M)

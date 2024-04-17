@@ -4,7 +4,18 @@
 #' @param conf.level confidence level for computation of credible intervals
 #' @param ... additional parameters
 #'
-#' @return list of type 'summary.hdlmm'
+#' @examples
+#' D <- sim.hdlmm(sim = "D", n = 1000)
+#' fit <- dlmtree(y ~ ., 
+#'                data = D$dat,
+#'                exposure.data = D$exposures,
+#'                dlm.type = "linear",
+#'                family = "gaussian",
+#'                mixture = TRUE,
+#'                het = TRUE)
+#' summary(fit)
+#'
+#' @returns list of type 'summary.hdlmm'
 #' @export summary.hdlmm
 #' @export
 #'

@@ -17,7 +17,10 @@
 #' while the second group is only associated with the scaled main effect, no interaction.
 #' @md
 #'
-#' @return Simulated data and true parameters
+#' @examples
+#' sim.hdlmm(sim = "A", n = 1000)
+#'
+#' @returns Simulated data and true parameters
 #' @export
 #'
 sim.hdlmm <- function(sim = "A",

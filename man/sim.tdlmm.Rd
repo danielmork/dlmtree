@@ -55,3 +55,7 @@ Simulation scenarios:
 \item Scenario F: Zero-inflated count response with single exposure effect with main effect of PM2.5 and interaction
 }
 }
+\examples{
+sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
+
+}

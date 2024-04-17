@@ -11,7 +11,7 @@
 #' @param verbose true (default) or false: print output
 #' @param ... additional parameters
 #'
-#' @return Summary of monotone fit
+#' @returns Summary of monotone fit
 #' @export summary.monotone
 #' @export
 #'

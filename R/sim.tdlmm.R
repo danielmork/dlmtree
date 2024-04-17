@@ -22,7 +22,10 @@
 #' - Scenario F: Zero-inflated count response with single exposure effect with main effect of PM2.5 and interaction
 #' @md
 #'
-#' @return Simulated data and true parameters
+#' @examples
+#' sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
+#'
+#' @returns Simulated data and true parameters
 #' @export
 #'
 sim.tdlmm <- function(sim = "A",

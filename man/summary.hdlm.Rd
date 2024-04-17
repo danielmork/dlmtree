@@ -19,3 +19,14 @@ list of type 'summary.hdlm'
 \description{
 summary.hdlm
 }
+\examples{
+D <- sim.hdlmm(sim = "B", n = 1000)
+fit <- dlmtree(y ~ ., 
+               data = D$dat,
+               exposure.data = D$exposures,
+               dlm.type = "linear",
+               family = "gaussian",
+               het = TRUE)
+summary(fit)
+
+}

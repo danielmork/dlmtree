@@ -26,7 +26,7 @@ double calcLogRatioFixedTDLM(treeMHR mhr0, treeMHR mhr, double RtR,
 //' dlmtree model with fixed Gaussian approach
 //'
 //' @param model A list of parameter and data contained for the model fitting
-//' @return A list of dlmtree model fit, mainly posterior mcmc samples
+//' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 //' @export
 // [[Rcpp::export]]
 Rcpp::List dlmtreeTDLMFixedGaussian(const Rcpp::List model)

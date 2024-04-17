@@ -4,12 +4,20 @@
 #' @param conf.level confidence level for computation of credible intervals
 #' @param ... additional parameters
 #'
-#' @return Summary of tdlm fit
-#' @export summary.tdlm
+#' @examples
+#' D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
+#' fit <- dlmtree(y ~ ., 
+#'                data = D$dat, 
+#'                exposure.data = D$exposures[[1]],
+#'                dlm.type = "linear",
+#'                family = "logit",
+#'                binomial.size = 1)
+#' summary(fit)
+#'
+#' @returns Summary of tdlm fit
 #' @export
 #'
-summary.tdlm <- function(object, conf.level = 0.95, ...)
-{
+summary.tdlm <- function(object, conf.level = 0.95, ...){
   Lags    <- max(object$TreeStructs$tmax)
   Iter    <- max(object$TreeStructs$Iter)
   ci.lims <- c((1 - conf.level) / 2, 1 - (1 - conf.level) / 2)

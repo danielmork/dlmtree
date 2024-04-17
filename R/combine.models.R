@@ -4,7 +4,7 @@
 #'
 #' @param mlist a list of models
 #'
-#' @return A data frame with model fit information of the models included in the list
+#' @returns A data frame with model fit information of the models included in the list
 #' @export combine.models
 #'
 combine.models <- function(mlist) {
@@ -42,7 +42,7 @@ combine.models <- function(mlist) {
 #'
 #' @param mlist a list of models
 #'
-#' @return A data frame with model fit information of the models included in the list
+#' @returns A data frame with model fit information of the models included in the list
 #' @export combine.models.tdlmm
 #'
 combine.models.tdlmm <- function(mlist) {

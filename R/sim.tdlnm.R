@@ -10,7 +10,10 @@
 #' - Scenario D: Logistic effect, smooth in time
 #' @md
 #'
-#' @return Simulated data and true parameters
+#' @examples
+#' sim.tdlnm(effect = "A", error.to.signal = 1)
+#'
+#' @returns Simulated data and true parameters
 #' @export
 #'
 sim.tdlnm <- function(effect = "A", error.to.signal = 1)

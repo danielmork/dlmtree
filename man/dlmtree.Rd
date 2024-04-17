@@ -12,16 +12,17 @@ dlmtree(
   family = "gaussian",
   mixture = FALSE,
   het = FALSE,
-  n.trees = 20,
-  n.burn = 2000,
-  n.iter = 5000,
-  n.thin = 5,
+  n.trees = 10,
+  n.burn = 1000,
+  n.iter = 2000,
+  n.thin = 2,
   shrinkage = "all",
   dlmtree.params = c(0.95, 2),
   dlmtree.step.prob = c(0.25, 0.25, 0.25, 0.25),
   binomial.size = 1,
   formula.zi = NULL,
   tdlnm.exposure.splits = 20,
+  tdlnm.time.split.prob = NULL,
   tdlnm.exposure.se = NULL,
   hdlm.modifiers = "all",
   hdlm.modifier.splits = 20,
@@ -91,6 +92,8 @@ evenly across quantiles of the exposure data) or list with two components:
 'type' = 'values' or 'quantiles', and 'split.vals' = a numerical
 vector indicating the corresponding exposure values or quantiles for splits.}
 
+\item{tdlnm.time.split.prob}{probability vector of a spliting probabilities for time lags. The default is uniform probabilities.}
+
 \item{tdlnm.exposure.se}{numerical matrix of exposure standard errors with same
 size as exposure.data or a scalar smoothing factor representing a uniform
 smoothing factor applied to each exposure measurement, defaults to sd(exposure.data)/2}
@@ -128,7 +131,7 @@ as a second example setting gamma_0l=4.119 and the corresponding diagonal elemen
 
 \item{monotone.tree.exp.params}{BART parameters for monotone exposure tree}
 
-\item{monotone.time.kappa}{scaling factor in dirichlet prior that goes alongside \code{time.split.prob} to
+\item{monotone.time.kappa}{scaling factor in dirichlet prior that goes alongside \code{tdlnm.time.split.prob} to
 control the amount of prior information given to the model for deciding probabilities of splits between adjacent lags}
 
 \item{subset}{integer vector to analyze only a subset of data and exposures}

@@ -6,7 +6,7 @@
 #' @param alpha tree shape parameter, 0 < alpha < 1
 #' @param beta tree size parameter, beta > 0
 #'
-#' @return A integer value of number of terminal nodes
+#' @returns A integer value of number of terminal nodes
 #' @export 
 #'
 drawTree <- function(depth, alpha, beta) {

@@ -4,7 +4,7 @@
 #' @param digits integer number of digits to round
 #' @param ... additional parameters
 #'
-#' @return output in R console
+#' @returns output in R console
 #' @export print.summary.monotone
 #' @export
 #'

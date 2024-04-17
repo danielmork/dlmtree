@@ -54,7 +54,7 @@ double aterm(int, double, double);
 //'
 //' @param b vector of binomial sizes
 //' @param z vector of parameters
-//' @return Eigen::VectorXd 
+//' @returns Eigen::VectorXd 
 //' @export
 // [[Rcpp::export]]
 Eigen::VectorXd rcpp_pgdraw(Eigen::VectorXd b, Eigen::VectorXd z) {
