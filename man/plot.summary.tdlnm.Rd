@@ -25,6 +25,20 @@ exposure values (requires package gganimate)}
 'flab' which sets the effect label for surface plots,
 'start.time' which sets the first time value}
 }
+\value{
+A plot of distributed lag effect estimated with tdlnm
+}
 \description{
 plot.summary.tdlnm
+}
+\examples{
+D <- sim.tdlnm(sim = "A", error.to.signal = 1)
+fit <- dlmtree(formula = y ~ .,
+               data = D$dat,
+               exposure.data = as.matrix(D$exposures),
+               dlm.type = "nonlinear",
+               family = "gaussian")
+fit_sum <- summary(fit)
+plot(fit_sum)
+
 }

@@ -35,13 +35,13 @@ predictions at all other exposure values}
 \item{...}{additional parameters}
 }
 \value{
-Summary of tdlnm fit
+list of type 'summary.tdlnm'
 }
 \description{
 summary.tdlnm
 }
 \examples{
-D <- sim.tdlnm(effect = "A", error.to.signal = 1)
+D <- sim.tdlnm(sim = "A", error.to.signal = 1)
 fit <- dlmtree(formula = y ~ .,
                data = D$dat,
                exposure.data = as.matrix(D$exposures),

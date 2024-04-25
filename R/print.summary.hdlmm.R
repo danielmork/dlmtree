@@ -5,13 +5,25 @@
 #' @param cw.only print only results for exposures with critical windows
 #' @param ... additional parameters
 #'
-#' @returns output in R console
-#' @export print.summary.hdlmm
+#' @examples
+#' D <- sim.hdlmm(sim = "D", n = 1000)
+#' fit <- dlmtree(y ~ ., 
+#'                data = D$dat,
+#'                exposure.data = D$exposures,
+#'                dlm.type = "linear",
+#'                family = "gaussian",
+#'                mixture = TRUE,
+#'                het = TRUE)
+#' fit_sum <- summary(fit)
+#' print(fit_sum)
+#'
+#' @returns output of hdlmm fit in R console
 #' @export
 #'
 print.summary.hdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
 {
-  cat("\nHDLMM:\n\n")
+  cat("---\n")
+  cat("HDLMM summary\n\n")
 
   # Print model info
   cat("Model run info:\n")

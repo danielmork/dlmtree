@@ -58,6 +58,7 @@ export(pip)
 export(splitpoints)
 
 export(plot.summary.tdlnm)
+export(plot.summary.tdlm)
 export(plot.summary.tdlmm)
 
 export(print.summary.tdlnm)

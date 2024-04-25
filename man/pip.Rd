@@ -17,3 +17,16 @@ A vector (type=1) or data.frame (type=2) of PIPs.
 \description{
 Posterior inclusion probabilities (PIPs) for modifiers in HDLM
 }
+\examples{
+# Posterior inclusion probability with HDLM 
+D <- sim.hdlmm(sim = "B", n = 1000)
+fit <- dlmtree(y ~ ., 
+               data = D$dat,
+               exposure.data = D$exposures,
+               dlm.type = "linear",
+               family = "gaussian",
+               het = TRUE)
+pip(fit)
+pip(fit, type = 2)
+
+}

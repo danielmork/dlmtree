@@ -16,7 +16,6 @@
 #' summary(fit)
 #'
 #' @returns list of type 'summary.hdlmm'
-#' @export summary.hdlmm
 #' @export
 #'
 summary.hdlmm <- function(object, conf.level = 0.95, ...)

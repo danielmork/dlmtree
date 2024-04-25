@@ -14,7 +14,7 @@
 \item{...}{additional parameters}
 }
 \value{
-Summary of tdlm fit
+list of type 'summary.tdlm'
 }
 \description{
 summary.tdlm

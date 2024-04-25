@@ -14,7 +14,7 @@
 #'                binomial.size = 1)
 #' summary(fit)
 #'
-#' @returns Summary of tdlm fit
+#' @returns list of type 'summary.tdlm'
 #' @export
 #'
 summary.tdlm <- function(object, conf.level = 0.95, ...){

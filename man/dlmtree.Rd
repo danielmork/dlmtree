@@ -12,7 +12,7 @@ dlmtree(
   family = "gaussian",
   mixture = FALSE,
   het = FALSE,
-  n.trees = 10,
+  n.trees = 20,
   n.burn = 1000,
   n.iter = 2000,
   n.thin = 2,
@@ -124,7 +124,7 @@ which eliminates all interactions and estimates only main effects of each exposu
 e.g., gamma_0l = 0 implies mean prior probability of split at lag l = 0.5}
 
 \item{monotone.sigma}{symmetric matrix (usually with only diagonal elements) corresponding to gamma_0 to define variances on prior probability of split;
-e.g., gamma_0l=0 with lth diagonal element of sigma=2.701 implies that 95\% of the time the prior probability of split is between 0.005 and 0.995,
+e.g., gamma_0l = 0 with lth diagonal element of sigma=2.701 implies that 95\% of the time the prior probability of split is between 0.005 and 0.995,
 as a second example setting gamma_0l=4.119 and the corresponding diagonal element of sigma=0.599 implies that 95\% of the time the prior probability of a split is between 0.8 and 0.99}
 
 \item{monotone.tree.time.params}{BART parameters for monotone time tree}
@@ -138,7 +138,7 @@ control the amount of prior information given to the model for deciding probabil
 
 \item{save.data}{true (default): save data used for fitting the model}
 
-\item{lowmem}{false (default) / true: turn on memory saver for DLNM, slower computation time}
+\item{lowmem}{true or false (default): turn on memory saver for DLNM, slower computation time}
 
 \item{verbose}{true (default) or false: print output}
 
@@ -149,7 +149,7 @@ terminal nodes and acceptance ratio.}
 "glm" = generate using GLM, or user defined, length must equal number of parameters in fixed effects model}
 }
 \value{
-object of class 'dlmtree'
+Object of one of the classes: tdlm, tdlmm, tdlnm, hdlm, hdlmm
 }
 \description{
 The 'dlmtree' function accommodates various response variable types, including continuous, binary, and zero-inflated count values.
@@ -179,4 +179,52 @@ of results. Examples are provided below for the syntax for running different typ
    Treed distributed non-linear lag model (TDLNM) \tab Non-linear \tab Gaussian \tab X \tab X \cr
    Zero-inflated monotone regression tree \tab Monotone \tab Gaussian \tab X \tab X \cr
 }
+}
+\examples{
+# TDLNM
+D <- sim.tdlnm(sim = "A", error.to.signal = 1)
+dlmtree(formula = y ~ .,
+        data = D$dat,
+        exposure.data = D$exposures,
+        dlm.type = "nonlinear",
+        family = "gaussian")
+
+# TDLM
+D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
+dlmtree(formula = y ~ .,
+        data = D$dat, 
+        exposure.data = D$exposures[[1]],
+        dlm.type = "linear",
+        family = "logit",
+        binomial.size = 1)
+
+# TDLMM
+D <- sim.tdlmm(sim = "B", error = 25, n = 1000)
+dlmtree(formula = y ~ .,
+        data = D$dat, 
+        exposure.data = D$exposures,
+        mixture.interactions = "noself", 
+        dlm.type = "linear", 
+        family = "gaussian",
+        mixture = TRUE)
+
+# HDLM
+D <- sim.hdlmm(sim = "B", n = 1000)
+dlmtree(formula = y ~ .,
+        data = D$dat,
+        exposure.data = D$exposures,
+        dlm.type = "linear",
+        family = "gaussian",
+        het = TRUE)
+
+# HDLMM
+D <- sim.hdlmm(sim = "D", n = 1000)
+dlmtree(formula = y ~ .,
+        data = D$dat,
+        exposure.data = D$exposures,
+        dlm.type = "linear",
+        family = "gaussian",
+        mixture = TRUE,
+        het = TRUE)
+
 }

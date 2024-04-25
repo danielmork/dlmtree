@@ -96,11 +96,11 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
 
   // Sparsity hyperparameter (Deprecated now as HDLMM does not perform exposure selection)
   ctr->mixKappa = as<double>(model["mixPrior"]); 
-  bool updateKappa = true;  
-  if (ctr->mixKappa < 0) {       
-    updateKappa = true;
-    ctr->mixKappa = 1;
-  }
+  // bool updateKappa = false;  
+  // if (ctr->mixKappa < 0) {       
+  //   updateKappa = true;
+  //   ctr->mixKappa = 1;
+  // }
 
   // *** Setup modifier data ***
   modDat *Mod = new modDat(as<std::vector<int>>(model["modIsNum"]), 
@@ -384,19 +384,7 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
       Mod->modProb = rDirichlet((ctr->modCount.array() + ctr->modKappa / ctr->pM).matrix());  // (m_1 + kappa / J, ..., m_J + kappa / J)
       // end modifier selection
 
-      // HDLMM: Exposure selection posterior calculation (Deprecated)
-      if (updateKappa) {
-        double mixKappaNew = R::rgamma(1.0, ctr->nTrees/4.0);
-        double mhrDirMix =
-          logDirichletDensity(ctr->expProb, ((ctr->expCount).array() + mixKappaNew).matrix()) -
-          logDirichletDensity(ctr->expProb, ((ctr->expCount).array() + ctr->mixKappa).matrix());
-
-        if (log(R::runif(0, 1)) < mhrDirMix && (mhrDirMix == mhrDirMix)){
-          ctr->mixKappa = mixKappaNew;
-        }
-      }
-      
-      // Update the exposure selection probability
+      // HDLMM: Exposure selection posterior calculation      
       ctr->expProb = rDirichlet(((ctr->expCount).array() + ctr->mixKappa).matrix());
 
 

@@ -12,7 +12,7 @@
 #' @param ... additional parameters
 #'
 #' @examples
-#' D <- sim.tdlnm(effect = "A", error.to.signal = 1)
+#' D <- sim.tdlnm(sim = "A", error.to.signal = 1)
 #' fit <- dlmtree(formula = y ~ .,
 #'                data = D$dat,
 #'                exposure.data = as.matrix(D$exposures),
@@ -20,7 +20,7 @@
 #'                family = "gaussian")
 #' summary(fit)
 #'
-#' @returns Summary of tdlnm fit
+#' @returns list of type 'summary.tdlnm'
 #' @export
 #'
 summary.tdlnm <- function(object,

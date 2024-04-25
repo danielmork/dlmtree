@@ -569,15 +569,15 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   ctr->nRec = floor(ctr->iter / ctr->thin);
 
   // Tree parameters
-  ctr->nTrees = as<int>(model["nTrees"]);                        
-  ctr->stepProb = as<std::vector<double> >(model["stepProbTDLM"]);
-  ctr->treePrior = as<std::vector<double> >(model["treePriorTDLM"]); 
-  ctr->verbose = as<bool>(model["verbose"]);                     
-  ctr->diagnostics = as<bool>(model["diagnostics"]); 
+  ctr->nTrees       = as<int>(model["nTrees"]);                        
+  ctr->stepProb     = as<std::vector<double> >(model["stepProbTDLM"]);
+  ctr->treePrior    = as<std::vector<double> >(model["treePriorTDLM"]); 
+  ctr->verbose      = as<bool>(model["verbose"]);                     
+  ctr->diagnostics  = as<bool>(model["diagnostics"]); 
 
   // Model selection
   ctr->binomial = as<bool>(model["binomial"]);  
-  ctr->zinb = as<bool>(model["zinb"]);          
+  ctr->zinb     = as<bool>(model["zinb"]);          
 
   // Mixture & Shrinkage
   ctr->modKappa = as<double>(model["mixPrior"]);
@@ -589,19 +589,19 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   ctr->shrinkage = as<int>(model["shrinkage"]);  
   
   // Data
-  ctr->Y0 = as<Eigen::VectorXd>(model["Y"]);      
-  ctr->Ystar = as<Eigen::VectorXd>(model["Y"]);  
-  ctr->n = (ctr->Y0).size();                  
+  ctr->Y0     = as<Eigen::VectorXd>(model["Y"]);      
+  ctr->Ystar  = as<Eigen::VectorXd>(model["Y"]);  
+  ctr->n      = (ctr->Y0).size();                  
 
   // Fixed effect
-  ctr->Z = as<Eigen::MatrixXd>(model["Z"]);     
+  ctr->Z  = as<Eigen::MatrixXd>(model["Z"]);     
   ctr->Zw = ctr->Z;                               
   ctr->pZ = (ctr->Z).cols(); 
 
   // ZI model
-  ctr->Z1 = as<Eigen::MatrixXd>(model["Z.zi"]);  
-  ctr->Zw1 = ctr->Z1; 
-  ctr->pZ1 = (ctr->Z1).cols(); 
+  ctr->Z1   = as<Eigen::MatrixXd>(model["Z.zi"]);  
+  ctr->Zw1  = ctr->Z1; 
+  ctr->pZ1  = (ctr->Z1).cols(); 
 
   // V_gamma for ZI model
   Eigen::MatrixXd VgInv1(ctr->pZ1, ctr->pZ1);    

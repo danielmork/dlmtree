@@ -2,12 +2,12 @@
 % Please edit documentation in R/plot.summary.tdlm.R
 \name{plot.summary.tdlm}
 \alias{plot.summary.tdlm}
-\title{plot.summary.tdlnm}
+\title{plot.summary.tdlm}
 \usage{
 \method{plot}{summary.tdlm}(x, trueDLM = NULL, ...)
 }
 \arguments{
-\item{x}{object of class 'summary.tdlnm', output of summary of 'tdlnm'}
+\item{x}{object of class 'summary.tdlm', output of summary of 'tdlm'}
 
 \item{trueDLM}{A vector of true effects that can be obtained from the simulated data. Only applicable for simulation studies}
 
@@ -15,6 +15,21 @@
 'flab' which sets the effect label for surface plots,
 'start.time' which sets the first time value}
 }
+\value{
+A plot of distributed lag effect estimated with tdlm
+}
 \description{
-plot.summary.tdlnm
+plot.summary.tdlm
+}
+\examples{
+D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
+fit <- dlmtree(y ~ ., 
+               data = D$dat, 
+               exposure.data = D$exposures[[1]],
+               dlm.type = "linear",
+               family = "logit",
+               binomial.size = 1)
+fit_sum <- summary(fit)
+plot(fit_sum)
+
 }

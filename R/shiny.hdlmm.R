@@ -4,8 +4,21 @@
 #'
 #' @param fit an object of class 'hdlmm'
 #'
+#' @examples
+#' D <- sim.hdlmm(sim = "D", n = 1000)
+#' fit <- dlmtree(y ~ ., 
+#'                data = D$dat,
+#'                exposure.data = D$exposures,
+#'                dlm.type = "linear",
+#'                family = "gaussian",
+#'                mixture = TRUE,
+#'                het = TRUE)
+#' if (interactive()) {
+#'  shiny(fit)
+#' }
+#' 
+#'
 #' @returns A shinyapp interface 
-#' @export shiny.hdlmm
 #' @export
 shiny.hdlmm <- function(fit)
 {

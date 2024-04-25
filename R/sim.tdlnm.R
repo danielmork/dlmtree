@@ -1,6 +1,6 @@
 #' sim.tdlnm
 #'
-#' @param effect character (A - D) specifying simulation scenario
+#' @param sim character (A - D) specifying simulation scenario
 #' @param error.to.signal scalar value setting error: sigma^2/var(f)
 #'
 #' @details Simulation scenarios:
@@ -11,12 +11,12 @@
 #' @md
 #'
 #' @examples
-#' sim.tdlnm(effect = "A", error.to.signal = 1)
+#' sim.tdlnm(sim = "A", error.to.signal = 1)
 #'
 #' @returns Simulated data and true parameters
 #' @export
 #'
-sim.tdlnm <- function(effect = "A", error.to.signal = 1)
+sim.tdlnm <- function(sim = "A", error.to.signal = 1)
 {
   data("pm25Exposures", envir = environment())
   pm25Exposures   <- log(pm25Exposures[which(pm25Exposures$S == "Colorado"),-c(1:2)])[,1:37]
@@ -28,7 +28,7 @@ sim.tdlnm <- function(effect = "A", error.to.signal = 1)
   c               <- c(data[,1:10] %*% params)
 
   # Piecewise constant effect ----
-  if (effect == "A") {
+  if (sim == "A") {
     cenval <- 1
 
     dlnm.fun <- function(exposure.data, cenval, sum = T) {
@@ -45,7 +45,7 @@ sim.tdlnm <- function(effect = "A", error.to.signal = 1)
     }
 
   # Linear effect ----
-  } else if (effect == "B") {
+  } else if (sim == "B") {
     cenval <- 1
 
     dlnm.fun <- function(exposure.data, cenval, sum = T) {
@@ -62,7 +62,7 @@ sim.tdlnm <- function(effect = "A", error.to.signal = 1)
     }
 
   # Logistic effect, piecewise in time ----
-  } else if (effect == "C") {
+  } else if (sim == "C") {
     cenval <- 1
 
     dlnm.fun <- function(exposure.data, cenval, sum = T) {
@@ -81,7 +81,7 @@ sim.tdlnm <- function(effect = "A", error.to.signal = 1)
     }
 
   # Logistic effect - smooth in time ----
-  } else if (effect == "D") {
+  } else if (sim == "D") {
     cenval <- 1
 
     dlnm.fun <- function(exposure.data, cenval, sum = T) {

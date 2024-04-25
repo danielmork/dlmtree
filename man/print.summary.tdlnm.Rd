@@ -14,8 +14,19 @@
 \item{...}{additional parameters}
 }
 \value{
-output in R console
+output of tdlnm fit in R console
 }
 \description{
 print.summary.tdlnm
+}
+\examples{
+D <- sim.tdlnm(sim = "A", error.to.signal = 1)
+fit <- dlmtree(formula = y ~ .,
+               data = D$dat,
+               exposure.data = as.matrix(D$exposures),
+               dlm.type = "nonlinear",
+               family = "gaussian")
+fit_sum <- summary(fit)
+print(fit_sum)
+
 }

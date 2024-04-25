@@ -14,8 +14,20 @@
 \item{...}{additional parameters}
 }
 \value{
-output in R console
+output of tdlm fit in R console
 }
 \description{
 print.summary.tdlm
+}
+\examples{
+D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
+fit <- dlmtree(y ~ ., 
+               data = D$dat, 
+               exposure.data = D$exposures[[1]],
+               dlm.type = "linear",
+               family = "logit",
+               binomial.size = 1)
+fit_sum <- summary(fit)
+print(fit_sum)
+
 }

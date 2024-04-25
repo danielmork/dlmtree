@@ -20,3 +20,16 @@ A data frame with split points and the probability that a split point was >= tha
 \description{
 Determine split points for continuous modifiers
 }
+\examples{
+# Split points with HDLM 
+D <- sim.hdlmm(sim = "B", n = 1000)
+fit <- dlmtree(y ~ ., 
+               data = D$dat,
+               exposure.data = D$exposures,
+               dlm.type = "linear",
+               family = "gaussian",
+               het = TRUE)
+splitpoints(fit, var = "mod_num", round = 2)
+splitpoints(fit, var = "mod_scale", round = 2)
+
+}

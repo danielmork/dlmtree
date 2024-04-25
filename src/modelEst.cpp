@@ -38,11 +38,12 @@ void tdlmModelEst(modelCtr *ctr){
     if (!(ctr->binomial)) {
       rHalfCauchyFC(&(ctr->sigma2), (double)ctr->n + (double)ctr->totTerm, 
                     ctr->R.dot(ctr->R) - ZR.dot(ctr->gamma) + ctr->sumTermT2 / ctr->nu, &(ctr->xiInvSigma2));
-
+      // Rcout << ctr->sigma2 << "\n";
+      
       if ((ctr->sigma2 != ctr->sigma2)) {// ! stop if infinite or nan variance
-        // Rcout << ctr->sigma2 << " " << ctr->totTerm << " " << 
-        //   ctr->R.dot(ctr->R) << " " << ZR.dot(ctr->gamma) << " " << ctr->R << " " <<
-        //   " " << ctr->Z << " " << ZR << " " << (ctr->gamma) << " " << ctr->sumTermT2 / ctr->nu << " " << ctr->xiInvSigma2;
+        Rcout << ctr->sigma2 << " " << ctr->totTerm << " " << 
+          ctr->R.dot(ctr->R) << " " << ZR.dot(ctr->gamma) << " " << ctr->R << " " <<
+          " " << ctr->Z << " " << ZR << " " << (ctr->gamma) << " " << ctr->sumTermT2 / ctr->nu << " " << ctr->xiInvSigma2;
         stop("\nNaN values (sigma) occured during model run, rerun model.\n");
       }
     }
@@ -278,7 +279,6 @@ double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step, do
   if (step == 0) {
     // select node to grow
     no = (std::size_t) floor(R::runif(0, dlnmTerm.size())); // Uniform selection among terminal nodes
-
     if (dlnmTerm[no]->grow()) { // propose new split
       double nGen2 = double(tree->nGen2());
       if (dlnmTerm[no]->depth == 0) { // If selected terminal node is the root node,
@@ -293,6 +293,7 @@ double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step, do
         2 * logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], dlnmTerm[no]->depth + depth + 1, 1) +
         logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], dlnmTerm[no]->depth + depth, 0) -
         logPSplit((ctr->treePrior)[0], (ctr->treePrior)[1], dlnmTerm[no]->depth + depth, 1);
+
       if (Exp != 0){
         Exp->updateNodeVals((dlnmTerm[no]->proposed)->c1); // update node values
       }
@@ -313,7 +314,6 @@ double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step, do
 
     tempNodes[no]->prune(); // prune nodes
     // newDlnmTerm = tree->listTerminal(1); // list proposed terminal nodes
-
 
   // Change
   } else {
@@ -348,7 +348,7 @@ double tdlmProposeTree(Node* tree, exposureDat* Exp, modelCtr* ctr, int step, do
 
     }
   }
-
+  
   return(stepMhr);
 } // end tdlmProposeTree function
 

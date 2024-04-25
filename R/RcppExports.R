@@ -188,7 +188,7 @@ tdlmm_Cpp <- function(model) {
 #' dlmtree model with tdlnm approach
 #'
 #' @param model A list of parameter and data contained for the model fitting
-#' @returns A list of dlmtree model fit, mainly posterior mcmc samples
+#' @return A list of dlmtree model fit, mainly posterior mcmc samples
 #' @export
 tdlnm_Cpp <- function(model) {
     .Call(`_dlmtree_tdlnm_Cpp`, model)

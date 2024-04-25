@@ -1,18 +1,28 @@
-#' plot.summary.tdlnm
+#' plot.summary.tdlm
 #'
-#' @param x object of class 'summary.tdlnm', output of summary of 'tdlnm'
+#' @param x object of class 'summary.tdlm', output of summary of 'tdlm'
 #' @param trueDLM A vector of true effects that can be obtained from the simulated data. Only applicable for simulation studies
 #' @param ... additional plotting parameters for title and labels
 #' 'flab' which sets the effect label for surface plots,
 #' 'start.time' which sets the first time value
 #'
-#' @import ggplot2
-#' @export plot.summary.tdlm
+#' @examples
+#' D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
+#' fit <- dlmtree(y ~ ., 
+#'                data = D$dat, 
+#'                exposure.data = D$exposures[[1]],
+#'                dlm.type = "linear",
+#'                family = "logit",
+#'                binomial.size = 1)
+#' fit_sum <- summary(fit)
+#' plot(fit_sum)
+#'
+#' @returns A plot of distributed lag effect estimated with tdlm
 #' @export
 #'
 plot.summary.tdlm <- function(x,  trueDLM = NULL, ...) {
 
-  args        <- list(...)
+  args <- list(...)
   main <- ifelse(!is.null(args$main), args$main, "DLM")
   xlab <- ifelse(!is.null(args$xlab), args$xlab, "Time")
   ylab <- ifelse(!is.null(args$ylab), args$ylab, "Effect")

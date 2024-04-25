@@ -13,8 +13,17 @@
 #' 'flab' which sets the effect label for surface plots,
 #' 'start.time' which sets the first time value
 #'
-#' @import ggplot2
-#' @export plot.summary.tdlnm
+#' @examples
+#' D <- sim.tdlnm(sim = "A", error.to.signal = 1)
+#' fit <- dlmtree(formula = y ~ .,
+#'                data = D$dat,
+#'                exposure.data = as.matrix(D$exposures),
+#'                dlm.type = "nonlinear",
+#'                family = "gaussian")
+#' fit_sum <- summary(fit)
+#' plot(fit_sum)
+#'
+#' @returns A plot of distributed lag effect estimated with tdlnm
 #' @export
 #'
 plot.summary.tdlnm <- function(x, plot.type = "mean", val = c(), time = c(), trueDLM = NULL, ...) {

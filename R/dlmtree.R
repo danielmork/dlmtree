@@ -58,7 +58,7 @@
 #' @param monotone.gamma0 vector (with length equal to number of lags) of means for logit-transformed prior probability of split at each lag; 
 #' e.g., gamma_0l = 0 implies mean prior probability of split at lag l = 0.5
 #' @param monotone.sigma symmetric matrix (usually with only diagonal elements) corresponding to gamma_0 to define variances on prior probability of split; 
-#' e.g., gamma_0l=0 with lth diagonal element of sigma=2.701 implies that 95% of the time the prior probability of split is between 0.005 and 0.995, 
+#' e.g., gamma_0l = 0 with lth diagonal element of sigma=2.701 implies that 95% of the time the prior probability of split is between 0.005 and 0.995, 
 #' as a second example setting gamma_0l=4.119 and the corresponding diagonal element of sigma=0.599 implies that 95% of the time the prior probability of a split is between 0.8 and 0.99
 #' @param monotone.tree.time.params BART parameters for monotone time tree
 #' @param monotone.tree.exp.params BART parameters for monotone exposure tree
@@ -66,7 +66,7 @@
 #' control the amount of prior information given to the model for deciding probabilities of splits between adjacent lags
 #' @param subset integer vector to analyze only a subset of data and exposures
 #' @param save.data true (default): save data used for fitting the model
-#' @param lowmem false (default) / true: turn on memory saver for DLNM, slower computation time
+#' @param lowmem true or false (default): turn on memory saver for DLNM, slower computation time
 #' @param verbose true (default) or false: print output
 #' @param diagnostics true or false (default) keep model diagnostic such as the number of
 #' terminal nodes and acceptance ratio.
@@ -94,9 +94,54 @@
 #' | Zero-inflated monotone regression tree                     | Monotone      |      Gaussian  | X              | X              |
 #' 
 #' @md
+#' @examples
+#' # TDLNM
+#' D <- sim.tdlnm(sim = "A", error.to.signal = 1)
+#' dlmtree(formula = y ~ .,
+#'         data = D$dat,
+#'         exposure.data = D$exposures,
+#'         dlm.type = "nonlinear",
+#'         family = "gaussian")
 #'
-#' @returns object of class 'dlmtree'
+#' # TDLM
+#' D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
+#' dlmtree(formula = y ~ .,
+#'         data = D$dat, 
+#'         exposure.data = D$exposures[[1]],
+#'         dlm.type = "linear",
+#'         family = "logit",
+#'         binomial.size = 1)
 #'
+#' # TDLMM
+#' D <- sim.tdlmm(sim = "B", error = 25, n = 1000)
+#' dlmtree(formula = y ~ .,
+#'         data = D$dat, 
+#'         exposure.data = D$exposures,
+#'         mixture.interactions = "noself", 
+#'         dlm.type = "linear", 
+#'         family = "gaussian",
+#'         mixture = TRUE)
+#'
+#' # HDLM
+#' D <- sim.hdlmm(sim = "B", n = 1000)
+#' dlmtree(formula = y ~ .,
+#'         data = D$dat,
+#'         exposure.data = D$exposures,
+#'         dlm.type = "linear",
+#'         family = "gaussian",
+#'         het = TRUE)
+#'
+#' # HDLMM
+#' D <- sim.hdlmm(sim = "D", n = 1000)
+#' dlmtree(formula = y ~ .,
+#'         data = D$dat,
+#'         exposure.data = D$exposures,
+#'         dlm.type = "linear",
+#'         family = "gaussian",
+#'         mixture = TRUE,
+#'         het = TRUE)
+#'
+#' @returns Object of one of the classes: tdlm, tdlmm, tdlnm, hdlm, hdlmm
 #' @export
 #'
 dlmtree <- function(formula,
@@ -107,7 +152,7 @@ dlmtree <- function(formula,
                     mixture = FALSE,
                     het = FALSE,                
                     # MCMC
-                    n.trees = 10,
+                    n.trees = 20,
                     n.burn = 1000,
                     n.iter = 2000,
                     n.thin = 2,
@@ -187,16 +232,16 @@ dlmtree <- function(formula,
   # Stop for unavailable models
   if (het) { # HDLM & HDLMM
     if (family %in% c("logit", "zinb")) {
-      stop("'logit' or 'zinb' are unavailable for heterogeneous models. Set family to 'gaussian'")
+      stop("'logit' or 'zinb' are unavailable for heterogeneous models. Set family to 'gaussian'.")
     }
 
     if (dlm.type %in% c("nonlinear", "monotone")) {
-      stop("Non-linear or monotone DLM types are unavailable for heterogeneous models. Set dlm.type to 'linear'")
+      stop("Non-linear or monotone DLM types are unavailable for heterogeneous models. Set dlm.type to 'linear'.")
     }
   } else { # TDLM, TDLNM, TDLMM
     if (dlm.type != "linear"){
       if (family %in% c("logit", "zinb")) {
-        stop("'logit' or 'zinb' are unavailable for non-linear or monotone models. Set family to 'gaussian'")
+        stop("'logit' or 'zinb' are unavailable for non-linear or monotone models. Set family to 'gaussian'.")
       }
     }
 
@@ -245,6 +290,11 @@ dlmtree <- function(formula,
       }
     }
   } else { # HDLMM, TDLMM
+    # TDLNM (no mixture) 
+    if (dlm.type == "nonlinear") {
+      stop("The mixture setting is not applicable to `non-linear` model. Set mixture to FALSE.")
+    }
+
     if (!is.list(exposure.data)) {
       stop("`exposure.data` must be a list of named exposures for mixture models")
     }
@@ -373,6 +423,7 @@ dlmtree <- function(formula,
     model$treePriorExp    <-  monotone.tree.exp.params
     model$timeKappa       <-  ifelse(is.null(monotone.time.kappa), 1.0, monotone.time.kappa)
     model$updateTimeKappa <-  ifelse(is.null(monotone.time.kappa), TRUE, FALSE)
+    model$debug           <-  FALSE
   }
 
   # Modifier prior for HDLM, HDLMM
@@ -391,10 +442,10 @@ dlmtree <- function(formula,
 
   # Diagnostics
   model$lowmem      <- lowmem
-  #model$maxThreads <-   max.threads
-  #model$debug <-        debug
   model$verbose     <- verbose
   model$diagnostics <- diagnostics
+  #model$maxThreads <-   max.threads
+  #model$debug <-        debug
   
   if (model$verbose) {
     cat("Preparing data...\n")
@@ -520,7 +571,7 @@ dlmtree <- function(formula,
   model$droppedCovar.zi <- colnames(model$Z.zi)[model$QR.zi$pivot[-seq_len(model$QR.zi$rank)]]                  
   model$Z.zi            <- model$Z.zi[,sort(model$QR.zi$pivot[seq_len(model$QR.zi$rank)])]           
   model$Z.zi            <- scaleModelMatrix(model$Z.zi)
-  if (length(model$droppedCovar.zi) > 0 & model$verbose) {
+  if (length(model$droppedCovar.zi) > 0 & model$verbose & family == "zinb") {
     warning("variables {", paste0(model$droppedCovar.zi, collapse = ", "), "} dropped due to perfect collinearity\n")
   }
 
@@ -701,16 +752,18 @@ dlmtree <- function(formula,
     if (length(model$modNames) == 1) {
       if (model$modNames == "all") {
         # Take out the unused columns and extract column names
-        model$modNames <- colnames(data)[-which(colnames(data) == all.vars(model$formula[[2]]))]
+        # model$modNames <- colnames(data)[-which(colnames(data) == all.vars(model$formula[[2]]))]
+        model$modNames <- attr(model$terms, "term.labels")
       }
-      model$Mo <- lapply(model$modNames, function(m) {
-          if (!(m %in% colnames(data))) {
-            stop("one or more `hdlm.modifiers` specified is not a column of `data`")
-          }
-          data[[m]] # Extract data with a string exposure name
-        }
-      )
     }
+
+    model$Mo <- lapply(model$modNames, function(m) {
+        if (!(m %in% colnames(data))) {
+            stop("one or more `hdlm.modifiers` specified is not a column of `data`")
+        }
+        data[[m]] # Extract data with a string exposure name
+      }
+    )
 
     model$MoUnique <- lapply(model$modNames, function(m) {
                                 if (!is.numeric(data[[m]])){

@@ -16,8 +16,21 @@
 \item{...}{additional parameters}
 }
 \value{
-output in R console
+output of hdlmm fit in R console
 }
 \description{
 print.summary.hdlmm
+}
+\examples{
+D <- sim.hdlmm(sim = "D", n = 1000)
+fit <- dlmtree(y ~ ., 
+               data = D$dat,
+               exposure.data = D$exposures,
+               dlm.type = "linear",
+               family = "gaussian",
+               mixture = TRUE,
+               het = TRUE)
+fit_sum <- summary(fit)
+print(fit_sum)
+
 }

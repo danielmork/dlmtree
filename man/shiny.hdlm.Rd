@@ -15,3 +15,16 @@ A shinyapp interface
 \description{
 A function to execute a shinyApp to provide comprehensive analysis with HDLM. The shinyApp includes PIP, split points, individualized & subgroup-specific effect.
 }
+\examples{
+D <- sim.hdlmm(sim = "B", n = 1000)
+fit <- dlmtree(y ~ ., 
+               data = D$dat,
+               exposure.data = D$exposures,
+               dlm.type = "linear",
+               family = "gaussian",
+               het = TRUE)
+if (interactive()) {
+ shiny(fit)
+}
+
+}

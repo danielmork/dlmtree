@@ -7,6 +7,18 @@
 #' @param round The number of decimal places to round the variable (var) to. No rounding occurs if round=NULL (default)
 #' For positive integer values of round, the variable will be rounded and split points will be reported at the resulting level
 #'
+#' @examples
+#' # Split points with HDLM 
+#' D <- sim.hdlmm(sim = "B", n = 1000)
+#' fit <- dlmtree(y ~ ., 
+#'                data = D$dat,
+#'                exposure.data = D$exposures,
+#'                dlm.type = "linear",
+#'                family = "gaussian",
+#'                het = TRUE)
+#' splitpoints(fit, var = "mod_num", round = 2)
+#' splitpoints(fit, var = "mod_scale", round = 2)
+#'
 #' @returns A data frame with split points and the probability that a split point was >= that split point value
 #' @export
 splitpoints <- function(object, var, round = NULL) 
@@ -17,16 +29,16 @@ splitpoints <- function(object, var, round = NULL)
   splitRules2 <- table(do.call(c, lapply(strsplit(treeRules$Rules, " & ", T), unique)))
   
   # check if continuous
-  categorical <- length(splitRules2[str_detect(names(splitRules2), var) & 
-                        str_detect(names(splitRules2), "%in%")])>0
+  categorical <- length(splitRules2[grepl(var, names(splitRules2)) & 
+                        grepl("%in%", names(splitRules2))])>0
                         
   if (categorical) {
     stop("var is categorical. Split points only works with continuous variables")
   } else {
-    varsp <- sort(splitRules2[str_detect(names(splitRules2), var) & 
-                                str_detect(names(splitRules2), ">=")]) /
-              sum(sort(splitRules2[str_detect(names(splitRules2), var) & 
-                                    str_detect(names(splitRules2), ">=")]))
+    varsp <- sort(splitRules2[grepl(var, names(splitRules2)) & 
+                                grepl(">=", names(splitRules2))]) /
+              sum(sort(splitRules2[grepl(var, names(splitRules2)) & 
+                                    grepl(">=", names(splitRules2))]))
     
     splits <- data.frame(loc = as.numeric(sapply(strsplit(names(varsp), " >= ", T), function(i) i[2])),
                          val = as.numeric(varsp))
