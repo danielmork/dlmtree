@@ -1,7 +1,4 @@
-/**
- * @file tdlnmGaussian.cpp
- * @author Daniel Mork (danielmork.github.io)
- * @brief Method for Treed DLNM and Treed DLM
+/** @brief Method for Treed DLNM and Treed DLM
  * @version 1.0
  * @date 2021-02-24
  * 
@@ -51,16 +48,16 @@ treeMHR dlnmMHR(std::vector<Node*> nodes, tdlmCtr *ctr,
   int pX = int(nodes.size());
   
   if ((pX == 1) && (!ctr->binomial) && (!ctr->zinb)) { // single terminal node, cont. response
-    double VTheta     = var / (var * ctr->VTheta1Inv + 1.0);
-    double XtVzInvR   = (ctr->X1).dot(ctr->R) - (ctr->VgZtX1).dot(ZtR);
-    double ThetaHat   = VTheta * XtVzInvR;
+    double VTheta = var / (var * ctr->VTheta1Inv + 1.0);
+    double XtVzInvR = (ctr->X1).dot(ctr->R) - (ctr->VgZtX1).dot(ZtR);
+    double ThetaHat = VTheta * XtVzInvR;
     double VThetaChol = sqrt(VTheta);
 
     out.Xd.resize(ctr->n, 1);
-    out.Xd.col(0)     = ctr->X1;
+    out.Xd.col(0) = ctr->X1;
     out.draw.resize(1);
-    out.draw(0)       = VThetaChol * R::rnorm(0, sqrt(ctr->sigma2)) + ThetaHat;
-    out.beta          = ThetaHat * XtVzInvR;
+    out.draw(0) = VThetaChol * R::rnorm(0, sqrt(ctr->sigma2)) + ThetaHat;
+    out.beta = ThetaHat * XtVzInvR;
     out.logVThetaChol = log(VThetaChol);
 
   } else { // 2+ terminal nodes or binomial response
@@ -74,12 +71,12 @@ treeMHR dlnmMHR(std::vector<Node*> nodes, tdlmCtr *ctr,
       out.Xd.col(s) = (nodes[s]->nodevals)->X;
       
       if (ctr->binomial || ctr->zinb) {
-        ZtX.col(s)    = ctr->Zw.transpose() * (nodes[s]->nodevals)->X;
-        VgZtX.col(s)  = ctr->Vg * ZtX.col(s);
+        ZtX.col(s) = ctr->Zw.transpose() * (nodes[s]->nodevals)->X;
+        VgZtX.col(s) = ctr->Vg * ZtX.col(s);
         
       } else {
-        ZtX.col(s)    = (nodes[s]->nodevals)->ZtX;
-        VgZtX.col(s)  = (nodes[s]->nodevals)->VgZtX;
+        ZtX.col(s) = (nodes[s]->nodevals)->ZtX;
+        VgZtX.col(s) = (nodes[s]->nodevals)->VgZtX;
       }
     }
 
@@ -120,14 +117,14 @@ treeMHR dlnmMHR(std::vector<Node*> nodes, tdlmCtr *ctr,
     // const VectorXd XtVzInvR =
     //   out.Xd.transpose() * ctr->R - VgZtX.transpose() * ZtR;
 
-    out.draw          = ThetaHat;
+    out.draw = ThetaHat;
     out.draw.noalias() += VThetaChol * as<VectorXd>(rnorm(pX, 0, sqrt(ctr->sigma2)));
-    out.beta          = ThetaHat.dot(XtVzInvR);
+    out.beta = ThetaHat.dot(XtVzInvR);
     out.logVThetaChol = VThetaChol.diagonal().array().log().sum();
   } // end 2+ terminal nodes
 
-  out.termT2  = (out.draw).dot(out.draw);
-  out.nTerm   = double(pX);
+  out.termT2 = (out.draw).dot(out.draw);
+  out.nTerm = double(pX);
 
   return(out);
 } // end drawMHR
@@ -144,19 +141,19 @@ treeMHR dlnmMHR(std::vector<Node*> nodes, tdlmCtr *ctr,
 void tdlnmTreeMCMC(int t, Node *tree, tdlmCtr *ctr, tdlmLog *dgn, 
                    exposureDat *Exp)
 {
-  int step        = 0;
-  int success     = 0;
-  double stepMhr  = 0.0;
-  double ratio    = 0.0;
-  double treevar  = ctr->nu * ctr->tau(t);
+  int step = 0;
+  int success = 0;
+  double stepMhr = 0.0;
+  double ratio = 0.0;
+  double treevar = ctr->nu * ctr->tau(t);
   std::size_t s;
   std::vector<Node*> dlnmTerm, newDlnmTerm;
   treeMHR mhr0, mhr;
 
   // List current tree terminal nodes
-  dlnmTerm      = tree->listTerminal();
-  VectorXd ZtR  = (ctr->Zw).transpose() * (ctr->R);
-  mhr0          = dlnmMHR(dlnmTerm, ctr, ZtR, treevar, tree, 0);
+  dlnmTerm = tree->listTerminal();
+  VectorXd ZtR = (ctr->Zw).transpose() * (ctr->R);
+  mhr0 = dlnmMHR(dlnmTerm, ctr, ZtR, treevar, tree, 0);
 
   if (dlnmTerm.size() > 1) {
     step = sampleInt(ctr->stepProb, 1);
@@ -171,7 +168,7 @@ void tdlnmTreeMCMC(int t, Node *tree, tdlmCtr *ctr, tdlmLog *dgn,
   if (success) {
     // calculate new tree part of MHR and draw node effects
     newDlnmTerm = tree->listTerminal(1);
-    mhr         = dlnmMHR(newDlnmTerm, ctr, ZtR, treevar, tree, 1);
+    mhr = dlnmMHR(newDlnmTerm, ctr, ZtR, treevar, tree, 1);
 
     // combine mhr parts into log-MH ratio
     if (ctr->binomial || ctr->zinb) {
@@ -181,9 +178,9 @@ void tdlnmTreeMCMC(int t, Node *tree, tdlmCtr *ctr, tdlmLog *dgn,
         
     } else {
       double RtR, RtZVgZtR;
-      RtR       = (ctr->R).dot(ctr->R);
-      RtZVgZtR  = ZtR.dot((ctr->Vg).selfadjointView<Lower>() * ZtR);
-      ratio     = stepMhr + (mhr.logVThetaChol - mhr0.logVThetaChol) -
+      RtR = (ctr->R).dot(ctr->R);
+      RtZVgZtR = ZtR.dot((ctr->Vg).selfadjointView<Lower>() * ZtR);
+      ratio = stepMhr + (mhr.logVThetaChol - mhr0.logVThetaChol) -
                   (0.5 * (ctr->n + 1.0) *
                   (log(0.5 * (RtR - RtZVgZtR - mhr.beta) + ctr->xiInvSigma2) -
                   log(0.5 * (RtR - RtZVgZtR - mhr0.beta) + ctr->xiInvSigma2))) -
@@ -210,14 +207,14 @@ void tdlnmTreeMCMC(int t, Node *tree, tdlmCtr *ctr, tdlmLog *dgn,
                 mhr0.termT2 / (ctr->sigma2 * ctr->nu));
 
   if ((ctr->tau)(t) != (ctr->tau)(t)) {
-    Rcout << ctr->gamma << "\n" << ctr->sigma2 << " " << ctr->tau << "\n" << ctr->Omega.mean();
+    // Rcout << ctr->gamma << "\n" << ctr->sigma2 << " " << ctr->tau << "\n" << ctr->Omega.mean();
     stop("\nNaN values occured during model run, rerun model.\n");
   }
   
-  ctr->nTerm(t)     = mhr0.nTerm;
-  ctr->totTerm      += mhr0.nTerm;
-  ctr->sumTermT2    += mhr0.termT2 / ctr->tau(t);
-  ctr->Rmat.col(t)  = mhr0.Xd * mhr0.draw;
+  ctr->nTerm(t) = mhr0.nTerm;
+  ctr->totTerm += mhr0.nTerm;
+  ctr->sumTermT2 += mhr0.termT2 / ctr->tau(t);
+  ctr->Rmat.col(t) = mhr0.Xd * mhr0.draw;
 
   // Record
   if (ctr->record > 0) {
@@ -227,12 +224,12 @@ void tdlnmTreeMCMC(int t, Node *tree, tdlmCtr *ctr, tdlmLog *dgn,
     (dlnmTerm[0]->nodestruct)->get(4), mhr0.draw(0), 0;
     (dgn->DLMexp).push_back(rec);
 
-    for(s = 1; s < dlnmTerm.size(); ++s) {
+    for (s = 1; s < dlnmTerm.size(); ++s) {
       rec[2] = (dlnmTerm[s]->nodestruct)->get(1);
       rec[3] = (dlnmTerm[s]->nodestruct)->get(2);
       rec[4] = (dlnmTerm[s]->nodestruct)->get(3);
       rec[5] = (dlnmTerm[s]->nodestruct)->get(4);
-      rec[6] = mhr0.draw(s);
+      rec[6] = mhr0.draw[s];
       (dgn->DLMexp).push_back(rec);
     }
 
@@ -267,41 +264,41 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   
   // * Set up model control
   tdlmCtr *ctr = new tdlmCtr;
-  ctr->iter         = as<int>(model["nIter"]);
-  ctr->burn         = as<int>(model["nBurn"]);
-  ctr->thin         = as<int>(model["nThin"]);
-  ctr->nRec         = floor(ctr->iter / ctr->thin);
-  ctr->nTrees       = as<int>(model["nTrees"]);
-  ctr->verbose      = as<bool>(model["verbose"]);
-  ctr->diagnostics  = as<bool>(model["diagnostics"]);
+  ctr->iter = as<int>(model["nIter"]);
+  ctr->burn = as<int>(model["nBurn"]);
+  ctr->thin = as<int>(model["nThin"]);
+  ctr->nRec = floor(ctr->iter / ctr->thin);
+  ctr->nTrees = as<int>(model["nTrees"]);
+  ctr->verbose = as<bool>(model["verbose"]);
+  ctr->diagnostics = as<bool>(model["diagnostics"]);
 
-  ctr->binomial   = as<bool>(model["binomial"]);
-  ctr->zinb       = as<bool>(model["zinb"]); 
-  ctr->stepProb   = as<std::vector<double> >(model["stepProbTDLM"]);
-  ctr->treePrior  = as<std::vector<double> >(model["treePriorTDLM"]);
-  ctr->shrinkage  = as<int>(model["shrinkage"]);
-  ctr->modKappa   = 1.0;
+  ctr->binomial = as<bool>(model["binomial"]);
+  ctr->zinb = as<bool>(model["zinb"]); 
+  ctr->stepProb = as<std::vector<double> >(model["stepProbTDLM"]);
+  ctr->treePrior = as<std::vector<double> >(model["treePriorTDLM"]);
+  ctr->shrinkage = as<int>(model["shrinkage"]);
+  ctr->modKappa = 1.0;
   
 
   // * Set up model data
-  ctr->Y0     = as<VectorXd>(model["Y"]);    
-  ctr->Ystar  = as<VectorXd>(model["Y"]);
-  ctr->n      = (ctr->Y0).size();                
+  ctr->Y0 = as<VectorXd>(model["Y"]);    
+  ctr->Ystar = as<VectorXd>(model["Y"]);
+  ctr->n = (ctr->Y0).size();                
 
-  ctr->Z      = as<MatrixXd>(model["Z"]);
-  ctr->Zw     = ctr->Z;
-  ctr->pZ     = (ctr->Z).cols();
+  ctr->Z = as<MatrixXd>(model["Z"]);
+  ctr->Zw = ctr->Z;
+  ctr->pZ = (ctr->Z).cols();
 
   // ZI model
-  ctr->Z1   = as<Eigen::MatrixXd>(model["Z.zi"]);  
-  ctr->Zw1  = ctr->Z1; 
-  ctr->pZ1  = (ctr->Z1).cols(); 
+  ctr->Z1 = as<Eigen::MatrixXd>(model["Z.zi"]);  
+  ctr->Zw1 = ctr->Z1; 
+  ctr->pZ1 = (ctr->Z1).cols(); 
 
 
   // V_gamma for ZI model
   Eigen::MatrixXd VgInv1(ctr->pZ1, ctr->pZ1);    
   VgInv1 = (ctr->Z1).transpose() * (ctr->Z1);    
-  VgInv1.diagonal().array() += 1.0 / 100.0;      
+  VgInv1.diagonal().array() += 1.0 / 10000.0;      
   ctr->Vg1 = VgInv1.inverse();
   VgInv1.resize(0,0);    
   ctr->VgChol1 = (ctr->Vg1).llt().matrixL();
@@ -309,7 +306,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   // V_gamma for (Gaussian / Binary / NB model) 
   Eigen::MatrixXd VgInv(ctr->pZ, ctr->pZ);
   VgInv = (ctr->Z).transpose() * (ctr->Z);
-  VgInv.diagonal().array() += 1.0 / 100.0;
+  VgInv.diagonal().array() += 1.0 / 10000.0;
   ctr->Vg = VgInv.inverse();
   VgInv.resize(0,0);
   ctr->VgChol = (ctr->Vg).llt().matrixL();    
@@ -336,8 +333,8 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
 
   // If ZINB, calculate the fixed values
   if(ctr->zinb){                                      
-    ctr->z2     = 0.5*((ctr->Y0).array() - ctr->r).array(); 
-    ctr->Ystar  = ctr->z2;
+    ctr->z2 = 0.5*((ctr->Y0).array() - ctr->r).array(); 
+    ctr->Ystar = ctr->z2;
   }
 
   // Initialize parameters
@@ -350,7 +347,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   ctr->z1.resize(ctr->n);            ctr->z1.setZero();
 
   // Store the indices of y = 0
-  for(int j = 0; j < ctr->n; j++){
+  for (int j = 0; j < ctr->n; ++j){
     if((ctr->Y0)[j] == 0){
       (ctr->yZeroIdx).push_back(j);
       (ctr->w)[j] = 0.5;
@@ -394,9 +391,9 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   ctr->nSplits = Exp->nSplits;
 
   // * Calculations used in special case: single-node trees
-  ctr->X1         = (Exp->Tcalc).col(ctr->pX - 1);
-  ctr->ZtX1       = (ctr->Z).transpose() * (ctr->X1);
-  ctr->VgZtX1     = (ctr->Vg).selfadjointView<Lower>() * (ctr->ZtX1);
+  ctr->X1 = (Exp->Tcalc).col(ctr->pX - 1);
+  ctr->ZtX1 = (ctr->Z).transpose() * (ctr->X1);
+  ctr->VgZtX1 = (ctr->Vg).selfadjointView<Lower>() * (ctr->ZtX1);
   ctr->VTheta1Inv = (ctr->X1).dot(ctr->X1) - (ctr->ZtX1).dot(ctr->VgZtX1);
 
   // * Create trees
@@ -406,7 +403,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   ns = new DLNMStruct(0, ctr->nSplits + 1, 1, int (ctr->pX),
                       as<VectorXd>(model["splitProb"]),
                       as<VectorXd>(model["timeSplits0"]));
-  for (t = 0; t < ctr->nTrees; t++) {
+  for (t = 0; t < ctr->nTrees; ++t) {
     trees.push_back(new Node(0, 1));
     trees[t]->nodestruct = ns->clone();
     Exp->updateNodeVals(trees[t]);
@@ -438,27 +435,27 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   ctr->gamma.resize(ctr->pZ);
   // Load initial params for faster convergence in binomial model
   if (ctr->binomial) {
-    ctr->gamma  = as<VectorXd>(model["initParams"]);
-    ctr->Omega  = rcpp_pgdraw(ctr->binomialSize, ctr->fhat + ctr->Z * ctr->gamma);
-    ctr->Zw     = ctr->Omega.asDiagonal() * ctr->Z;
-    ctr->VgInv  = ctr->Z.transpose() * ctr->Zw;
+    ctr->gamma = as<VectorXd>(model["initParams"]);
+    ctr->Omega = rcpp_pgdraw(ctr->binomialSize, ctr->fhat + ctr->Z * ctr->gamma);
+    ctr->Zw = ctr->Omega.asDiagonal() * ctr->Z;
+    ctr->VgInv = ctr->Z.transpose() * ctr->Zw;
     ctr->VgInv.diagonal().array() += 1 / 1000.0;
-    ctr->Vg     = ctr->VgInv.inverse();
+    ctr->Vg = ctr->VgInv.inverse();
     ctr->VgChol = ctr->Vg.llt().matrixL();
     // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
     ctr->Y = ctr->kappa.array() / ctr->Omega.array();
   }
-  ctr->totTerm    = 0;
-  ctr->sumTermT2  = 0;
-  ctr->nu         = 1.0; 
-  ctr->sigma2     = 1.0;
+  ctr->totTerm = 0;
+  ctr->sumTermT2 = 0;
+  ctr->nu = 1.0; 
+  ctr->sigma2 = 1.0;
 
   tdlmModelEst(ctr);
 
   rHalfCauchyFC(&(ctr->nu), ctr->nTrees, 0.0);
   (ctr->tau).resize(ctr->nTrees);                   (ctr->tau).setOnes();
   if (ctr->shrinkage > 0) {
-    for (t = 0; t < ctr->nTrees; t++) {
+    for (t = 0; t < ctr->nTrees; ++t) {
       rHalfCauchyFC(&(ctr->tau(t)), 0.0, 0.0);
     }
   }
@@ -470,6 +467,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   std::size_t s;
   for (ctr->b = 1; ctr->b <= (ctr->iter + ctr->burn); (ctr->b)++) {
     Rcpp::checkUserInterrupt();
+
     if ((ctr->b > ctr->burn) && (((ctr->b - ctr->burn) % ctr->thin) == 0)) {
       ctr->record = floor((ctr->b - ctr->burn) / ctr->thin);
     } else {
@@ -479,9 +477,9 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     // * Update trees
     ctr->R += (ctr->Rmat).col(0);
     (ctr->fhat).setZero();
-    ctr->totTerm    = 0.0; 
-    ctr->sumTermT2  = 0.0;
-    for (t = 0; t < ctr->nTrees; t++) {
+    ctr->totTerm = 0.0; 
+    ctr->sumTermT2 = 0.0;
+    for (t = 0; t < ctr->nTrees; ++t) {
       tdlnmTreeMCMC(t, trees[t], ctr, dgn, Exp);
       ctr->fhat += (ctr->Rmat).col(t);
       if (t < ctr->nTrees - 1) {
@@ -494,26 +492,26 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     tdlmModelEst(ctr);
     rHalfCauchyFC(&(ctr->nu), ctr->totTerm, ctr->sumTermT2 / ctr->sigma2);
     if ((ctr->sigma2 != ctr->sigma2) || (ctr->nu != ctr->nu)) {
-      Rcout << ctr->gamma << "\n" << ctr->sigma2 << " " << ctr->nu << "\n" << ctr->Omega.mean() << " " << ctr->Y.mean();
+      // Rcout << ctr->gamma << "\n" << ctr->sigma2 << " " << ctr->nu << "\n" << ctr->Omega.mean() << " " << ctr->Y.mean();
       stop("\nNaN values occured during model run, rerun model.\n");
     }
 
     // * Record
     if (ctr->record > 0) {
-      (dgn->gamma).col(ctr->record - 1)     = ctr->gamma;
-      (dgn->sigma2)(ctr->record - 1)        = ctr->sigma2;
-      (dgn->nu)(ctr->record - 1)            = ctr->nu;
-      (dgn->tau).col(ctr->record - 1)       = ctr->tau;
+      (dgn->gamma).col(ctr->record - 1) = ctr->gamma;
+      (dgn->sigma2)(ctr->record - 1) = ctr->sigma2;
+      (dgn->nu)(ctr->record - 1) = ctr->nu;
+      (dgn->tau).col(ctr->record - 1) = ctr->tau;
       (dgn->termNodes).col(ctr->record - 1) = ctr->nTerm;
-      dgn->timeProbs.col(ctr->record -1)    = trees[0]->nodestruct->getTimeProbs();
+      dgn->timeProbs.col(ctr->record -1) = trees[0]->nodestruct->getTimeProbs();
       dgn->fhat += ctr->fhat;
       Yhat += ctr->fhat + ctr->Z * ctr->gamma;
 
       // ZINB
-      (dgn->b1).col(ctr->record - 1)    = ctr->b1;
-      (dgn->b2).col(ctr->record - 1)    = ctr->b2;
-      (dgn->r)(ctr->record - 1)         = ctr->r;
-      (dgn->wMat).col(ctr->record - 1)  = ctr->w;
+      (dgn->b1).col(ctr->record - 1) = ctr->b1;
+      (dgn->b2).col(ctr->record - 1) = ctr->b2;
+      (dgn->r)(ctr->record - 1) = ctr->r;
+      (dgn->wMat).col(ctr->record - 1) = ctr->w;
     }
     // * Update progress
     prog->printMark();
@@ -523,24 +521,24 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   MatrixXd DLM((dgn->DLMexp).size(), 8);
   for (s = 0; s < (dgn->DLMexp).size(); ++s)
     DLM.row(s) = dgn->DLMexp[s];
-  VectorXd sigma2     = dgn->sigma2;
-  VectorXd nu         = dgn->nu;
-  VectorXd fhat       = (dgn->fhat).array() / ctr->nRec;
-  MatrixXd gamma      = (dgn->gamma).transpose();
-  MatrixXd tau        = (dgn->tau).transpose();
-  MatrixXd termNodes  = (dgn->termNodes).transpose();
-  MatrixXd timeProbs  = (dgn->timeProbs).transpose();
-  VectorXd YhatOut    = Yhat / ctr->nRec;
+  VectorXd sigma2 = dgn->sigma2;
+  VectorXd nu = dgn->nu;
+  VectorXd fhat = (dgn->fhat).array() / ctr->nRec;
+  MatrixXd gamma = (dgn->gamma).transpose();
+  MatrixXd tau = (dgn->tau).transpose();
+  MatrixXd termNodes = (dgn->termNodes).transpose();
+  MatrixXd timeProbs = (dgn->timeProbs).transpose();
+  VectorXd YhatOut = Yhat / ctr->nRec;
   MatrixXd Accept((dgn->TreeAccept).size(), 5);
   for (s = 0; s < (dgn->TreeAccept).size(); ++s){
     Accept.row(s) = dgn->TreeAccept[s];
   }
 
   // ZINB specific return 
-  Eigen::MatrixXd b1    = (dgn->b1).transpose(); 
-  Eigen::MatrixXd b2    = (dgn->b2).transpose();
-  Eigen::VectorXd r     = dgn->r; 
-  Eigen::MatrixXd wMat  = dgn->wMat; 
+  Eigen::MatrixXd b1 = (dgn->b1).transpose(); 
+  Eigen::MatrixXd b2 = (dgn->b2).transpose();
+  Eigen::VectorXd r = dgn->r; 
+  Eigen::MatrixXd wMat = dgn->wMat; 
 
   delete prog;
   // delete ctr;

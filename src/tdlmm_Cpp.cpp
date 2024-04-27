@@ -500,12 +500,12 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
     rec << ctr->record, t, 0, 0, 0, 0, 0, 0;          // Initiate a vector of Iteration, tree#, Exposure, tmin, tmax, estimation, exposure-variance
     mix << ctr->record, t, 0, 0, 0, 0, 0, 0, 0, 0; 
     int k = 0;
-    for(int i = 0; i < mhr0.nTerm1; ++i) {        // Go through the first tree's terminals
+    for (int i = 0; i < mhr0.nTerm1; ++i) {        // Go through the first tree's terminals
       rec[2] = 0; // First of the tree pair                                // Exposure
       rec[3] = m1;
       rec[4] = (term1[i]->nodestruct)->get(3);    // tmin
       rec[5] = (term1[i]->nodestruct)->get(4);    // tmax
-      rec[6] = mhr0.draw1(i);                     // First tree's terminal delta_a's ith terminal
+      rec[6] = mhr0.draw1[i];                     // First tree's terminal delta_a's ith terminal
       rec[7] = (ctr->tau)(t) * m1Var;             // Exposure-specific variance
 
       (dgn->DLMexp).push_back(rec);               // Push DLMexp vector
@@ -517,7 +517,7 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
           rec[3] = m2;
           rec[4] = (term2[j]->nodestruct)->get(3);
           rec[5] = (term2[j]->nodestruct)->get(4);
-          rec[6] = mhr0.draw2(j);
+          rec[6] = mhr0.draw2[j];
           rec[7] = (ctr->tau)(t) * m2Var;
           (dgn->DLMexp).push_back(rec);
         }
@@ -540,7 +540,7 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
             mix[4] = (term2[j]->nodestruct)->get(4);
           }
           
-          mix[8] = mhr0.drawMix(k);
+          mix[8] = mhr0.drawMix[k];
           (dgn->MIXexp).push_back(mix);
           ++k;
         }
@@ -652,7 +652,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   ctr->z1.resize(ctr->n);            ctr->z1.setZero();
 
   // Store the indices of y = 0
-  for(int j = 0; j < ctr->n; j++){
+  for (int j = 0; j < ctr->n; ++j){
     if((ctr->Y0)[j] == 0){
       (ctr->yZeroIdx).push_back(j);
       (ctr->w)[j] = 0.5;

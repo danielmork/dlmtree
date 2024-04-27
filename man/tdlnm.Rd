@@ -11,13 +11,12 @@ tdlnm(
   exposure.splits = 20,
   exposure.se = sd(exposure.data)/2,
   n.trees = 20,
-  n.burn = 2000,
-  n.iter = 5000,
+  n.burn = 1000,
+  n.iter = 2000,
   n.thin = 5,
   family = "gaussian",
   binomial.size = 1,
   formula.zi = NULL,
-  keep_XZ = FALSE,
   tree.params = c(0.95, 2),
   step.prob = c(0.25, 0.25),
   monotone = FALSE,
@@ -73,8 +72,6 @@ vector defining binomial size for 'logit' family}
 \item{formula.zi}{object of class formula, a symbolic description of the ZI
 model to be fitted, e.g. y ~ a + b. This only applies to ZINB where covariates for
 ZI model is different from NB model. This is same as the main formula by default}
-
-\item{keep_XZ}{false (default) or true: keep the model scale exposure and covariate data}
 
 \item{tree.params}{numerical vector of alpha and beta hyperparameters
 controlling tree depth (see Bayesian CART, 1998), default: alpha = 0.95,

@@ -41,9 +41,9 @@ void tdlmModelEst(modelCtr *ctr){
       // Rcout << ctr->sigma2 << "\n";
       
       if ((ctr->sigma2 != ctr->sigma2)) {// ! stop if infinite or nan variance
-        Rcout << ctr->sigma2 << " " << ctr->totTerm << " " << 
-          ctr->R.dot(ctr->R) << " " << ZR.dot(ctr->gamma) << " " << ctr->R << " " <<
-          " " << ctr->Z << " " << ZR << " " << (ctr->gamma) << " " << ctr->sumTermT2 / ctr->nu << " " << ctr->xiInvSigma2;
+        // Rcout << ctr->sigma2 << " " << ctr->totTerm << " " << 
+        //   ctr->R.dot(ctr->R) << " " << ZR.dot(ctr->gamma) << " " << ctr->R << " " <<
+        //   " " << ctr->Z << " " << ZR << " " << (ctr->gamma) << " " << ctr->sumTermT2 / ctr->nu << " " << ctr->xiInvSigma2;
         stop("\nNaN values (sigma) occured during model run, rerun model.\n");
       }
     }

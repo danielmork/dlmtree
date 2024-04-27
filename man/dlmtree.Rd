@@ -18,7 +18,7 @@ dlmtree(
   n.thin = 2,
   shrinkage = "all",
   dlmtree.params = c(0.95, 2),
-  dlmtree.step.prob = c(0.25, 0.25, 0.25, 0.25),
+  dlmtree.step.prob = c(0.25, 0.25),
   binomial.size = 1,
   formula.zi = NULL,
   tdlnm.exposure.splits = 20,
@@ -32,15 +32,15 @@ dlmtree(
   hdlm.selection.prior = 0.5,
   mixture.interactions = "noself",
   mixture.prior = 1,
-  monotone.gamma0 = rep(0, ncol(exposure.data)),
-  monotone.sigma = diag(ncol(exposure.data)) * 1.502^2,
+  monotone.gamma0 = NULL,
+  monotone.sigma = NULL,
   monotone.tree.time.params = c(0.95, 2),
   monotone.tree.exp.params = c(0.95, 2),
   monotone.time.kappa = NULL,
   subset = 1:nrow(data),
-  save.data = TRUE,
   lowmem = FALSE,
   verbose = TRUE,
+  save.data = TRUE,
   diagnostics = FALSE,
   initial.params = NULL
 )
@@ -99,7 +99,8 @@ size as exposure.data or a scalar smoothing factor representing a uniform
 smoothing factor applied to each exposure measurement, defaults to sd(exposure.data)/2}
 
 \item{hdlm.modifiers}{string vector containing desired modifiers to be included in a modifier tree.
-The strings in the vector must match the names of the columns of the data. By default, a modifier tree considers all covariates as modifiers unless stated otherwise.}
+The strings in the vector must match the names of the columns of the data.
+By default, a modifier tree considers all covariates in the formula as modifiers unless stated otherwise.}
 
 \item{hdlm.modifier.splits}{integer value to determine the possible number of splitting points that will be used for a modifier tree}
 
@@ -136,11 +137,11 @@ control the amount of prior information given to the model for deciding probabil
 
 \item{subset}{integer vector to analyze only a subset of data and exposures}
 
-\item{save.data}{true (default): save data used for fitting the model}
-
 \item{lowmem}{true or false (default): turn on memory saver for DLNM, slower computation time}
 
 \item{verbose}{true (default) or false: print output}
+
+\item{save.data}{true (default) or false: save data used for model fitting. This must be set to TRUE to use shiny() on HDLM or HDLMM}
 
 \item{diagnostics}{true or false (default) keep model diagnostic such as the number of
 terminal nodes and acceptance ratio.}
@@ -174,57 +175,20 @@ of results. Examples are provided below for the syntax for running different typ
    Treed distributed lag mixture model (TDLMM) \tab Linear \tab Gaussian \tab O \tab X \cr
     \tab  \tab Binary \tab O \tab X \cr
     \tab  \tab ZINB \tab O \tab X \cr
+   Treed distributed non-linear lag model (TDLNM) \tab Non-linear \tab Gaussian \tab X \tab X \cr
+    \tab  \tab Binary \tab X \tab X \cr
+   Zero-inflated monotone regression tree \tab Monotone \tab Gaussian \tab X \tab X \cr
+    \tab  \tab Binary \tab X \tab X \cr
    Heterogeneous distributed lag model (HDLM) \tab Linear \tab Gaussian \tab X \tab O \cr
    Heterogeneous distributed lag mixture model (HDLMM) \tab Linear \tab Gaussian \tab O \tab O \cr
-   Treed distributed non-linear lag model (TDLNM) \tab Non-linear \tab Gaussian \tab X \tab X \cr
-   Zero-inflated monotone regression tree \tab Monotone \tab Gaussian \tab X \tab X \cr
 }
 }
 \examples{
-# TDLNM
 D <- sim.tdlnm(sim = "A", error.to.signal = 1)
-dlmtree(formula = y ~ .,
-        data = D$dat,
-        exposure.data = D$exposures,
-        dlm.type = "nonlinear",
-        family = "gaussian")
-
-# TDLM
-D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
-dlmtree(formula = y ~ .,
-        data = D$dat, 
-        exposure.data = D$exposures[[1]],
-        dlm.type = "linear",
-        family = "logit",
-        binomial.size = 1)
-
-# TDLMM
-D <- sim.tdlmm(sim = "B", error = 25, n = 1000)
-dlmtree(formula = y ~ .,
-        data = D$dat, 
-        exposure.data = D$exposures,
-        mixture.interactions = "noself", 
-        dlm.type = "linear", 
-        family = "gaussian",
-        mixture = TRUE)
-
-# HDLM
-D <- sim.hdlmm(sim = "B", n = 1000)
-dlmtree(formula = y ~ .,
-        data = D$dat,
-        exposure.data = D$exposures,
-        dlm.type = "linear",
-        family = "gaussian",
-        het = TRUE)
-
-# HDLMM
-D <- sim.hdlmm(sim = "D", n = 1000)
-dlmtree(formula = y ~ .,
-        data = D$dat,
-        exposure.data = D$exposures,
-        dlm.type = "linear",
-        family = "gaussian",
-        mixture = TRUE,
-        het = TRUE)
+fit <- dlmtree(formula = y ~ .,
+               data = D$dat,
+               exposure.data = D$exposures,
+               dlm.type = "nonlinear",
+               family = "gaussian")
 
 }

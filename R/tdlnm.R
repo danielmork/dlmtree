@@ -32,7 +32,6 @@
 #' @param formula.zi object of class formula, a symbolic description of the ZI
 #' model to be fitted, e.g. y ~ a + b. This only applies to ZINB where covariates for
 #' ZI model is different from NB model. This is same as the main formula by default
-#' @param keep_XZ false (default) or true: keep the model scale exposure and covariate data
 #' @param tree.params numerical vector of alpha and beta hyperparameters
 #' controlling tree depth (see Bayesian CART, 1998), default: alpha = 0.95,
 #' beta = 2
@@ -71,13 +70,12 @@ tdlnm <- function(formula,
                   exposure.splits = 20,
                   exposure.se = sd(exposure.data) / 2,
                   n.trees = 20,
-                  n.burn = 2000,
-                  n.iter = 5000,
+                  n.burn = 1000,
+                  n.iter = 2000,
                   n.thin = 5,
                   family = "gaussian",
                   binomial.size = 1,
                   formula.zi = NULL, 
-                  keep_XZ = FALSE,
                   tree.params = c(.95, 2),
                   step.prob = c(.25, .25),
 
@@ -178,17 +176,17 @@ tdlnm <- function(formula,
 #   model$nIter <- n.iter
 #   model$nThin <- n.thin
 #   model$mcmcIter <- floor(n.iter / n.thin)
+
 #   model$family <- family
 #   model$verbose <- verbose
 #   model$diagnostics <- diagnostics
 #   model$treePriorTDLM <- tree.params
 #   model$stepProb <- c(step.prob[1], step.prob[1], step.prob[2])
 #   model$stepProbTDLM <- model$stepProb / sum(model$stepProb)
-#   model$timeSplits0 = time.split.prob
 #   model$monotone = monotone
 #   model$shrinkage <- shrinkage
 #   model$lowmem <- lowmem
-#   model$maxThreads <- max.threads
+#   # model$maxThreads <- max.threads
 #   model$debug <- debug
 #   model$shape <- ifelse(!is.null(exposure.se), "Smooth",
 #                         ifelse(exposure.splits == 0, "Linear",
@@ -266,6 +264,8 @@ tdlnm <- function(formula,
 #     model$smooth <- TRUE
 #     model$SE <- force(exposure.se)
 #   }
+
+#   model$timeSplits0 = force(rep(1 / (model$pExp - 1), model$pExp - 1))
 
 #   if (length(exposure.splits) == 1) {
 
@@ -534,17 +534,17 @@ tdlnm <- function(formula,
 
 
 #   # rescale DLM estimates
-#   model$DLM <- as.data.frame(model$DLM)
-#   colnames(model$DLM) <- c("Iter", "Tree", "xmin", "xmax", "tmin", "tmax",
+#   model$TreeStructs <- as.data.frame(model$TreeStructs)
+#   colnames(model$TreeStructs) <- c("Iter", "Tree", "xmin", "xmax", "tmin", "tmax",
 #                            "est", "intcp")
-#   model$DLM$est <- model$DLM$est * model$Yscale / model$Xscale
-#   model$DLM$xmin <- sapply(model$DLM$xmin, function(i) {
+#   model$TreeStructs$est <- model$TreeStructs$est * model$Yscale / model$Xscale
+#   model$TreeStructs$xmin <- sapply(model$TreeStructs$xmin, function(i) {
 #     if (i == 0) {
 #       if (piecewise.linear) min(model$X)
 #       else -Inf
 #     } else model$Xsplits[i]
 #   })
-#   model$DLM$xmax <- sapply(model$DLM$xmax, function(i) {
+#   model$TreeStructs$xmax <- sapply(model$TreeStructs$xmax, function(i) {
 #     if (i == (length(model$Xsplits) + 1)) {
 #       if (piecewise.linear) max(model$X)
 #       else Inf
@@ -553,13 +553,12 @@ tdlnm <- function(formula,
 
 
 #   # Remove model and exposure data
-#   if(!keep_XZ){
-#     model$X <- NULL
-#     model$Tcalc <- NULL
-#     model$Xcalc <- NULL
-#     model$Z <- NULL
-#     model$Z.zi <- NULL
-#   }
+#   model$X <- NULL
+#   model$Tcalc <- NULL
+#   model$Xcalc <- NULL
+#   model$Z <- NULL
+#   model$Z.zi <- NULL
+
 
 #   # Change env to list
 #   model.out <- lapply(names(model), function(i) model[[i]])

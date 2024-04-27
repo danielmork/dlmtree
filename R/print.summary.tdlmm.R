@@ -145,7 +145,7 @@ print.summary.tdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
     cw.any = FALSE # Counting for "no interaction" messages
     for (mix.name in names(x$MIX)) {
       cw <- rowSums(x$MIX[[mix.name]]$cw)
-      cw.any <- any(cw > 0)
+      cw.any <- (cw.any | any(cw > 0))
   
       if (any(cw > 0) | (!cw.only & length(x$MIX) > 1)) {
         if (length(names(x$MIX)) == 1) { # Single interaction when we fit TDLMMns to two components

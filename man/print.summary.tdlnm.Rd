@@ -23,7 +23,7 @@ print.summary.tdlnm
 D <- sim.tdlnm(sim = "A", error.to.signal = 1)
 fit <- dlmtree(formula = y ~ .,
                data = D$dat,
-               exposure.data = as.matrix(D$exposures),
+               exposure.data = D$exposures,
                dlm.type = "nonlinear",
                family = "gaussian")
 fit_sum <- summary(fit)

@@ -23,8 +23,8 @@ plot.summary.tdlm
 }
 \examples{
 D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
-fit <- dlmtree(y ~ ., 
-               data = D$dat, 
+fit <- dlmtree(y ~ .,
+               data = D$dat,
                exposure.data = D$exposures[[1]],
                dlm.type = "linear",
                family = "logit",
