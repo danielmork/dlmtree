@@ -20,9 +20,13 @@
 #' @export
 shiny.hdlm <- function(fit)
 {
+  `%notin%` <- Negate(`%in%`)
+  
   if(!(class(fit) %in% c("hdlm", "dlmtree"))){
     stop("The class of the model fit must be 'hdlm' or 'dlmtree'")
   }
+
+  fit$data <- as_tibble(fit$data)
   
   # Functions for weighted subgroup DLM effect
   plotDLM <- function(estDLM_data, groups = 1) {
