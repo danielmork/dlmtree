@@ -26,7 +26,11 @@ shiny.hdlm <- function(fit)
     stop("The class of the model fit must be 'hdlm' or 'dlmtree'")
   }
 
-  fit$data <- as_tibble(fit$data)
+  # Data preparation
+  factor_cols <- sapply(fit$data, is.factor)  # Identify factor columns
+  fit$data[factor_cols] <- lapply(fit$data[factor_cols], as.character) 
+  fit$data <- fit$data %>% as_tibble()
+
   
   # Functions for weighted subgroup DLM effect
   plotDLM <- function(estDLM_data, groups = 1) {
