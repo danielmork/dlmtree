@@ -26,9 +26,10 @@ LazyData: false
 Depends: R (>= 3.5.0)
 Imports: Rcpp (>= 1.0.4), dplyr, ggplot2, shiny, shinythemes
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 SystemRequirements: C++11
+URL: https://github.com/danielmork/dlmtree
+BugReports: https://github.com/danielmork/dlmtree/issues
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
-
