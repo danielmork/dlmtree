@@ -4,3 +4,4 @@ vignettes
 .vscode
 ^\.Rproj\.yml$
 ^cran-comments\.md$
+^LICENSE\.md$
