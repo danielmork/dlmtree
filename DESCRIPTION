@@ -15,10 +15,11 @@ Authors@R: c(
             email = "Ander.Wilson@colostate.edu", 
             role = "aut",
             comment = c(ORCID = "0000-0003-4774-3883")))
-Description: Provide constrained distributed lag models (DLMs) using a regression tree approach 
-  within the Bayesian additive regression trees (BART) framework, referred to as treed DLMs. Includes various extensions of treed DLMs, 
-  allowing for the incorporation of different scenarios like linear/non-linear associations, mixture exposures, and heterogeneous exposure effects.
-  Details on the methodology are described in Mork et al. (2024) <doi:10.1080/01621459.2023.2258595>.
+Description: Functions to estimate and interpret treed distributed lag models (DLMs). The methods estimate constrained DLMs using the
+  Bayesian additive regression trees (BART) framework. Includes various extensions of treed DLMs. These include: 
+  treed DLMs and distributed lag mixture models as describted in Mork and Wilson (2023) <doi: 10.1111/biom.13568>; 
+  treed distributed lag nonlinear models as described in Mork and Wilson (2021) <doi: 10.1093/biostatistics/kxaa051>;
+  heterogenious DLMs as described in Mork et al. (2024) <doi:10.1080/01621459.2023.2258595>. The package also includes a Shiny App to help interpret results.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: false
