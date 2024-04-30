@@ -10,3 +10,4 @@ examples
 .vscode
 _config.yml
 .Rbuildignore
+docs

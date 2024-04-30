@@ -6,3 +6,6 @@ vignettes
 ^cran-comments\.md$
 ^LICENSE\.md$
 ^README\.Rmd$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
