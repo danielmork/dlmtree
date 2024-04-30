@@ -166,22 +166,6 @@ Model is recommended to be run for at minimum 5000 burn-in
 iterations followed by 15000 sampling iterations with a thinning factor of 5.
 Convergence can be checked by re-running the model and validating consistency
 of results. Examples are provided below for the syntax for running different types of models.
-
-'dlmtree' function offers:\tabular{lcccc}{
-   Model \tab DLM type \tab Family \tab Mixture \tab Heterogeneity \cr
-   Treed distributed lag model (TDLM) \tab Linear \tab Gaussian \tab X \tab X \cr
-    \tab  \tab Binary \tab X \tab X \cr
-    \tab  \tab ZINB \tab X \tab X \cr
-   Treed distributed lag mixture model (TDLMM) \tab Linear \tab Gaussian \tab O \tab X \cr
-    \tab  \tab Binary \tab O \tab X \cr
-    \tab  \tab ZINB \tab O \tab X \cr
-   Treed distributed non-linear lag model (TDLNM) \tab Non-linear \tab Gaussian \tab X \tab X \cr
-    \tab  \tab Binary \tab X \tab X \cr
-   Zero-inflated monotone regression tree \tab Monotone \tab Gaussian \tab X \tab X \cr
-    \tab  \tab Binary \tab X \tab X \cr
-   Heterogeneous distributed lag model (HDLM) \tab Linear \tab Gaussian \tab X \tab O \cr
-   Heterogeneous distributed lag mixture model (HDLMM) \tab Linear \tab Gaussian \tab O \tab O \cr
-}
 }
 \examples{
 D <- sim.tdlnm(sim = "A", error.to.signal = 1)

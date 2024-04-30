@@ -12,7 +12,6 @@
 \item{trueDLM}{A vector of true effects that can be obtained from the simulated data. Only applicable for simulation studies}
 
 \item{...}{additional plotting parameters for title and labels
-'flab' which sets the effect label for surface plots,
 'start.time' which sets the first time value}
 }
 \value{

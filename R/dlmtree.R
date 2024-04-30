@@ -78,23 +78,6 @@
 #' iterations followed by 15000 sampling iterations with a thinning factor of 5.
 #' Convergence can be checked by re-running the model and validating consistency
 #' of results. Examples are provided below for the syntax for running different types of models.
-#'
-#' 'dlmtree' function offers: 
-#'
-#' |Model                                                       |DLM type       |      Family    |Mixture         |Heterogeneity   |
-#' |:-----------------------------------------------------------|:-------------:|:--------------:|:--------------:|:--------------:|
-#' | Treed distributed lag model (TDLM)                         | Linear        |      Gaussian  | X              | X              |
-#' |                                                            |               |      Binary    | X              | X              |
-#' |                                                            |               |      ZINB      | X              | X              |
-#' | Treed distributed lag mixture model (TDLMM)                | Linear        |      Gaussian  | O              | X              |
-#' |                                                            |               |      Binary    | O              | X              |
-#' |                                                            |               |      ZINB      | O              | X              |
-#' | Treed distributed non-linear lag model (TDLNM)             | Non-linear    |      Gaussian  | X              | X              |
-#' |                                                            |               |      Binary    | X              | X              |
-#' | Zero-inflated monotone regression tree                     | Monotone      |      Gaussian  | X              | X              |
-#' |                                                            |               |      Binary    | X              | X              |
-#' | Heterogeneous distributed lag model (HDLM)                 | Linear        |      Gaussian  | X              | O              |
-#' | Heterogeneous distributed lag mixture model (HDLMM)        | Linear        |      Gaussian  | O              | O              |
 #' 
 #' @md
 #' @examples

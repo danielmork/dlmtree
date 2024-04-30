@@ -3,7 +3,6 @@
 #' @param x object of class 'summary.tdlm', output of summary of 'tdlm'
 #' @param trueDLM A vector of true effects that can be obtained from the simulated data. Only applicable for simulation studies
 #' @param ... additional plotting parameters for title and labels
-#' 'flab' which sets the effect label for surface plots,
 #' 'start.time' which sets the first time value
 #'
 #' @examples

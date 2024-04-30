@@ -1,0 +1,190 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = FALSE,
+  comment = ">",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# dlmtree
+
+`dlmtree` is an R package that provides constrained distributed lag models (DLMs) using a regression tree approach within the Bayesian additive regression trees (BART) framework, referred to as treed DLMs. The package includes various extensions of treed DLMs, allowing for the incorporation of different scenarios like linear, non-linear associations, mixture exposures, and heterogeneous exposure effects. The package is built user-friendly with a single function \texttt{dlmtree} with three arguments to specify treed DLMs. Functions for summarizing the model fit and visualization are also provided.
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+## Models
+
+| Model                                                      | DLM type      |  Family    | Mixture   | Heterogeneity  |
+|:-----------------------------------------------------------|:-------------:|:----------:|:---------:|:--------------:|
+| Treed distributed lag model (TDLM)                         | Linear        |  Gaussian  | X         | X              |
+|                                                            |               |  Binary    | X         | X              |
+|                                                            |               |  Count     | X         | X              |
+| Treed distributed lag mixture model (TDLMM)                | Linear        |  Gaussian  | O         | X              |
+|                                                            |               |  Binary    | O         | X              |
+|                                                            |               |  Count     | O         | X              |
+| Treed distributed non-linear lag model (TDLNM)             | Non-linear    |  Gaussian  | X         | X              |
+|                                                            |               |  Binary    | X         | X              |
+| Heterogeneous distributed lag model (HDLM)                 | Linear        |  Gaussian  | X         | O              |
+| Heterogeneous distributed lag mixture model (HDLMM)        | Linear        |  Gaussian  | O         | O              |
+| Zero-inflated monotone regression tree (TDLNM-monotone)    | Monotone      |  Gaussian  | X         | X              |
+|                                                            |               |  Binary    | X         | X              |
+
+## Installation
+
+Installing package from [GitHub](https://github.com/):
+
+``` r
+# install.packages("devtools")
+devtools::install_github("danielmork/dlmtree")
+library(dlmtree)
+```
+
+<!-- Installing package from CRAN with: -->
+
+<!-- ``` r -->
+<!-- install.packages("dlmtree") -->
+<!-- library(dlmtree) -->
+<!-- ``` -->
+
+## Examples
+```{r}
+set.seed(1)
+library(dlmtree)
+```
+
+
+### TDLM
+* Fitting the model
+```{r tdlm.fit}
+D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 5000)
+fit <- dlmtree(formula = y ~ .,
+               data = D$dat,
+               exposure.data = D$exposures[["e1"]],
+               dlm.type = "linear", 
+               family = "logit",
+               n.burn = 2500, n.iter = 5000, n.thin = 5)
+```
+
+* Summary of the model fit
+```{r tdlm.sum}
+fit_sum <- summary(fit)
+fit_sum
+```
+
+* Visualization
+```{r tdlm.plot}
+plot(fit_sum, main = "Plot title", xlab = "Time axis label", ylab = "Exposure effect axis label")
+```
+
+### TDLMM
+* Fitting the model
+```{r tdlmm.fit}
+D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 5000)
+fit <- dlmtree(formula = y ~ .,
+               data = D$dat,
+               exposure.data = D$exposures,
+               dlm.type = "linear", 
+               family = "logit", 
+               mixture = TRUE,
+               binomial.size = 1,
+               mixture.interactions = "noself",
+               n.burn = 2500, n.iter = 5000, n.thin = 5)
+```
+
+* Summary of the model fit
+```{r tdlmm.sum}
+fit_sum <- summary(fit)
+fit_sum
+```
+
+* Visualization
+```{r tdlmm.plot}
+plot(fit_sum, exposure1 = "e1", main = "Plot title", xlab = "Time axis label", ylab = "Exposure effect axis label")
+plot(fit_sum, exposure1 = "e1", exposure2 = "e2", main = "Plot title")
+```
+
+### TDLNM
+* Fitting the model
+```{r tdlnm.fit}
+D <- sim.tdlnm(sim = "A", error.to.signal = 1)
+fit <- dlmtree(formula = y ~ .,
+               data = D$dat,
+               exposure.data = as.matrix(D$exposures),
+               dlm.type = "nonlinear", 
+               family = "gaussian",
+               n.burn = 2500, n.iter = 5000, n.thin = 5)
+```
+
+* Summary of the model fit
+```{r tdlnm.sum}
+fit_sum <- summary(fit)
+fit_sum
+```
+
+* Visualization
+```{r tdlnm.plot}
+plot(fit_sum, main = "Plot title", xlab = "Time axis label", ylab = "Exposure-concentration axis label", flab = "Effect color label")
+```
+
+### HDLM
+* Fitting the model
+```{r hdlm.fit}
+# Gaussian 
+D <- sim.hdlmm(sim = "A", n = 5000)
+fit <- dlmtree(y ~ ., 
+               data = D$dat,
+               exposure.data = D$exposure,
+               dlm.type = "linear", 
+               family = "gaussian", 
+               het = TRUE,
+               hdlm.dlmtree.type = "shared", # 'nested' is also an option
+               n.burn = 2500, n.iter = 5000, n.thin = 5)
+```
+
+* Summary of the model fit
+```{r hdlm.sum}
+fit_sum <- summary(fit)
+fit_sum
+```
+
+* Launching Shiny app
+```{r hdlm.shiny}
+# shiny(fit)
+```
+
+### HDLMM
+* Fitting the model
+```{r hdlmm.fit}
+# Gaussian
+D <- sim.hdlmm(sim = "D", n = 5000)
+fit <- dlmtree(formula = y ~ ., 
+               data = D$dat,
+               exposure.data = D$exposures,
+               dlm.type = "linear", 
+               family = "gaussian", 
+               mixture = TRUE, 
+               het = TRUE,
+               mixture.interactions = "noself", 
+               hdlm.modifiers = "all",
+               n.burn = 2500, n.iter = 5000, n.thin = 5)
+```
+
+* Summary of the model fit
+```{r hdlmm.sum}
+fit_sum <- summary(fit)
+fit_sum
+```
+
+* Launching Shiny app
+```{r hdlmm.shiny}
+# shiny(fit)
+```
+
