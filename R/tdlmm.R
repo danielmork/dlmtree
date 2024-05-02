@@ -1,5 +1,5 @@
 #' tdlmm
-#' @title Treed Distributed Lag Mixture Models
+#' @title Treed Distributed Lag Mixture Models (Deprecated)
 #' @description TDLMM is a method for estimating a Treed Distributed Lag
 #' Mixture Model. It operates by building an ensemble of pairs of regression
 #' trees. Each tree in a tree-pair partitions the time span of the exposure data
@@ -53,7 +53,6 @@
 #' of results.
 #'
 #' @returns object of class 'tdlmm'
-#' @export
 #'
 tdlmm <- function(formula,
                   data,

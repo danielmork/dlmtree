@@ -88,7 +88,7 @@ dlnmEst <- function(dlnm, predAt, nlags, nsamp, center, se) {
     .Call(`_dlmtree_dlnmEst`, dlnm, predAt, nlags, nsamp, center, se)
 }
 
-#' Calculates the posterior includsion probability (PIP).
+#' Calculates the posterior inclusion probability (PIP).
 #'
 #' @param dlnm A numeric matrix containing the model fit information
 #' @param nlags total number of lags
@@ -145,7 +145,7 @@ monotdlnm_Cpp <- function(model) {
     .Call(`_dlmtree_monotdlnm_Cpp`, model)
 }
 
-#' integrate (0,inf) over multivariate normal 
+#' Integrates (0,inf) over multivariate normal 
 #'
 #' @param mu vector of mean parameters
 #' @param sigma covariance matrix
@@ -155,7 +155,7 @@ zeroToInfNormCDF <- function(mu, sigma) {
     .Call(`_dlmtree_zeroToInfNormCDF`, mu, sigma)
 }
 
-#' truncated multivariate normal sampler, mean mu, cov sigma, truncated (0, Inf)
+#' Truncated multivariate normal sampler, mean mu, cov sigma, truncated (0, Inf)
 #'
 #' @param mu vector of mean parameters
 #' @param sigma covariance matrix
@@ -166,7 +166,7 @@ rtmvnorm <- function(mu, sigma, iter) {
     .Call(`_dlmtree_rtmvnorm`, mu, sigma, iter)
 }
 
-#' multiple draw polya gamma latent variable for var c[i] with size b[i]
+#' Multiple draw polya gamma latent variable for var c[i] with size b[i]
 #'
 #' @param b vector of binomial sizes
 #' @param z vector of parameters

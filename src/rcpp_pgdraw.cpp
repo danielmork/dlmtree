@@ -50,7 +50,7 @@ double randinvg(double);
 double aterm(int, double, double);
 
 
-//' multiple draw polya gamma latent variable for var c[i] with size b[i]
+//' Multiple draw polya gamma latent variable for var c[i] with size b[i]
 //'
 //' @param b vector of binomial sizes
 //' @param z vector of parameters

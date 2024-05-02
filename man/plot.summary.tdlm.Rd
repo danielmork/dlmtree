@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot.summary.tdlm.R
 \name{plot.summary.tdlm}
 \alias{plot.summary.tdlm}
-\title{plot.summary.tdlm}
+\title{Plots a distributed lag function for model summary of 'tdlm'}
 \usage{
 \method{plot}{summary.tdlm}(x, trueDLM = NULL, ...)
 }
@@ -18,6 +18,9 @@
 A plot of distributed lag effect estimated with tdlm
 }
 \description{
+Method for plotting a distributed lag function for model summary of 'tdlm'
+}
+\details{
 plot.summary.tdlm
 }
 \examples{

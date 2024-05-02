@@ -1,5 +1,8 @@
 #' sim.tdlnm
 #'
+#' @title Creates simulated data for TDLNM
+#' @description Method for creating simulated data for TDLNM
+#'
 #' @param sim character (A - D) specifying simulation scenario
 #' @param error.to.signal scalar value setting error: sigma^2/var(f)
 #'

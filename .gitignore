@@ -11,3 +11,4 @@ examples
 _config.yml
 .Rbuildignore
 docs
+inst/doc

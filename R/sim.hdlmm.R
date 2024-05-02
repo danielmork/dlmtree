@@ -1,6 +1,7 @@
 #' sim.hdlmm
 #'
-#' @description Simulation scenarios for HDLM & HDLMM
+#' @title Creates simulated data for HDLM & HDLMM
+#' @description Method for creating simulated data for HDLM & HDLMM
 #'
 #' @param sim character (A - E) specifying simulation scenario
 #' @param n sample size

@@ -2,7 +2,7 @@
 % Please edit documentation in R/summary.tdlmm.R
 \name{summary.tdlmm}
 \alias{summary.tdlmm}
-\title{summary.tdlmm}
+\title{Creates a summary object of class 'tdlmm'}
 \usage{
 \method{summary}{tdlmm}(
   object,
@@ -36,6 +36,9 @@ interactions, such that log10(BayesFactor) > x. Default = 0.5}
 list of type 'summary.tdlmm'
 }
 \description{
+Method for creating a summary object of class 'tdlmm'
+}
+\details{
 summary.tdlmm
 }
 \examples{

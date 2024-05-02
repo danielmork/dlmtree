@@ -2,7 +2,7 @@
 % Please edit documentation in R/print.summary.monotone.R
 \name{print.summary.monotone}
 \alias{print.summary.monotone}
-\title{print.summary.monotone}
+\title{Prints an overview with summary of model class 'monotone'}
 \usage{
 \method{print}{summary.monotone}(x, digits = 3, ...)
 }
@@ -17,5 +17,8 @@
 output in R console
 }
 \description{
+Method for printing an overview with summary of model class 'monotone'
+}
+\details{
 print.summary.monotone
 }

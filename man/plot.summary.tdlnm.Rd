@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot.summary.tdlnm.R
 \name{plot.summary.tdlnm}
 \alias{plot.summary.tdlnm}
-\title{plot.summary.tdlnm}
+\title{Returns variety of plots for model summary of class 'tdlnm'}
 \usage{
 \method{plot}{summary.tdlnm}(x, plot.type = "mean", val = c(), time = c(), trueDLM = NULL, ...)
 }
@@ -29,6 +29,9 @@ exposure values (requires package gganimate)}
 A plot of distributed lag effect estimated with tdlnm
 }
 \description{
+Method for returning variety of plots for model summary of class 'tdlnm'
+}
+\details{
 plot.summary.tdlnm
 }
 \examples{

@@ -1,6 +1,7 @@
 #' estDLM
 #'
-#' @description A function to calculate subgroup-specific lag effects for heterogeneous models
+#' @title Calculates subgroup-specific lag effects for heterogeneous models
+#' @description Method for calculating subgroup-specific lag effects for heterogeneous models: HDLM, HDLMM
 #'
 #' @param object an object of a model fit. Must be 'hdlm' or 'hdlmm'
 #' @param new.data a data frame with new observations with the same number of modifiers
@@ -200,15 +201,14 @@ estDLM <- function(object,
 }
 
 
-#' ruleIdx
+#' Calculates the weights for each modifier rule
 #'
-#' @description A function to calculate the weights for each rule
+#' @description Method for calculating the weights for each modifier rule
 #'
 #' @param mod a list of modifier splitting rules
 #' @param mem.safe boolean memory parameter
 #'
 #' @returns A list of weights per rule with modifiers
-#' @export 
 #'
 ruleIdx <- function(mod, mem.safe = FALSE) {
   self      <- environment()

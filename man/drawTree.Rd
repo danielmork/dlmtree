@@ -2,7 +2,7 @@
 % Please edit documentation in R/drawTree.R
 \name{drawTree}
 \alias{drawTree}
-\title{drawTree}
+\title{Draws a new tree structure}
 \usage{
 drawTree(depth, alpha, beta)
 }
@@ -17,5 +17,8 @@ drawTree(depth, alpha, beta)
 A integer value of number of terminal nodes
 }
 \description{
-A recursive function to draw a new tree structure
+A recursive method for drawing a new tree structure
+}
+\details{
+drawTree
 }

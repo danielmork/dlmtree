@@ -1,5 +1,5 @@
 #' tdlnm
-#' @title Treed Distributed Lag Non-Linear Models
+#' @title Treed Distributed Lag Non-Linear Models (Deprecated)
 #' @description TDLNM is a method for estimating Distributed Lag
 #' Linear and Non-Linear Models (DLMs/DLNMs). It operates by building an
 #' ensemble of regression trees, which each partition the exposure-time-
@@ -62,7 +62,6 @@
 #' of results.
 #'
 #' @returns object of class 'tdlnm' or 'tdlm'
-#' @export
 #'
 tdlnm <- function(formula,
                   data,

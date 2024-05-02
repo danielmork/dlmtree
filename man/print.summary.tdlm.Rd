@@ -2,7 +2,7 @@
 % Please edit documentation in R/print.summary.tdlm.R
 \name{print.summary.tdlm}
 \alias{print.summary.tdlm}
-\title{print.summary.tdlm}
+\title{Prints an overview with summary of model class 'tdlm'}
 \usage{
 \method{print}{summary.tdlm}(x, digits = 3, ...)
 }
@@ -17,6 +17,9 @@
 output of tdlm fit in R console
 }
 \description{
+Method for printing an overview with summary of model class 'tdlm'
+}
+\details{
 print.summary.tdlm
 }
 \examples{

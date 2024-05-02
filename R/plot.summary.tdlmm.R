@@ -1,6 +1,7 @@
 #' plot.summary.tdlmm
 #'
-#' @description Method for plotting DLMMs from summary of tdlmm. Includes plots
+#' @title Plots DLMMs for model summary of class 'tdlmm'
+#' @description Method for plotting DLMMs for model summary of class 'tdlmm'. Includes plots
 #' for marginal exposure effects as well as interactions between two exposures.
 #'
 #' @param x an object of type 'summary.tdlmm' from summary.tdlmm() output

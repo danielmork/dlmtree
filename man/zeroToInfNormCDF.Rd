@@ -2,7 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{zeroToInfNormCDF}
 \alias{zeroToInfNormCDF}
-\title{integrate (0,inf) over multivariate normal}
+\title{Integrates (0,inf) over multivariate normal}
 \usage{
 zeroToInfNormCDF(mu, sigma)
 }
@@ -15,5 +15,5 @@ zeroToInfNormCDF(mu, sigma)
 double
 }
 \description{
-integrate (0,inf) over multivariate normal
+Integrates (0,inf) over multivariate normal
 }

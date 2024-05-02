@@ -2,7 +2,7 @@
 % Please edit documentation in R/estDLM.R
 \name{estDLM}
 \alias{estDLM}
-\title{estDLM}
+\title{Calculates subgroup-specific lag effects for heterogeneous models}
 \usage{
 estDLM(
   object,
@@ -36,5 +36,8 @@ estDLM(
 A list of distributed lag effects per subgroups
 }
 \description{
-A function to calculate subgroup-specific lag effects for heterogeneous models
+Method for calculating subgroup-specific lag effects for heterogeneous models: HDLM, HDLMM
+}
+\details{
+estDLM
 }

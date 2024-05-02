@@ -1,6 +1,6 @@
 #' dlmtree
 #'
-#' @title Tree structured distributed lag models
+#' @title Fit tree structured distributed lag models
 #' @description 
 #' The 'dlmtree' function accommodates various response variable types, including continuous, binary, and zero-inflated count values. 
 #' The function is designed to handle both single exposure and exposure mixtures. For a single exposure, users are offered options to model non-linear effects (tdlnm), 

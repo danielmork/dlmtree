@@ -1,6 +1,7 @@
 #' scaleModelMatrix
 #'
-#' @description A function to center and scale a matrix
+#' @title Centers and scales a matrix
+#' @description Method for centering and scaling a matrix
 #'
 #' @param M a matrix to center and scale
 #'

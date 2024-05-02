@@ -2,7 +2,7 @@
 % Please edit documentation in R/scaleModelMatrix.R
 \name{scaleModelMatrix}
 \alias{scaleModelMatrix}
-\title{scaleModelMatrix}
+\title{Centers and scales a matrix}
 \usage{
 scaleModelMatrix(M)
 }
@@ -13,5 +13,8 @@ scaleModelMatrix(M)
 a scaled matrix
 }
 \description{
-A function to center and scale a matrix
+Method for centering and scaling a matrix
+}
+\details{
+scaleModelMatrix
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/shiny.hdlmm.R
 \name{shiny.hdlmm}
 \alias{shiny.hdlmm}
-\title{shiny.hdlmm}
+\title{Executes a shiny app for HDLMM.}
 \usage{
 \method{shiny}{hdlmm}(fit)
 }
@@ -13,7 +13,10 @@
 A shinyapp interface
 }
 \description{
-A function to execute a shinyApp to provide comprehensive analysis with HDLMM. The shinyApp includes PIP, split points, individualized & subgroup-specific effect.
+Method for executing a shiny app to provide comprehensive analysis with HDLMM. The shiny app includes PIP, split points, individualized & subgroup-specific effects.
+}
+\details{
+shiny.hdlmm
 }
 \examples{
 D <- sim.hdlmm(sim = "D", n = 1000)
@@ -27,6 +30,5 @@ fit <- dlmtree(y ~ .,
 if (interactive()) {
  shiny(fit)
 }
-
 
 }

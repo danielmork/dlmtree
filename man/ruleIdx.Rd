@@ -2,7 +2,7 @@
 % Please edit documentation in R/estDLM.R
 \name{ruleIdx}
 \alias{ruleIdx}
-\title{ruleIdx}
+\title{Calculates the weights for each modifier rule}
 \usage{
 ruleIdx(mod, mem.safe = FALSE)
 }
@@ -15,5 +15,5 @@ ruleIdx(mod, mem.safe = FALSE)
 A list of weights per rule with modifiers
 }
 \description{
-A function to calculate the weights for each rule
+Method for calculating the weights for each modifier rule
 }

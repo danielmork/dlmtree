@@ -2,7 +2,7 @@
 % Please edit documentation in R/sim.hdlmm.R
 \name{sim.hdlmm}
 \alias{sim.hdlmm}
-\title{sim.hdlmm}
+\title{Creates simulated data for HDLM & HDLMM}
 \usage{
 sim.hdlmm(
   sim = "A",
@@ -27,9 +27,11 @@ sim.hdlmm(
 Simulated data and true parameters
 }
 \description{
-Simulation scenarios for HDLM & HDLMM
+Method for creating simulated data for HDLM & HDLMM
 }
 \details{
+sim.hdlmm
+
 Simulation scenarios:
 \itemize{
 \item Scenario A: Two subgroups with early/late windows determined by continuous and binary modifiers

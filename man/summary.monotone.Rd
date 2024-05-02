@@ -2,7 +2,7 @@
 % Please edit documentation in R/summary.monotone.R
 \name{summary.monotone}
 \alias{summary.monotone}
-\title{summary.monotone}
+\title{Creates a summary object of class 'monotone'}
 \usage{
 \method{summary}{monotone}(
   object,
@@ -38,5 +38,8 @@ predictions at all other exposure values}
 Summary of monotone fit
 }
 \description{
+Method for creating a summary object of class 'monotone'
+}
+\details{
 summary.monotone
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{rcpp_pgdraw}
 \alias{rcpp_pgdraw}
-\title{multiple draw polya gamma latent variable for var c[i] with size b[i]}
+\title{Multiple draw polya gamma latent variable for var c[i] with size b[i]}
 \usage{
 rcpp_pgdraw(b, z)
 }
@@ -15,5 +15,5 @@ rcpp_pgdraw(b, z)
 Eigen::VectorXd
 }
 \description{
-multiple draw polya gamma latent variable for var c[i] with size b[i]
+Multiple draw polya gamma latent variable for var c[i] with size b[i]
 }

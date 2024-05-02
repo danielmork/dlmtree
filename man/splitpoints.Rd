@@ -2,7 +2,7 @@
 % Please edit documentation in R/splitpoints.R
 \name{splitpoints}
 \alias{splitpoints}
-\title{splitpoints}
+\title{Determines split points for continuous modifiers}
 \usage{
 splitpoints(object, var, round = NULL)
 }
@@ -18,7 +18,10 @@ For positive integer values of round, the variable will be rounded and split poi
 A data frame with split points and the probability that a split point was >= that split point value
 }
 \description{
-Determine split points for continuous modifiers
+Method for determining split points for continuous modifiers
+}
+\details{
+splitpoints
 }
 \examples{
 # Split points with HDLM 

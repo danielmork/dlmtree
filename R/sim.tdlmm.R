@@ -1,6 +1,7 @@
 #' sim.tdlmm
 #'
-#' @description Simulation scenarios for TDLM & TDLMM
+#' @title Creates simulated data for TDLM & TDLMM
+#' @description Method for creating simulated data for TDLM & TDLMM
 #'
 #' @param sim character (A - F) specifying simulation scenario
 #' @param error positive scalar specifying error variance for Gaussian response

@@ -1,5 +1,8 @@
 #' print.summary.monotone
 #'
+#' @title Prints an overview with summary of model class 'monotone'
+#' @description Method for printing an overview with summary of model class 'monotone'
+#' 
 #' @param x an object of type 'summary.monotone', result of call to summary.monotone()
 #' @param digits integer number of digits to round
 #' @param ... additional parameters

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot.summary.tdlmm.R
 \name{plot.summary.tdlmm}
 \alias{plot.summary.tdlmm}
-\title{plot.summary.tdlmm}
+\title{Plots DLMMs for model summary of class 'tdlmm'}
 \usage{
 \method{plot}{summary.tdlmm}(
   x,
@@ -45,8 +45,11 @@
 A plot of distributed lag effect or interaction surface estimated with tdlmm
 }
 \description{
-Method for plotting DLMMs from summary of tdlmm. Includes plots
+Method for plotting DLMMs for model summary of class 'tdlmm'. Includes plots
 for marginal exposure effects as well as interactions between two exposures.
+}
+\details{
+plot.summary.tdlmm
 }
 \examples{
 D <- sim.tdlmm(sim = "B", error = 25, n = 1000)

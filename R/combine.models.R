@@ -1,5 +1,6 @@
 #' combine.models
-#'
+#' 
+#' @title Combines information from DLMs of single exposure
 #' @description Method for combining information from DLMs of single exposure
 #'
 #' @param mlist a list of models
@@ -38,6 +39,7 @@ combine.models <- function(mlist) {
 
 #' combine.models.tdlmm
 #'
+#' @title Combines information from DLMs of mixture exposures.
 #' @description Method for combining information from DLMs of mixture exposures.
 #'
 #' @param mlist a list of models

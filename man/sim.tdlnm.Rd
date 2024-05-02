@@ -2,7 +2,7 @@
 % Please edit documentation in R/sim.tdlnm.R
 \name{sim.tdlnm}
 \alias{sim.tdlnm}
-\title{sim.tdlnm}
+\title{Creates simulated data for TDLNM}
 \usage{
 sim.tdlnm(sim = "A", error.to.signal = 1)
 }
@@ -15,9 +15,11 @@ sim.tdlnm(sim = "A", error.to.signal = 1)
 Simulated data and true parameters
 }
 \description{
-sim.tdlnm
+Method for creating simulated data for TDLNM
 }
 \details{
+sim.tdlnm
+
 Simulation scenarios:
 \itemize{
 \item Scenario A: Piecewise constant effect

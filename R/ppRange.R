@@ -1,6 +1,7 @@
 #' ppRange
 #'
-#' @description Function to make a 'pretty' output of a group of numbers. For
+#' @title Makes a 'pretty' output of a group of numbers
+#' @description Method for making a 'pretty' output of a group of numbers. For
 #' example: 2,3,4,5,8,9,12,15,16 becomes 2-5,8-9,12,15-16
 #'
 #' @param r set of integers to make 'pretty'

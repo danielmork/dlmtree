@@ -2,7 +2,7 @@
 % Please edit documentation in R/combine.models.R
 \name{combine.models}
 \alias{combine.models}
-\title{combine.models}
+\title{Combines information from DLMs of single exposure}
 \usage{
 combine.models(mlist)
 }
@@ -14,4 +14,7 @@ A data frame with model fit information of the models included in the list
 }
 \description{
 Method for combining information from DLMs of single exposure
+}
+\details{
+combine.models
 }

@@ -1,5 +1,8 @@
 #' plot.summary.tdlnm
 #'
+#' @title Returns variety of plots for model summary of class 'tdlnm'
+#' @description Method for returning variety of plots for model summary of class 'tdlnm'
+#' 
 #' @param x object of class 'summary.tdlnm', output of summary of 'tdlnm'
 #' @param plot.type string indicating plot type, options are 'mean' (default)
 #' which shows mean exposure-time response surface, 'se', 'ci-min', 'ci-max',

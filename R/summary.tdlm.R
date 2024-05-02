@@ -1,5 +1,8 @@
 #' summary.tdlm
 #'
+#' @title Creates a summary object of class 'tdlm'
+#' @description Method for creating a summary object of class 'tdlm'
+#'
 #' @param object an object of dlm class 'tdlm' (i.e. a linear effect DLM)
 #' @param conf.level confidence level for computation of credible intervals
 #' @param ... additional parameters

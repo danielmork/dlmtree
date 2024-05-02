@@ -31,7 +31,7 @@ extern "C" {
 }
 
 
-//' integrate (0,inf) over multivariate normal 
+//' Integrates (0,inf) over multivariate normal 
 //'
 //' @param mu vector of mean parameters
 //' @param sigma covariance matrix
@@ -250,7 +250,7 @@ double rtuvnorm(double a, double b) {
 }
 
 
-//' truncated multivariate normal sampler, mean mu, cov sigma, truncated (0, Inf)
+//' Truncated multivariate normal sampler, mean mu, cov sigma, truncated (0, Inf)
 //'
 //' @param mu vector of mean parameters
 //' @param sigma covariance matrix

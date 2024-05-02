@@ -1,5 +1,8 @@
 #' print.summary.tdlmm
 #'
+#' @title Prints an overview with summary of model class 'tdlmm'
+#' @description Method for printing an overview with summary of model class 'tdlmm'
+#' 
 #' @param x an object of type 'summary.tdlmm', result of call to summary.tdlmm()
 #' @param digits integer number of digits to round
 #' @param cw.only print only results for exposures with critical windows

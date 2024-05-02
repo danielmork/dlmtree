@@ -2,7 +2,7 @@
 % Please edit documentation in R/tdlmm.R
 \name{tdlmm}
 \alias{tdlmm}
-\title{Treed Distributed Lag Mixture Models}
+\title{Treed Distributed Lag Mixture Models (Deprecated)}
 \usage{
 tdlmm(
   formula,

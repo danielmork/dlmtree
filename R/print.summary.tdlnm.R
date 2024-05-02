@@ -1,5 +1,8 @@
 #' print.summary.tdlnm
 #'
+#' @title Prints an overview with summary of model class 'tdlnm'
+#' @description Method for printing an overview with summary of model class 'tdlnm'
+#' 
 #' @param x an object of type 'summary.tdlnm', result of call to summary.tdlnm()
 #' @param digits integer number of digits to round
 #' @param ... additional parameters

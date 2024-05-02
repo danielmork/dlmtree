@@ -2,7 +2,7 @@
 % Please edit documentation in R/summary.hdlm.R
 \name{summary.hdlm}
 \alias{summary.hdlm}
-\title{summary.hdlm}
+\title{Creates a summary object of class 'hdlm'}
 \usage{
 \method{summary}{hdlm}(object, conf.level = 0.95, ...)
 }
@@ -17,6 +17,9 @@
 list of type 'summary.hdlm'
 }
 \description{
+Method for creating a summary object of class 'hdlm'
+}
+\details{
 summary.hdlm
 }
 \examples{

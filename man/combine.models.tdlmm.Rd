@@ -2,7 +2,7 @@
 % Please edit documentation in R/combine.models.R
 \name{combine.models.tdlmm}
 \alias{combine.models.tdlmm}
-\title{combine.models.tdlmm}
+\title{Combines information from DLMs of mixture exposures.}
 \usage{
 combine.models.tdlmm(mlist)
 }
@@ -14,4 +14,7 @@ A data frame with model fit information of the models included in the list
 }
 \description{
 Method for combining information from DLMs of mixture exposures.
+}
+\details{
+combine.models.tdlmm
 }

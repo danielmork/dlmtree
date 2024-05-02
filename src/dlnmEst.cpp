@@ -81,7 +81,7 @@ SEXP dlnmEst(arma::dmat dlnm, arma::dvec predAt, int nlags, int nsamp, double ce
 }
 
 
-//' Calculates the posterior includsion probability (PIP).
+//' Calculates the posterior inclusion probability (PIP).
 //'
 //' @param dlnm A numeric matrix containing the model fit information
 //' @param nlags total number of lags

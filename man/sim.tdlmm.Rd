@@ -2,7 +2,7 @@
 % Please edit documentation in R/sim.tdlmm.R
 \name{sim.tdlmm}
 \alias{sim.tdlmm}
-\title{sim.tdlmm}
+\title{Creates simulated data for TDLM & TDLMM}
 \usage{
 sim.tdlmm(
   sim = "A",
@@ -42,9 +42,11 @@ sim.tdlmm(
 Simulated data and true parameters
 }
 \description{
-Simulation scenarios for TDLM & TDLMM
+Method for creating simulated data for TDLM & TDLMM
 }
 \details{
+sim.tdlmm
+
 Simulation scenarios:
 \itemize{
 \item Scenario A: Binary response with single exposure effect

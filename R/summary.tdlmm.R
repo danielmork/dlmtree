@@ -1,5 +1,8 @@
 #' summary.tdlmm
 #'
+#' @title Creates a summary object of class 'tdlmm'
+#' @description Method for creating a summary object of class 'tdlmm'
+#'
 #' @param object an object of type 'tdlmm', the output from tdlmm()
 #' @param conf.level confidence level (default = 0.95)
 #' @param marginalize value(s) for calculating marginal DLMs, defaults to

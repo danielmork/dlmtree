@@ -1,6 +1,7 @@
 #' drawTree
 #'
-#' @description A recursive function to draw a new tree structure
+#' @title Draws a new tree structure
+#' @description A recursive method for drawing a new tree structure
 #'
 #' @param depth depth of a tree
 #' @param alpha tree shape parameter, 0 < alpha < 1

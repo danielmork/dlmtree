@@ -2,7 +2,7 @@
 % Please edit documentation in R/summary.tdlm.R
 \name{summary.tdlm}
 \alias{summary.tdlm}
-\title{summary.tdlm}
+\title{Creates a summary object of class 'tdlm'}
 \usage{
 \method{summary}{tdlm}(object, conf.level = 0.95, ...)
 }
@@ -17,6 +17,9 @@
 list of type 'summary.tdlm'
 }
 \description{
+Method for creating a summary object of class 'tdlm'
+}
+\details{
 summary.tdlm
 }
 \examples{

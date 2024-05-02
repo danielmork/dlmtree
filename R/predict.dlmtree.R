@@ -1,6 +1,7 @@
 #' predict.dlmtree
 #'
-#' @description Calculate predicted response for HDLM & HDLMM
+#' @title Calculates predicted response for HDLM & HDLMM
+#' @description Method for calculating predicted response for HDLM & HDLMM
 #'
 #' @param object fitted dlmtree model with dlmType hdlm/hdlmm
 #' @param new.data new data frame which contains the same covariates and modifiers used to fit HDLM/HDLMM model

@@ -2,7 +2,7 @@
 % Please edit documentation in R/ppRange.R
 \name{ppRange}
 \alias{ppRange}
-\title{ppRange}
+\title{Makes a 'pretty' output of a group of numbers}
 \usage{
 ppRange(r)
 }
@@ -13,6 +13,9 @@ ppRange(r)
 character string of values representing 'r'
 }
 \description{
-Function to make a 'pretty' output of a group of numbers. For
+Method for making a 'pretty' output of a group of numbers. For
 example: 2,3,4,5,8,9,12,15,16 becomes 2-5,8-9,12,15-16
+}
+\details{
+ppRange
 }

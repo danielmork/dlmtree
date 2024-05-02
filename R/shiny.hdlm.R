@@ -1,6 +1,7 @@
 #' shiny.hdlm
 #'
-#' @description A function to execute a shinyApp to provide comprehensive analysis with HDLM. The shinyApp includes PIP, split points, individualized & subgroup-specific effect.
+#' @title Executes a shiny app for HDLM.
+#' @description Method for executing a shiny app to provide comprehensive analysis with HDLM. The shiny app includes PIP, split points, individualized & subgroup-specific effects.
 #'
 #' @param fit an object of class 'hdlm'
 #'

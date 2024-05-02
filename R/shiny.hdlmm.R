@@ -1,6 +1,7 @@
 #' shiny.hdlmm
 #'
-#' @description A function to execute a shinyApp to provide comprehensive analysis with HDLMM. The shinyApp includes PIP, split points, individualized & subgroup-specific effect.
+#' @title Executes a shiny app for HDLMM.
+#' @description Method for executing a shiny app to provide comprehensive analysis with HDLMM. The shiny app includes PIP, split points, individualized & subgroup-specific effects.
 #'
 #' @param fit an object of class 'hdlmm'
 #'
@@ -17,7 +18,6 @@
 #'  shiny(fit)
 #' }
 #' 
-#'
 #' @returns A shinyapp interface 
 #' @export
 shiny.hdlmm <- function(fit)

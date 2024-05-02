@@ -2,7 +2,7 @@
 % Please edit documentation in R/dlmtree.R
 \name{dlmtree}
 \alias{dlmtree}
-\title{Tree structured distributed lag models}
+\title{Fit tree structured distributed lag models}
 \usage{
 dlmtree(
   formula,

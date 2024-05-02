@@ -1,0 +1,59 @@
+---
+title: "TDLMM"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{TDLMM}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This vignette demonstrates the implementation of treed distributed lag mixture model (TDLMM). More details can be found in Mork and Wilson (2023) <doi: [10.1111/biom.13568](https://doi.org/10.1111/biom.13568)>.
+
+```{r setup}
+library(dlmtree)
+set.seed(1)
+```
+
+### Fitting the model
+```{r tdlmm.fit}
+D <- sim.tdlmm(sim = "B", n = 5000)
+fit <- dlmtree(formula = y ~ .,
+               data = D$dat,
+               exposure.data = D$exposures,
+               dlm.type = "linear", 
+               mixture = TRUE,
+               binomial.size = 1,
+               mixture.interactions = "noself",
+               n.burn = 2500, n.iter = 10000, n.thin = 5)
+```
+
+### Model fit summary
+```{r tdlmm.sum}
+fit_sum <- summary(fit)
+fit_sum
+```
+
+### Main exposure effect
+```{r tdlmm.plot}
+plot(fit_sum, 
+     exposure1 = "e1", 
+     main = "Plot title", 
+     xlab = "Time axis label",
+     ylab = "Exposure effect axis label")
+```
+
+### Lagged interaction effect
+```{r}
+plot(fit_sum, 
+     exposure1 = "e1",      # Specify first exposure
+     exposure2 = "e2",      # Specify second exposure 
+     main = "Plot title")
+```
+

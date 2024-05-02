@@ -2,7 +2,7 @@
 % Please edit documentation in R/summary.tdlnm.R
 \name{summary.tdlnm}
 \alias{summary.tdlnm}
-\title{summary.tdlnm}
+\title{Creates a summary object of class 'tdlnm'}
 \usage{
 \method{summary}{tdlnm}(
   object,
@@ -38,6 +38,9 @@ predictions at all other exposure values}
 list of type 'summary.tdlnm'
 }
 \description{
+Method for creating a summary object of class 'tdlnm'
+}
+\details{
 summary.tdlnm
 }
 \examples{

@@ -37,8 +37,6 @@ importFrom("stats", "as.formula", "model.frame", "model.matrix",
 
 importFrom("utils", "combn", "data")
 
-# export(tdlnm)
-# export(tdlmm)
 export(dlmtree)
 
 export(sim.tdlnm)

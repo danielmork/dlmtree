@@ -1,5 +1,8 @@
 #' plot.summary.tdlm
 #'
+#' @title Plots a distributed lag function for model summary of 'tdlm'
+#' @description Method for plotting a distributed lag function for model summary of 'tdlm'
+#' 
 #' @param x object of class 'summary.tdlm', output of summary of 'tdlm'
 #' @param trueDLM A vector of true effects that can be obtained from the simulated data. Only applicable for simulation studies
 #' @param ... additional plotting parameters for title and labels

@@ -2,7 +2,7 @@
 % Please edit documentation in R/tdlnm.R
 \name{tdlnm}
 \alias{tdlnm}
-\title{Treed Distributed Lag Non-Linear Models}
+\title{Treed Distributed Lag Non-Linear Models (Deprecated)}
 \usage{
 tdlnm(
   formula,

@@ -1,5 +1,8 @@
 #' summary.monotone
 #'
+#' @title Creates a summary object of class 'monotone'
+#' @description Method for creating a summary object of class 'monotone'
+#'
 #' @param object an object of class 'monotone'
 #' @param pred.at numerical vector of exposure values to make predictions for
 #' at each time period

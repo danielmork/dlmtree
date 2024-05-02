@@ -2,7 +2,7 @@
 % Please edit documentation in R/predict.dlmtree.R
 \name{predict.dlmtree}
 \alias{predict.dlmtree}
-\title{predict.dlmtree}
+\title{Calculates predicted response for HDLM & HDLMM}
 \usage{
 \method{predict}{dlmtree}(
   object,
@@ -42,5 +42,8 @@
 Posterior predictive distribution draws
 }
 \description{
-Calculate predicted response for HDLM & HDLMM
+Method for calculating predicted response for HDLM & HDLMM
+}
+\details{
+predict.dlmtree
 }

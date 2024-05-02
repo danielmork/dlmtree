@@ -1,6 +1,7 @@
 #' splitpoints
 #'
-#' @description Determine split points for continuous modifiers
+#' @title Determines split points for continuous modifiers
+#' @description Method for determining split points for continuous modifiers
 #'
 #' @param object An object of class dlmtree with DLM type hdlm & hdlmm
 #' @param var The name of a continuous variable for which the split points will be reported

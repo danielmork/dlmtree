@@ -1,5 +1,8 @@
 #' summary.tdlnm
 #'
+#' @title Creates a summary object of class 'tdlnm'
+#' @description Method for creating a summary object of class 'tdlnm'
+#'
 #' @param object an object of class 'tdlnm', result of a call to tdlnm
 #' @param pred.at numerical vector of exposure values to make predictions for
 #' at each time period

@@ -1,5 +1,8 @@
 #' print.summary.hdlmm
 #'
+#' @title Prints an overview with summary of model class 'hdlmm'
+#' @description Method for printing an overview with summary of model class 'hdlmm'
+#' 
 #' @param x an object of type 'summary.hdlmm', result of call to summary.hdlmm()
 #' @param digits integer number of digits to round
 #' @param cw.only print only results for exposures with critical windows

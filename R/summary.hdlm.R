@@ -1,5 +1,8 @@
 #' summary.hdlm
 #'
+#' @title Creates a summary object of class 'hdlm'
+#' @description Method for creating a summary object of class 'hdlm'
+#'
 #' @param object an object of class 'hdlm'
 #' @param conf.level confidence level for computation of credible intervals
 #' @param ... additional parameters

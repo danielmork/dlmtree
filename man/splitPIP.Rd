@@ -2,7 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{splitPIP}
 \alias{splitPIP}
-\title{Calculates the posterior includsion probability (PIP).}
+\title{Calculates the posterior inclusion probability (PIP).}
 \usage{
 splitPIP(dlnm, nlags, niter)
 }
@@ -17,5 +17,5 @@ splitPIP(dlnm, nlags, niter)
 A matrix of split counts per mcmc
 }
 \description{
-Calculates the posterior includsion probability (PIP).
+Calculates the posterior inclusion probability (PIP).
 }

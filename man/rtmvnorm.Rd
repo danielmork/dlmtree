@@ -2,7 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{rtmvnorm}
 \alias{rtmvnorm}
-\title{truncated multivariate normal sampler, mean mu, cov sigma, truncated (0, Inf)}
+\title{Truncated multivariate normal sampler, mean mu, cov sigma, truncated (0, Inf)}
 \usage{
 rtmvnorm(mu, sigma, iter)
 }
@@ -17,5 +17,5 @@ rtmvnorm(mu, sigma, iter)
 VectorXd
 }
 \description{
-truncated multivariate normal sampler, mean mu, cov sigma, truncated (0, Inf)
+Truncated multivariate normal sampler, mean mu, cov sigma, truncated (0, Inf)
 }

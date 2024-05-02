@@ -2,7 +2,7 @@
 % Please edit documentation in R/print.summary.hdlmm.R
 \name{print.summary.hdlmm}
 \alias{print.summary.hdlmm}
-\title{print.summary.hdlmm}
+\title{Prints an overview with summary of model class 'hdlmm'}
 \usage{
 \method{print}{summary.hdlmm}(x, digits = 3, cw.only = TRUE, ...)
 }
@@ -19,6 +19,9 @@
 output of hdlmm fit in R console
 }
 \description{
+Method for printing an overview with summary of model class 'hdlmm'
+}
+\details{
 print.summary.hdlmm
 }
 \examples{
