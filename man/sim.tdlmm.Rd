@@ -11,9 +11,6 @@ sim.tdlmm(
   mean.p = 0.5,
   prop.active = 0.05,
   expList = NULL,
-  ctnum = 20,
-  week = 561,
-  data.zinb = NULL,
   r = 1
 )
 }
@@ -29,12 +26,6 @@ sim.tdlmm(
 \item{prop.active}{proportion of active exposures for simulation scenario C}
 
 \item{expList}{named list of exposure data}
-
-\item{ctnum}{number of counties}
-
-\item{week}{number of weeks for each county, must be between 1-561}
-
-\item{data.zinb}{covariate data}
 
 \item{r}{dispersion parameter of negative binomial distribution}
 }

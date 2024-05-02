@@ -63,6 +63,7 @@ reference:
   - coExp
   - exposureCov
   - pm25Exposures
+  - zinbCo
   
 - title: Cpp source code & Misc.
   contents:

@@ -9,9 +9,6 @@
 #' @param prop.active proportion of active exposures for simulation scenario C
 #' @param n sample size for simulation
 #' @param expList named list of exposure data
-#' @param ctnum number of counties
-#' @param week number of weeks for each county, must be between 1-561
-#' @param data.zinb covariate data
 #' @param r dispersion parameter of negative binomial distribution
 #'
 #' @details Simulation scenarios:
@@ -36,10 +33,6 @@ sim.tdlmm <- function(sim = "A",
                       # n.exp = 25,         # Not in use (number of exposures for simulation scenarios three and four)
                       prop.active = 0.05,   # Scn C
                       expList = NULL,
-                      # ZINB
-                      ctnum = 20,           # n = ctnum * week for zinb (time series design)
-                      week = 561,
-                      data.zinb = NULL,
                       r = 1)
 {
   if (!(sim %in% LETTERS[1:6])) {
@@ -121,6 +114,7 @@ sim.tdlmm <- function(sim = "A",
       truthInt  <- outer(eff1, eff2) * 0.025 * effect.size 
       margDLM1  <- eff1 * effect.size + rowSums(truthInt) * mean(exposures[[2]])
       margDLM2  <- colSums(truthInt) * mean(exposures[[1]])
+
       return(list("dat" = cbind.data.frame(y, data),
                   "exposures" = exposures, 
                   "params" = params,
@@ -202,9 +196,24 @@ sim.tdlmm <- function(sim = "A",
                   "c" = c))
     }
   } else { 
-    # ZINB 
-    if (week > length(which(data.zinb$fipscoor == unique(data.zinb$fipscoor)[1]))) {
-      stop(paste0("Week must be less than ", length(which(data.zinb$fipscoor == unique(data.zinb$fipscoor)[1]))))
+    # Read in data containing exposure & covariates
+    data(zinbCo, envir = environment())
+    week    <- 52
+    ctnum   <- 64
+
+    # Time-series covariates
+    birthCov <- zinbCo[, c("fipscoor", "month", "YOC")]
+
+    # Exposure data
+    if (is.null(expList)) {
+      expList <- list(
+        e1 = as.matrix(zinbCo[, grep("^cmaq_pm25_", names(zinbCo), value = TRUE)]),
+        e2 = as.matrix(zinbCo[, grep("^tmmx_", names(zinbCo), value = TRUE)])
+      )
+    } else {
+      if(length(expList) < 2){
+        stop("The length of an input list 'expList' must be equal to or more than two.")
+      }
     }
 
     # Setup
@@ -213,22 +222,22 @@ sim.tdlmm <- function(sim = "A",
     n.samp  <- min(nrow(expList[[1]]), n)   # minimum between {observation and the number of required sampling}
 
     # Sample counties
-    fips <- sample(unique(data.zinb$fipscoor), ctnum, replace = FALSE)
+    fips <- sample(unique(birthCov$fipscoor), ctnum, replace = FALSE)
     
     # Sample weeks from each county
     idx <- c()
     for (code in fips) {
-      fips.idx  <- sample(which(data.zinb$fipscoor == code), week, replace = FALSE)
+      fips.idx  <- sample(which(birthCov$fipscoor == code), week, replace = FALSE)
       idx       <- c(idx, fips.idx)
     }
     
     # Data setup
-    data.zinb           <- data.zinb[idx, ]
-    data.zinb$fipscoor  <- droplevels(data.zinb$fipscoor)
+    birthCov           <- birthCov[idx, ]
+    birthCov$fipscoor  <- droplevels(birthCov$fipscoor)
 
     # Model matrix construction for ZI & NB model
-    data.zi <- model.matrix(~ fipscoor - 1, data = data.zinb)
-    data.nb <- model.matrix(~ fipscoor + month + YOC, data = data.zinb)
+    data.zi <- model.matrix(~ fipscoor - 1, data = birthCov)
+    data.nb <- model.matrix(~ fipscoor + month + YOC, data = birthCov)
 
     # Effect size
     effect.size <- 0.1
@@ -276,7 +285,7 @@ sim.tdlmm <- function(sim = "A",
       zeroProp  <- length(y[y == 0])/n            # Proportion of zeros
 
       # Return the result
-      return(list("data" = cbind.data.frame(y, data.zinb),
+      return(list("data" = cbind.data.frame(y, birthCov),
                   "exposures" = exposures, 
                   "start.time1" = start.time1,
                   "eff1" = eff1,
@@ -347,7 +356,7 @@ sim.tdlmm <- function(sim = "A",
       nonzero   <- length(y[y != 0])/n           # y is not zero
       zeroProp  <- length(y[y == 0])/n           # Proportion of zeros
 
-      return(list("data" = cbind.data.frame(y, data.zinb),
+      return(list("data" = cbind.data.frame(y, birthCov),
                   "exposures" = exposures,
                   "eff1" = eff1, 
                   "eff2" = eff2,
