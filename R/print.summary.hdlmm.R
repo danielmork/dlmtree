@@ -33,10 +33,10 @@ print.summary.hdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
 
   # Print ZI and NB part separately for ZINB
   # if (x$family == "zinb") {
-  #   cat("- ZI:", Reduce(paste, deparse(x$formula.zi)), "\n")
-  #   cat("- NB:", Reduce(paste, deparse(x$formula)), "\n")
+  #   cat("- ZI:", Reduce(paste, deparse1(x$formula.zi)), "\n")
+  #   cat("- NB:", Reduce(paste, deparse1(x$formula)), "\n")
   # } else {
-  cat("-", Reduce(paste, deparse(x$formula)), "\n")
+  cat("-", Reduce(paste, deparse1(x$formula)), "\n")
   # }
   cat("- family:", x$ctr$response, "\n")
   cat("-", x$ctr$n.trees, "trees\n")

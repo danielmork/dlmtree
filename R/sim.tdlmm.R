@@ -32,8 +32,8 @@ sim.tdlmm <- function(sim = "A",
                       mean.p = 0.5,         # Scn A
                       # n.exp = 25,         # Not in use (number of exposures for simulation scenarios three and four)
                       prop.active = 0.05,   # Scn C
-                      expList = NULL,
-                      r = 1)
+                      expList = NULL,       # Scn A - F
+                      r = 1)                # Scn E, F
 {
   if (!(sim %in% LETTERS[1:6])) {
     stop("`sim` must be an character from A - F")
