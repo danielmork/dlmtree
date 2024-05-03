@@ -1,16 +1,38 @@
 Package: dlmtree
 Type: Package
 Title: Bayesian Treed Distributed Lag Models
-Version: 0.8.1.1
-Author: Daniel Mork
-Maintainer: Daniel Mork <daniel.mork@colostate.edu>
-Description: This package provides a set of tools for estimating distributed
-  lag linear and nonlinear models. These methods are based on the Bayesian
-  Additive Regression Trees (BART) framework.
+Version: 1.0.0
+Authors@R: c(
+    person("Daniel", "Mork", 
+            email = "dmork@hsph.harvard.edu", 
+            role = c("aut", "cre", "cph"),
+            comment = c(ORCID = "0000-0002-7924-0706")),
+    person("Seongwon", "Im", 
+            email = "Seongwon.Im@colostate.edu", 
+            role = "aut",
+            comment = c(ORCID = "0009-0000-8447-5852")),
+    person("Ander", "Wilson", 
+            email = "Ander.Wilson@colostate.edu", 
+            role = "aut",
+            comment = c(ORCID = "0000-0003-4774-3883")))
+Description: Functions to estimate and interpret treed distributed lag models (DLMs). The methods estimate constrained DLMs using the
+  Bayesian additive regression trees (BART) framework. Includes various extensions of treed DLMs. These include: 
+  treed DLMs and distributed lag mixture models as described in Mork and Wilson (2023) <doi: 10.1111/biom.13568>; 
+  treed distributed lag nonlinear models as described in Mork and Wilson (2021) <doi: 10.1093/biostatistics/kxaa051>;
+  heterogeneous DLMs as described in Mork et al. (2024) <doi:10.1080/01621459.2023.2258595>. The package also includes a Shiny App to help interpret results.
 License: GPL (>= 3)
 Encoding: UTF-8
-LazyData: true
+LazyData: false
 Depends: R (>= 3.5.0)
-Imports: Rcpp (>= 1.0.6), ggplot2, viridis
+Imports: Rcpp (>= 1.0.4), dplyr, ggplot2, shiny, shinythemes
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen
-RoxygenNote: 7.1.2
+RoxygenNote: 7.3.1
+SystemRequirements: C++11
+URL: https://github.com/danielmork/dlmtree
+BugReports: https://github.com/danielmork/dlmtree/issues
+Suggests: 
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+VignetteBuilder: knitr

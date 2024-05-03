@@ -2,38 +2,53 @@
 % Please edit documentation in R/sim.tdlmm.R
 \name{sim.tdlmm}
 \alias{sim.tdlmm}
-\title{sim.tdlmm}
+\title{Creates simulated data for TDLM & TDLMM}
 \usage{
 sim.tdlmm(
-  sim = 1,
+  sim = "A",
+  n = 5000,
   error = 10,
   mean.p = 0.5,
-  n.exp = 25,
   prop.active = 0.05,
-  n = 5000,
-  expList = NULL
+  expList = NULL,
+  r = 1
 )
 }
 \arguments{
-\item{sim}{integer (1-4) specifying simulation scenario}
-
-\item{error}{positive scalar specifying error variance}
-
-\item{mean.p}{scalar between zero and one specifying mean probability
-for simulation scenario one}
-
-\item{n.exp}{number of exposures for simulation scenarios three and four}
-
-\item{prop.active}{proportion of active exposures for simulation scenario
-three}
+\item{sim}{character (A - F) specifying simulation scenario}
 
 \item{n}{sample size for simulation}
 
+\item{error}{positive scalar specifying error variance for Gaussian response}
+
+\item{mean.p}{scalar between zero and one specifying mean probability for simulation scenario A}
+
+\item{prop.active}{proportion of active exposures for simulation scenario C}
+
 \item{expList}{named list of exposure data}
+
+\item{r}{dispersion parameter of negative binomial distribution}
 }
 \value{
-
+Simulated data and true parameters
 }
 \description{
-Simulation scenarios to accompany TDLM/TDLMM
+Method for creating simulated data for TDLM & TDLMM
+}
+\details{
+sim.tdlmm
+
+Simulation scenarios:
+\itemize{
+\item Scenario A: Binary response with single exposure effect
+\item Scenario B: Continuous response with main effect of PM2.5 and interaction
+\item Scenario C: Continuous response to test exposure selection using exposure
+\item Scenario D: Continuous response to test exposure selection using one exposure of main effect and two interaction effects among four exposures
+\item Scenario E: Zero-inflated count response with single exposure effect
+\item Scenario F: Zero-inflated count response with single exposure effect with main effect of PM2.5 and interaction
+}
+}
+\examples{
+sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
+
 }

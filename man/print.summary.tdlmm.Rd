@@ -2,20 +2,36 @@
 % Please edit documentation in R/print.summary.tdlmm.R
 \name{print.summary.tdlmm}
 \alias{print.summary.tdlmm}
-\title{print.summary.tdlmm}
+\title{Prints an overview with summary of model class 'tdlmm'}
 \usage{
-\method{print}{summary.tdlmm}(object, digits = 4, cw.only = TRUE)
+\method{print}{summary.tdlmm}(x, digits = 3, cw.only = TRUE, ...)
 }
 \arguments{
-\item{object}{an object of type 'summary.tdlmm', result of call to summary.tdlmm()}
+\item{x}{an object of type 'summary.tdlmm', result of call to summary.tdlmm()}
 
 \item{digits}{integer number of digits to round}
 
 \item{cw.only}{print only results for exposures with critical windows}
+
+\item{...}{additional parameters}
 }
 \value{
-output in R console
+output of tdlmm fit in R console
 }
 \description{
+Method for printing an overview with summary of model class 'tdlmm'
+}
+\details{
 print.summary.tdlmm
+}
+\examples{
+D <- sim.tdlmm(sim = "B", error = 25, n = 1000)
+fit <- dlmtree(y ~ .,
+               data = D$dat, exposure.data = D$exposures,
+               mixture.interactions = "noself", 
+               dlm.type = "linear", family = "gaussian",
+               mixture = TRUE)
+fit_sum <- summary(fit)
+print(fit_sum)
+
 }

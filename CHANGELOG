@@ -1,5 +1,11 @@
 R package 'dlmtree' history of changes
 
+Version 0.9.0
+* Beta prior for monotone CW selection
+* Bayes factor selection method
+* zero inflated tree method
+* monotone DLNM
+* precalculation in tdlnm for large speed improvement
 Version 0.8.1.1
 * fix to single covariate model
 * add functions for posterior analysis with dlmtree class (pip and splitpoints)

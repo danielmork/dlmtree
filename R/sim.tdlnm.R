@@ -1,26 +1,39 @@
 #' sim.tdlnm
 #'
-#' @param effect character (A - D) indicating simulation scenario
+#' @title Creates simulated data for TDLNM
+#' @description Method for creating simulated data for TDLNM
+#'
+#' @param sim character (A - D) specifying simulation scenario
 #' @param error.to.signal scalar value setting error: sigma^2/var(f)
 #'
-#' @return
+#' @details Simulation scenarios:
+#' - Scenario A: Piecewise constant effect
+#' - Scenario B: Linear effect
+#' - Scenario C: Logistic effect, piecewise in time
+#' - Scenario D: Logistic effect, smooth in time
+#' @md
+#'
+#' @examples
+#' sim.tdlnm(sim = "A", error.to.signal = 1)
+#'
+#' @returns Simulated data and true parameters
 #' @export
 #'
-sim.tdlnm <- function(effect = "A", error.to.signal = 1)
+sim.tdlnm <- function(sim = "A", error.to.signal = 1)
 {
-  data("pm25Exposures")
-  pm25Exposures <- log(pm25Exposures[which(pm25Exposures$S == "Colorado"),-c(1:2)])[,1:37]
-  n.samp <- nrow(pm25Exposures)
-
-  data <- cbind(matrix(rnorm(5*n.samp), n.samp, 5),
-                matrix(rbinom(5*n.samp, 1, .5), n.samp, 5))
-  colnames(data) <- c(paste0("c", 1:5), paste0("b", 1:5))
-  params <- rnorm(10)
-  c <- c(data[,1:10] %*% params)
+  data("pm25Exposures", envir = environment())
+  pm25Exposures   <- log(pm25Exposures[which(pm25Exposures$S == "Colorado"),-c(1:2)])[,1:37]
+  n.samp          <- nrow(pm25Exposures)
+  data            <- cbind(matrix(rnorm(5*n.samp), n.samp, 5), 
+                         matrix(rbinom(5*n.samp, 1, .5), n.samp, 5))
+  colnames(data)  <- c(paste0("c", 1:5), paste0("b", 1:5))
+  params          <- rnorm(10)
+  c               <- c(data[,1:10] %*% params)
 
   # Piecewise constant effect ----
-  if (effect == "A") {
-    cenval = 1
+  if (sim == "A") {
+    cenval <- 1
+
     dlnm.fun <- function(exposure.data, cenval, sum = T) {
       if (sum) {
         -rowSums(exposure.data[, 11:15] > 2)
@@ -35,8 +48,9 @@ sim.tdlnm <- function(effect = "A", error.to.signal = 1)
     }
 
   # Linear effect ----
-  } else if (effect == "B") {
-    cenval = 1
+  } else if (sim == "B") {
+    cenval <- 1
+
     dlnm.fun <- function(exposure.data, cenval, sum = T) {
       if (sum) {
         rowSums((cenval - exposure.data[, 11:15]))
@@ -51,8 +65,9 @@ sim.tdlnm <- function(effect = "A", error.to.signal = 1)
     }
 
   # Logistic effect, piecewise in time ----
-  } else if (effect == "C") {
-    cenval = 1
+  } else if (sim == "C") {
+    cenval <- 1
+
     dlnm.fun <- function(exposure.data, cenval, sum = T) {
       flogistic <- function(x) ((1/(1+exp(5*(x-2.5)))) - 1)
 
@@ -69,14 +84,13 @@ sim.tdlnm <- function(effect = "A", error.to.signal = 1)
     }
 
   # Logistic effect - smooth in time ----
-  } else if (effect == "D") {
-    cenval = 1
+  } else if (sim == "D") {
+    cenval <- 1
+
     dlnm.fun <- function(exposure.data, cenval, sum = T) {
       flogistic <- function(x) ((1/(1+exp(5*(x-2.5)))) - 1)
-
-      ftime <- function(t) (exp(-.0025 * (t-13)^4))
-
-      f <- function(x, t) (flogistic(x) * ftime(t))
+      ftime     <- function(t) (exp(-.0025 * (t-13)^4))
+      f         <- function(x, t) (flogistic(x) * ftime(t))
 
       if (sum) {
         sapply(1:nrow(exposure.data), function(i) {
@@ -97,9 +111,8 @@ sim.tdlnm <- function(effect = "A", error.to.signal = 1)
   e <- rnorm(length(f), 0, sqrt(var(f) * error.to.signal))
   y <- c + f + e
 
-
   return(list("dat" = cbind.data.frame(y, data),
-              "exposure" = as.matrix(pm25Exposures),
+              "exposures" = as.matrix(pm25Exposures),
               "dlnm.fun" = dlnm.fun,
               "cenval" = cenval,
               "params" = params,

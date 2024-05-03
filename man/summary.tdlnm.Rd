@@ -2,14 +2,17 @@
 % Please edit documentation in R/summary.tdlnm.R
 \name{summary.tdlnm}
 \alias{summary.tdlnm}
-\title{summary.tdlnm}
+\title{Creates a summary object of class 'tdlnm'}
 \usage{
 \method{summary}{tdlnm}(
   object,
   pred.at = NULL,
   cenval = 0,
   conf.level = 0.95,
-  exposure.se = NULL
+  exposure.se = NULL,
+  mcmc = FALSE,
+  verbose = TRUE,
+  ...
 )
 }
 \arguments{
@@ -24,10 +27,29 @@ predictions at all other exposure values}
 \item{conf.level}{confidence level for computation of credible intervals}
 
 \item{exposure.se}{scalar smoothing factor, if different from model}
+
+\item{mcmc}{true or false (default): return MCMC samplers}
+
+\item{verbose}{true (default) or false: print output}
+
+\item{...}{additional parameters}
 }
 \value{
-
+list of type 'summary.tdlnm'
 }
 \description{
+Method for creating a summary object of class 'tdlnm'
+}
+\details{
 summary.tdlnm
+}
+\examples{
+D <- sim.tdlnm(sim = "A", error.to.signal = 1)
+fit <- dlmtree(formula = y ~ .,
+               data = D$dat,
+               exposure.data = D$exposures,
+               dlm.type = "nonlinear",
+               family = "gaussian")
+summary(fit)
+
 }

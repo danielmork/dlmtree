@@ -5,40 +5,62 @@ exportPattern("^[[:alpha:]]+")
 S3method(summary, tdlnm)
 S3method(summary, tdlm)
 S3method(summary, tdlmm)
+S3method(summary, hdlm)
+S3method(summary, hdlmm)
+S3method(summary, monotone)
+
+S3method(print, summary.tdlnm)
+S3method(print, summary.tdlm)
+S3method(print, summary.tdlmm)
+S3method(print, summary.hdlm)
+S3method(print, summary.hdlmm)
+S3method(print, summary.monotone)
+
+S3method(plot, summary.tdlm)
 S3method(plot, summary.tdlnm)
 S3method(plot, summary.tdlmm)
-S3method(print, summary.tdlnm)
-S3method(print, summary.tdlmm)
 S3method(predict, dlmtree)
 
+S3method(shiny, hdlm)
+S3method(shiny, hdlmm)
 
 import(ggplot2)
-import(viridis)
+import(dplyr)
+import(shiny)
+import(shinythemes)
 
 importFrom("stats", "as.formula", "model.frame", "model.matrix",
            "model.response", "pnorm", "quantile", "rbinom", "rnorm",
-           "sd", "terms.formula", "var", "IQR", "median", "runif", "toeplitz")
+           "sd", "terms.formula", "var", "IQR", "median", "runif", "toeplitz",
+           "aggregate", "complete.cases", "delete.response",
+           "dnorm", "na.fail", "reorder", "rnbinom", "setNames", "step", "time")
+
 importFrom("utils", "combn", "data")
 
-export(tdlnm)
-export(tdlmm)
 export(dlmtree)
 
 export(sim.tdlnm)
 export(sim.tdlmm)
-export(sim.dlmtree)
+export(sim.hdlmm)
 
 export(summary.tdlnm)
 export(summary.tdlm)
 export(summary.tdlmm)
-export(estDLM)
+export(summary.hdlm)
+export(summary.hdlmm)
 
+export(combine.models)
+export(estDLM)
 export(predict.dlmtree)
 export(pip)
 export(splitpoints)
 
 export(plot.summary.tdlnm)
+export(plot.summary.tdlm)
 export(plot.summary.tdlmm)
 
 export(print.summary.tdlnm)
 export(print.summary.tdlmm)
+export(print.summary.tdlm)
+export(print.summary.hdlm)
+export(print.summary.hdlmm)

@@ -2,18 +2,34 @@
 % Please edit documentation in R/print.summary.tdlnm.R
 \name{print.summary.tdlnm}
 \alias{print.summary.tdlnm}
-\title{print.summary.tdlnm}
+\title{Prints an overview with summary of model class 'tdlnm'}
 \usage{
-\method{print}{summary.tdlnm}(object, digits = 3)
+\method{print}{summary.tdlnm}(x, digits = 3, ...)
 }
 \arguments{
-\item{object}{an object of type 'summary.tdlnm', result of call to summary.tdlnm()}
+\item{x}{an object of type 'summary.tdlnm', result of call to summary.tdlnm()}
 
 \item{digits}{integer number of digits to round}
+
+\item{...}{additional parameters}
 }
 \value{
-
+output of tdlnm fit in R console
 }
 \description{
+Method for printing an overview with summary of model class 'tdlnm'
+}
+\details{
 print.summary.tdlnm
+}
+\examples{
+D <- sim.tdlnm(sim = "A", error.to.signal = 1)
+fit <- dlmtree(formula = y ~ .,
+               data = D$dat,
+               exposure.data = D$exposures,
+               dlm.type = "nonlinear",
+               family = "gaussian")
+fit_sum <- summary(fit)
+print(fit_sum)
+
 }

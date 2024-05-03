@@ -2,7 +2,7 @@
 % Please edit documentation in R/pip.R
 \name{pip}
 \alias{pip}
-\title{Posterior inclusion probabilities (PIPs) for modifiers in HDLM}
+\title{Calculates posterior inclusion probabilities (PIPs) for modifiers in HDLM & HDLMM}
 \usage{
 pip(object, type = 1)
 }
@@ -15,5 +15,21 @@ pip(object, type = 1)
 A vector (type=1) or data.frame (type=2) of PIPs.
 }
 \description{
-Posterior inclusion probabilities (PIPs) for modifiers in HDLM
+Method for calculating posterior inclusion probabilities (PIPs) for modifiers in HDLM & HDLMM
+}
+\details{
+pip
+}
+\examples{
+# Posterior inclusion probability with HDLM 
+D <- sim.hdlmm(sim = "B", n = 1000)
+fit <- dlmtree(y ~ ., 
+               data = D$dat,
+               exposure.data = D$exposures,
+               dlm.type = "linear",
+               family = "gaussian",
+               het = TRUE)
+pip(fit)
+pip(fit, type = 2)
+
 }

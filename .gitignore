@@ -5,3 +5,10 @@
 examples
 *.o
 *.dll
+.DS_Store
+*.so
+.vscode
+_config.yml
+.Rbuildignore
+docs
+inst/doc

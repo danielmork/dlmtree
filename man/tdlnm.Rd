@@ -2,29 +2,36 @@
 % Please edit documentation in R/tdlnm.R
 \name{tdlnm}
 \alias{tdlnm}
-\title{Treed Distributed Lag Non-Linear Models}
+\title{Treed Distributed Lag Non-Linear Models (Deprecated)}
 \usage{
 tdlnm(
   formula,
   data,
   exposure.data,
-  exposure.splits = 50,
-  exposure.se = NULL,
+  exposure.splits = 20,
+  exposure.se = sd(exposure.data)/2,
   n.trees = 20,
-  n.burn = 2000,
-  n.iter = 5000,
-  n.thin = 10,
+  n.burn = 1000,
+  n.iter = 2000,
+  n.thin = 5,
   family = "gaussian",
   binomial.size = 1,
+  formula.zi = NULL,
   tree.params = c(0.95, 2),
   step.prob = c(0.25, 0.25),
   monotone = FALSE,
-  tree.time.params = c(0.5, 2),
-  tree.exp.params = c(0.2, 2),
-  shrinkage = 1,
+  monotone.gamma0 = rep(0, ncol(exposure.data)),
+  monotone.sigma = diag(ncol(exposure.data)) * 1.502^2,
+  monotone.tree.time.params = c(0.95, 2),
+  monotone.tree.exp.params = c(0.95, 2),
+  monotone.time.kappa = NULL,
+  shrinkage = ifelse(monotone, F, T),
   subset = NULL,
+  lowmem = FALSE,
   verbose = TRUE,
   diagnostics = FALSE,
+  initial.params = NULL,
+  debug = FALSE,
   ...
 )
 }
@@ -46,21 +53,25 @@ model, which assumes a linear effect of exposure.}
 
 \item{exposure.se}{numerical matrix of exposure standard errors with same
 size as exposure.data or a scalar smoothing factor representing a uniform
-smoothing factor applied to each exposure measurement}
+smoothing factor applied to each exposure measurement, defaults to sd(exposure.data)/2}
 
-\item{n.trees}{integer for number of trees in ensemble}
+\item{n.trees}{integer for number of trees in ensemble, default = 20}
 
-\item{n.burn}{integer for length of burn-in}
+\item{n.burn}{integer for length of burn-in, >=2000 recommended}
 
-\item{n.iter}{integer for number of iterations to run model after burn-in}
+\item{n.iter}{integer for number of iterations to run model after burn-in >=5000 recommended}
 
-\item{n.thin}{integer thinning factor, i.e. keep every tenth iteration}
+\item{n.thin}{integer thinning factor, i.e. keep every fifth iteration}
 
 \item{family}{'gaussian' for continuous response, or 'logit' for binomial
 response with logit link}
 
 \item{binomial.size}{integer type scalar (if all equal, default = 1) or
 vector defining binomial size for 'logit' family}
+
+\item{formula.zi}{object of class formula, a symbolic description of the ZI
+model to be fitted, e.g. y ~ a + b. This only applies to ZINB where covariates for
+ZI model is different from NB model. This is same as the main formula by default}
 
 \item{tree.params}{numerical vector of alpha and beta hyperparameters
 controlling tree depth (see Bayesian CART, 1998), default: alpha = 0.95,
@@ -70,20 +81,39 @@ beta = 2}
 2) change, defaults to (0.25, 0.25) or equal
 probability of each step for tree updates}
 
+\item{monotone}{false (default) or true: estimate monotone effects}
+
+\item{monotone.gamma0}{---------UPDATE---------}
+
+\item{monotone.sigma}{---------UPDATE---------}
+
+\item{monotone.tree.time.params}{---------UPDATE---------}
+
+\item{monotone.tree.exp.params}{---------UPDATE---------}
+
+\item{monotone.time.kappa}{---------UPDATE---------}
+
 \item{shrinkage}{int, 1 (default) turn on tree-specific shrinkage priors,
 0 turn off}
 
 \item{subset}{integer vector to analyze only a subset of data and exposures}
 
-\item{verbose}{true (default) or false: print output}
+\item{lowmem}{false (default) / true: turn on memory saver for DLNM, slower computation time}
+
+\item{verbose}{true (default) or false: print progress bar output}
 
 \item{diagnostics}{true or false (default) keep model diagnostic such as
 terminal nodes, acceptance details, etc.}
 
+\item{initial.params}{initial parameters for fixed effects model, FALSE = none (default), 
+"glm" = generate using GLM, or user defined, length must equal number of parameters in fixed effects model}
+
+\item{debug}{if true, outputs debugging messages}
+
 \item{...}{NA}
 }
 \value{
-obect of class 'tdlnm' or 'tdlm'
+object of class 'tdlnm' or 'tdlm'
 }
 \description{
 TDLNM is a method for estimating Distributed Lag

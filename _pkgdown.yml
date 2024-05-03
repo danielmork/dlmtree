@@ -1,0 +1,94 @@
+url: ~
+template:
+  bootstrap: 5
+
+navbar:
+  structure:
+      left:  [intro, articles, reference, news]
+      right: [search, github]
+      
+  components:
+    articles:
+      text: Treed DLM
+      menu:
+      - text: TDLM
+        href: articles/TDLM.html
+      - text: TDLNM
+        href: articles/TDLNM.html
+      - text: TDLMM
+        href: articles/TDLMM.html
+      - text: HDLM
+        href: articles/HDLM.html
+      - text: HDLMM
+        href: articles/HDLMM.html
+    news:
+      text: News
+      href: news/index.html
+        
+reference:
+- title: Model fitting
+  contents: 
+  - dlmtree
+  
+- title: Model summary
+  desc: Obtain results from the model fit
+  contents: 
+  - starts_with("combine.models")
+  - starts_with("summary")
+  - estDLM
+  - ppRange
+  - predict.dlmtree
+  - starts_with("print")
+  
+- title: Visualization
+  desc: Visualize distributed lag functions
+  contents: 
+  - starts_with("plot")
+  
+- title: HDLM & HDLMM
+  desc: Useful functions for HDLM & HDLMM
+  contents: 
+  - pip
+  - starts_with("shiny")
+  - splitpoints
+  
+- title: Simulation
+  desc: Simulate datasets
+  contents: 
+  - starts_with("sim")
+  
+- title: Data
+  desc: Built-in datasets
+  contents: 
+  - coExp
+  - exposureCov
+  - pm25Exposures
+  - zinbCo
+  
+- title: Cpp source code & Misc.
+  contents:
+  - cppIntersection
+  - dlmEst
+  - dlmtreeGPFixedGaussian
+  - dlmtreeGPGaussian
+  - dlmtreeHDLMGaussian
+  - dlmtreeHDLMMGaussian
+  - dlmtreeTDLMFixedGaussian
+  - dlmtreeTDLMNestedGaussian
+  - dlmtreeTDLM_cpp
+  - dlnmEst
+  - dlnmPLEst
+  - drawTree
+  - mixEst
+  - monotdlnm_Cpp
+  - ppRange
+  - rcpp_pgdraw
+  - rtmvnorm
+  - ruleIdx
+  - scaleModelMatrix
+  - splitPIP
+  - tdlmm
+  - tdlnm
+  - tdlmm_Cpp
+  - tdlnm_Cpp
+  - zeroToInfNormCDF

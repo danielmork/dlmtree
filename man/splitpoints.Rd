@@ -2,20 +2,37 @@
 % Please edit documentation in R/splitpoints.R
 \name{splitpoints}
 \alias{splitpoints}
-\title{Determine split points for continuous modifiers}
+\title{Determines split points for continuous modifiers}
 \usage{
 splitpoints(object, var, round = NULL)
 }
 \arguments{
-\item{object}{An object of class dlmtree.}
+\item{object}{An object of class dlmtree with DLM type hdlm & hdlmm}
 
-\item{var}{The name of a continuous variable for which the split points will be reported.}
+\item{var}{The name of a continuous variable for which the split points will be reported}
 
-\item{round}{The number of decimal places to round the variable (var) to. No rounding occurs if round=NULL (default). For positive integer values of round, the variable will be rounded and split points will be reported at the resulting level.}
+\item{round}{The number of decimal places to round the variable (var) to. No rounding occurs if round=NULL (default)
+For positive integer values of round, the variable will be rounded and split points will be reported at the resulting level}
 }
 \value{
-A data.frame with split points and the probability that a split point was >= that split point value.
+A data frame with split points and the probability that a split point was >= that split point value
 }
 \description{
-Determine split points for continuous modifiers
+Method for determining split points for continuous modifiers
+}
+\details{
+splitpoints
+}
+\examples{
+# Split points with HDLM 
+D <- sim.hdlmm(sim = "B", n = 1000)
+fit <- dlmtree(y ~ ., 
+               data = D$dat,
+               exposure.data = D$exposures,
+               dlm.type = "linear",
+               family = "gaussian",
+               het = TRUE)
+splitpoints(fit, var = "mod_num", round = 2)
+splitpoints(fit, var = "mod_scale", round = 2)
+
 }

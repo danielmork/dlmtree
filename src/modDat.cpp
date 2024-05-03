@@ -10,9 +10,10 @@ modDat::modDat(std::vector<int> isnum,
                Rcpp::List spIdx,
                std::vector<int> fidx)
 {
-  varIsNum = isnum;
-  nMods = varIsNum.size();
-  fullIdx = fidx;
+  varIsNum  = isnum;
+  nMods     = varIsNum.size();
+  fullIdx   = fidx;
+
   n = fullIdx.size();
   for (int i = 0; i < nMods; ++i) {
     std::vector<std::vector<int> > temp;
@@ -32,25 +33,26 @@ modDat::modDat(std::vector<int> isnum,
 
 modDat::~modDat() {}
 
-double modDat::totalProb(std::vector<std::vector<int> > am)
-{
+double modDat::totalProb(std::vector<std::vector<int> > am){
   double tp = 0;
   for (int i = 0; i < nMods; ++i) {
-    if (am[i].size() > 0)
+    if (am[i].size() > 0){
       tp += modProb(i);
+    }
   }
+
   return(tp);
 }
 
 std::vector<std::vector<int> >
   modDat::getAvailMods(int splitVar, int splitVal, std::vector<int> splitVec,
-                       std::vector<std::vector<int> > am, bool left)
-{
+                       std::vector<std::vector<int> > am, bool left){
   std::vector<std::vector<int> > newAvailMod = am;
   std::size_t i;
 
-  if (splitVar == -1)
+  if (splitVar == -1){
     return(newAvailMod);
+  }
 
   if (splitVal != -1) {
     std::vector<int> idx;
@@ -85,20 +87,22 @@ std::vector<std::vector<int> >
 void modDat::updateNodeVals(Node *n)
 {
   // stop if no update needed
-  if (n->update == 0)
+  if (n->update == 0){
     return;
+  }
     
   // load NodeVals struct
-  if (n->nodevals == 0)
+  if (n->nodevals == 0){
     n->nodevals = new NodeVals(this->n);
+  }
 
   // update parent nodes first, if needed
   Node *sib, *parent;
   sib = 0; parent = 0;
 
   if (n->depth > 0) {
-    parent = n->parent;
-    sib = n->sib();
+    parent  = n->parent;
+    sib     = n->sib();
 
     if (parent->update) {
       updateNodeVals(parent);
@@ -109,18 +113,18 @@ void modDat::updateNodeVals(Node *n)
       sib->nodevals = new NodeVals(this->n);
 
   } else {
-    n->nodevals->idx = this->fullIdx;
-    n->update = 0;
+    n->nodevals->idx        = this->fullIdx;
+    n->update               = 0;
     n->nodevals->updateXmat = 1;
     return;
   }
 
   if (parent->nodevals->idx.size() == 0){
-    n->nodevals->idx = parent->nodevals->idx;
-    sib->nodevals->idx = parent->nodevals->idx;
-    n->update = 0;
-    n->nodevals->updateXmat = 1;
-    sib->update = 0;
+    n->nodevals->idx          = parent->nodevals->idx;
+    sib->nodevals->idx        = parent->nodevals->idx;
+    n->update                 = 0;
+    n->nodevals->updateXmat   = 1;
+    sib->update               = 0;
     sib->nodevals->updateXmat = 1;
     return;
   }
@@ -130,14 +134,15 @@ void modDat::updateNodeVals(Node *n)
   // Find intersection and difference of parent and rule indices
   std::pair<std::vector<int>, std::vector<int> > iD;
   if (varIsNum[splitVar]) {
-    int splitVal = (parent->nodestruct)->get(2);
-    iD = intersectAndDiff((parent->nodevals)->idx,
-                          splitIdx[splitVar][splitVal]);
+    int splitVal  = (parent->nodestruct)->get(2);
+    iD            = intersectAndDiff((parent->nodevals)->idx, splitIdx[splitVar][splitVal]);
   } else {
     std::vector<int> splitVec = (parent->nodestruct)->get2(1);
     int vecLen = 0;
-    for (auto i : splitVec)
+    for (auto i : splitVec){
       vecLen += splitIdx[splitVar][i].size();
+    }
+
     std::vector<int> splitVecIdx;
     splitVecIdx.reserve(vecLen);
     for (auto i : splitVec)
@@ -165,8 +170,8 @@ void modDat::updateNodeVals(Node *n)
     }
   }
 
-  n->update = 0;
-  n->nodevals->updateXmat = 1;
-  sib->update = 0;
+  n->update                 = 0;
+  n->nodevals->updateXmat   = 1;
+  sib->update               = 0;
   sib->nodevals->updateXmat = 1;
 }

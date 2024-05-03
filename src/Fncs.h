@@ -9,6 +9,7 @@ using namespace Rcpp;
 int sampleInt(const std::vector<double> &probs, double totProb);
 int sampleInt(const Eigen::VectorXd &probs);
 double logPSplit(double alpha, double beta, int depth, bool terminal);
+double logZIPSplit(Eigen::VectorXd timeProbs, int tmin, int tmax, int nTrees, bool term);
 double logDirichletDensity(const Eigen::VectorXd &x, 
                            const Eigen::VectorXd &alpha);
 void rHalfCauchyFC(double* x2, double a, double b, double* yInv = 0);
@@ -17,5 +18,6 @@ Eigen::VectorXd rDirichlet(const Eigen::VectorXd &alpha);
 std::pair<std::vector<int>, std::vector<int> >
   intersectAndDiff(const std::vector<int> &origVec, 
                    const std::vector<int> &newVec);
-std::vector<int> cppIntersection(const IntegerVector& A, 
-                                 const IntegerVector& B);
+std::vector<int> cppIntersection(const IntegerVector& A, const IntegerVector& B);
+Eigen::VectorXd selectInd(Eigen::VectorXd original, std::vector<int> indices);
+Eigen::MatrixXd selectIndM(Eigen::MatrixXd original, std::vector<int> indices);

@@ -35,16 +35,20 @@ NodeVals::~NodeVals()
 }
 NodeVals::NodeVals(const NodeVals& x)
 {
-  X = x.X;
-  XtX = x.XtX;
-  ZtX = x.ZtX;
-  ZtXmat = x.ZtXmat;
-  VgZtX = x.VgZtX;
-  VgZtXmat = x.VgZtXmat;
-  tempV = x.tempV;
-  idx = x.idx;
-  updateXmat = x.updateXmat;
-  nestedTree = 0;
+  X                 = x.X;
+  Xpl               = x.Xpl;
+  XplProposed       = x.XplProposed;
+  XtX               = x.XtX;
+  ZtX               = x.ZtX;
+  ZtXmat            = x.ZtXmat;
+  ZtXmatProposed    = x.ZtXmatProposed;
+  VgZtX             = x.VgZtX;
+  VgZtXmat          = x.VgZtXmat;
+  VgZtXmatProposed  = x.VgZtXmatProposed;
+  tempV             = x.tempV;
+  idx               = x.idx;
+  updateXmat        = x.updateXmat;
+  nestedTree        = 0;
   if (x.nestedTree != 0) {
     nestedTree = new Node(*(x.nestedTree));
   }
@@ -53,12 +57,14 @@ NodeVals::NodeVals(const NodeVals& x)
 Node::Node(int depth_in,
            bool update_in)
 {
-  depth = depth_in;
-  update = update_in;
-  c1 = 0; c2 = 0; parent = 0;
-  proposed = 0;
-  nodevals = 0;
-  nodestruct = 0;
+  depth       = depth_in;
+  update      = update_in;
+  c1          = 0; 
+  c2          = 0; 
+  parent      = 0;
+  proposed    = 0;
+  nodevals    = 0;
+  nodestruct  = 0;
 }
 
 Node::~Node()
@@ -92,13 +98,15 @@ Node::~Node()
 
 Node::Node(const Node& n)
 {
-  depth = n.depth;
-  update = n.update;
-  c1 = 0; c2 = 0; parent = 0;
-  proposed = 0;
-  nodevals = 0;
-  nodestruct = 0;
-  nodestruct = (n.nodestruct)->clone();
+  depth       = n.depth;
+  update      = n.update;
+  c1          = 0; 
+  c2          = 0; 
+  parent      = 0;
+  proposed    = 0;
+  nodevals    = 0;
+  nodestruct  = 0;
+  nodestruct  = (n.nodestruct)->clone();
   if (n.nodevals != 0) {
     nodevals = new NodeVals(*(n.nodevals));
   }
@@ -171,7 +179,6 @@ bool Node::change()
     (proposed->c1)->setUpdate(1);
     (proposed->c2)->setUpdate(1);
 
-
     return(1);
   }
 
@@ -188,10 +195,10 @@ bool Node::swap(Node* child)
   }
 
   // Create proposed nodes
-  proposed = new Node(depth, update);
-  proposed->nodestruct = child->nodestruct->clone();
-  proposed->c1 = new Node(*c1);
-  proposed->c2 = new Node(*c2);
+  proposed              = new Node(depth, update);
+  proposed->nodestruct  = child->nodestruct->clone();
+  proposed->c1          = new Node(*c1);
+  proposed->c2          = new Node(*c2);
   if (c1 == child) {
     proposed->c1->nodestruct = nodestruct->clone();
     if (c2->c1 != 0) {
@@ -333,8 +340,6 @@ void Node::reject()
 }
 
 
-
-
 int Node::nTerminal()
 {
   if (c1 == 0) {
@@ -357,7 +362,6 @@ int Node::nGen2()
     return(c1->nGen2() + c2->nGen2());
   }
 }
-
 
 
 std::vector<Node*> Node::listTerminal(bool follow_proposed)
@@ -480,6 +484,49 @@ bool Node::isGen2()
 
 
 
+void Node::replaceTree(Node* newTree)
+{
+  // Delete previous attributes
+  if (nodevals != 0) {
+      delete nodevals;
+      nodevals = 0;
+    }
+  if (nodestruct != 0) {
+    delete nodestruct;
+    nodestruct = 0;
+  }
+
+  if (c1 != 0) {
+    delete c1;
+    c1 = 0;
+  }
+
+  if (c2 != 0) {
+    delete c2;
+    c2 = 0;
+  }
+
+  if (proposed != 0) {
+    delete proposed;
+    proposed = 0;
+  }
+
+  parent = 0;
+
+  // Update to new information
+  depth       = newTree->depth;
+  update      = newTree->update;
+  nodestruct  = (newTree->nodestruct)->clone();
+  if (newTree->nodevals != 0) {
+    nodevals = new NodeVals(*(newTree->nodevals));
+  }
+  if (newTree->c1 != 0) {
+    c1 = new Node(*(newTree->c1));
+    c2 = new Node(*(newTree->c2));
+    c1->parent = this;
+    c2->parent = this;
+  }
+}
 
 
 void Node::replaceNodeVals(Node* newTree)

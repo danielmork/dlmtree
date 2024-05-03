@@ -2,10 +2,10 @@
 % Please edit documentation in R/plot.summary.tdlmm.R
 \name{plot.summary.tdlmm}
 \alias{plot.summary.tdlmm}
-\title{plot.summary.tdlmm}
+\title{Plots DLMMs for model summary of class 'tdlmm'}
 \usage{
 \method{plot}{summary.tdlmm}(
-  object,
+  x,
   type = "marginal",
   exposure1 = NULL,
   exposure2 = NULL,
@@ -13,11 +13,13 @@
   time2 = c(),
   show.cw = TRUE,
   cw.plots.only = TRUE,
+  trueDLM = NULL,
+  scale = NULL,
   ...
 )
 }
 \arguments{
-\item{object}{object of type 'summary.tdlmm' from summary.tdlmm() output}
+\item{x}{an object of type 'summary.tdlmm' from summary.tdlmm() output}
 
 \item{type}{plot type, 'marginal' (default)}
 
@@ -25,23 +27,39 @@
 
 \item{exposure2}{exposure paired with 'exposure1' for plotting interaction}
 
-\item{time1}{plot a cross section from an interaction plot at specific time
-for 'exposure1'}
+\item{time1}{plot a cross section from an interaction plot at specific time for 'exposure1'}
 
-\item{time2}{plot a cross section from an interaction plot at specific time
-for 'exposure2'}
+\item{time2}{plot a cross section from an interaction plot at specific time for 'exposure2'}
 
-\item{show.cw}{indicate location of critical windows in interaction plot
-with red points}
+\item{show.cw}{indicate location of critical windows in interaction plot with red points}
 
 \item{cw.plots.only}{show only plots with critical windows}
 
-\item{...}{additional plotting parameters for manipulating title and labels}
+\item{trueDLM}{A vector of true effects that can be obtained from the simulated data. Only applicable for simulation studies}
+
+\item{scale}{default = NULL, if scale is not NULL, the effects are exponentiated}
+
+\item{...}{additional plotting parameters for title and labels}
 }
 \value{
-ggplot
+A plot of distributed lag effect or interaction surface estimated with tdlmm
 }
 \description{
-Method for plotting DLMMs from summary of tdlmm. Includes plots
+Method for plotting DLMMs for model summary of class 'tdlmm'. Includes plots
 for marginal exposure effects as well as interactions between two exposures.
+}
+\details{
+plot.summary.tdlmm
+}
+\examples{
+D <- sim.tdlmm(sim = "B", error = 25, n = 1000)
+fit <- dlmtree(y ~ .,
+               data = D$dat, exposure.data = D$exposures,
+               mixture.interactions = "noself", 
+               dlm.type = "linear", family = "gaussian",
+               mixture = TRUE)
+fit_sum <- summary(fit)
+plot(fit_sum, exposure1 = "e1")
+plot(fit_sum, exposure1 = "e1", exposure2 = "e2")
+
 }

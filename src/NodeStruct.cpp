@@ -2,6 +2,8 @@
 #include "NodeStruct.h"
 #include "modDat.h"
 #include "Fncs.h"
+#include <random>
+#include <algorithm>
 using namespace Rcpp;
 
 // Generic function placeholders
@@ -17,12 +19,14 @@ bool NodeStruct::proposeSplit() {return(0);}
 void NodeStruct::dropSplit() {}
 void NodeStruct::printStruct() {}
 int NodeStruct::get(int a) {return(0);}
-std::vector<int> NodeStruct::get2(int a)
-  { std::vector<int> b; return(b); }
+std::vector<int> NodeStruct::get2(int a){ std::vector<int> b; return(b); }
 std::vector<std::vector<int> > NodeStruct::get3(int a)
   { std::vector<std::vector<int> > b; return(b); }
 bool NodeStruct::checkEqual(NodeStruct* n) {return(0);}
 void NodeStruct::setTimeRange(int lower, int upper) {}
+void NodeStruct::setTimeProbs(Eigen::VectorXd newProbs) {}
+Eigen::VectorXd NodeStruct::getTimeProbs() {Eigen::VectorXd a; return(a);}
+
 
 /**
  * @brief Construct a new DLNMStruct::DLNMStruct object
@@ -37,27 +41,37 @@ void NodeStruct::setTimeRange(int lower, int upper) {}
 DLNMStruct::DLNMStruct(int xmin_in, int xmax_in, int tmin_in, int tmax_in,
                        Eigen::VectorXd Xp_in, Eigen::VectorXd Tp_in)
 {
-  xmin = xmin_in; xmax = xmax_in; tmin = tmin_in; tmax = tmax_in;
-  Xp = Xp_in; Tp = Tp_in;
-  xsplit = 0; tsplit = 0;
-  totXp = Xp.segment(xmin, xmax - xmin - 1).array().sum();
-  totTp = Tp.segment(tmin - 1, tmax - tmin).array().sum();
+  xmin    = xmin_in; 
+  xmax    = xmax_in; 
+  tmin    = tmin_in; 
+  tmax    = tmax_in;
+  Xp      = Xp_in; 
+  Tp      = Tp_in;
+  xsplit  = 0; 
+  tsplit  = 0;
+  totXp   = Xp.segment(xmin, xmax - xmin - 1).array().sum();
+  totTp   = Tp.segment(tmin - 1, tmax - tmin).array().sum();
 }
 
 DLNMStruct::~DLNMStruct() {}
 
 DLNMStruct::DLNMStruct(const DLNMStruct& ns)
 {
-  xmin = ns.xmin; xmax = ns.xmax; tmin = ns.tmin; tmax = ns.tmax;
-  Xp = ns.Xp; Tp = ns.Tp; xsplit = ns.xsplit; tsplit = ns.tsplit;
-  totXp = Xp.segment(xmin, xmax - xmin - 1).array().sum();
-  totTp = Tp.segment(tmin - 1, tmax - tmin).array().sum();
+  xmin    = ns.xmin; 
+  xmax    = ns.xmax; 
+  tmin    = ns.tmin; 
+  tmax    = ns.tmax;
+  Xp      = ns.Xp; 
+  Tp      = ns.Tp; 
+  xsplit  = ns.xsplit; 
+  tsplit  = ns.tsplit;
+  totXp   = Xp.segment(xmin, xmax - xmin - 1).array().sum();
+  totTp   = Tp.segment(tmin - 1, tmax - tmin).array().sum();
 }
 
 
-
-
-
+Eigen::VectorXd DLNMStruct::getTimeProbs()  { return(this->Tp); }
+void DLNMStruct::setTimeProbs(Eigen::VectorXd newProbs) { Tp = newProbs; }
 
 
 bool DLNMStruct::proposeSplit()
@@ -66,7 +80,6 @@ bool DLNMStruct::proposeSplit()
       ((totXp <= 0.0) && (totTp <= 0.0))) {
     return(0);
   }
-
   if ((xmin >= xmax - 1) || (totXp <= 0.0)) { // sample T
     tsplit = sampleInt(Tp.segment(tmin - 1, tmax - tmin)) + tmin;
     xsplit = 0;
@@ -108,6 +121,7 @@ bool DLNMStruct::checkEqual(NodeStruct* n) {return(0);}
 
 void DLNMStruct::updateStruct(NodeStruct* parStruct, bool left)
 {
+  Tp = parStruct->getTimeProbs();
   int xs = parStruct->get(5);
   int ts = parStruct->get(6);
   if (left) {
@@ -158,7 +172,6 @@ NodeStruct* DLNMStruct::subStruct(bool left)
   if (left) {
     if (xsplit > 0) {
       ns = new DLNMStruct(xmin, xsplit, tmin, tmax, Xp, Tp);
-
     } else {
       ns = new DLNMStruct(xmin, xmax, tmin, tsplit, Xp, Tp);
     }
@@ -166,7 +179,6 @@ NodeStruct* DLNMStruct::subStruct(bool left)
   } else {
     if (xsplit > 0) {
       ns = new DLNMStruct(xsplit, xmax, tmin, tmax, Xp, Tp);
-
     } else {
       ns = new DLNMStruct(xmin, xmax, tsplit + 1, tmax, Xp, Tp);
     }
@@ -177,7 +189,6 @@ NodeStruct* DLNMStruct::subStruct(bool left)
 
 
 NodeStruct* DLNMStruct::clone() { return new DLNMStruct(*this); }
-
 
 
 double DLNMStruct::logPRule()
@@ -216,21 +227,20 @@ int DLNMStruct::get(int a)
 
 
 
-
 ModStruct::ModStruct(modDat* md)
 {
-  modFncs = md;
-  availMod = md->availMod;
-  splitVal = -1;
-  splitVar = -1;
+  modFncs   = md;
+  availMod  = md->availMod;
+  splitVal  = -1;
+  splitVar  = -1;
 }
 
 ModStruct::ModStruct(modDat* md, std::vector<std::vector<int> > am)
 {
-  modFncs = md;
-  availMod = am;
-  splitVal = -1;
-  splitVar = -1;
+  modFncs   = md;
+  availMod  = am;
+  splitVal  = -1;
+  splitVar  = -1;
 }
 
 // Delete (do not delete modDat object, set pointer to zero)
@@ -242,11 +252,11 @@ ModStruct::~ModStruct()
 // Clone function
 ModStruct::ModStruct(const ModStruct& ns)
 {
-  modFncs = ns.modFncs;
-  availMod = ns.availMod;
-  splitVal = ns.splitVal;
-  splitVar = ns.splitVar;
-  splitVec = ns.splitVec;
+  modFncs   = ns.modFncs;
+  availMod  = ns.availMod;
+  splitVal  = ns.splitVal;
+  splitVar  = ns.splitVar;
+  splitVec  = ns.splitVec;
 }
 
 // Proposed new split based on availMod
@@ -296,7 +306,7 @@ bool ModStruct::proposeSplit()
       // Select random categories from available
       splitVec.clear();
       int nCat = floor(R::runif(1.0, am.size()));
-      std::random_shuffle(am.begin(), am.end());
+      std::shuffle(am.begin(), am.end(), std::default_random_engine());
       for (i = 0; i < (std::size_t) nCat; ++i) {
         splitVec.push_back(am[i]);
       }
@@ -305,7 +315,7 @@ bool ModStruct::proposeSplit()
       if (unavailMod.size() > 0) {
         int nOther = floor(R::runif(0.0, unavailMod.size() + 1.0));
         if (nOther > 0) {
-          std::random_shuffle(unavailMod.begin(), unavailMod.end());
+          std::shuffle(unavailMod.begin(), unavailMod.end(), std::default_random_engine());
           for (i = 0; i < (std::size_t) nOther; ++i) {
             splitVec.push_back(unavailMod[i]);
           }

@@ -2,18 +2,33 @@
 % Please edit documentation in R/sim.tdlnm.R
 \name{sim.tdlnm}
 \alias{sim.tdlnm}
-\title{sim.tdlnm}
+\title{Creates simulated data for TDLNM}
 \usage{
-sim.tdlnm(effect = "A", error.to.signal = 1)
+sim.tdlnm(sim = "A", error.to.signal = 1)
 }
 \arguments{
-\item{effect}{character (A - D) indicating simulation scenario}
+\item{sim}{character (A - D) specifying simulation scenario}
 
 \item{error.to.signal}{scalar value setting error: sigma^2/var(f)}
 }
 \value{
-
+Simulated data and true parameters
 }
 \description{
+Method for creating simulated data for TDLNM
+}
+\details{
 sim.tdlnm
+
+Simulation scenarios:
+\itemize{
+\item Scenario A: Piecewise constant effect
+\item Scenario B: Linear effect
+\item Scenario C: Logistic effect, piecewise in time
+\item Scenario D: Logistic effect, smooth in time
+}
+}
+\examples{
+sim.tdlnm(sim = "A", error.to.signal = 1)
+
 }

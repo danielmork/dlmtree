@@ -1,0 +1,47 @@
+---
+title: "TDLM"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{TDLM}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This vignette demonstrates the implementation of treed distributed lag model (TDLM). More details can be found in Mork and Wilson (2023) <doi: [10.1111/biom.13568](https://doi.org/10.1111/biom.13568)>.
+
+```{r setup}
+library(dlmtree)
+set.seed(1)
+```
+
+### Fitting the model
+```{r tdlm.fit}
+D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 5000)
+fit <- dlmtree(formula = y ~ .,
+               data = D$dat,
+               exposure.data = D$exposures[["e1"]],
+               dlm.type = "linear", 
+               family = "logit",
+               n.burn = 2500, n.iter = 10000, n.thin = 5)
+```
+
+### Model fit summary
+```{r tdlm.sum}
+fit_sum <- summary(fit)
+fit_sum
+```
+
+### Exposure effect
+```{r tdlm.plot}
+plot(fit_sum, 
+     main = "Plot title", 
+     xlab = "Time axis label", 
+     ylab = "Exposure effect axis label")
+```
