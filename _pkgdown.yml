@@ -1,12 +1,16 @@
-url: ~
+url: https://danielmork.github.io/dlmtree/
 template:
   bootstrap: 5
-
 navbar:
   structure:
-      left:  [intro, articles, reference, news]
-      right: [search, github]
-      
+    left:
+    - intro
+    - articles
+    - reference
+    - news
+    right:
+    - search
+    - github
   components:
     articles:
       text: Treed DLM
@@ -24,42 +28,33 @@ navbar:
     news:
       text: News
       href: news/index.html
-        
 reference:
 - title: Model fitting
-  contents: 
-  - dlmtree
-  
+  contents: dlmtree
 - title: Model summary
   desc: Obtain results from the model fit
-  contents: 
+  contents:
   - starts_with("combine.models")
   - starts_with("summary")
   - estDLM
   - ppRange
   - predict.dlmtree
   - starts_with("print")
-  
 - title: Visualization
   desc: Visualize distributed lag functions
-  contents: 
-  - starts_with("plot")
-  
+  contents: starts_with("plot")
 - title: HDLM & HDLMM
   desc: Useful functions for HDLM & HDLMM
-  contents: 
+  contents:
   - pip
   - starts_with("shiny")
   - splitpoints
-  
 - title: Simulation
   desc: Simulate datasets
-  contents: 
-  - starts_with("sim")
-  
+  contents: starts_with("sim")
 - title: Data
   desc: Built-in datasets
-  contents: 
+  contents:
   - coExp
   - exposureCov
   - pm25Exposures
@@ -93,3 +88,4 @@ reference:
   - tdlmm_Cpp
   - tdlnm_Cpp
   - zeroToInfNormCDF
+
