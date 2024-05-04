@@ -16,7 +16,7 @@ and visualization are also provided.
 <!-- badges: start -->
 <!-- badges: end -->
 
-### Treed DLM
+### Treed DLM Overview
 
 | Model                                                  |    Type    |  Family  | Mixture | Heterogeneity |
 |:-------------------------------------------------------|:----------:|:--------:|:-------:|:-------------:|
@@ -32,6 +32,10 @@ and visualization are also provided.
 |                                                        |            |  Binary  |    X    |       X       |
 | Heterogeneous distributed lag model (HDLM)$^3$         |   Linear   | Gaussian |    X    |       O       |
 | Heterogeneous distributed lag mixture model (HDLMM)    |   Linear   | Gaussian |    O    |       O       |
+
+### Model Selection Guide
+
+![](man/figures/decisiontree.png)
 
 ### Installation
 
