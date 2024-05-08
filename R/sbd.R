@@ -5,7 +5,7 @@
 #'
 #' @docType data
 #'
-#' @usage data(sbd)
+#' @usage data(sbd_dlmtree)
 #'
 #' @format data.frame
 #'
@@ -15,4 +15,4 @@
 #'
 #' @source \url{https://aqs.epa.gov/aqsweb/airdata/download_files.html}
 #'
-"sbd"
+"sbd_dlmtree"

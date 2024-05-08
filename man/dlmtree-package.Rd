@@ -13,6 +13,7 @@ Functions to estimate and interpret treed distributed lag models (DLMs). The met
 Useful links:
 \itemize{
   \item \url{https://github.com/danielmork/dlmtree}
+  \item \url{https://danielmork.github.io/dlmtree/}
   \item Report bugs at \url{https://github.com/danielmork/dlmtree/issues}
 }
 
