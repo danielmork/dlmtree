@@ -1,5 +1,5 @@
 #' Simulated covariates and exposures in the context of association 
-#' between birth weight and maternal exposure to environmental chemical
+#' between birth weight and maternal exposure to environmental chemicals
 #' @description data frame of maternal covariates, birth information, 
 #' and five exposures, each measured over 37 weeks.
 #'
@@ -15,4 +15,4 @@
 #'
 #' @source \url{https://aqs.epa.gov/aqsweb/airdata/download_files.html}
 #'
-"sbd_dlmtree"
+"sbd"
