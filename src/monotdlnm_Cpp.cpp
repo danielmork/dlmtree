@@ -377,7 +377,8 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   ctr->diagnostics  = as<bool>(model["diagnostics"]);
   
   // * Set up model data
-  ctr->Y          = as<VectorXd>(model["Y"]);
+  ctr->Y0          = as<VectorXd>(model["Y"]);
+  ctr->Ystar          = as<VectorXd>(model["Y"]);
   ctr->n          = ctr->Y.size();
   ctr->Z          = as<MatrixXd>(model["Z"]);
   ctr->pZ         = ctr->Z.cols();
@@ -394,8 +395,8 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   ctr->Omega.resize(ctr->n);                   ctr->Omega.setOnes();
   if (ctr->binomial) {
     ctr->binomialSize = as<VectorXd>(model["binomialSize"]);
-    ctr->kappa        = ctr->Y - 0.5 * (ctr->binomialSize);
-    ctr->Y            = ctr->kappa;
+    ctr->kappa        = ctr->Y0 - 0.5 * (ctr->binomialSize);
+    ctr->Ystar            = ctr->kappa;
   }
   
   // * Create exposure data management
@@ -524,7 +525,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
     ctr->Vg     = ctr->VgInv.inverse();
     ctr->VgChol = ctr->Vg.llt().matrixL();
     // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
-    ctr->Y      = ctr->kappa.array() / ctr->Omega.array();
+    ctr->Ystar      = ctr->kappa.array() / ctr->Omega.array();
   }
   ctr->tau.resize(ctr->nTrees);                     ctr->tau.setOnes();
   ctr->R          = ctr->Y;
@@ -569,7 +570,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
     } // end update trees
 
     // * Update model
-    ctr->R = ctr->Y - ctr->fhat;
+    ctr->R = ctr->Ystar - ctr->fhat;
     tdlmModelEst(ctr);
 
     rHalfCauchyFC(&(ctr->nu), ctr->totTerm, ctr->sumTermT2 / ctr->sigma2);
