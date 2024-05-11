@@ -443,7 +443,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     ctr->Vg = ctr->VgInv.inverse();
     ctr->VgChol = ctr->Vg.llt().matrixL();
     // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
-    ctr->Y = ctr->kappa.array() / ctr->Omega.array();
+    ctr->Ystar = ctr->kappa.array() / ctr->Omega.array();
   }
   ctr->totTerm = 0;
   ctr->sumTermT2 = 0;
