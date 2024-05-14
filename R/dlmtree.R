@@ -230,8 +230,14 @@ dlmtree <- function(formula,
       tdlnm.exposure.splits <- 0
     }
 
-    # Exposure smoothing/error (TDLM, TDLNM)
-    if (!is.null(tdlnm.exposure.se)) {
+    # Exposure smoothing/error (TDLNM, monotone)
+    # Set default
+    if(is.null(tdlnm.exposure.se)){
+      tdlnm.exposure.se <- sd(exposure.data)/2
+    }
+
+    # check the dimension
+    if (!is.null(tdlnm.exposure.se)){
       if (!is.numeric(tdlnm.exposure.se)) {
         stop("`tdlnm.exposure.se` must be a scalar or numeric matrix")
       }
@@ -518,7 +524,7 @@ dlmtree <- function(formula,
         model$SE <- matrix(0.0, 0, 0)
       } else {
         model$smooth <- TRUE
-        model$SE <- force(sd(exposure.data)/2)
+        model$SE <- force(tdlnm.exposure.se)
       }
 
       model$timeSplits0 = force(rep(1 / (model$pExp - 1), model$pExp - 1))
