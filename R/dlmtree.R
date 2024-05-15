@@ -237,19 +237,16 @@ dlmtree <- function(formula,
     }
 
     # check the dimension
-    if (!is.null(tdlnm.exposure.se)){
-      if (!is.numeric(tdlnm.exposure.se)) {
-        stop("`tdlnm.exposure.se` must be a scalar or numeric matrix")
-      }
-  
-      if (length(tdlnm.exposure.se) == 1) {
-        tdlnm.exposure.se <- matrix(tdlnm.exposure.se, nrow(exposure.data), ncol(exposure.data))
-      }
-  
-      if (!all(dim(exposure.data) == dim(tdlnm.exposure.se))) {
-        stop("`tdlnm.exposure.se` and `exposure.data` must have same dimensions")
-      }
-    } 
+    if (!is.numeric(tdlnm.exposure.se)) {
+      stop("`tdlnm.exposure.se` must be a scalar or numeric matrix")
+    }
+    if (length(tdlnm.exposure.se) == 1) {
+      tdlnm.exposure.se <- matrix(tdlnm.exposure.se, nrow(exposure.data), ncol(exposure.data))
+    }
+    if (!all(dim(exposure.data) == dim(tdlnm.exposure.se))) {
+      stop("`tdlnm.exposure.se` and `exposure.data` must have same dimensions")
+    }
+
   } else { # HDLMM, TDLMM
     # TDLNM (no mixture) 
     if (dlm.type == "nonlinear") {
@@ -298,7 +295,7 @@ dlmtree <- function(formula,
       binomial.size <- rep(binomial.size, nrow(data))
     if (length(binomial.size) != nrow(data))
       stop("`binomial.size` must be positive integer and same length as data")
-    model$binomialSize <- force(binomial.size)
+    model$binomialSize <- binomial.size
     model$binomial <- 1
   }
 
@@ -369,8 +366,9 @@ dlmtree <- function(formula,
   model$stepProbMod   <- prop.table(c(hdlm.modtree.step.prob[1], hdlm.modtree.step.prob[2], hdlm.modtree.step.prob[3], 1 - sum(hdlm.modtree.step.prob)))
 
   # Monotone model priors
-  model$shape       <- ifelse(!is.null(tdlnm.exposure.se), "Smooth",
-                              ifelse(tdlnm.exposure.splits == 0, "Linear", "Step Function"))
+  model$shape       <- ifelse(tdlnm.exposure.splits == 0, "Linear",
+                              ifelse(mean(tdlnm.exposure.se) != 0, "Smooth",
+                                     "Step Function"))
                                
   if (dlm.type == "monotone") {
     model$monotone        <-  TRUE
@@ -421,7 +419,7 @@ dlmtree <- function(formula,
           data <- data[subset,]
           exposure.data <- exposure.data[subset,]
 
-          if (!is.null(tdlnm.exposure.se))
+          if (model$shape != "Linear")
             tdlnm.exposure.se <- tdlnm.exposure.se[subset,]
 
           if (model$family == "logit")
@@ -448,8 +446,8 @@ dlmtree <- function(formula,
     formula.zi <- formula
   }
 
-  model$formula <- force(as.formula(formula))
-  model$formula.zi  <- force(as.formula(formula.zi))
+  model$formula <- as.formula(formula)
+  model$formula.zi  <- as.formula(formula.zi)
 
   tf   <- terms.formula(model$formula, data = data)
   tf.zi    <- terms.formula(model$formula.zi, data = data) 
@@ -459,8 +457,8 @@ dlmtree <- function(formula,
     stop("no valid response in formula")
   }
 
-  model$intercept <- force(ifelse(attr(tf, "intercept"), TRUE, FALSE))
-  model$intercept.zi <- force(ifelse(attr(tf.zi, "intercept"), TRUE, FALSE))
+  model$intercept <- ifelse(attr(tf, "intercept"), TRUE, FALSE)
+  model$intercept.zi <- ifelse(attr(tf.zi, "intercept"), TRUE, FALSE)
 
   # Sanity check for variables and the names
   if (length(which(attr(tf, "term.labels") %in% colnames(data))) == 0 & 
@@ -517,17 +515,17 @@ dlmtree <- function(formula,
       names(model$X)        <- model$expNames
       model$expProb         <- rep(1/length(model$X), length(model$X))
     } else {
-      model$X       <- force(exposure.data)
-      model$Xrange  <- force(range(exposure.data))
-      if (is.null(tdlnm.exposure.se)) {
+      model$X       <- exposure.data
+      model$Xrange  <- range(exposure.data)
+      if (mean(tdlnm.exposure.se) == 0) {
         model$smooth <- FALSE
         model$SE <- matrix(0.0, 0, 0)
       } else {
         model$smooth <- TRUE
-        model$SE <- force(tdlnm.exposure.se)
+        model$SE <- tdlnm.exposure.se
       }
 
-      model$timeSplits0 = force(rep(1 / (model$pExp - 1), model$pExp - 1))
+      model$timeSplits0 = rep(1 / (model$pExp - 1), model$pExp - 1)
 
       if (length(tdlnm.exposure.splits) == 1) {
         # TDLM
@@ -536,28 +534,32 @@ dlmtree <- function(formula,
           model$splitProb <- as.double(c())
           model$Xsplits   <- as.double(c())
           model$nSplits   <- 0
-          model$Xscale    <- force(sd(model$X))
-          model$X         <- force(model$X / model$Xscale)
-          model$Tcalc     <- force(sapply(1:ncol(model$X),
-                                      function(i) rowSums(model$X[, 1:i, drop = F])))
+          model$Xscale    <- sd(model$X)
+          model$X         <- model$X / model$Xscale
+          model$Tcalc     <- sapply(1:ncol(model$X),
+                                      function(i) rowSums(model$X[, 1:i, drop = F]))
 
         # TDLNM: Splits defined by quantiles of exposure
         } else {
           model$class <- "tdlnm"
+          # if (dlm.type == "monotone") 
+          #   model$class <- "monotone"
           if (is.list(tdlnm.exposure.splits)) {
             stop("tdlnm.exposure.splits must be a scalar or list with two inputs: 'type' and 'split.vals'")
           } else {
-            model$Xsplits   <- force(sort(unique(quantile(model$X,
+            model$Xsplits   <- sort(unique(quantile(model$X,
                                                         (1:(tdlnm.exposure.splits - 1)) /
-                                                          tdlnm.exposure.splits))))
-            model$nSplits   <- force(length(model$Xsplits))
-            model$splitProb <- force(rep(1 / model$nSplits, model$nSplits))
+                                                          tdlnm.exposure.splits)))
+            model$nSplits   <- length(model$Xsplits)
+            model$splitProb <- rep(1 / model$nSplits, model$nSplits)
           }
         }
 
       # TDLNM: Splits defined by specific values or quantiles
       } else {
         model$class <- "tdlnm"
+        # if (dlm.type == "monotone") 
+        #   model$class <- "monotone"
 
         # if tdlnm.exposure.splits entered incorrectly, infer user input and inform
         if (!is.list(tdlnm.exposure.splits)) {
@@ -575,27 +577,27 @@ dlmtree <- function(formula,
 
         # use specific values as splitting points
         if (tdlnm.exposure.splits$type == "values") {
-          model$Xsplits <- force(sort(unique(tdlnm.exposure.splits$split.vals)))
-          model$Xsplits <- force(model$Xsplits[which(model$Xsplits > min(model$X) &
-                                                    model$Xsplits < max(model$X))])
+          model$Xsplits <- sort(unique(tdlnm.exposure.splits$split.vals))
+          model$Xsplits <- model$Xsplits[which(model$Xsplits > min(model$X) &
+                                                    model$Xsplits < max(model$X))]
 
         # use specific quantiles as splitting points
         } else if (tdlnm.exposure.splits$type == "quantiles") {
           if (any(tdlnm.exposure.splits$split.vals > 1 | tdlnm.exposure.splits$split.vals < 0))
             stop("`tdlnm.exposure.splits$split.vals` must be between zero and one if using quantiles")
-          model$Xsplits <- force(sort(unique(quantile(model$X,
-                                                      tdlnm.exposure.splits$split.vals))))
-          model$Xsplits <- force(model$Xsplits[which(model$Xsplits > min(model$X) &
-                                                    model$Xsplits < max(model$X))])
+          model$Xsplits <- sort(unique(quantile(model$X,
+                                                      tdlnm.exposure.splits$split.vals)))
+          model$Xsplits <- model$Xsplits[which(model$Xsplits > min(model$X) &
+                                                    model$Xsplits < max(model$X))]
         } else {
           stop("`tdlnm.exposure.splits$type` must be one of `values` or `quantiles`")
         }
 
-        model$nSplits <- force(length(model$Xsplits))
+        model$nSplits <- length(model$Xsplits)
         if (model$nSplits == 0)
           stop("no exposure splits specified, please check `tdlnm.exposure.splits` input")
 
-        model$splitProb <- force(rep(1 / model$nSplits, model$nSplits))
+        model$splitProb <- rep(1 / model$nSplits, model$nSplits)
         
         # memory warning
         if (prod(dim(model$X)) * model$nSplits * 8 > 1024^3 & model$verbose)
@@ -609,14 +611,14 @@ dlmtree <- function(formula,
   # Precalculate counts below each splitting values
   if (length(model$Xsplits) > 0) {
     model$Xscale <- 1
-    model$Tcalc <- force(sapply(1:ncol(model$X), function(i) {
-      rep(i / model$Xscale, nrow(model$X)) }))
+    model$Tcalc <- sapply(1:ncol(model$X), function(i) {
+      rep(i / model$Xscale, nrow(model$X)) })
     if (model$smooth) {
-      model$Xcalc <- force(sapply(model$Xsplits, function(i) {
-        rowSums(pnorm((i - model$X) / model$SE)) }) / model$Xscale)
+      model$Xcalc <- sapply(model$Xsplits, function(i) {
+        rowSums(pnorm((i - model$X) / model$SE)) }) / model$Xscale
     } else {
-      model$Xcalc <- force(sapply(model$Xsplits, function(i) {
-        rowSums(model$X < i) }) / model$Xscale)
+      model$Xcalc <- sapply(model$Xsplits, function(i) {
+        rowSums(model$X < i) }) / model$Xscale
     }
   }
   
@@ -692,7 +694,7 @@ dlmtree <- function(formula,
     stop("missing values in model data, use `complete.cases()` to subset data")
 
   # Response
-  model$Y <- force(model.response(mf))
+  model$Y <- model.response(mf)
 
   # Check response & model specification
   # Binary response
@@ -725,22 +727,22 @@ dlmtree <- function(formula,
   }
 
   # Covariates for main model
-  model$Z <- force(model.matrix(model$formula, data = mf))     
-  QR <- qr(crossprod(model$Z))                           
-  model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)])]      
+  model$Z <- model.matrix(model$formula, data = mf)
+  QR <- qr(crossprod(model$Z))
+  model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)])]
   model$droppedCovar <- colnames(model$Z)[QR$pivot[-seq_len(QR$rank)]]
-  model$Z <- force(scaleModelMatrix(model$Z))
+  model$Z <- scaleModelMatrix(model$Z)
   if (length(model$droppedCovar) > 0 & model$verbose) {
     warning("variables {", paste0(model$droppedCovar, collapse = ", "), "} dropped due to perfect collinearity\n")
   }
   rm(QR)
 
   # Covariates for ZI model
-  model$Z.zi <- force(model.matrix(model$formula.zi, data = mf.zi))   
+  model$Z.zi <- model.matrix(model$formula.zi, data = mf.zi)
   QR.zi <- qr(crossprod(model$Z.zi)) 
-  model$Z.zi <- model$Z.zi[,sort(QR.zi$pivot[seq_len(QR.zi$rank)])]           
+  model$Z.zi <- model$Z.zi[,sort(QR.zi$pivot[seq_len(QR.zi$rank)])]
   model$droppedCovar.zi <- colnames(model$Z.zi)[QR.zi$pivot[-seq_len(QR.zi$rank)]]
-  model$Z.zi <- force(scaleModelMatrix(model$Z.zi))
+  model$Z.zi <- scaleModelMatrix(model$Z.zi)
   if (length(model$droppedCovar.zi) > 0 & model$verbose & family == "zinb") {
     warning("variables {", paste0(model$droppedCovar.zi, collapse = ", "), "} dropped due to perfect collinearity\n")
   }
@@ -752,25 +754,25 @@ dlmtree <- function(formula,
     model$Ymean   <- sum(range(model$Y))/2
     #model$Yscale  <- diff(range(model$Y - model$Ymean))
     model$Yscale  <- sd(model$Y - model$Ymean)
-    model$Y       <- force((model$Y - model$Ymean) / model$Yscale)
+    model$Y       <- (model$Y - model$Ymean) / model$Yscale
   } else {
     model$Yscale  <- 1
     model$Ymean   <- 0
-    model$Y       <- force(scale(model$Y, center = 0, scale = 1))
+    model$Y       <- scale(model$Y, center = 0, scale = 1)
   }
 
   # Store the processed values
-  model$Y <- force(c(model$Y))
+  model$Y <- c(model$Y)
 
   model$Zscale <- attr(model$Z, "scaled:scale")
   model$Zmean <- attr(model$Z, "scaled:center")
   model$Znames <- colnames(model$Z)
-  model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
+  model$Z <- matrix(model$Z, nrow(model$Z), ncol(model$Z))
 
   model$Zscale.zi <- attr(model$Z.zi, "scaled:scale")
   model$Zmean.zi <- attr(model$Z.zi, "scaled:center")
   model$Znames.zi <- colnames(model$Z.zi)
-  model$Z.zi <- force(matrix(model$Z.zi, nrow(model$Z.zi), ncol(model$Z.zi)))
+  model$Z.zi <- matrix(model$Z.zi, nrow(model$Z.zi), ncol(model$Z.zi))
 
   # print("Initializing parameters...")
   # TDLMM
@@ -997,7 +999,7 @@ dlmtree <- function(formula,
                                             labels = model$expNames)
     }
 
-  } else if (model$class %in% c("tdlm", "tdlnm")) {
+  } else if (model$class %in% c("tdlm", "tdlnm", "monotone")) {
     # rescale DLM estimates
     model$TreeStructs           <- as.data.frame(model$TreeStructs)
     colnames(model$TreeStructs) <- c("Iter", "Tree", "xmin", "xmax", "tmin", "tmax", "est", "intcp")
