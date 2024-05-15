@@ -360,7 +360,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
 {
   // * Set up model control
   tdlmCtr *ctr      = new tdlmCtr;
-  if (ctr->debug){Rcout << "Create data\n";}
+  // if (ctr->debug){Rcout << "Create data\n";}
 
   ctr->debug        = as<bool>(model["debug"]);
   ctr->iter         = as<int>(model["nIter"]);
@@ -377,9 +377,9 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   ctr->diagnostics  = as<bool>(model["diagnostics"]);
   
   // * Set up model data
-  ctr->Y0          = as<VectorXd>(model["Y"]);
-  ctr->Ystar          = as<VectorXd>(model["Y"]);
-  ctr->n          = ctr->Y.size();
+  ctr->Y0         = as<VectorXd>(model["Y"]);
+  ctr->Ystar      = as<VectorXd>(model["Y"]);
+  ctr->n          = ctr->Y0.size();
   ctr->Z          = as<MatrixXd>(model["Z"]);
   ctr->pZ         = ctr->Z.cols();
   ctr->Zw         = ctr->Z;
@@ -396,7 +396,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   if (ctr->binomial) {
     ctr->binomialSize = as<VectorXd>(model["binomialSize"]);
     ctr->kappa        = ctr->Y0 - 0.5 * (ctr->binomialSize);
-    ctr->Ystar            = ctr->kappa;
+    ctr->Ystar        = ctr->kappa;
   }
   
   // * Create exposure data management
@@ -528,11 +528,12 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
     ctr->Ystar      = ctr->kappa.array() / ctr->Omega.array();
   }
   ctr->tau.resize(ctr->nTrees);                     ctr->tau.setOnes();
-  ctr->R          = ctr->Y;
+  ctr->R          = ctr->Ystar;
   ctr->totTerm    = 0;
   ctr->sumTermT2  = 0.0;
   ctr->nu         = 1.0; // ! Need to define nu and sigma2 prior to ModelEst
   ctr->sigma2     = 1.0;
+  
   tdlmModelEst(ctr);     // initial draws for gamma, sigma2, omega (binomial)
 
   rHalfCauchyFC(&(ctr->nu), ctr->nTrees, 0.0);
@@ -643,7 +644,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   // delete ctr; // Cannot delete this for some reason?
 
   return(Rcpp::List::create(
-    Named("DLM")              = wrap(DLM),
+    Named("TreeStructs")      = wrap(DLM),
     Named("fhat")             = wrap(fhat),
     Named("sigma2")           = wrap(sigma2),
     Named("Yhat")             = wrap(YhatOut),
