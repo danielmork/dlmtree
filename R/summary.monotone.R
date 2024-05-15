@@ -15,7 +15,6 @@
 #' @param ... additional parameters
 #'
 #' @returns Summary of monotone fit
-#' @export summary.monotone
 #' @export
 #'
 summary.monotone <- function(object,
@@ -139,7 +138,7 @@ summary.monotone <- function(object,
               "formula.zi"        = object$formula.zi)
 
 
-  class(ret) <- "summary.tdlnm"
+  class(ret) <- "summary.monotone"
   
   if (mcmc) {
     ret$dlm_mcmc                  <- dlmest

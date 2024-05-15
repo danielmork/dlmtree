@@ -94,8 +94,8 @@ tdlnm <- function(formula,
                   debug = FALSE,
                   ...)
 {
-  message("Execution halt: 'tdlnm.R' has been deprecated and will be removed in the future. Please use 'dlmtree.fit' instead with arguments: 
-          dlm.type = `nonlinear` for TDLNM and dlm.type = `linear` for TDLM. For example codes, use ?dlmtree.fit.")
+  message("Execution halt: 'tdlnm.R' has been deprecated and will be removed in the future. Please use 'dlmtree' instead with arguments: 
+          dlm.type = `nonlinear` for TDLNM and dlm.type = `linear` for TDLM. For example codes, use ?dlmtree.")
 
 #   model <- list()
 #   options(stringsAsFactors = F)
