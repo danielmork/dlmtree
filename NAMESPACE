@@ -37,6 +37,8 @@ importFrom("stats", "as.formula", "model.frame", "model.matrix",
 
 importFrom("utils", "combn", "data")
 
+importFrom("tidyr", "pivot_longer")
+
 importFrom(utils,packageDescription)
 
 export(dlmtree)
