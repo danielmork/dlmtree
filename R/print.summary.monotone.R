@@ -7,8 +7,17 @@
 #' @param digits integer number of digits to round
 #' @param ... additional parameters
 #'
+#' @examples
+#' D <- sim.tdlnm(sim = "A", error.to.signal = 1)
+#' fit <- dlmtree(formula = y ~ .,
+#'                data = D$dat,
+#'                exposure.data = D$exposures,
+#'                dlm.type = "monotone",
+#'                family = "gaussian")
+#' fit_sum <- summary(fit)
+#' print(fit_sum)
+#'
 #' @returns output in R console
-#' @export print.summary.monotone
 #' @export
 #'
 print.summary.monotone <- function(x, digits = 3, ...)
@@ -24,6 +33,7 @@ print.summary.monotone <- function(x, digits = 3, ...)
   # } else {
   cat("-", Reduce(paste, deparse1(x$formula)), "\n")
 
+  cat("- sample size:", format(x$n, big.mark = ","), "\n")
   cat("- family:", x$ctr$response, "\n")
   cat("-", x$ctr$n.trees, "trees\n")
   cat("-", x$ctr$n.burn, "burn-in iterations\n")
@@ -110,4 +120,10 @@ print.summary.monotone <- function(x, digits = 3, ...)
   } else {
     cat(cw, "\n")
   }
+
+  if(x$ctr$response == "gaussian"){
+    cat("\nresidual standard errors: ")
+    cat(round(x$rse, 3), "\n")
+  }
+
 }

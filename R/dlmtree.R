@@ -240,9 +240,11 @@ dlmtree <- function(formula,
     if (!is.numeric(tdlnm.exposure.se)) {
       stop("`tdlnm.exposure.se` must be a scalar or numeric matrix")
     }
+
     if (length(tdlnm.exposure.se) == 1) {
       tdlnm.exposure.se <- matrix(tdlnm.exposure.se, nrow(exposure.data), ncol(exposure.data))
     }
+    
     if (!all(dim(exposure.data) == dim(tdlnm.exposure.se))) {
       stop("`tdlnm.exposure.se` and `exposure.data` must have same dimensions")
     }
@@ -366,10 +368,14 @@ dlmtree <- function(formula,
   model$stepProbMod   <- prop.table(c(hdlm.modtree.step.prob[1], hdlm.modtree.step.prob[2], hdlm.modtree.step.prob[3], 1 - sum(hdlm.modtree.step.prob)))
 
   # Monotone model priors
-  model$shape       <- ifelse(tdlnm.exposure.splits == 0, "Linear",
+  model$monotone    <-  FALSE               
+
+  if (!mixture) { # if statement to avoid a warning when running TDLMM
+    model$shape     <- ifelse(mean(tdlnm.exposure.splits) == 0, "Linear",
                               ifelse(mean(tdlnm.exposure.se) != 0, "Smooth",
-                                     "Step Function"))
-                               
+                                      "Step Function"))
+  }
+
   if (dlm.type == "monotone") {
     model$monotone        <-  TRUE
     model$zirtGamma0      <-  monotone.gamma0
@@ -400,8 +406,8 @@ dlmtree <- function(formula,
   model$verbose     <- verbose
   model$diagnostics <- diagnostics
   model$debug       <- FALSE
-  #model$maxThreads <-   max.threads
-  #model$debug <-        debug
+  #model$maxThreads <- max.threads
+  #model$debug      <- debug
   
   if (model$verbose) {
     cat("Preparing data...\n")
@@ -517,6 +523,7 @@ dlmtree <- function(formula,
     } else {
       model$X       <- exposure.data
       model$Xrange  <- range(exposure.data)
+
       if (mean(tdlnm.exposure.se) == 0) {
         model$smooth <- FALSE
         model$SE <- matrix(0.0, 0, 0)
@@ -541,7 +548,7 @@ dlmtree <- function(formula,
 
         # TDLNM: Splits defined by quantiles of exposure
         } else {
-          model$class <- "tdlnm"
+          model$class <- ifelse(model$monotone, "monotone", "tdlnm")
           # if (dlm.type == "monotone") 
           #   model$class <- "monotone"
           if (is.list(tdlnm.exposure.splits)) {
@@ -557,7 +564,7 @@ dlmtree <- function(formula,
 
       # TDLNM: Splits defined by specific values or quantiles
       } else {
-        model$class <- "tdlnm"
+        model$class <- ifelse(model$monotone, "monotone", "tdlnm")
         # if (dlm.type == "monotone") 
         #   model$class <- "monotone"
 
@@ -799,34 +806,6 @@ dlmtree <- function(formula,
     }
   }
 
-
-  # print(model$nIter)
-  # print(model$nBurn)
-  # print(model$nThin)
-  # print(model$nTrees)
-  # print(model$verbose)
-  # print(model$diagnostics)
-  # print(model$binomial)
-  # print(model$stepProbTDLM)
-  # print(model$treePriorTDLM)
-  # print(model$shrinkage)
-  # print("----------------------------")
-  # print("----------------------------")
-  # print(model$Y)
-  # print(model$Z)
-  # print("----------------------------")
-  # print("----------------------------")
-  # print(model$binomialSize)
-  # print(model$nSplits)
-  # print(model$SE)
-  # print(model$Xsplits)
-  # print(model$Xcalc)
-  # print(model$Tcalc)
-  # print(model$lowmem)
-  # print(model$splitProb)
-  # print(model$timeSplits0)
-
-
   out <- switch(model$class,
                 "tdlm"  = tdlnm_Cpp(model),
                 "tdlmm" = tdlmm_Cpp(model),
@@ -838,57 +817,6 @@ dlmtree <- function(formula,
                 "monotone" = monotdlnm_Cpp(model))
   
 
-  # # print("Choosing which model to run...")
-  # if (is.null(fixed.tree.idx)) {
-  #   if (model$class %in% c("tdlm", "shared"))
-  #     if (model$monotone) {
-  #       out <- monotdlnm_Cpp(model) # monotone
-  #     } else {
-  #       if (model$class == "tdlm") {
-  #         out <- tdlnm_Cpp(model) # TDLM
-  #       } else {
-  #         out <- dlmtreeHDLMGaussian(model) # shared HDLM
-  #       }
-  #     }  
-  #   else if (model$class %in% c("tdlm2", "nested")) # nested HDLM
-  #     # if (ver == 2)
-  #     out <- dlmtreeTDLM_cpp(model) # nested
-  #     # else if (ver == 1)
-  #     #   out <- dlmtreeTDLMNestedGaussian(model)
-  #   else if (model$class == "tdlmm") # TDLMM
-  #     out <- tdlmm_Cpp(model)
-  #   else if (model$class == "hdlmm") # HDLMM
-  #     out <- dlmtreeHDLMMGaussian(model)
-  #   else if (model$class == "gp") {
-  #     model$covarianceType <- 0
-  #     if (covariance.type == "exponential") {
-  #       model$covarianceType <- 1
-  #       model$DistMat <- -toeplitz(0:(model$pExp - 1))
-  #     } else if (covariance.type == "gaussian") {
-  #       model$covarianceType <- 1
-  #       model$DistMat <- -toeplitz((0:(model$pExp - 1))^2)
-  #     } else if (covariance.type == "identity") {
-  #       model$covarianceType <- 0
-  #       model$DistMat <- diag(model$pExp)
-  #     }
-  #     out <- dlmtreeGPGaussian(model)
-  #   }
-
-  # } else {
-  #   idx <- sort(unique(do.call(c, fixed.tree.idx)))
-  #   if (length(idx) != length(model$Y) | any(idx > length(model$Y))) {
-  #     stop("fixed.tree.idx must contain all indices once")
-  #   }
-
-  #   model$fixedIdx <- lapply(fixed.tree.idx, function(i) i - 1)
-
-  #   if (model$class == "gp") {
-  #     model$DistMat <- -toeplitz(0:(model$pExp - 1))
-  #     out <- dlmtreeGPFixedGaussian(model)
-  #   } else {
-  #     out <- dlmtreeTDLMFixedGaussian(model)
-  #   }
-  # }
 
   # print("Model finished running")
   if (verbose) {

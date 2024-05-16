@@ -68,6 +68,8 @@ summary.tdlm <- function(object, conf.level = 0.95, ...){
               "conf.level"        = conf.level,
               "sig.to.noise"      = ifelse(is.null(object$sigma2), NA,
                                         var(object$fhat) / mean(object$sigma2)),
+              "rse"               = sd(object$sigma2),
+              "n"                 = nrow(object$data),
               "matfit"            = matfit,
               "cilower"           = cilower,
               "ciupper"           = ciupper,

@@ -36,6 +36,8 @@ print.summary.tdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
   } else {
     cat("-", Reduce(paste, deparse1(x$formula)), "\n")
   }
+
+  cat("- sample size:", format(x$n, big.mark = ","), "\n")
   cat("- family:", x$family, "\n")
   cat("- ", x$nTrees, " trees (alpha = ", x$treePrior[1], ", beta = ", x$treePrior[2], ")\n", sep = "")
   cat("-", x$nBurn, "burn-in iterations\n")
@@ -180,4 +182,9 @@ print.summary.tdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
   }
 
   cat("\n---\n")
+
+  if(x$family == "gaussian"){
+    cat("residual standard errors: ")
+    cat(round(x$rse, 3), "\n")
+  }
 }

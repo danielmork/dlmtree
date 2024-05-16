@@ -148,6 +148,11 @@ print.summary.hdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
   #   }
   # }
 
+  if(x$ctr$response == "gaussian"){
+    cat("\nresidual standard errors: ")
+    cat(round(x$rse, 3))
+  }
+
   cat("\n---\n")
 
   cat("To obtain exposure effect estimates, use the 'shiny(fit)' function.\n")

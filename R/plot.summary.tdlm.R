@@ -22,7 +22,7 @@
 #' @returns A plot of distributed lag effect estimated with tdlm
 #' @export
 #'
-plot.summary.tdlm <- function(x,  trueDLM = NULL, ...) {
+plot.summary.tdlm <- function(x, trueDLM = NULL, ...) {
 
   args <- list(...)
   main <- ifelse(!is.null(args$main), args$main, "DLM")

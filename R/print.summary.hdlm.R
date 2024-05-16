@@ -37,6 +37,8 @@ print.summary.hdlm <- function(x, digits = 3, cw.only = TRUE, ...)
   # } else {
   cat("-", Reduce(paste, deparse1(x$formula)), "\n")
   # }
+
+  cat("- sample size:", format(x$n, big.mark = ","), "\n")
   cat("- family:", x$ctr$response, "\n")
   cat("-", x$ctr$n.trees, "trees\n")
   cat("-", x$ctr$n.burn, "burn-in iterations\n")
@@ -135,6 +137,11 @@ print.summary.hdlm <- function(x, digits = 3, cw.only = TRUE, ...)
   #                   ppRange(which(x$TreeStructs[[ex.name]]$marg.cw))))
   #   }
   # }
+
+  if(x$ctr$response == "gaussian"){
+    cat("\nresidual standard errors: ")
+    cat(round(x$rse, 3))
+  }
 
   cat("\n---\n")
 

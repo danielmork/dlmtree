@@ -256,7 +256,6 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn, exposure
     }
   }
   
-  
   // * Propose new nested tree at each terminal node
   for (Node* eta : dlnmTerm) {
 
@@ -372,6 +371,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   ctr->treePrior    = as<std::vector<double> >(model["treePriorTime"]);
   ctr->treePrior2   = as<std::vector<double> >(model["treePriorExp"]);
   ctr->binomial     = as<bool>(model["binomial"]);
+  ctr->zinb         = as<bool>(model["zinb"]); 
   ctr->shrinkage    = as<int>(model["shrinkage"]);
   ctr->verbose      = as<bool>(model["verbose"]);
   ctr->diagnostics  = as<bool>(model["diagnostics"]);
