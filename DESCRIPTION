@@ -24,7 +24,7 @@ License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: false
 Depends: R (>= 3.5.0)
-Imports: Rcpp (>= 1.0.4), dplyr, ggplot2, shiny, shinythemes
+Imports: Rcpp (>= 1.0.4), dplyr, ggplot2, shiny, shinythemes, tidyr
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen
 RoxygenNote: 7.3.1
 SystemRequirements: C++11
