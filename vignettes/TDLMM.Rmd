@@ -57,3 +57,15 @@ plot(fit_sum,
      main = "Plot title")
 ```
 
+### Adjusting for expected changes in co-occurring exposures
+Here we consider going from the 25th to the 75th percentile in each exposure while adjusting for the expected changes in other exposures due to their correlations with the exposure of interest.
+```{r}
+library(ggplot2)
+adj_coexposure(D$exposures, object, contrast_perc = c(0.25, 0.75))
+ggplot(dlm_coexp, aes(x = Time, y = Effect, ymin = Lower, ymax = Upper)) +
+  geom_hline(yintercept = 0, color = "red") +
+  geom_ribbon(fill = "grey") +
+  geom_line() +
+  facet_wrap(~Name) +
+  theme_bw()
+```

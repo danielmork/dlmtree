@@ -28,6 +28,7 @@ import(ggplot2)
 import(dplyr)
 import(shiny)
 import(shinythemes)
+import(mgcv)
 
 importFrom("stats", "as.formula", "model.frame", "model.matrix",
            "model.response", "pnorm", "quantile", "rbinom", "rnorm",
@@ -59,6 +60,7 @@ export(estDLM)
 export(predict.dlmtree)
 export(pip)
 export(splitpoints)
+export(adj_coexposure)
 
 export(plot.summary.tdlnm)
 export(plot.summary.tdlm)
