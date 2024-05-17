@@ -96,12 +96,13 @@ lag model (TDLM). More details can be found in Mork and Wilson (2023)
 &lt;doi: <a href="https://doi.org/10.1111/biom.13568" class="external-link">10.1111/biom.13568</a>&gt;.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/danielmork/dlmtree" class="external-link">dlmtree</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; This is dlmtree 1.0.0. For details visit https://danielmork.github.io/dlmtree/.</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co">#&gt; This is dlmtree 1.0.0. For details visit https://danielmork.github.io/dlmtree/.</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="fitting-the-model">Fitting the model<a class="anchor" aria-label="anchor" href="#fitting-the-model"></a>
 </h3>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">D</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sim.tdlmm.html">sim.tdlmm</a></span><span class="op">(</span>sim <span class="op">=</span> <span class="st">"A"</span>, mean.p <span class="op">=</span> <span class="fl">0.5</span>, n <span class="op">=</span> <span class="fl">5000</span><span class="op">)</span></span>
 <span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dlmtree.html">dlmtree</a></span><span class="op">(</span>formula <span class="op">=</span> <span class="va">y</span> <span class="op">~</span> <span class="va">.</span>,</span>
 <span>               data <span class="op">=</span> <span class="va">D</span><span class="op">$</span><span class="va">dat</span>,</span>
@@ -115,7 +116,7 @@ lag model (TDLM). More details can be found in Mork and Wilson (2023)
 <span><span class="co">#&gt; Burn-in % complete </span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
-<span><span class="co">#&gt; MCMC iterations (est time: 48 seconds)</span></span>
+<span><span class="co">#&gt; MCMC iterations (est time: 44 seconds)</span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
 <span><span class="co">#&gt; Compiling results...</span></span></code></pre></div>
@@ -123,7 +124,7 @@ lag model (TDLM). More details can be found in Mork and Wilson (2023)
 <div class="section level3">
 <h3 id="model-fit-summary">Model fit summary<a class="anchor" aria-label="anchor" href="#model-fit-summary"></a>
 </h3>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="va">fit_sum</span></span>
 <span><span class="co">#&gt; ---</span></span>
@@ -202,7 +203,7 @@ lag model (TDLM). More details can be found in Mork and Wilson (2023)
 <div class="section level3">
 <h3 id="exposure-effect">Exposure effect<a class="anchor" aria-label="anchor" href="#exposure-effect"></a>
 </h3>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit_sum</span>, </span>
 <span>     main <span class="op">=</span> <span class="st">"Plot title"</span>, </span>
 <span>     xlab <span class="op">=</span> <span class="st">"Time axis label"</span>, </span>
