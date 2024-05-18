@@ -42,6 +42,8 @@ importFrom("tidyr", "pivot_longer")
 
 importFrom(utils,packageDescription)
 
+importFrom("mgcv", bam)
+
 export(dlmtree)
 
 export(sim.tdlnm)

@@ -20,6 +20,7 @@
 #'
 #' @return data.frame of plot data with exposure name, posterior mean, and
 #' credible intervals, or posterior samples if keep.mcmc = TRUE
+#' @importFrom mgcv bam
 #' @export
 
 adj_coexposure <- function(exposure.data,
@@ -67,7 +68,7 @@ adj_coexposure <- function(exposure.data,
         # Predict `response` (respExp) at 25/75 percentiles of `predictor` (predExp).
         # Other methods could be substituted here to achieve prediction
         formula <- as.formula(paste(respExp, "~s(", predExp, ", k = 5, bs = 'ps')"))
-        model <- bam(formula, dat = exposureDat)
+        model <- mgcv::bam(formula, dat = exposureDat)
         newdat <- data.frame(contrast_exp[[predExp]])
         names(newdat) <- predExp
         predLevels[[predExp]][[respExp]] <- predict(model, newdata = newdat)
@@ -152,6 +153,7 @@ adj_coexposure <- function(exposure.data,
       expDLM[[exposure]] <- mcmc
     } else {
       expDLM[[exposure]] <- 
+        suppressWarnings(
         data.frame("Name" = exposure,
                    "Time" = 1:modelSummary$nLags,
                    "Effect" = apply(mcmc, 1, mean),
@@ -162,7 +164,7 @@ adj_coexposure <- function(exposure.data,
                    # Cumulative effect
                    "cEffect" = mean(apply(mcmc, 2, sum)),
                    "cLower" = quantile(apply(mcmc, 2, sum), (1 - conf.level) / 2),
-                   "cUpper" = quantile(apply(mcmc, 2, sum), 1 - (1 - conf.level) / 2))
+                   "cUpper" = quantile(apply(mcmc, 2, sum), 1 - (1 - conf.level) / 2)))
       expDLM[[exposure]]$CW <- # Critical window where CI does not contain zero
         (expDLM[[exposure]]$Lower > 0 | expDLM[[exposure]]$Upper < 0)
     }
