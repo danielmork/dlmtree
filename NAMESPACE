@@ -28,7 +28,6 @@ import(ggplot2)
 import(dplyr)
 import(shiny)
 import(shinythemes)
-import(mgcv)
 
 importFrom("stats", "as.formula", "model.frame", "model.matrix",
            "model.response", "pnorm", "quantile", "rbinom", "rnorm",
@@ -36,13 +35,11 @@ importFrom("stats", "as.formula", "model.frame", "model.matrix",
            "aggregate", "complete.cases", "delete.response",
            "dnorm", "na.fail", "reorder", "rnbinom", "setNames", "step", "time")
 
-importFrom("utils", "combn", "data")
+importFrom("utils", "combn", "data", "packageDescription")
 
 importFrom("tidyr", "pivot_longer")
 
-importFrom(utils,packageDescription)
-
-importFrom("mgcv", bam)
+importFrom("mgcv", "bam", "predict.bam")
 
 export(dlmtree)
 

@@ -68,7 +68,7 @@ adj_coexposure <- function(exposure.data,
         # Predict `response` (respExp) at 25/75 percentiles of `predictor` (predExp).
         # Other methods could be substituted here to achieve prediction
         formula <- as.formula(paste(respExp, "~s(", predExp, ", k = 5, bs = 'ps')"))
-        model <- mgcv::bam(formula, dat = exposureDat)
+        model <- bam(formula, dat = exposureDat)
         newdat <- data.frame(contrast_exp[[predExp]])
         names(newdat) <- predExp
         predLevels[[predExp]][[respExp]] <- predict(model, newdata = newdat)
