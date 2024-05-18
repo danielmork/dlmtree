@@ -357,6 +357,7 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn, exposure
 // [[Rcpp::export]]
 Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
 {
+  // Rcout << "monotone \n";
   // * Set up model control
   tdlmCtr *ctr      = new tdlmCtr;
   // if (ctr->debug){Rcout << "Create data\n";}

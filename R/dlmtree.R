@@ -121,7 +121,7 @@ dlmtree <- function(formula,
                     hdlm.modtree.step.prob = c(.25, .25, .25), 
                     hdlm.dlmtree.type = "shared",      
                     hdlm.selection.prior = 0.5,
-                    # HDLM/HDLMM parameters
+                    # Mixture parameters
                     mixture.interactions = "noself",  
                     mixture.prior = 1,     
                     # Monotone parameters
@@ -131,7 +131,7 @@ dlmtree <- function(formula,
                     monotone.tree.exp.params = c(.95, 2), 
                     monotone.time.kappa = NULL, 
                     # Diagnostic parameters
-                    subset = 1:nrow(data),
+                    subset = NULL,
                     lowmem = FALSE,
                     #max.threads = 0,
                     verbose = TRUE,
@@ -144,7 +144,7 @@ dlmtree <- function(formula,
                     #...)
 {
   model <- list()
-  options(stringsAsFactors = FALSE)
+  options(stringsAsFactors = F)
   piecewise.linear = FALSE
 
   # print("Checking MCMC input...")
@@ -216,6 +216,13 @@ dlmtree <- function(formula,
       
     model$pExp <- ncol(exposure.data) # lag
 
+    # TDLM 
+    if (dlm.type == "linear") {
+      tdlnm.exposure.splits <- 0
+    }
+
+    model$monotone <- ifelse(dlm.type == "monotone", TRUE, FALSE)
+
     # Monotone default set up
     if(is.null(monotone.gamma0)){
       monotone.gamma0 <- rep(0, ncol(exposure.data))
@@ -224,16 +231,15 @@ dlmtree <- function(formula,
     if(is.null(monotone.sigma)){
       monotone.sigma <- diag(ncol(exposure.data)) * 1.502^2
     }
-                              
-    # TDLM 
-    if (dlm.type == "linear") {
-      tdlnm.exposure.splits <- 0
-    }
 
     # Exposure smoothing/error (TDLNM, monotone)
     # Set default
     if(is.null(tdlnm.exposure.se)){
       tdlnm.exposure.se <- sd(exposure.data)/2
+    }
+
+    if(is.null(tdlnm.time.split.prob)){
+      tdlnm.time.split.prob <- rep(1 / (model$pExp - 1), model$pExp - 1)
     }
 
     # check the dimension
@@ -307,7 +313,7 @@ dlmtree <- function(formula,
     model$zinb    <- 1
     model$sigma2  <- 1
   }
-
+  
   # Mixture interactions
   # print("Checking mixture interaction...")
   if (!(mixture.interactions %in% c("none", "noself", "all"))) {
@@ -362,14 +368,13 @@ dlmtree <- function(formula,
   # dlmtree
   model$treePriorTDLM <- dlmtree.params
   model$stepProbTDLM  <- prop.table(c(dlmtree.step.prob[1], dlmtree.step.prob[1], dlmtree.step.prob[2]))
+  model$timeSplits0 <- tdlnm.time.split.prob
 
   # modtree
   model$treePriorMod  <- hdlm.modtree.params
   model$stepProbMod   <- prop.table(c(hdlm.modtree.step.prob[1], hdlm.modtree.step.prob[2], hdlm.modtree.step.prob[3], 1 - sum(hdlm.modtree.step.prob)))
 
-  # Monotone model priors
-  model$monotone    <-  FALSE               
-
+  # Monotone model priors            
   if (!mixture) { # if statement to avoid a warning when running TDLMM
     model$shape     <- ifelse(mean(tdlnm.exposure.splits) == 0, "Linear",
                               ifelse(mean(tdlnm.exposure.se) != 0, "Smooth",
@@ -377,14 +382,12 @@ dlmtree <- function(formula,
   }
 
   if (dlm.type == "monotone") {
-    model$monotone        <-  TRUE
     model$zirtGamma0      <-  monotone.gamma0
     model$zirtSigma       <-  monotone.sigma
     model$treePriorTime   <-  monotone.tree.time.params
     model$treePriorExp    <-  monotone.tree.exp.params
     model$timeKappa       <-  ifelse(is.null(monotone.time.kappa), 1.0, monotone.time.kappa)
     model$updateTimeKappa <-  ifelse(is.null(monotone.time.kappa), TRUE, FALSE)
-    model$debug           <-  FALSE
   }
 
   # Modifier prior for HDLM, HDLMM
@@ -399,7 +402,8 @@ dlmtree <- function(formula,
   }
 
   model$mixPrior  <- mixture.prior # Exposure selection sparsity
-  model$shrinkage <- switch(shrinkage, "all" = 3, "trees" = 2, "exposures" = 1, "none" = 0)
+  model$shrinkage <- ifelse(dlm.type == "monotone", FALSE,
+                      switch(shrinkage, "all" = 3, "trees" = 2, "exposures" = 1, "none" = 0))
 
   # Diagnostics
   model$lowmem      <- lowmem
@@ -472,10 +476,6 @@ dlmtree <- function(formula,
       !model$intercept & !model$intercept.zi) 
     stop("no valid variables in formula")
 
-
-
-
-
   # *** Exposure splits ***
   # print("Exposure split...")
   model$splitProb <- as.double(c())
@@ -531,8 +531,6 @@ dlmtree <- function(formula,
         model$smooth <- TRUE
         model$SE <- tdlnm.exposure.se
       }
-
-      model$timeSplits0 = rep(1 / (model$pExp - 1), model$pExp - 1)
 
       if (length(tdlnm.exposure.splits) == 1) {
         # TDLM
@@ -689,8 +687,6 @@ dlmtree <- function(formula,
     }
   }
 
-
-
   # *** Scale data and setup exposures ***
   # print("Checking collinearity...")
   data <- droplevels(data)
@@ -793,8 +789,6 @@ dlmtree <- function(formula,
     }
   }
   
-
-
   # *** Run model ***
   if (verbose) {
     if(model$class == "monotone"){
@@ -815,7 +809,6 @@ dlmtree <- function(formula,
                 "hdlmm" = dlmtreeHDLMMGaussian(model),
                 "tdlnm" = tdlnm_Cpp(model),
                 "monotone" = monotdlnm_Cpp(model))
-  
 
 
   # print("Model finished running")
@@ -1073,6 +1066,8 @@ dlmtree <- function(formula,
     model$modSplitIdx <- NULL
     model$fullIdx     <- NULL
 
+
+    # Redundant code
     if (model$class == "gp") {
       colnames(model$TreeStructs) <- c("Rule", "Iter", "Tree", "modTerm", paste0("Lag", 1:model$pExp))
       model$TreeStructs[,-c(1:4)] <- model$TreeStructs[,-c(1:4)] * model$Yscale / model$Xscale

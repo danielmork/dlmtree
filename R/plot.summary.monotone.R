@@ -1,9 +1,9 @@
-#' plot.summary.tdlnm
+#' plot.summary.monotone
 #'
-#' @title Returns variety of plots for model summary of class 'tdlnm'
-#' @description Method for returning variety of plots for model summary of class 'tdlnm'
-#' 
-#' @param x object of class 'summary.tdlnm', output of summary of 'tdlnm'
+#' @title Returns variety of plots for model summary of class 'monotone'
+#' @description Method for returning variety of plots for model summary of class 'monotone'
+#'
+#' @param x object of class 'summary.monotone', output of summary of 'monotone'
 #' @param plot.type string indicating plot type, options are 'mean' (default)
 #' which shows mean exposure-time response surface, 'se', 'ci-min', 'ci-max',
 #' 'slice' which takes a slice of the plot at a given 'val' or 'time',
@@ -11,7 +11,7 @@
 #' exposure values (requires package gganimate)
 #' @param val exposure value for slice plot
 #' @param time time value for slice plot
-#' @param ... additional plotting parameters for title and labels
+#' @param ... additional parameters to alter plots: 'main', 'xlab', 'ylab',
 #' 'flab' which sets the effect label for surface plots,
 #' 'start.time' which sets the first time value
 #'
@@ -20,15 +20,15 @@
 #' fit <- dlmtree(formula = y ~ .,
 #'                data = D$dat,
 #'                exposure.data = D$exposures,
-#'                dlm.type = "nonlinear",
+#'                dlm.type = "monotone",
 #'                family = "gaussian")
 #' fit_sum <- summary(fit)
 #' plot(fit_sum)
 #'
-#' @returns A plot of distributed lag effect estimated with tdlnm
+#' @returns A plot of distributed lag effect estimated with monotone-TDLNM
 #' @export
 #'
-plot.summary.tdlnm <- function(x, plot.type = "mean", val = c(), time = c(), ...)
+plot.summary.monotone <- function(x, plot.type = "mean", val = c(), time = c(), ...)
 {
   args <- list(...)
   main <- ifelse(!is.null(args$main), args$main, "")
@@ -134,6 +134,6 @@ plot.summary.tdlnm <- function(x, plot.type = "mean", val = c(), time = c(), ...
         labs(x = xlab, y = ylab, title = main)
     }
   } 
-  
+
   return(p)
 }

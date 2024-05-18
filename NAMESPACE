@@ -18,6 +18,7 @@ S3method(print, summary.monotone)
 
 S3method(plot, summary.tdlm)
 S3method(plot, summary.tdlnm)
+S3method(plot, summary.monotone)
 S3method(plot, summary.tdlmm)
 S3method(predict, dlmtree)
 
@@ -60,6 +61,7 @@ export(splitpoints)
 
 export(plot.summary.tdlnm)
 export(plot.summary.tdlm)
+export(plot.summary.monotone)
 export(plot.summary.tdlmm)
 
 export(print.summary.tdlnm)

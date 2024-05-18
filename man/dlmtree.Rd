@@ -37,7 +37,7 @@ dlmtree(
   monotone.tree.time.params = c(0.95, 2),
   monotone.tree.exp.params = c(0.95, 2),
   monotone.time.kappa = NULL,
-  subset = 1:nrow(data),
+  subset = NULL,
   lowmem = FALSE,
   verbose = TRUE,
   save.data = TRUE,
