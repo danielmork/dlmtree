@@ -35,11 +35,11 @@ importFrom("stats", "as.formula", "model.frame", "model.matrix",
            "aggregate", "complete.cases", "delete.response",
            "dnorm", "na.fail", "reorder", "rnbinom", "setNames", "step", "time")
 
-importFrom("utils", "combn", "data")
+importFrom("utils", "combn", "data", "packageDescription")
 
 importFrom("tidyr", "pivot_longer")
 
-importFrom(utils,packageDescription)
+importFrom("mgcv", "bam", "predict.bam")
 
 export(dlmtree)
 
@@ -59,6 +59,7 @@ export(estDLM)
 export(predict.dlmtree)
 export(pip)
 export(splitpoints)
+export(adj_coexposure)
 
 export(plot.summary.tdlnm)
 export(plot.summary.tdlm)
