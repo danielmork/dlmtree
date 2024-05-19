@@ -290,6 +290,10 @@ dlmtree <- function(formula,
       if (any(is.na(exposure.data[[i]]))) {
         stop("missing values in exposure data")
       }
+
+      if (het == FALSE & mean(exposure.data[[i]]) < 1e-10){
+        cat("Caution: At least one of the exposure data may have been centered. \n This could result in an inaccurate estimate of marginal exposure effect when using TDLMM \n \n")
+      }
     }
   }
 
