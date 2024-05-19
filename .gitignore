@@ -7,8 +7,8 @@ examples
 *.dll
 .DS_Store
 *.so
-.vscode
 _config.yml
 .Rbuildignore
 inst/doc
 docs
+pkgdown
