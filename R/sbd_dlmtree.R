@@ -11,8 +11,4 @@
 #'
 #' @keywords datasets
 #'
-#' @references \url{https://www.epa.gov/outdoor-air-quality-data}
-#'
-#' @source \url{https://aqs.epa.gov/aqsweb/airdata/download_files.html}
-#'
 "sbd_dlmtree"
