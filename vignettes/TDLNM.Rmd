@@ -9,40 +9,76 @@ vignette: >
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
+  collapse = FALSE,
   comment = "#>"
 )
 ```
 
 This vignette demonstrates the implementation of treed distributed lag non-linear model (TDLNM). More details can be found in Mork and Wilson (2021) <doi: [10.1093/biostatistics/kxaa051](https://doi.org/10.1093/biostatistics/kxaa051)>.
 
-```{r setup}
+```{r setup, message = FALSE}
 library(dlmtree)
+library(tidyverse)
 set.seed(1)
+data("sbd_dlmtree")
+```
+
+### Data preparation
+```{r}
+# Response and covariates
+sbd_cov <- sbd_dlmtree %>% 
+            select(bwgaz, ChildSex, MomAge, GestAge, MomPriorBMI, Race,
+                    Hispanic, MomEdu, SmkAny, Marital, Income,
+                    EstDateConcept, EstMonthConcept, EstYearConcept)
+
+# Exposure data
+sbd_exp <- list(PM25 = sbd_dlmtree %>% select(starts_with("pm25_")),
+                TEMP = sbd_dlmtree %>% select(starts_with("temp_")),
+                SO2 = sbd_dlmtree %>% select(starts_with("so2_")),
+                CO = sbd_dlmtree %>% select(starts_with("co_")),
+                NO2 = sbd_dlmtree %>% select(starts_with("no2_")))
+sbd_exp <- sbd_exp %>% lapply(as.matrix)
 ```
 
 ### Fitting the model
 ```{r tdlnm.fit}
-D <- sim.tdlnm(sim = "A", error.to.signal = 1)
-fit <- dlmtree(formula = y ~ .,
-               data = D$dat,
-               exposure.data = D$exposures,
-               dlm.type = "nonlinear", 
-               family = "gaussian",
-               n.burn = 2500, n.iter = 10000, n.thin = 5)
+tdlnm.fit <- dlmtree(formula = bwgaz ~ ChildSex + MomAge + MomPriorBMI + 
+                                        Race + Hispanic + SmkAny + EstMonthConcept,
+                     data = sbd_cov,
+                     exposure.data = sbd_exp[["TEMP"]],
+                     dlm.type = "nonlinear",
+                     family = "gaussian",
+                     tdlnm.exposure.splits = 20,
+                     n.burn = 2500, n.iter = 10000, n.thin = 5)
 ```
 
 ### Model fit summary
 ```{r tdlnm.sum}
-fit_sum <- summary(fit)
-fit_sum
+tdlnm.sum <- summary(tdlnm.fit)
+tdlnm.sum
 ```
 
 ### Exposure-time surface
 ```{r tdlnm.plot}
-plot(fit_sum, 
+plot(tdlnm.sum, 
      main = "Plot title", 
      xlab = "Time axis label", 
      ylab = "Exposure-concentration axis label", 
      flab = "Effect color label")
 ```
+
+### Slicing on exposure-concentration
+```{r}
+# slicing on exposure-concentration
+plot(tdlnm.sum, plot.type = "slice", val = 1, main = "Slice at concentration 1") 
+plot(tdlnm.sum, plot.type = "slice", val = 2, main = "Slice at concentration 2")
+```
+
+### Slicing on time lag
+```{r}
+# slicing on exposure-concentration
+plot(tdlnm.sum, plot.type = "slice", time = 7, main = "Slice at time 7")
+plot(tdlnm.sum, plot.type = "slice", time = 15, main = "Slice at time 15")
+plot(tdlnm.sum, plot.type = "slice", time = 33, main = "Slice at time 33")
+```
+

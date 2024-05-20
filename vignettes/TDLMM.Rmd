@@ -9,63 +9,88 @@ vignette: >
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
+  collapse = FALSE,
   comment = "#>"
 )
 ```
 
 This vignette demonstrates the implementation of treed distributed lag mixture model (TDLMM). More details can be found in Mork and Wilson (2023) <doi: [10.1111/biom.13568](https://doi.org/10.1111/biom.13568)>.
 
-```{r setup}
+```{r setup, message = FALSE}
 library(dlmtree)
+library(tidyverse)
 set.seed(1)
+data("sbd_dlmtree")
+```
+
+### Data preparation
+```{r}
+# Response and covariates
+sbd_cov <- sbd_dlmtree %>% 
+            select(bwgaz, ChildSex, MomAge, GestAge, MomPriorBMI, Race,
+                    Hispanic, MomEdu, SmkAny, Marital, Income,
+                    EstDateConcept, EstMonthConcept, EstYearConcept)
+
+# Exposure data
+sbd_exp <- list(PM25 = sbd_dlmtree %>% select(starts_with("pm25_")),
+                TEMP = sbd_dlmtree %>% select(starts_with("temp_")),
+                SO2 = sbd_dlmtree %>% select(starts_with("so2_")),
+                CO = sbd_dlmtree %>% select(starts_with("co_")),
+                NO2 = sbd_dlmtree %>% select(starts_with("no2_")))
+sbd_exp <- sbd_exp %>% lapply(as.matrix)
 ```
 
 ### Fitting the model
 ```{r tdlmm.fit}
-D <- sim.tdlmm(sim = "B", n = 5000)
-fit <- dlmtree(formula = y ~ .,
-               data = D$dat,
-               exposure.data = D$exposures,
-               dlm.type = "linear", 
-               mixture = TRUE,
-               binomial.size = 1,
-               mixture.interactions = "noself",
-               n.burn = 2500, n.iter = 10000, n.thin = 5)
+tdlmm.fit <- dlmtree(formula = bwgaz ~ ChildSex + MomAge + MomPriorBMI +
+                                        Race + Hispanic + SmkAny + EstMonthConcept,
+                     data = sbd_cov,
+                     exposure.data = sbd_exp,
+                     family = "gaussian", dlm.type = "linear", mixture = TRUE,
+                     mixture.interactions = "noself",
+                     n.burn = 2500, n.iter = 10000, n.thin = 5)
 ```
 
 ### Model fit summary
 ```{r tdlmm.sum}
-fit_sum <- summary(fit)
-fit_sum
+# Marginalization with co-exposure fixed at exact levels for each exposure
+tdlmm.sum.exact <- summary(tdlmm.fit, marginalize = c(3, 2, 1, 2, 1))
+
+# Marginalization with co-exposure fixed at 25th percentile
+tdlmm.sum.percentile <- summary(tdlmm.fit, marginalize = 25)
+
+# Marginalization with co-exposure fixed at the empirical means (default)
+tdlmm.sum <- summary(tdlmm.fit, marginalize = "mean", log10BF.crit = 0.5)
+tdlmm.sum
 ```
 
 ### Main exposure effect
 ```{r tdlmm.plot}
-plot(fit_sum, 
-     exposure1 = "e1", 
-     main = "Plot title", 
-     xlab = "Time axis label",
-     ylab = "Exposure effect axis label")
+library(gridExtra)
+
+p1 <- plot(tdlmm.sum, exposure1 = "PM25", main = "PM2.5")
+p2 <- plot(tdlmm.sum, exposure1 = "TEMP", main = "Temperature")
+p3 <- plot(tdlmm.sum, exposure1 = "SO2", main = "SO2")
+
+grid.arrange(p1, p2, p3, nrow = 1)
 ```
 
 ### Lagged interaction effect
 ```{r}
-plot(fit_sum, 
-     exposure1 = "e1",      # Specify first exposure
-     exposure2 = "e2",      # Specify second exposure 
-     main = "Plot title")
+plot(tdlmm.sum, exposure1 = "PM25", exposure2 = "TEMP")
 ```
 
 ### Adjusting for expected changes in co-occurring exposures
 Here we consider going from the 25th to the 75th percentile in each exposure while adjusting for the expected changes in other exposures due to their correlations with the exposure of interest.
 ```{r}
 library(ggplot2)
-dlm_coexp <- adj_coexposure(D$exposures, fit, contrast_perc = c(0.25, 0.75))
+dlm_coexp <- adj_coexposure(sbd_exp, tdlmm.fit, contrast_perc = c(0.25, 0.75))
 ggplot(dlm_coexp, aes(x = Time, y = Effect, ymin = Lower, ymax = Upper)) +
   geom_hline(yintercept = 0, color = "red") +
   geom_ribbon(fill = "grey") +
   geom_line() +
   facet_wrap(~Name) +
-  theme_bw()
+  theme_bw() + 
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0))
 ```
