@@ -18,7 +18,7 @@ This vignette demonstrates the implementation of heterogeneous treed distributed
 
 ```{r setup, message = FALSE}
 library(dlmtree)
-library(tidyverse)
+library(dplyr)
 set.seed(1)
 data("sbd_dlmtree")
 ```
