@@ -43,3 +43,13 @@ Method for creating a summary object of class 'monotone'
 \details{
 summary.monotone
 }
+\examples{
+D <- sim.tdlnm(sim = "A", error.to.signal = 1)
+fit <- dlmtree(formula = y ~ .,
+               data = D$dat,
+               exposure.data = D$exposures,
+               dlm.type = "monotone",
+               family = "gaussian")
+summary(fit)
+
+}

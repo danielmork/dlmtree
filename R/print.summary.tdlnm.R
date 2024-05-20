@@ -33,7 +33,7 @@ print.summary.tdlnm <- function(x, digits = 3, ...)
   } else {
     cat("-", Reduce(paste, deparse1(x$formula)), "\n")
   }
-
+  cat("- sample size:", format(x$n, big.mark = ","), "\n")
   cat("- family:", x$ctr$response, "\n")
   cat("-", x$ctr$n.trees, "trees\n")
   cat("-", x$ctr$n.burn, "burn-in iterations\n")
@@ -113,6 +113,10 @@ print.summary.tdlnm <- function(x, digits = 3, ...)
 
   cat("\ncritical windows: ")
   cw <- ppRange(which((colSums(x$cilower > 0) + colSums(x$ciupper < 0)) > 0))
-
   cat(cw, "\n")
+
+  if(x$ctr$response == "gaussian"){
+    cat("\nresidual standard errors: ")
+    cat(round(x$rse, 3), "\n")
+  }
 }

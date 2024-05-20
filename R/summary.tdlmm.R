@@ -296,6 +296,8 @@ summary.tdlmm <- function(object,
   # ---- Return ----
   res$sig2noise <- ifelse(is.null(object$sigma2), NA,
                           var(object$fhat) / mean(object$sigma2))
+  res$rse       <- sd(object$sigma2)
+  res$n         <- nrow(object$data)
 
   class(res) <- "summary.tdlmm"
   

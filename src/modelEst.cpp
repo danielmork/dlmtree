@@ -33,7 +33,6 @@ void tdlmModelEst(modelCtr *ctr){
   if(!(ctr->zinb)){ 
     const VectorXd ZR = ctr->Zw.transpose() * ctr->R; 
     ctr->gamma        = ctr->Vg * ZR; 
-    
     // * Update sigma^2 and xi_sigma2
     if (!(ctr->binomial)) {
       rHalfCauchyFC(&(ctr->sigma2), (double)ctr->n + (double)ctr->totTerm, 
