@@ -66,13 +66,13 @@ tdlmm.sum
 
 ### Main exposure effect
 ```{r tdlmm.plot}
-library(gridExtra)
-
 p1 <- plot(tdlmm.sum, exposure1 = "PM25", main = "PM2.5")
 p2 <- plot(tdlmm.sum, exposure1 = "TEMP", main = "Temperature")
 p3 <- plot(tdlmm.sum, exposure1 = "SO2", main = "SO2")
 
-grid.arrange(p1, p2, p3, nrow = 1)
+p1
+p2
+p3
 ```
 
 ### Lagged interaction effect
