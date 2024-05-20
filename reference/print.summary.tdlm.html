@@ -116,6 +116,7 @@
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Model run info:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - y ~ . </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> - sample size: 1,000 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - family: logit </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - 20 trees</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - 1000 burn-in iterations</span>
@@ -124,65 +125,67 @@
 <span class="r-out co"><span class="r-pr">#&gt;</span> - 0.95 confidence level</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Fixed effect coefficients:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               Mean  Lower  Upper</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)  0.053 -0.234  0.369</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> c1          -0.011 -0.138  0.127</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> c2          -0.013 -0.128  0.112</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> c3          -0.131 -0.271  0.001</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> c4           0.025 -0.116  0.155</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *c5         -0.212 -0.340 -0.084</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> b1          -0.001 -0.258  0.246</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> b2           0.142 -0.119  0.413</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> b3           0.020 -0.239  0.269</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> b4           0.054 -0.225  0.301</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> b5          -0.188 -0.423  0.071</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               Mean  Lower Upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept) -0.059 -0.376 0.241</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> c1           0.017 -0.120 0.149</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *c2          0.163  0.027 0.295</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> c3          -0.022 -0.150 0.096</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> c4           0.100 -0.033 0.233</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> c5           0.028 -0.092 0.152</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> b1          -0.042 -0.298 0.213</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> b2          -0.143 -0.398 0.098</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> b3          -0.103 -0.358 0.156</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> b4           0.089 -0.185 0.351</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> b5           0.145 -0.111 0.416</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> * = CI does not contain zero</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> DLM effect:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> range = [0, 0.08]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> signal-to-noise = 0.214</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> critical windows: 1-12 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             Mean  Lower Upper</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 1  0.059  0.003 0.099</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 2  0.061  0.014 0.102</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 3  0.063  0.020 0.102</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 4  0.065  0.022 0.102</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 5  0.073  0.034 0.111</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 6  0.076  0.039 0.112</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 7  0.077  0.044 0.113</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 8  0.079  0.046 0.113</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 9  0.079  0.045 0.116</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 10 0.078  0.043 0.116</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 11 0.080  0.043 0.130</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 12 0.078  0.036 0.131</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 13  0.058 -0.004 0.109</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 14  0.034 -0.020 0.099</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 15  0.010 -0.039 0.065</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 16  0.003 -0.040 0.043</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 17  0.000 -0.043 0.031</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 18  0.002 -0.032 0.033</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 19  0.002 -0.032 0.032</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 20  0.000 -0.034 0.030</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 21  0.000 -0.034 0.034</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 22  0.001 -0.033 0.029</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 23  0.000 -0.039 0.027</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 24  0.004 -0.027 0.030</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 25  0.006 -0.024 0.035</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 26  0.009 -0.017 0.038</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 27  0.010 -0.016 0.041</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 28  0.009 -0.020 0.038</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 29  0.009 -0.023 0.038</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 30  0.010 -0.022 0.042</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 31  0.010 -0.024 0.044</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 32  0.012 -0.021 0.050</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 33  0.013 -0.016 0.055</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 34  0.010 -0.023 0.049</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 35  0.006 -0.039 0.043</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 36  0.000 -0.062 0.039</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Period 37  0.001 -0.064 0.051</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> range = [-0.04, 0.086]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> signal-to-noise = 0.205</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> critical windows: 17-27 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              Mean  Lower Upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 1   -0.040 -0.146 0.019</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 2   -0.022 -0.089 0.028</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 3   -0.015 -0.054 0.031</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 4   -0.017 -0.060 0.020</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 5   -0.016 -0.056 0.022</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 6   -0.013 -0.048 0.022</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 7   -0.013 -0.050 0.021</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 8   -0.011 -0.050 0.023</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 9   -0.008 -0.048 0.026</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 10  -0.003 -0.038 0.034</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 11  -0.002 -0.036 0.040</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 12  -0.003 -0.040 0.034</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 13  -0.007 -0.056 0.034</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 14  -0.001 -0.052 0.058</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 15   0.020 -0.043 0.090</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 16   0.061 -0.012 0.123</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 17  0.080  0.030 0.137</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 18  0.081  0.037 0.130</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 19  0.083  0.041 0.130</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 20  0.086  0.046 0.140</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 21  0.083  0.043 0.130</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 22  0.081  0.039 0.133</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 23  0.072  0.024 0.125</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 24  0.061  0.013 0.110</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 25  0.053  0.004 0.094</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 26  0.049  0.001 0.090</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *Period 27  0.048  0.000 0.094</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 28   0.044 -0.010 0.097</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 29   0.032 -0.030 0.100</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 30  -0.004 -0.069 0.059</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 31  -0.013 -0.071 0.053</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 32  -0.030 -0.084 0.016</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 33  -0.032 -0.086 0.014</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 34  -0.033 -0.090 0.015</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 35  -0.028 -0.089 0.023</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 36  -0.012 -0.063 0.057</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Period 37  -0.003 -0.060 0.087</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> * = CI does not contain zero</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ---</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

@@ -109,7 +109,7 @@
 <span class="r-out co"><span class="r-pr">#&gt;</span> Burn-in % complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [0--------25--------50--------75--------100]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ''''''''''''''''''''''''''''''''''''''''''</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> MCMC iterations (est time: 4 seconds)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> MCMC iterations (est time: 6 seconds)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [0--------25--------50--------75--------100]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ''''''''''''''''''''''''''''''''''''''''''</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Compiling results...</span>
@@ -120,6 +120,7 @@
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Model run info:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - y ~ . </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> - sample size: 1,000 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - family: gaussian </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - 20 trees</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - 1000 burn-in iterations</span>
@@ -130,41 +131,42 @@
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Fixed effects:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                Mean  Lower  Upper</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  (Intercept) -0.172 -0.364  0.037</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *mod_num      0.275  0.208  0.342</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *mod_bin      1.739  1.613  1.870</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *mod_scale   -1.536 -1.762 -1.311</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *c1          -0.928 -1.000 -0.855</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *c2           0.094  0.026  0.160</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *c3           0.431  0.364  0.497</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *c4          -0.766 -0.831 -0.701</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *c5           2.021  1.956  2.087</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  b1           0.011 -0.112  0.135</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *b2           0.318  0.197  0.442</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *b3           0.302  0.167  0.425</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *b4           0.980  0.848  1.104</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> *b5          -1.087 -1.224 -0.960</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  (Intercept)  0.053 -0.155  0.262</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *mod_num      0.444  0.380  0.507</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *mod_bin     -0.607 -0.731 -0.484</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  mod_scale    0.176 -0.045  0.414</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *c1          -0.571 -0.637 -0.508</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  c2          -0.054 -0.122  0.012</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  c3           0.044 -0.017  0.107</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *c4           1.988  1.926  2.051</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *c5          -0.666 -0.726 -0.601</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *b1          -0.762 -0.892 -0.631</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *b2           0.348  0.225  0.474</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *b3           1.114  0.984  1.244</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *b4          -0.979 -1.106 -0.854</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> *b5           0.674  0.541  0.798</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> * = CI does not contain zero</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Modifiers:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             PIP</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> mod_num   1.000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mod_bin   0.230</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mod_bin   0.197</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> mod_scale 1.000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> c1        0.265</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> c2        0.215</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> c3        0.184</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> c4        0.266</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> c5        0.268</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> b1        0.260</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> b2        0.186</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> b3        0.152</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> b4        0.264</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> b5        0.269</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> c1        0.349</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> c2        0.307</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> c3        0.376</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> c4        0.258</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> c5        0.440</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> b1        0.218</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> b2        0.348</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> b3        0.422</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> b4        0.307</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> b5        0.677</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> PIP = Posterior inclusion probability</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> residual standard errors: 0.047</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> To obtain exposure effect estimates, use the 'shiny(fit)' function.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
