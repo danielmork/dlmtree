@@ -96,44 +96,61 @@ lag model (TDLM). More details can be found in Mork and Wilson (2023)
 &lt;doi: <a href="https://doi.org/10.1111/biom.13568" class="external-link">10.1111/biom.13568</a>&gt;.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/danielmork/dlmtree" class="external-link">dlmtree</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; This is dlmtree 1.0.0. For details visit https://danielmork.github.io/dlmtree/.</span></span></code></pre></div>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"sbd_dlmtree"</span><span class="op">)</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="data-preparation">Data preparation<a class="anchor" aria-label="anchor" href="#data-preparation"></a>
+</h3>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># Response and covariates</span></span>
+<span><span class="va">sbd_cov</span> <span class="op">&lt;-</span> <span class="va">sbd_dlmtree</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>            <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">bwgaz</span>, <span class="va">ChildSex</span>, <span class="va">MomAge</span>, <span class="va">GestAge</span>, <span class="va">MomPriorBMI</span>, <span class="va">Race</span>,</span>
+<span>                    <span class="va">Hispanic</span>, <span class="va">MomEdu</span>, <span class="va">SmkAny</span>, <span class="va">Marital</span>, <span class="va">Income</span>,</span>
+<span>                    <span class="va">EstDateConcept</span>, <span class="va">EstMonthConcept</span>, <span class="va">EstYearConcept</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Exposure data</span></span>
+<span><span class="va">sbd_exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>PM25 <span class="op">=</span> <span class="va">sbd_dlmtree</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"pm25_"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                TEMP <span class="op">=</span> <span class="va">sbd_dlmtree</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"temp_"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                SO2 <span class="op">=</span> <span class="va">sbd_dlmtree</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"so2_"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                CO <span class="op">=</span> <span class="va">sbd_dlmtree</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"co_"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                NO2 <span class="op">=</span> <span class="va">sbd_dlmtree</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"no2_"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">sbd_exp</span> <span class="op">&lt;-</span> <span class="va">sbd_exp</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">as.matrix</span><span class="op">)</span></span></code></pre></div>
+</div>
 <div class="section level3">
 <h3 id="fitting-the-model">Fitting the model<a class="anchor" aria-label="anchor" href="#fitting-the-model"></a>
 </h3>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">D</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sim.tdlmm.html">sim.tdlmm</a></span><span class="op">(</span>sim <span class="op">=</span> <span class="st">"A"</span>, mean.p <span class="op">=</span> <span class="fl">0.5</span>, n <span class="op">=</span> <span class="fl">5000</span><span class="op">)</span></span>
-<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dlmtree.html">dlmtree</a></span><span class="op">(</span>formula <span class="op">=</span> <span class="va">y</span> <span class="op">~</span> <span class="va">.</span>,</span>
-<span>               data <span class="op">=</span> <span class="va">D</span><span class="op">$</span><span class="va">dat</span>,</span>
-<span>               exposure.data <span class="op">=</span> <span class="va">D</span><span class="op">$</span><span class="va">exposures</span><span class="op">[[</span><span class="st">"e1"</span><span class="op">]</span><span class="op">]</span>,</span>
-<span>               dlm.type <span class="op">=</span> <span class="st">"linear"</span>, </span>
-<span>               family <span class="op">=</span> <span class="st">"logit"</span>,</span>
-<span>               n.burn <span class="op">=</span> <span class="fl">2500</span>, n.iter <span class="op">=</span> <span class="fl">10000</span>, n.thin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Preparing data...</span></span>
+<code class="sourceCode R"><span><span class="va">tdlm.fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dlmtree.html">dlmtree</a></span><span class="op">(</span>formula <span class="op">=</span> <span class="va">bwgaz</span> <span class="op">~</span> <span class="va">ChildSex</span> <span class="op">+</span> <span class="va">MomAge</span> <span class="op">+</span> <span class="va">MomPriorBMI</span> <span class="op">+</span></span>
+<span>                                        <span class="va">Race</span> <span class="op">+</span> <span class="va">Hispanic</span> <span class="op">+</span> <span class="va">SmkAny</span> <span class="op">+</span> <span class="va">EstMonthConcept</span>,</span>
+<span>                    data <span class="op">=</span> <span class="va">sbd_cov</span>,</span>
+<span>                    exposure.data <span class="op">=</span> <span class="va">sbd_exp</span><span class="op">[[</span><span class="st">"PM25"</span><span class="op">]</span><span class="op">]</span>, <span class="co"># A single numeric matrix</span></span>
+<span>                    family <span class="op">=</span> <span class="st">"gaussian"</span>, dlm.type <span class="op">=</span> <span class="st">"linear"</span>,</span>
+<span>                    n.burn <span class="op">=</span> <span class="fl">2500</span>, n.iter <span class="op">=</span> <span class="fl">10000</span>, n.thin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt; Preparing data...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Running TDLM:</span></span>
 <span><span class="co">#&gt; Burn-in % complete </span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
-<span><span class="co">#&gt; MCMC iterations (est time: 48 seconds)</span></span>
+<span><span class="co">#&gt; MCMC iterations (est time: 28 seconds)</span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
-<span><span class="co">#&gt; Compiling results...</span></span></code></pre></div>
+<span><span class="co">#&gt; Compiling results...</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="model-fit-summary">Model fit summary<a class="anchor" aria-label="anchor" href="#model-fit-summary"></a>
 </h3>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit_sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
-<span><span class="va">fit_sum</span></span>
-<span><span class="co">#&gt; ---</span></span>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tdlm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tdlm.fit</span><span class="op">)</span></span>
+<span><span class="va">tdlm.sum</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; TDLM summary</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Model run info:</span></span>
-<span><span class="co">#&gt; - y ~ . </span></span>
-<span><span class="co">#&gt; - sample size: 5,000 </span></span>
-<span><span class="co">#&gt; - family: logit </span></span>
+<span><span class="co">#&gt; - bwgaz ~ ChildSex + MomAge + MomPriorBMI + Race + Hispanic + SmkAny + EstMonthConcept </span></span>
+<span><span class="co">#&gt; - sample size: 10,000 </span></span>
+<span><span class="co">#&gt; - family: gaussian </span></span>
 <span><span class="co">#&gt; - 20 trees</span></span>
 <span><span class="co">#&gt; - 2500 burn-in iterations</span></span>
 <span><span class="co">#&gt; - 10000 post-burn iterations</span></span>
@@ -141,73 +158,83 @@ lag model (TDLM). More details can be found in Mork and Wilson (2023)
 <span><span class="co">#&gt; - 0.95 confidence level</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Fixed effect coefficients:</span></span>
-<span><span class="co">#&gt;               Mean  Lower  Upper</span></span>
-<span><span class="co">#&gt; (Intercept) -0.026 -0.168  0.120</span></span>
-<span><span class="co">#&gt; *c1         -0.108 -0.165 -0.049</span></span>
-<span><span class="co">#&gt; *c2         -0.145 -0.200 -0.089</span></span>
-<span><span class="co">#&gt; c3           0.011 -0.045  0.067</span></span>
-<span><span class="co">#&gt; c4          -0.036 -0.094  0.022</span></span>
-<span><span class="co">#&gt; *c5          0.129  0.073  0.187</span></span>
-<span><span class="co">#&gt; b1          -0.032 -0.148  0.086</span></span>
-<span><span class="co">#&gt; b2          -0.043 -0.159  0.072</span></span>
-<span><span class="co">#&gt; b3           0.102 -0.017  0.223</span></span>
-<span><span class="co">#&gt; b4           0.116 -0.002  0.233</span></span>
-<span><span class="co">#&gt; b5           0.020 -0.094  0.131</span></span>
+<span><span class="co">#&gt;                        Mean  Lower  Upper</span></span>
+<span><span class="co">#&gt; *(Intercept)          2.289  2.032  2.542</span></span>
+<span><span class="co">#&gt; *ChildSexM           -2.105 -2.126 -2.085</span></span>
+<span><span class="co">#&gt; MomAge                0.000 -0.001  0.002</span></span>
+<span><span class="co">#&gt; *MomPriorBMI         -0.021 -0.022 -0.019</span></span>
+<span><span class="co">#&gt; RaceAsianPI           0.069 -0.057  0.192</span></span>
+<span><span class="co">#&gt; RaceBlack             0.078 -0.050  0.205</span></span>
+<span><span class="co">#&gt; Racewhite             0.059 -0.060  0.181</span></span>
+<span><span class="co">#&gt; *HispanicNonHispanic  0.255  0.233  0.278</span></span>
+<span><span class="co">#&gt; *SmkAnyY             -0.403 -0.451 -0.356</span></span>
+<span><span class="co">#&gt; EstMonthConcept2     -0.049 -0.109  0.010</span></span>
+<span><span class="co">#&gt; *EstMonthConcept3    -0.145 -0.211 -0.077</span></span>
+<span><span class="co">#&gt; *EstMonthConcept4    -0.230 -0.295 -0.160</span></span>
+<span><span class="co">#&gt; *EstMonthConcept5    -0.207 -0.265 -0.147</span></span>
+<span><span class="co">#&gt; *EstMonthConcept6    -0.205 -0.260 -0.153</span></span>
+<span><span class="co">#&gt; EstMonthConcept7     -0.032 -0.083  0.023</span></span>
+<span><span class="co">#&gt; *EstMonthConcept8     0.145  0.081  0.210</span></span>
+<span><span class="co">#&gt; *EstMonthConcept9     0.393  0.326  0.460</span></span>
+<span><span class="co">#&gt; *EstMonthConcept10    0.372  0.311  0.437</span></span>
+<span><span class="co">#&gt; *EstMonthConcept11    0.330  0.271  0.387</span></span>
+<span><span class="co">#&gt; *EstMonthConcept12    0.129  0.078  0.181</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; * = CI does not contain zero</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; DLM effect:</span></span>
-<span><span class="co">#&gt; range = [-0.012, 0.088]</span></span>
-<span><span class="co">#&gt; signal-to-noise = 0.161</span></span>
-<span><span class="co">#&gt; critical windows: 20-27 </span></span>
-<span><span class="co">#&gt;              Mean  Lower Upper</span></span>
-<span><span class="co">#&gt; Period 1   -0.004 -0.034 0.020</span></span>
-<span><span class="co">#&gt; Period 2   -0.001 -0.020 0.024</span></span>
-<span><span class="co">#&gt; Period 3    0.000 -0.017 0.021</span></span>
-<span><span class="co">#&gt; Period 4   -0.001 -0.018 0.018</span></span>
-<span><span class="co">#&gt; Period 5   -0.003 -0.019 0.015</span></span>
-<span><span class="co">#&gt; Period 6   -0.003 -0.018 0.015</span></span>
-<span><span class="co">#&gt; Period 7   -0.004 -0.021 0.012</span></span>
-<span><span class="co">#&gt; Period 8   -0.005 -0.021 0.012</span></span>
-<span><span class="co">#&gt; Period 9   -0.005 -0.021 0.013</span></span>
-<span><span class="co">#&gt; Period 10  -0.008 -0.027 0.007</span></span>
-<span><span class="co">#&gt; Period 11  -0.009 -0.029 0.006</span></span>
-<span><span class="co">#&gt; Period 12  -0.010 -0.031 0.005</span></span>
-<span><span class="co">#&gt; Period 13  -0.010 -0.029 0.006</span></span>
-<span><span class="co">#&gt; Period 14  -0.009 -0.031 0.007</span></span>
-<span><span class="co">#&gt; Period 15  -0.008 -0.031 0.011</span></span>
-<span><span class="co">#&gt; Period 16  -0.004 -0.026 0.021</span></span>
-<span><span class="co">#&gt; Period 17   0.001 -0.023 0.031</span></span>
-<span><span class="co">#&gt; Period 18   0.006 -0.017 0.044</span></span>
-<span><span class="co">#&gt; Period 19   0.017 -0.015 0.079</span></span>
-<span><span class="co">#&gt; *Period 20  0.085  0.052 0.112</span></span>
-<span><span class="co">#&gt; *Period 21  0.086  0.060 0.107</span></span>
-<span><span class="co">#&gt; *Period 22  0.087  0.067 0.107</span></span>
-<span><span class="co">#&gt; *Period 23  0.088  0.070 0.108</span></span>
-<span><span class="co">#&gt; *Period 24  0.088  0.070 0.109</span></span>
-<span><span class="co">#&gt; *Period 25  0.088  0.067 0.111</span></span>
-<span><span class="co">#&gt; *Period 26  0.087  0.062 0.115</span></span>
-<span><span class="co">#&gt; *Period 27  0.072  0.010 0.101</span></span>
-<span><span class="co">#&gt; Period 28   0.052 -0.012 0.097</span></span>
-<span><span class="co">#&gt; Period 29  -0.010 -0.044 0.029</span></span>
-<span><span class="co">#&gt; Period 30  -0.012 -0.043 0.011</span></span>
-<span><span class="co">#&gt; Period 31  -0.012 -0.042 0.009</span></span>
-<span><span class="co">#&gt; Period 32  -0.008 -0.029 0.012</span></span>
-<span><span class="co">#&gt; Period 33  -0.006 -0.024 0.015</span></span>
-<span><span class="co">#&gt; Period 34  -0.006 -0.024 0.014</span></span>
-<span><span class="co">#&gt; Period 35  -0.005 -0.024 0.018</span></span>
-<span><span class="co">#&gt; Period 36  -0.005 -0.028 0.018</span></span>
-<span><span class="co">#&gt; Period 37  -0.005 -0.033 0.023</span></span>
+<span><span class="co">#&gt; range = [-0.019, 0.008]</span></span>
+<span><span class="co">#&gt; signal-to-noise = 0.021</span></span>
+<span><span class="co">#&gt; critical windows: 11-20,36-37 </span></span>
+<span><span class="co">#&gt;              Mean  Lower  Upper</span></span>
+<span><span class="co">#&gt; Period 1    0.003 -0.005  0.015</span></span>
+<span><span class="co">#&gt; Period 2    0.000 -0.006  0.010</span></span>
+<span><span class="co">#&gt; Period 3   -0.002 -0.010  0.004</span></span>
+<span><span class="co">#&gt; Period 4   -0.002 -0.010  0.003</span></span>
+<span><span class="co">#&gt; Period 5   -0.001 -0.007  0.004</span></span>
+<span><span class="co">#&gt; Period 6   -0.001 -0.006  0.005</span></span>
+<span><span class="co">#&gt; Period 7   -0.001 -0.006  0.006</span></span>
+<span><span class="co">#&gt; Period 8   -0.001 -0.008  0.004</span></span>
+<span><span class="co">#&gt; Period 9   -0.002 -0.011  0.003</span></span>
+<span><span class="co">#&gt; Period 10  -0.002 -0.012  0.006</span></span>
+<span><span class="co">#&gt; *Period 11 -0.016 -0.024 -0.007</span></span>
+<span><span class="co">#&gt; *Period 12 -0.017 -0.024 -0.010</span></span>
+<span><span class="co">#&gt; *Period 13 -0.017 -0.024 -0.012</span></span>
+<span><span class="co">#&gt; *Period 14 -0.017 -0.022 -0.010</span></span>
+<span><span class="co">#&gt; *Period 15 -0.017 -0.022 -0.011</span></span>
+<span><span class="co">#&gt; *Period 16 -0.017 -0.022 -0.011</span></span>
+<span><span class="co">#&gt; *Period 17 -0.017 -0.024 -0.011</span></span>
+<span><span class="co">#&gt; *Period 18 -0.019 -0.030 -0.013</span></span>
+<span><span class="co">#&gt; *Period 19 -0.018 -0.027 -0.011</span></span>
+<span><span class="co">#&gt; *Period 20 -0.015 -0.024 -0.003</span></span>
+<span><span class="co">#&gt; Period 21  -0.007 -0.019  0.002</span></span>
+<span><span class="co">#&gt; Period 22  -0.002 -0.010  0.006</span></span>
+<span><span class="co">#&gt; Period 23  -0.003 -0.012  0.003</span></span>
+<span><span class="co">#&gt; Period 24  -0.002 -0.008  0.004</span></span>
+<span><span class="co">#&gt; Period 25   0.000 -0.005  0.006</span></span>
+<span><span class="co">#&gt; Period 26   0.000 -0.005  0.006</span></span>
+<span><span class="co">#&gt; Period 27  -0.001 -0.005  0.005</span></span>
+<span><span class="co">#&gt; Period 28  -0.001 -0.006  0.004</span></span>
+<span><span class="co">#&gt; Period 29  -0.001 -0.007  0.004</span></span>
+<span><span class="co">#&gt; Period 30  -0.002 -0.008  0.003</span></span>
+<span><span class="co">#&gt; Period 31  -0.002 -0.008  0.004</span></span>
+<span><span class="co">#&gt; Period 32  -0.001 -0.008  0.005</span></span>
+<span><span class="co">#&gt; Period 33   0.002 -0.004  0.010</span></span>
+<span><span class="co">#&gt; Period 34   0.004 -0.003  0.012</span></span>
+<span><span class="co">#&gt; Period 35   0.006 -0.001  0.014</span></span>
+<span><span class="co">#&gt; *Period 36  0.008  0.000  0.017</span></span>
+<span><span class="co">#&gt; *Period 37  0.008  0.000  0.019</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; * = CI does not contain zero</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ---</span></span></code></pre></div>
+<span><span class="co">#&gt; residual standard errors: 0.004</span></span>
+<span><span class="co">#&gt; ---</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="exposure-effect">Exposure effect<a class="anchor" aria-label="anchor" href="#exposure-effect"></a>
 </h3>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit_sum</span>, </span>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlm.sum</span>, </span>
 <span>     main <span class="op">=</span> <span class="st">"Plot title"</span>, </span>
 <span>     xlab <span class="op">=</span> <span class="st">"Time axis label"</span>, </span>
 <span>     ylab <span class="op">=</span> <span class="st">"Exposure effect axis label"</span><span class="op">)</span></span></code></pre></div>

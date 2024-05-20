@@ -96,46 +96,62 @@ distributed lag model (HDLM). More details can be found in Mork et
 al. (2024) &lt;doi: <a href="https://doi.org/10.1080/01621459.2023.2258595" class="external-link">10.1080/01621459.2023.2258595</a>&gt;.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/danielmork/dlmtree" class="external-link">dlmtree</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; This is dlmtree 1.0.0. For details visit https://danielmork.github.io/dlmtree/.</span></span></code></pre></div>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"sbd_dlmtree"</span><span class="op">)</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="data-preparation">Data preparation<a class="anchor" aria-label="anchor" href="#data-preparation"></a>
+</h3>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># Response and covariates</span></span>
+<span><span class="va">sbd_cov</span> <span class="op">&lt;-</span> <span class="va">sbd_dlmtree</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>            <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">bwgaz</span>, <span class="va">ChildSex</span>, <span class="va">MomAge</span>, <span class="va">GestAge</span>, <span class="va">MomPriorBMI</span>, <span class="va">Race</span>,</span>
+<span>                    <span class="va">Hispanic</span>, <span class="va">MomEdu</span>, <span class="va">SmkAny</span>, <span class="va">Marital</span>, <span class="va">Income</span>,</span>
+<span>                    <span class="va">EstDateConcept</span>, <span class="va">EstMonthConcept</span>, <span class="va">EstYearConcept</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Exposure data</span></span>
+<span><span class="va">sbd_exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>PM25 <span class="op">=</span> <span class="va">sbd_dlmtree</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"pm25_"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                TEMP <span class="op">=</span> <span class="va">sbd_dlmtree</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"temp_"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                SO2 <span class="op">=</span> <span class="va">sbd_dlmtree</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"so2_"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                CO <span class="op">=</span> <span class="va">sbd_dlmtree</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"co_"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                NO2 <span class="op">=</span> <span class="va">sbd_dlmtree</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"no2_"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">sbd_exp</span> <span class="op">&lt;-</span> <span class="va">sbd_exp</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">as.matrix</span><span class="op">)</span></span></code></pre></div>
+</div>
 <div class="section level3">
 <h3 id="fitting-the-model">Fitting the model<a class="anchor" aria-label="anchor" href="#fitting-the-model"></a>
 </h3>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Gaussian </span></span>
-<span><span class="va">D</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sim.hdlmm.html">sim.hdlmm</a></span><span class="op">(</span>sim <span class="op">=</span> <span class="st">"A"</span>, n <span class="op">=</span> <span class="fl">5000</span><span class="op">)</span></span>
-<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dlmtree.html">dlmtree</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">.</span>, </span>
-<span>               data <span class="op">=</span> <span class="va">D</span><span class="op">$</span><span class="va">dat</span>,</span>
-<span>               exposure.data <span class="op">=</span> <span class="va">D</span><span class="op">$</span><span class="va">exposure</span>,</span>
-<span>               dlm.type <span class="op">=</span> <span class="st">"linear"</span>, </span>
-<span>               family <span class="op">=</span> <span class="st">"gaussian"</span>, </span>
-<span>               het <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>               hdlm.dlmtree.type <span class="op">=</span> <span class="st">"shared"</span>, <span class="co"># 'nested' is also an option</span></span>
-<span>               n.burn <span class="op">=</span> <span class="fl">2500</span>, n.iter <span class="op">=</span> <span class="fl">10000</span>, n.thin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Preparing data...</span></span>
+<code class="sourceCode R"><span><span class="va">hdlm.fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dlmtree.html">dlmtree</a></span><span class="op">(</span>formula <span class="op">=</span> <span class="va">bwgaz</span> <span class="op">~</span> <span class="va">ChildSex</span> <span class="op">+</span> <span class="va">MomAge</span> <span class="op">+</span> <span class="va">MomPriorBMI</span> <span class="op">+</span></span>
+<span>                                        <span class="va">Race</span> <span class="op">+</span> <span class="va">Hispanic</span> <span class="op">+</span> <span class="va">SmkAny</span> <span class="op">+</span> <span class="va">EstMonthConcept</span>,</span>
+<span>                    data <span class="op">=</span> <span class="va">sbd_cov</span>,</span>
+<span>                    exposure.data <span class="op">=</span> <span class="va">sbd_exp</span><span class="op">[[</span><span class="st">"PM25"</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>                    family <span class="op">=</span> <span class="st">"gaussian"</span>, dlm.type <span class="op">=</span> <span class="st">"linear"</span>, het <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                    hdlm.modifiers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ChildSex"</span>, <span class="st">"MomAge"</span>, <span class="st">"MomPriorBMI"</span>, <span class="st">"SmkAny"</span><span class="op">)</span>,</span>
+<span>                    hdlm.modifier.splits <span class="op">=</span> <span class="fl">15</span>,</span>
+<span>                    n.burn <span class="op">=</span> <span class="fl">2500</span>, n.iter <span class="op">=</span> <span class="fl">10000</span>, n.thin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt; Preparing data...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Running shared HDLM:</span></span>
 <span><span class="co">#&gt; Burn-in % complete </span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
-<span><span class="co">#&gt; MCMC iterations (est time: 1.5 minutes)</span></span>
+<span><span class="co">#&gt; MCMC iterations (est time: 3.1 minutes)</span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
-<span><span class="co">#&gt; Compiling results...</span></span></code></pre></div>
+<span><span class="co">#&gt; Compiling results...</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="model-fit-summary">Model fit summary<a class="anchor" aria-label="anchor" href="#model-fit-summary"></a>
 </h3>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit_sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
-<span><span class="va">fit_sum</span></span>
-<span><span class="co">#&gt; ---</span></span>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">hdlm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">hdlm.fit</span><span class="op">)</span></span>
+<span><span class="va">hdlm.sum</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; HDLM summary</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Model run info:</span></span>
-<span><span class="co">#&gt; - y ~ . </span></span>
-<span><span class="co">#&gt; - sample size: 5,000 </span></span>
+<span><span class="co">#&gt; - bwgaz ~ ChildSex + MomAge + MomPriorBMI + Race + Hispanic + SmkAny + EstMonthConcept </span></span>
+<span><span class="co">#&gt; - sample size: 10,000 </span></span>
 <span><span class="co">#&gt; - family: gaussian </span></span>
 <span><span class="co">#&gt; - 20 trees</span></span>
 <span><span class="co">#&gt; - 2500 burn-in iterations</span></span>
@@ -145,51 +161,48 @@ al. (2024) &lt;doi: <a href="https://doi.org/10.1080/01621459.2023.2258595" cla
 <span><span class="co">#&gt; - 0.95 confidence level</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Fixed effects:</span></span>
-<span><span class="co">#&gt;                Mean  Lower  Upper</span></span>
-<span><span class="co">#&gt;  (Intercept) -0.009 -0.096  0.075</span></span>
-<span><span class="co">#&gt; *mod_num     -0.487 -0.515 -0.460</span></span>
-<span><span class="co">#&gt; *mod_bin      0.363  0.306  0.419</span></span>
-<span><span class="co">#&gt; *mod_scale   -1.669 -1.761 -1.575</span></span>
-<span><span class="co">#&gt; *c1          -0.600 -0.628 -0.572</span></span>
-<span><span class="co">#&gt; *c2           0.352  0.325  0.381</span></span>
-<span><span class="co">#&gt; *c3           0.126  0.098  0.154</span></span>
-<span><span class="co">#&gt; *c4           0.133  0.104  0.160</span></span>
-<span><span class="co">#&gt; *c5           1.282  1.254  1.309</span></span>
-<span><span class="co">#&gt; *b1          -1.359 -1.412 -1.306</span></span>
-<span><span class="co">#&gt; *b2          -0.985 -1.038 -0.930</span></span>
-<span><span class="co">#&gt; *b3          -0.144 -0.201 -0.088</span></span>
-<span><span class="co">#&gt; *b4          -0.079 -0.135 -0.022</span></span>
-<span><span class="co">#&gt; *b5           0.658  0.605  0.716</span></span>
+<span><span class="co">#&gt;                        Mean  Lower  Upper</span></span>
+<span><span class="co">#&gt; *(Intercept)          1.284  0.905  1.649</span></span>
+<span><span class="co">#&gt;  ChildSexM            0.110 -0.327  0.560</span></span>
+<span><span class="co">#&gt;  MomAge               0.000 -0.004  0.004</span></span>
+<span><span class="co">#&gt; *MomPriorBMI         -0.021 -0.023 -0.018</span></span>
+<span><span class="co">#&gt;  RaceAsianPI          0.047 -0.080  0.170</span></span>
+<span><span class="co">#&gt;  RaceBlack            0.056 -0.071  0.183</span></span>
+<span><span class="co">#&gt;  Racewhite            0.036 -0.087  0.154</span></span>
+<span><span class="co">#&gt; *HispanicNonHispanic  0.255  0.232  0.277</span></span>
+<span><span class="co">#&gt; *SmkAnyY             -0.403 -0.454 -0.354</span></span>
+<span><span class="co">#&gt;  EstMonthConcept2    -0.049 -0.106  0.005</span></span>
+<span><span class="co">#&gt; *EstMonthConcept3    -0.133 -0.197 -0.071</span></span>
+<span><span class="co">#&gt; *EstMonthConcept4    -0.208 -0.275 -0.142</span></span>
+<span><span class="co">#&gt; *EstMonthConcept5    -0.194 -0.247 -0.145</span></span>
+<span><span class="co">#&gt; *EstMonthConcept6    -0.200 -0.253 -0.148</span></span>
+<span><span class="co">#&gt;  EstMonthConcept7    -0.032 -0.087  0.020</span></span>
+<span><span class="co">#&gt; *EstMonthConcept8     0.151  0.088  0.210</span></span>
+<span><span class="co">#&gt; *EstMonthConcept9     0.392  0.325  0.455</span></span>
+<span><span class="co">#&gt; *EstMonthConcept10    0.382  0.317  0.444</span></span>
+<span><span class="co">#&gt; *EstMonthConcept11    0.339  0.286  0.392</span></span>
+<span><span class="co">#&gt; *EstMonthConcept12    0.139  0.091  0.188</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; * = CI does not contain zero</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Modifiers:</span></span>
-<span><span class="co">#&gt;              PIP</span></span>
-<span><span class="co">#&gt; mod_num   1.0000</span></span>
-<span><span class="co">#&gt; mod_bin   1.0000</span></span>
-<span><span class="co">#&gt; mod_scale 0.3865</span></span>
-<span><span class="co">#&gt; c1        0.2565</span></span>
-<span><span class="co">#&gt; c2        0.2535</span></span>
-<span><span class="co">#&gt; c3        0.2465</span></span>
-<span><span class="co">#&gt; c4        0.4595</span></span>
-<span><span class="co">#&gt; c5        0.2885</span></span>
-<span><span class="co">#&gt; b1        0.4070</span></span>
-<span><span class="co">#&gt; b2        0.3335</span></span>
-<span><span class="co">#&gt; b3        0.2865</span></span>
-<span><span class="co">#&gt; b4        0.2710</span></span>
-<span><span class="co">#&gt; b5        0.2425</span></span>
+<span><span class="co">#&gt;                PIP</span></span>
+<span><span class="co">#&gt; ChildSex    1.0000</span></span>
+<span><span class="co">#&gt; MomAge      0.8595</span></span>
+<span><span class="co">#&gt; MomPriorBMI 0.8660</span></span>
+<span><span class="co">#&gt; SmkAny      0.1920</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; PIP = Posterior inclusion probability</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; residual standard errors: 0.02</span></span>
+<span><span class="co">#&gt; residual standard errors: 0.004</span></span>
 <span><span class="co">#&gt; ---</span></span>
-<span><span class="co">#&gt; To obtain exposure effect estimates, use the 'shiny(fit)' function.</span></span></code></pre></div>
+<span><span class="co">#&gt; To obtain exposure effect estimates, use the 'shiny(fit)' function.</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="launching-shiny-app">Launching Shiny app<a class="anchor" aria-label="anchor" href="#launching-shiny-app"></a>
 </h3>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># shiny(fit)</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># shiny(hdlm.fit)</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
