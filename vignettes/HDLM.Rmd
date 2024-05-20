@@ -9,39 +9,56 @@ vignette: >
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
+  collapse = FALSE,
   comment = "#>"
 )
 ```
 
 This vignette demonstrates the implementation of heterogeneous treed distributed lag model (HDLM). More details can be found in Mork et al. (2024) <doi: [10.1080/01621459.2023.2258595](https://doi.org/10.1080/01621459.2023.2258595)>.
 
-```{r setup}
+```{r setup, message = FALSE}
 library(dlmtree)
+library(dplyr)
 set.seed(1)
+data("sbd_dlmtree")
+```
+
+### Data preparation
+```{r}
+# Response and covariates
+sbd_cov <- sbd_dlmtree %>% 
+            select(bwgaz, ChildSex, MomAge, GestAge, MomPriorBMI, Race,
+                    Hispanic, MomEdu, SmkAny, Marital, Income,
+                    EstDateConcept, EstMonthConcept, EstYearConcept)
+
+# Exposure data
+sbd_exp <- list(PM25 = sbd_dlmtree %>% select(starts_with("pm25_")),
+                TEMP = sbd_dlmtree %>% select(starts_with("temp_")),
+                SO2 = sbd_dlmtree %>% select(starts_with("so2_")),
+                CO = sbd_dlmtree %>% select(starts_with("co_")),
+                NO2 = sbd_dlmtree %>% select(starts_with("no2_")))
+sbd_exp <- sbd_exp %>% lapply(as.matrix)
 ```
 
 ### Fitting the model
 ```{r hdlm.fit}
-# Gaussian 
-D <- sim.hdlmm(sim = "A", n = 5000)
-fit <- dlmtree(y ~ ., 
-               data = D$dat,
-               exposure.data = D$exposure,
-               dlm.type = "linear", 
-               family = "gaussian", 
-               het = TRUE,
-               hdlm.dlmtree.type = "shared", # 'nested' is also an option
-               n.burn = 2500, n.iter = 10000, n.thin = 5)
+hdlm.fit <- dlmtree(formula = bwgaz ~ ChildSex + MomAge + MomPriorBMI +
+                                        Race + Hispanic + SmkAny + EstMonthConcept,
+                    data = sbd_cov,
+                    exposure.data = sbd_exp[["PM25"]],
+                    family = "gaussian", dlm.type = "linear", het = TRUE,
+                    hdlm.modifiers = c("ChildSex", "MomAge", "MomPriorBMI", "SmkAny"),
+                    hdlm.modifier.splits = 15,
+                    n.burn = 2500, n.iter = 10000, n.thin = 5)
 ```
 
 ### Model fit summary
 ```{r hdlm.sum}
-fit_sum <- summary(fit)
-fit_sum
+hdlm.sum <- summary(hdlm.fit)
+hdlm.sum
 ```
 
 ### Launching Shiny app
 ```{r hdlm.shiny}
-# shiny(fit)
+# shiny(hdlm.fit)
 ```

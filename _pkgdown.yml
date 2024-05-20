@@ -39,6 +39,7 @@ reference:
   - estDLM
   - ppRange
   - predict.dlmtree
+  - adj_coexposure
   - starts_with("print")
 - title: Visualization
   desc: Visualize distributed lag functions
