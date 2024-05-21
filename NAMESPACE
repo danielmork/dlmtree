@@ -33,7 +33,7 @@ import(shinythemes)
 importFrom("stats", "as.formula", "model.frame", "model.matrix",
            "model.response", "pnorm", "quantile", "rbinom", "rnorm",
            "sd", "terms.formula", "var", "IQR", "median", "runif", "toeplitz",
-           "aggregate", "complete.cases", "delete.response",
+           "aggregate", "complete.cases", "delete.response", "cov", "predict",
            "dnorm", "na.fail", "reorder", "rnbinom", "setNames", "step", "time")
 
 importFrom("utils", "combn", "data", "packageDescription")
@@ -41,6 +41,7 @@ importFrom("utils", "combn", "data", "packageDescription")
 importFrom("tidyr", "pivot_longer")
 
 importFrom("mgcv", "bam", "predict.bam")
+
 
 export(dlmtree)
 

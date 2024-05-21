@@ -1,20 +1,15 @@
 ---
-title: "HDLMM"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{HDLMM}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+title: "HDLM"
 ---
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = FALSE,
+  collapse = TRUE,
   comment = "#>"
 )
 ```
 
-This vignette demonstrates the implementation of heterogeneous treed distributed lag mixture model (HDLMM).
+This vignette demonstrates the implementation of heterogeneous treed distributed lag model (HDLM). More details can be found in Mork et al. (2024) <doi: [10.1080/01621459.2023.2258595](https://doi.org/10.1080/01621459.2023.2258595)>.
 
 ```{r setup, message = FALSE}
 library(dlmtree)
@@ -41,27 +36,24 @@ sbd_exp <- sbd_exp %>% lapply(as.matrix)
 ```
 
 ### Fitting the model
-```{r hdlmm.fit}
-# Gaussian
-hdlmm.fit <- dlmtree(formula = bwgaz ~ ChildSex + MomAge + MomPriorBMI +
+```{r hdlm.fit}
+hdlm.fit <- dlmtree(formula = bwgaz ~ ChildSex + MomAge + MomPriorBMI +
                                         Race + Hispanic + SmkAny + EstMonthConcept,
-                     data = sbd_cov,
-                     exposure.data = sbd_exp,
-                     family = "gaussian",
-                     dlm.type = "linear", mixture = TRUE, het = TRUE,
-                     hdlm.modifiers = c("ChildSex", "MomAge", "MomPriorBMI", "SmkAny"),
-                     hdlm.modifier.splits = 15,
-                     n.burn = 2500, n.iter = 10000, n.thin = 5)
+                    data = sbd_cov,
+                    exposure.data = sbd_exp[["PM25"]],
+                    family = "gaussian", dlm.type = "linear", het = TRUE,
+                    hdlm.modifiers = c("ChildSex", "MomAge", "MomPriorBMI", "SmkAny"),
+                    hdlm.modifier.splits = 15,
+                    n.burn = 2500, n.iter = 10000, n.thin = 5)
 ```
 
 ### Model fit summary
-```{r hdlmm.sum}
-hdlmm.sum <- summary(hdlmm.fit)
-hdlmm.sum
+```{r hdlm.sum}
+hdlm.sum <- summary(hdlm.fit)
+hdlm.sum
 ```
 
 ### Launching Shiny app
-```{r hdlmm.shiny}
-# shiny(hdlmm.fit)
+```{r hdlm.shiny}
+# shiny(hdlm.fit)
 ```
-
