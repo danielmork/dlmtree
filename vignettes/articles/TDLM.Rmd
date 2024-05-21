@@ -1,10 +1,5 @@
 ---
-title: "HDLM"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{HDLM}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+title: "TDLM"
 ---
 
 ```{r, include = FALSE}
@@ -14,7 +9,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette demonstrates the implementation of heterogeneous treed distributed lag model (HDLM). More details can be found in Mork et al. (2024) <doi: [10.1080/01621459.2023.2258595](https://doi.org/10.1080/01621459.2023.2258595)>.
+This vignette demonstrates the implementation of treed distributed lag model (TDLM). More details can be found in Mork and Wilson (2023) <doi: [10.1111/biom.13568](https://doi.org/10.1111/biom.13568)>.
 
 ```{r setup, message = FALSE}
 library(dlmtree)
@@ -40,25 +35,27 @@ sbd_exp <- list(PM25 = sbd_dlmtree %>% select(starts_with("pm25_")),
 sbd_exp <- sbd_exp %>% lapply(as.matrix)
 ```
 
+
 ### Fitting the model
-```{r hdlm.fit}
-hdlm.fit <- dlmtree(formula = bwgaz ~ ChildSex + MomAge + MomPriorBMI +
+```{r tdlm.fit}
+tdlm.fit <- dlmtree(formula = bwgaz ~ ChildSex + MomAge + MomPriorBMI +
                                         Race + Hispanic + SmkAny + EstMonthConcept,
                     data = sbd_cov,
-                    exposure.data = sbd_exp[["PM25"]],
-                    family = "gaussian", dlm.type = "linear", het = TRUE,
-                    hdlm.modifiers = c("ChildSex", "MomAge", "MomPriorBMI", "SmkAny"),
-                    hdlm.modifier.splits = 15,
+                    exposure.data = sbd_exp[["PM25"]], # A single numeric matrix
+                    family = "gaussian", dlm.type = "linear",
                     n.burn = 2500, n.iter = 10000, n.thin = 5)
 ```
 
 ### Model fit summary
-```{r hdlm.sum}
-hdlm.sum <- summary(hdlm.fit)
-hdlm.sum
+```{r tdlm.sum}
+tdlm.sum <- summary(tdlm.fit)
+tdlm.sum
 ```
 
-### Launching Shiny app
-```{r hdlm.shiny}
-# shiny(hdlm.fit)
+### Exposure effect
+```{r tdlm.plot}
+plot(tdlm.sum, 
+     main = "Plot title", 
+     xlab = "Time axis label", 
+     ylab = "Exposure effect axis label")
 ```

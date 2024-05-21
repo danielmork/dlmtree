@@ -29,7 +29,8 @@ adj_coexposure <- function(exposure.data,
                            contrast_exp = list(),
                            conf.level = 0.95,
                            keep.mcmc = FALSE) {
-  if (class(object) != "tdlmm")
+
+  if (!inherits(object, "tdlmm"))
     stop("adj_coexposure is intended to be used with TDLMM")
 
   ##### Adjusting for changes in co-exposures ######
@@ -68,7 +69,7 @@ adj_coexposure <- function(exposure.data,
         # Predict `response` (respExp) at 25/75 percentiles of `predictor` (predExp).
         # Other methods could be substituted here to achieve prediction
         formula <- as.formula(paste(respExp, "~s(", predExp, ", k = 5, bs = 'ps')"))
-        model <- bam(formula, dat = exposureDat)
+        model <- bam(formula, data = exposureDat)
         newdat <- data.frame(contrast_exp[[predExp]])
         names(newdat) <- predExp
         predLevels[[predExp]][[respExp]] <- predict(model, newdata = newdat)
