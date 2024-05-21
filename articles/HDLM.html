@@ -85,7 +85,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>HDLM</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/danielmork/dlmtree/blob/HEAD/vignettes/HDLM.Rmd" class="external-link"><code>vignettes/HDLM.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/danielmork/dlmtree/blob/HEAD/vignettes/articles/HDLM.Rmd" class="external-link"><code>vignettes/articles/HDLM.Rmd</code></a></small>
       <div class="d-none name"><code>HDLM.Rmd</code></div>
     </div>
 
@@ -128,25 +128,25 @@ al. (2024) &lt;doi: <a href="https://doi.org/10.1080/01621459.2023.2258595" cla
 <span>                    family <span class="op">=</span> <span class="st">"gaussian"</span>, dlm.type <span class="op">=</span> <span class="st">"linear"</span>, het <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                    hdlm.modifiers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ChildSex"</span>, <span class="st">"MomAge"</span>, <span class="st">"MomPriorBMI"</span>, <span class="st">"SmkAny"</span><span class="op">)</span>,</span>
 <span>                    hdlm.modifier.splits <span class="op">=</span> <span class="fl">15</span>,</span>
-<span>                    n.burn <span class="op">=</span> <span class="fl">2500</span>, n.iter <span class="op">=</span> <span class="fl">10000</span>, n.thin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; Preparing data...</span></span>
+<span>                    n.burn <span class="op">=</span> <span class="fl">2500</span>, n.iter <span class="op">=</span> <span class="fl">10000</span>, n.thin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Preparing data...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Running shared HDLM:</span></span>
 <span><span class="co">#&gt; Burn-in % complete </span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
-<span><span class="co">#&gt; MCMC iterations (est time: 3.1 minutes)</span></span>
+<span><span class="co">#&gt; MCMC iterations (est time: 2.9 minutes)</span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
-<span><span class="co">#&gt; Compiling results...</span></span></code></pre>
+<span><span class="co">#&gt; Compiling results...</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="model-fit-summary">Model fit summary<a class="anchor" aria-label="anchor" href="#model-fit-summary"></a>
 </h3>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">hdlm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">hdlm.fit</span><span class="op">)</span></span>
-<span><span class="va">hdlm.sum</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; ---</span></span>
+<span><span class="va">hdlm.sum</span></span>
+<span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; HDLM summary</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Model run info:</span></span>
@@ -196,12 +196,12 @@ al. (2024) &lt;doi: <a href="https://doi.org/10.1080/01621459.2023.2258595" cla
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; residual standard errors: 0.004</span></span>
 <span><span class="co">#&gt; ---</span></span>
-<span><span class="co">#&gt; To obtain exposure effect estimates, use the 'shiny(fit)' function.</span></span></code></pre>
+<span><span class="co">#&gt; To obtain exposure effect estimates, use the 'shiny(fit)' function.</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="launching-shiny-app">Launching Shiny app<a class="anchor" aria-label="anchor" href="#launching-shiny-app"></a>
 </h3>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># shiny(hdlm.fit)</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

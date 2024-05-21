@@ -85,7 +85,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>TDLNM</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/danielmork/dlmtree/blob/HEAD/vignettes/TDLNM.Rmd" class="external-link"><code>vignettes/TDLNM.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/danielmork/dlmtree/blob/HEAD/vignettes/articles/TDLNM.Rmd" class="external-link"><code>vignettes/articles/TDLNM.Rmd</code></a></small>
       <div class="d-none name"><code>TDLNM.Rmd</code></div>
     </div>
 
@@ -128,8 +128,8 @@ Wilson (2021) &lt;doi: <a href="https://doi.org/10.1093/biostatistics/kxaa051" c
 <span>                     dlm.type <span class="op">=</span> <span class="st">"nonlinear"</span>,</span>
 <span>                     family <span class="op">=</span> <span class="st">"gaussian"</span>,</span>
 <span>                     tdlnm.exposure.splits <span class="op">=</span> <span class="fl">20</span>,</span>
-<span>                     n.burn <span class="op">=</span> <span class="fl">2500</span>, n.iter <span class="op">=</span> <span class="fl">10000</span>, n.thin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; Preparing data...</span></span>
+<span>                     n.burn <span class="op">=</span> <span class="fl">2500</span>, n.iter <span class="op">=</span> <span class="fl">10000</span>, n.thin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Preparing data...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Running TDLNM:</span></span>
 <span><span class="co">#&gt; Burn-in % complete </span></span>
@@ -138,17 +138,17 @@ Wilson (2021) &lt;doi: <a href="https://doi.org/10.1093/biostatistics/kxaa051" c
 <span><span class="co">#&gt; MCMC iterations (est time: 28 seconds)</span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
-<span><span class="co">#&gt; Compiling results...</span></span></code></pre>
+<span><span class="co">#&gt; Compiling results...</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="model-fit-summary">Model fit summary<a class="anchor" aria-label="anchor" href="#model-fit-summary"></a>
 </h3>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tdlnm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tdlnm.fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Centered DLNM at exposure value 0</span></span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tdlnm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tdlnm.fit</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; Centered DLNM at exposure value 0</span></span></code></pre>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tdlnm.sum</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; ---</span></span>
+<code class="sourceCode R"><span><span class="va">tdlnm.sum</span></span>
+<span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; TDLNM summary</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Model run info:</span></span>
@@ -191,12 +191,12 @@ Wilson (2021) &lt;doi: <a href="https://doi.org/10.1093/biostatistics/kxaa051" c
 <span><span class="co">#&gt; signal-to-noise = 0.405</span></span>
 <span><span class="co">#&gt; critical windows: 4-6,10-34 </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; residual standard errors: 0.004</span></span></code></pre>
+<span><span class="co">#&gt; residual standard errors: 0.004</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="exposure-time-surface">Exposure-time surface<a class="anchor" aria-label="anchor" href="#exposure-time-surface"></a>
 </h3>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, </span>
 <span>     main <span class="op">=</span> <span class="st">"Plot title"</span>, </span>
 <span>     xlab <span class="op">=</span> <span class="st">"Time axis label"</span>, </span>
@@ -207,25 +207,25 @@ Wilson (2021) &lt;doi: <a href="https://doi.org/10.1093/biostatistics/kxaa051" c
 <div class="section level3">
 <h3 id="slicing-on-exposure-concentration">Slicing on exposure-concentration<a class="anchor" aria-label="anchor" href="#slicing-on-exposure-concentration"></a>
 </h3>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># slicing on exposure-concentration</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"slice"</span>, val <span class="op">=</span> <span class="fl">1</span>, main <span class="op">=</span> <span class="st">"Slice at concentration 1"</span><span class="op">)</span> </span></code></pre></div>
 <p><img src="TDLNM_files/figure-html/unnamed-chunk-3-1.png" width="700"></p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"slice"</span>, val <span class="op">=</span> <span class="fl">2</span>, main <span class="op">=</span> <span class="st">"Slice at concentration 2"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="TDLNM_files/figure-html/unnamed-chunk-3-2.png" width="700"></p>
 </div>
 <div class="section level3">
 <h3 id="slicing-on-time-lag">Slicing on time lag<a class="anchor" aria-label="anchor" href="#slicing-on-time-lag"></a>
 </h3>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># slicing on exposure-concentration</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"slice"</span>, time <span class="op">=</span> <span class="fl">7</span>, main <span class="op">=</span> <span class="st">"Slice at time 7"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="TDLNM_files/figure-html/unnamed-chunk-4-1.png" width="700"></p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"slice"</span>, time <span class="op">=</span> <span class="fl">15</span>, main <span class="op">=</span> <span class="st">"Slice at time 15"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="TDLNM_files/figure-html/unnamed-chunk-4-2.png" width="700"></p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"slice"</span>, time <span class="op">=</span> <span class="fl">33</span>, main <span class="op">=</span> <span class="st">"Slice at time 33"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="TDLNM_files/figure-html/unnamed-chunk-4-3.png" width="700"></p>
 </div>
