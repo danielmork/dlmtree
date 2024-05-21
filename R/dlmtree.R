@@ -300,7 +300,7 @@ dlmtree <- function(formula,
     }
 
     if(exp.centered){
-      cat("Caution: At least one of the exposure data may have been centered. This could result in an inaccurate estimate of marginal exposure effect when using TDLMM \n \n")
+      message("Caution: At least one of the exposure data may have been centered. This could result in an inaccurate estimate of marginal exposure effect when using TDLMM \n")
     }
   }
 
