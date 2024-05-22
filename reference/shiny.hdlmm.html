@@ -84,7 +84,8 @@
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">D</span> <span class="op">&lt;-</span> <span class="fu"><a href="sim.hdlmm.html">sim.hdlmm</a></span><span class="op">(</span>sim <span class="op">=</span> <span class="st">"D"</span>, n <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+<span class="r-in"><span><span class="va">D</span> <span class="op">&lt;-</span> <span class="fu"><a href="sim.hdlmm.html">sim.hdlmm</a></span><span class="op">(</span>sim <span class="op">=</span> <span class="st">"D"</span>, n <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="dlmtree.html">dlmtree</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">.</span>, </span></span>
 <span class="r-in"><span>               data <span class="op">=</span> <span class="va">D</span><span class="op">$</span><span class="va">dat</span>,</span></span>
 <span class="r-in"><span>               exposure.data <span class="op">=</span> <span class="va">D</span><span class="op">$</span><span class="va">exposures</span>,</span></span>
@@ -103,8 +104,9 @@
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ''''''''''''''''''''''''''''''''''''''''''</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Compiling results...</span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span> <span class="fu"><a href="shiny.html">shiny</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="shiny.html">shiny</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
