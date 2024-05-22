@@ -256,6 +256,8 @@ dlmtree <- function(formula,
     }
 
   } else { # HDLMM, TDLMM
+    exp.centered <- FALSE # Check exposure centering for TDLMM
+
     # TDLNM (no mixture) 
     if (dlm.type == "nonlinear") {
       stop("The mixture setting is not applicable to `non-linear` model. Set mixture to FALSE.")
@@ -291,9 +293,14 @@ dlmtree <- function(formula,
         stop("missing values in exposure data")
       }
 
+      # Check exposure centering for TDLMM
       if (het == FALSE & mean(exposure.data[[i]]) < 1e-10){
-        cat("Caution: At least one of the exposure data may have been centered. \n This could result in an inaccurate estimate of marginal exposure effect when using TDLMM \n \n")
+        exp.centered <- TRUE
       }
+    }
+
+    if(exp.centered){
+      message("Caution: At least one of the exposure data may have been centered. This could result in an inaccurate estimate of marginal exposure effect when using TDLMM \n")
     }
   }
 

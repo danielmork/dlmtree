@@ -23,6 +23,7 @@ Method for creating a summary object of class 'hdlm'
 summary.hdlmm
 }
 \examples{
+\donttest{
 D <- sim.hdlmm(sim = "D", n = 1000)
 fit <- dlmtree(y ~ ., 
                data = D$dat,
@@ -32,5 +33,6 @@ fit <- dlmtree(y ~ .,
                mixture = TRUE,
                het = TRUE)
 summary(fit)
+}
 
 }

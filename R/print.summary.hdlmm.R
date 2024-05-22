@@ -9,6 +9,7 @@
 #' @param ... additional parameters
 #'
 #' @examples
+#' \donttest{
 #' D <- sim.hdlmm(sim = "D", n = 1000)
 #' fit <- dlmtree(y ~ ., 
 #'                data = D$dat,
@@ -19,6 +20,7 @@
 #'                het = TRUE)
 #' fit_sum <- summary(fit)
 #' print(fit_sum)
+#' }
 #'
 #' @returns output of hdlmm fit in R console
 #' @export
