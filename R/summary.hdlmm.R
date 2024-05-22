@@ -8,6 +8,7 @@
 #' @param ... additional parameters
 #'
 #' @examples
+#' \donttest{
 #' D <- sim.hdlmm(sim = "D", n = 1000)
 #' fit <- dlmtree(y ~ ., 
 #'                data = D$dat,
@@ -17,6 +18,7 @@
 #'                mixture = TRUE,
 #'                het = TRUE)
 #' summary(fit)
+#' }
 #'
 #' @returns list of type 'summary.hdlmm'
 #' @export

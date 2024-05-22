@@ -25,6 +25,7 @@ Method for printing an overview with summary of model class 'hdlmm'
 print.summary.hdlmm
 }
 \examples{
+\donttest{
 D <- sim.hdlmm(sim = "D", n = 1000)
 fit <- dlmtree(y ~ ., 
                data = D$dat,
@@ -35,5 +36,6 @@ fit <- dlmtree(y ~ .,
                het = TRUE)
 fit_sum <- summary(fit)
 print(fit_sum)
+}
 
 }

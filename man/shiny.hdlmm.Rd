@@ -19,6 +19,7 @@ Method for executing a shiny app to provide comprehensive analysis with HDLMM. T
 shiny.hdlmm
 }
 \examples{
+\donttest{
 D <- sim.hdlmm(sim = "D", n = 1000)
 fit <- dlmtree(y ~ ., 
                data = D$dat,
@@ -28,7 +29,8 @@ fit <- dlmtree(y ~ .,
                mixture = TRUE,
                het = TRUE)
 if (interactive()) {
- shiny(fit)
+  shiny(fit)
+}
 }
 
 }

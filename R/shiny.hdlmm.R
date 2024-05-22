@@ -6,6 +6,7 @@
 #' @param fit an object of class 'hdlmm'
 #'
 #' @examples
+#' \donttest{
 #' D <- sim.hdlmm(sim = "D", n = 1000)
 #' fit <- dlmtree(y ~ ., 
 #'                data = D$dat,
@@ -15,7 +16,8 @@
 #'                mixture = TRUE,
 #'                het = TRUE)
 #' if (interactive()) {
-#'  shiny(fit)
+#'   shiny(fit)
+#' }
 #' }
 #' 
 #' @returns A shinyapp interface 
