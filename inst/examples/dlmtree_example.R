@@ -7,7 +7,7 @@
   # binary outcome with logit link
   
   D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
-  fit_tdlm <- dlmtree(y ~ .,
+  tdlm.fit <- dlmtree(y ~ .,
                       data = D$dat,
                       exposure.data = D$exposures[[1]],
                       dlm.type = "linear",
@@ -15,35 +15,35 @@
                       binomial.size = 1)
   
   # summarize results
-  s_fit_tdlm <- summary(fit_tdlm)
-  s_fit_tdlm
+  tdlm.sum <- summary(tdlm.fit)
+  tdlm.sum
   
   # plot results
-  plot(s_fit_tdlm)
+  plot(tdlm.sum)
   
   
   
   # Treed distributed lag nonlinear model (TDLNM)
   # Gaussian regression model
   D <- sim.tdlnm(sim = "A", error.to.signal = 1)
-  fit_tdlnm <- dlmtree(formula = y ~ .,
+  tdlnm.fit <- dlmtree(formula = y ~ .,
                        data = D$dat,
                        exposure.data = D$exposures,
                        dlm.type = "nonlinear",
                        family = "gaussian")
   
   # summarize results
-  s_fit_tdlnm <- summary(fit_tdlnm)
-  s_fit_tdlnm
+  tdlnm.sum <- summary(tdlnm.fit)
+  tdlnm.sum
   
   # plot results
-  plot(s_fit_tdlnm)
+  plot(tdlnm.sum)
   
   
   
   # Heterogenious TDLM (HDLM), similar to first example but with heterogenious exposure response
   D <- sim.hdlmm(sim = "B", n = 1000)
-  fit_hdlm <- dlmtree(y ~ .,
+  hdlm.fit <- dlmtree(y ~ .,
                       data = D$dat,
                       exposure.data = D$exposures,
                       dlm.type = "linear",
@@ -51,12 +51,12 @@
                       het = TRUE)
   
   # summarize results
-  s_fit_hdlm <- summary(fit_hdlm)
-  s_fit_hdlm
+  hdlm.sum <- summary(hdlm.fit)
+  hdlm.sum
   
   # shiny app for HDLM
   if (interactive()) {
-    shiny(fit_hdlm)
+    shiny(hdlm.fit)
   }
   
   
@@ -68,26 +68,26 @@
   # Model for mixutre (or multivariate) lagged exposures
   # with a homogenious exposure-time-response function
   D <- sim.tdlmm(sim = "B", error = 25, n = 1000)
-  fit_tdlmm <- dlmtree(y ~ .,
+  tdlmm.fit <- dlmtree(y ~ .,
                        data = D$dat, exposure.data = D$exposures,
                        mixture.interactions = "noself",
                        dlm.type = "linear", family = "gaussian",
                        mixture = TRUE)
   
   # summarize results
-  s_fit_tdlmm <- summary(fit_tdlmm)
+  tdlmm.sum <- summary(tdlmm.fit)
   
   # plot the marginal exposure-response for one exposure
-  plot(s_fit_tdlmm, exposure1 = "e1")
+  plot(tdlmm.sum, exposure1 = "e1")
   
   # plot exposure-response surface
-  plot(s_fit_tdlmm, exposure1 = "e1", exposure2 = "e2")
+  plot(tdlmm.sum, exposure1 = "e1", exposure2 = "e2")
   
   
   
   # heterogenious version of TDLMM
   D <- sim.hdlmm(sim = "D", n = 1000)
-  fit_hdlmm <- dlmtree(y ~ .,
+  hdlmm.fit <- dlmtree(y ~ .,
                        data = D$dat,
                        exposure.data = D$exposures,
                        dlm.type = "linear",
@@ -96,12 +96,12 @@
                        het = TRUE)
   
   # summarize results
-  s_fit_hdlmm <- summary(fit_hdlmm)
-  s_fit_hdlmm
+  hdlmm.sum <- summary(hdlmm.fit)
+  hdlmm.sum
   
   # summarize results
   if (interactive()) {
-    shiny(s_fit_hdlmm)
+    shiny(hdlmm.fit)
   }
   
   
