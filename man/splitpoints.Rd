@@ -24,6 +24,7 @@ Method for determining split points for continuous modifiers
 splitpoints
 }
 \examples{
+\donttest{
 # Split points with HDLM 
 D <- sim.hdlmm(sim = "B", n = 1000)
 fit <- dlmtree(y ~ ., 
@@ -34,5 +35,6 @@ fit <- dlmtree(y ~ .,
                het = TRUE)
 splitpoints(fit, var = "mod_num", round = 2)
 splitpoints(fit, var = "mod_scale", round = 2)
+}
 
 }

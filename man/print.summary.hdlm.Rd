@@ -24,15 +24,3 @@ Method for printing an overview with summary of model class 'hdlm'
 \details{
 print.summary.hdlm
 }
-\examples{
-D <- sim.hdlmm(sim = "B", n = 1000)
-fit <- dlmtree(y ~ ., 
-               data = D$dat,
-               exposure.data = D$exposures,
-               dlm.type = "linear",
-               family = "gaussian",
-               het = TRUE)
-fit_sum <- summary(fit)
-print(fit_sum)
-
-}

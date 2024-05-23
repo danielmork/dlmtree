@@ -22,14 +22,3 @@ Method for printing an overview with summary of model class 'monotone'
 \details{
 print.summary.monotone
 }
-\examples{
-D <- sim.tdlnm(sim = "A", error.to.signal = 1)
-fit <- dlmtree(formula = y ~ .,
-               data = D$dat,
-               exposure.data = D$exposures,
-               dlm.type = "monotone",
-               family = "gaussian")
-fit_sum <- summary(fit)
-print(fit_sum)
-
-}

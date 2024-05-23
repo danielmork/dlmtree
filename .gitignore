@@ -2,13 +2,9 @@
 .Rhistory
 .RData
 .Ruserdata
-examples
 *.o
 *.dll
 .DS_Store
 *.so
-_config.yml
-.Rbuildignore
-inst/doc
 docs
 pkgdown

@@ -21,6 +21,7 @@ Method for calculating posterior inclusion probabilities (PIPs) for modifiers in
 pip
 }
 \examples{
+\donttest{
 # Posterior inclusion probability with HDLM 
 D <- sim.hdlmm(sim = "B", n = 1000)
 fit <- dlmtree(y ~ ., 
@@ -31,5 +32,6 @@ fit <- dlmtree(y ~ .,
                het = TRUE)
 pip(fit)
 pip(fit, type = 2)
+}
 
 }
