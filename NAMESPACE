@@ -2,6 +2,13 @@ useDynLib(dlmtree, .registration=TRUE)
 importFrom(Rcpp, evalCpp)
 exportPattern("^[[:alpha:]]+")
 
+S3method(print, tdlnm)
+S3method(print, tdlm)
+S3method(print, tdlmm)
+S3method(print, hdlm)
+S3method(print, hdlmm)
+S3method(print, monotone)
+
 S3method(summary, tdlnm)
 S3method(summary, tdlm)
 S3method(summary, tdlmm)
@@ -36,7 +43,7 @@ importFrom("stats", "as.formula", "model.frame", "model.matrix",
            "aggregate", "complete.cases", "delete.response", "cov", "predict",
            "dnorm", "na.fail", "reorder", "rnbinom", "setNames", "step", "time")
 
-importFrom("utils", "combn", "data", "packageDescription")
+importFrom("utils", "combn", "data", "packageDescription", "methods")
 
 importFrom("tidyr", "pivot_longer")
 
