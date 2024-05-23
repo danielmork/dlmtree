@@ -1150,6 +1150,9 @@ dlmtree <- function(formula,
   rm(model)
   gc()
   
+  # return the call
+  model.out$call <- match.call()
+  
   class(model.out)  <- model.out$class
   return(model.out)
 }
