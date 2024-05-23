@@ -16,17 +16,6 @@
 #' @param scale default = NULL, if scale is not NULL, the effects are exponentiated
 #' @param ... additional plotting parameters for title and labels
 #'
-#' @examples
-#' D <- sim.tdlmm(sim = "B", error = 25, n = 1000)
-#' fit <- dlmtree(y ~ .,
-#'                data = D$dat, exposure.data = D$exposures,
-#'                mixture.interactions = "noself", 
-#'                dlm.type = "linear", family = "gaussian",
-#'                mixture = TRUE)
-#' fit_sum <- summary(fit)
-#' plot(fit_sum, exposure1 = "e1")
-#' plot(fit_sum, exposure1 = "e1", exposure2 = "e2")
-#'
 #' @returns A plot of distributed lag effect or interaction surface estimated with tdlmm
 #' @export
 #'

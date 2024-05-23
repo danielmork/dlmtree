@@ -14,17 +14,7 @@
 #' @param ... additional parameters to alter plots: 'main', 'xlab', 'ylab',
 #' 'flab' which sets the effect label for surface plots,
 #' 'start.time' which sets the first time value
-#'
-#' @examples
-#' D <- sim.tdlnm(sim = "A", error.to.signal = 1)
-#' fit <- dlmtree(formula = y ~ .,
-#'                data = D$dat,
-#'                exposure.data = D$exposures,
-#'                dlm.type = "monotone",
-#'                family = "gaussian")
-#' fit_sum <- summary(fit)
-#' plot(fit_sum)
-#'
+#' 
 #' @returns A plot of distributed lag effect estimated with monotone-TDLNM
 #' @export
 #'

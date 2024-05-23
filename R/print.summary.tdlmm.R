@@ -8,16 +8,6 @@
 #' @param cw.only print only results for exposures with critical windows
 #' @param ... additional parameters
 #'
-#' @examples
-#' D <- sim.tdlmm(sim = "B", error = 25, n = 1000)
-#' fit <- dlmtree(y ~ .,
-#'                data = D$dat, exposure.data = D$exposures,
-#'                mixture.interactions = "noself", 
-#'                dlm.type = "linear", family = "gaussian",
-#'                mixture = TRUE)
-#' fit_sum <- summary(fit)
-#' print(fit_sum)
-#'
 #' @returns output of tdlmm fit in R console
 #' @export
 #'

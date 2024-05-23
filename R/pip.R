@@ -7,6 +7,7 @@
 #' @param type Type=1 indicates single modifier PIPs. Type=2 indicates joint modifier PIPs for two modifiers.
 #'
 #' @examples
+#' \donttest{
 #' # Posterior inclusion probability with HDLM 
 #' D <- sim.hdlmm(sim = "B", n = 1000)
 #' fit <- dlmtree(y ~ ., 
@@ -17,7 +18,8 @@
 #'                het = TRUE)
 #' pip(fit)
 #' pip(fit, type = 2)
-#'
+#' }
+#' 
 #' @returns A vector (type=1) or data.frame (type=2) of PIPs.
 #' @export
 pip <- function(object, type=1) {

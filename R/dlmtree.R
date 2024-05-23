@@ -80,13 +80,7 @@
 #' of results. Examples are provided below for the syntax for running different types of models.
 #' 
 #' @md
-#' @examples
-#' D <- sim.tdlnm(sim = "A", error.to.signal = 1)
-#' fit <- dlmtree(formula = y ~ .,
-#'                data = D$dat,
-#'                exposure.data = D$exposures,
-#'                dlm.type = "nonlinear",
-#'                family = "gaussian")
+#' @example inst/examples/dlmtree_example.R
 #'
 #' @returns Object of one of the classes: tdlm, tdlmm, tdlnm, hdlm, hdlmm
 #' @export
