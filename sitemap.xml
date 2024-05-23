@@ -127,6 +127,15 @@
     <loc>https://danielmork.github.io/dlmtree/reference/predict.dlmtree.html</loc>
   </url>
   <url>
+    <loc>https://danielmork.github.io/dlmtree/reference/print.hdlm.html</loc>
+  </url>
+  <url>
+    <loc>https://danielmork.github.io/dlmtree/reference/print.hdlmm.html</loc>
+  </url>
+  <url>
+    <loc>https://danielmork.github.io/dlmtree/reference/print.monotone.html</loc>
+  </url>
+  <url>
     <loc>https://danielmork.github.io/dlmtree/reference/print.summary.hdlm.html</loc>
   </url>
   <url>
@@ -143,6 +152,15 @@
   </url>
   <url>
     <loc>https://danielmork.github.io/dlmtree/reference/print.summary.tdlnm.html</loc>
+  </url>
+  <url>
+    <loc>https://danielmork.github.io/dlmtree/reference/print.tdlm.html</loc>
+  </url>
+  <url>
+    <loc>https://danielmork.github.io/dlmtree/reference/print.tdlmm.html</loc>
+  </url>
+  <url>
+    <loc>https://danielmork.github.io/dlmtree/reference/print.tdlnm.html</loc>
   </url>
   <url>
     <loc>https://danielmork.github.io/dlmtree/reference/rcpp_pgdraw.html</loc>
