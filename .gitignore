@@ -2,7 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
-examples
 *.o
 *.dll
 .DS_Store
