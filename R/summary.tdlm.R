@@ -26,10 +26,13 @@ summary.tdlm <- function(object, conf.level = 0.95, ...){
   ce                <- colSums(dlmest)
   cumulative.effect <- c("mean" = mean(ce), quantile(ce, ci.lims))
   xvals             <- seq(object$Xrange[1], object$Xrange[2], length.out = 50)
-  cumulative.effect <- data.frame("vals" = xvals,
-                                  "mean" = cumulative.effect[1] * xvals,
-                                  "lower" = cumulative.effect[2] * xvals,
-                                  "upper" = cumulative.effect[3] * xvals)
+  
+  # Deprecated
+  # cumulative.effect <- data.frame("vals" = xvals,
+  #                                 "mean" = cumulative.effect[1] * xvals,
+  #                                 "lower" = cumulative.effect[2] * xvals,
+  #                                 "upper" = cumulative.effect[3] * xvals)
+  
 
   # Fixed effect estimates
   gamma.mean  <- colMeans(object$gamma)
