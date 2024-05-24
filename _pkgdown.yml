@@ -60,7 +60,7 @@ reference:
   - exposureCov
   - pm25Exposures
   - zinbCo
-  - sbd_dlmtree
+  - get_sbd_dlmtree
   
 - title: Cpp source code & Misc.
   contents:
