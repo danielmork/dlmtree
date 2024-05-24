@@ -96,12 +96,19 @@ distributed lag mixture model (HDLMM).</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/danielmork/dlmtree" class="external-link">dlmtree</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"sbd_dlmtree"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="load-data">Load data<a class="anchor" aria-label="anchor" href="#load-data"></a>
+</h3>
+<p>Simulated data is available on <a href="https://github.com/danielmork/dlmtree/tree/master/vignettes/articles" class="external-link">GitHub</a>.
+It can be loaded with the following code.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sbd_dlmtree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_sbd_dlmtree.html">get_sbd_dlmtree</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</div>
 <div class="section level3">
 <h3 id="data-preparation">Data preparation<a class="anchor" aria-label="anchor" href="#data-preparation"></a>
 </h3>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Response and covariates</span></span>
 <span><span class="va">sbd_cov</span> <span class="op">&lt;-</span> <span class="va">sbd_dlmtree</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>            <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">bwgaz</span>, <span class="va">ChildSex</span>, <span class="va">MomAge</span>, <span class="va">GestAge</span>, <span class="va">MomPriorBMI</span>, <span class="va">Race</span>,</span>
@@ -119,7 +126,7 @@ distributed lag mixture model (HDLMM).</p>
 <div class="section level3">
 <h3 id="fitting-the-model">Fitting the model<a class="anchor" aria-label="anchor" href="#fitting-the-model"></a>
 </h3>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Gaussian</span></span>
 <span><span class="va">hdlmm.fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dlmtree.html">dlmtree</a></span><span class="op">(</span>formula <span class="op">=</span> <span class="va">bwgaz</span> <span class="op">~</span> <span class="va">ChildSex</span> <span class="op">+</span> <span class="va">MomAge</span> <span class="op">+</span> <span class="va">MomPriorBMI</span> <span class="op">+</span></span>
 <span>                                        <span class="va">Race</span> <span class="op">+</span> <span class="va">Hispanic</span> <span class="op">+</span> <span class="va">SmkAny</span> <span class="op">+</span> <span class="va">EstMonthConcept</span>,</span>
@@ -144,7 +151,7 @@ distributed lag mixture model (HDLMM).</p>
 <div class="section level3">
 <h3 id="model-fit-summary">Model fit summary<a class="anchor" aria-label="anchor" href="#model-fit-summary"></a>
 </h3>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">hdlmm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">hdlmm.fit</span><span class="op">)</span></span>
 <span><span class="va">hdlmm.sum</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; ---</span></span>
@@ -204,7 +211,7 @@ distributed lag mixture model (HDLMM).</p>
 <div class="section level3">
 <h3 id="launching-shiny-app">Launching Shiny app<a class="anchor" aria-label="anchor" href="#launching-shiny-app"></a>
 </h3>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># shiny(hdlmm.fit)</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

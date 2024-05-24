@@ -317,13 +317,13 @@ For more examples, visit: <a href="https://danielmork.github.io/dlmtree/">dlmtre
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># The first three examples are for one lagged exposure</span></span></span>
-<span class="r-in"><span>  </span></span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># treed distributed lag model (TDLM)</span></span></span>
 <span class="r-in"><span>  <span class="co"># binary outcome with logit link</span></span></span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="va">D</span> <span class="op">&lt;-</span> <span class="fu"><a href="sim.tdlmm.html">sim.tdlmm</a></span><span class="op">(</span>sim <span class="op">=</span> <span class="st">"A"</span>, mean.p <span class="op">=</span> <span class="fl">0.5</span>, n <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="va">tdlm.fit</span> <span class="op">&lt;-</span> <span class="fu">dlmtree</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">.</span>,</span></span>
 <span class="r-in"><span>                      data <span class="op">=</span> <span class="va">D</span><span class="op">$</span><span class="va">dat</span>,</span></span>
@@ -341,7 +341,7 @@ For more examples, visit: <a href="https://danielmork.github.io/dlmtree/">dlmtre
 <span class="r-out co"><span class="r-pr">#&gt;</span> [0--------25--------50--------75--------100]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ''''''''''''''''''''''''''''''''''''''''''</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Compiling results...</span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># summarize results</span></span></span>
 <span class="r-in"><span>  <span class="va">tdlm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tdlm.fit</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="va">tdlm.sum</span></span></span>
@@ -420,13 +420,13 @@ For more examples, visit: <a href="https://danielmork.github.io/dlmtree/">dlmtre
 <span class="r-out co"><span class="r-pr">#&gt;</span> * = CI does not contain zero</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---</span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># plot results</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlm.sum</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="dlmtree-1.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span>  </span></span>
-<span class="r-in"><span>  </span></span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># Treed distributed lag nonlinear model (TDLNM)</span></span></span>
 <span class="r-in"><span>  <span class="co"># Gaussian regression model</span></span></span>
 <span class="r-in"><span>  <span class="va">D</span> <span class="op">&lt;-</span> <span class="fu"><a href="sim.tdlnm.html">sim.tdlnm</a></span><span class="op">(</span>sim <span class="op">=</span> <span class="st">"A"</span>, error.to.signal <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
@@ -441,11 +441,11 @@ For more examples, visit: <a href="https://danielmork.github.io/dlmtree/">dlmtre
 <span class="r-out co"><span class="r-pr">#&gt;</span> Burn-in % complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [0--------25--------50--------75--------100]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ''''''''''''''''''''''''''''''''''''''''''</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> MCMC iterations (est time: 2 seconds)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> MCMC iterations (est time: 0 seconds)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [0--------25--------50--------75--------100]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ''''''''''''''''''''''''''''''''''''''''''</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Compiling results...</span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># summarize results</span></span></span>
 <span class="r-in"><span>  <span class="va">tdlnm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tdlnm.fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Centered DLNM at exposure value 0 </span>
@@ -485,13 +485,13 @@ For more examples, visit: <a href="https://danielmork.github.io/dlmtree/">dlmtre
 <span class="r-out co"><span class="r-pr">#&gt;</span> critical windows: 3-15,18-24 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> residual standard errors: 0.138 </span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># plot results</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="dlmtree-2.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span>  </span></span>
-<span class="r-in"><span>  </span></span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># Heterogenious TDLM (HDLM), similar to first example but with heterogenious exposure response</span></span></span>
 <span class="r-in"><span>  <span class="va">D</span> <span class="op">&lt;-</span> <span class="fu"><a href="sim.hdlmm.html">sim.hdlmm</a></span><span class="op">(</span>sim <span class="op">=</span> <span class="st">"B"</span>, n <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="va">hdlm.fit</span> <span class="op">&lt;-</span> <span class="fu">dlmtree</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">.</span>,</span></span>
@@ -506,11 +506,11 @@ For more examples, visit: <a href="https://danielmork.github.io/dlmtree/">dlmtre
 <span class="r-out co"><span class="r-pr">#&gt;</span> Burn-in % complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [0--------25--------50--------75--------100]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ''''''''''''''''''''''''''''''''''''''''''</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> MCMC iterations (est time: 4 seconds)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> MCMC iterations (est time: 6 seconds)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [0--------25--------50--------75--------100]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ''''''''''''''''''''''''''''''''''''''''''</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Compiling results...</span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># summarize results</span></span></span>
 <span class="r-in"><span>  <span class="va">hdlm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">hdlm.fit</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="va">hdlm.sum</span></span></span>
@@ -569,17 +569,17 @@ For more examples, visit: <a href="https://danielmork.github.io/dlmtree/">dlmtre
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> To obtain exposure effect estimates, use the 'shiny(fit)' function.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># shiny app for HDLM</span></span></span>
 <span class="r-in"><span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="shiny.html">shiny</a></span><span class="op">(</span><span class="va">hdlm.fit</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="op">}</span></span></span>
-<span class="r-in"><span>  </span></span>
-<span class="r-in"><span>  </span></span>
-<span class="r-in"><span>  </span></span>
-<span class="r-in"><span>  <span class="co"># The next two examples are for a mixture (or multivariate) exposure </span></span></span>
-<span class="r-in"><span>  </span></span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># The next two examples are for a mixture (or multivariate) exposure</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># Treed distributed lag mixture model (TDLMM)</span></span></span>
 <span class="r-in"><span>  <span class="co"># Model for mixutre (or multivariate) lagged exposures</span></span></span>
 <span class="r-in"><span>  <span class="co"># with a homogenious exposure-time-response function</span></span></span>
@@ -599,7 +599,7 @@ For more examples, visit: <a href="https://danielmork.github.io/dlmtree/">dlmtre
 <span class="r-out co"><span class="r-pr">#&gt;</span> [0--------25--------50--------75--------100]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ''''''''''''''''''''''''''''''''''''''''''</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Compiling results...</span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># summarize results</span></span></span>
 <span class="r-in"><span>  <span class="va">tdlmm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tdlmm.fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Reconstructing main effects...</span>
@@ -607,17 +607,17 @@ For more examples, visit: <a href="https://danielmork.github.io/dlmtree/">dlmtre
 <span class="r-out co"><span class="r-pr">#&gt;</span> 0%...25%...50%...75%...100%</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Calculating marginal effects...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Calculating fixed effects...</span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># plot the marginal exposure-response for one exposure</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlmm.sum</span>, exposure1 <span class="op">=</span> <span class="st">"e1"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="dlmtree-3.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># plot exposure-response surface</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlmm.sum</span>, exposure1 <span class="op">=</span> <span class="st">"e1"</span>, exposure2 <span class="op">=</span> <span class="st">"e2"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="dlmtree-4.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span>  </span></span>
-<span class="r-in"><span>  </span></span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># heterogenious version of TDLMM</span></span></span>
 <span class="r-in"><span>  <span class="va">D</span> <span class="op">&lt;-</span> <span class="fu"><a href="sim.hdlmm.html">sim.hdlmm</a></span><span class="op">(</span>sim <span class="op">=</span> <span class="st">"D"</span>, n <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="va">hdlmm.fit</span> <span class="op">&lt;-</span> <span class="fu">dlmtree</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">.</span>,</span></span>
@@ -637,7 +637,7 @@ For more examples, visit: <a href="https://danielmork.github.io/dlmtree/">dlmtre
 <span class="r-out co"><span class="r-pr">#&gt;</span> [0--------25--------50--------75--------100]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ''''''''''''''''''''''''''''''''''''''''''</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Compiling results...</span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># summarize results</span></span></span>
 <span class="r-in"><span>  <span class="va">hdlmm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">hdlmm.fit</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="va">hdlmm.sum</span></span></span>
@@ -698,13 +698,13 @@ For more examples, visit: <a href="https://danielmork.github.io/dlmtree/">dlmtre
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> To obtain exposure effect estimates, use the 'shiny(fit)' function.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># summarize results</span></span></span>
 <span class="r-in"><span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="shiny.html">shiny</a></span><span class="op">(</span><span class="va">hdlmm.fit</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="op">}</span></span></span>
-<span class="r-in"><span>  </span></span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
