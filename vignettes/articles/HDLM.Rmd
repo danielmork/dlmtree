@@ -1,5 +1,7 @@
 ---
 title: "HDLM"
+resource_files:
+  - vignettes/articles/sbd_dlmtree.rda
 ---
 
 ```{r, include = FALSE}
@@ -15,7 +17,19 @@ This vignette demonstrates the implementation of heterogeneous treed distributed
 library(dlmtree)
 library(dplyr)
 set.seed(1)
-data("sbd_dlmtree")
+```
+
+### Load data
+
+Simulated data is available on [GitHub](https://github.com/danielmork/dlmtree/tree/master/vignettes/articles). It can be loaded with the following code.
+
+```{r load data from GitHub, eval=FALSE, include=TRUE}
+sbd_dlmtree <- get_sbd_dlmtree()
+```
+
+
+```{r load data, include=FALSE}
+load("sbd_dlmtree.rda")
 ```
 
 ### Data preparation
