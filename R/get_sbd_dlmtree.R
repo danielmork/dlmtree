@@ -34,6 +34,8 @@
 #' 
 get_sbd_dlmtree <- function(){
   
+  sbd_dlmtree <- NULL
+  
   temp <- tempfile()
   download.file("https://github.com/danielmork/dlmtree/raw/master/vignettes/articles/sbd_dlmtree.rda", temp )
   load(temp)

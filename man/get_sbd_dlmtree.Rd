@@ -24,11 +24,11 @@ A data frame with 10000 rows (observations) and 202 variables. All data is simul
   \item{EstDateConcept}{Estimated date of conception.}
   \item{EstMonthConcept}{Estimated month of conception.}
   \item{EstYearConcept}{Estimated year of conception.}
-  \item{pm25_1 -- pm25_37}{Weekly average exposure to PM2.5 for weeks 1 to 37.}
-  \item{no2_1 -- no2_37}{Weekly average exposure to NO2 for weeks 1 to 37.}
-  \item{so2_1 -- so2_37}{Weekly average exposure to SO2 for weeks 1 to 37.}
-  \item{co2_1 -- co2_37}{Weekly average exposure to CO for weeks 1 to 37.}
-  \item{temp_1 -- temp_37}{Weekly average exposure to temperature for weeks 1 to 37.}
+  \item{pm25_1 - pm25_37}{Weekly average exposure to PM2.5 for weeks 1 to 37.}
+  \item{no2_1 - no2_37}{Weekly average exposure to NO2 for weeks 1 to 37.}
+  \item{so2_1 - so2_37}{Weekly average exposure to SO2 for weeks 1 to 37.}
+  \item{co2_1 - co2_37}{Weekly average exposure to CO for weeks 1 to 37.}
+  \item{temp_1 - temp_37}{Weekly average exposure to temperature for weeks 1 to 37.}
   \item{source}{Variable indicating that the data came from the bdlim package.}
 }
 \description{
