@@ -127,7 +127,10 @@
     <loc>https://danielmork.github.io/dlmtree/reference/ppRange.html</loc>
   </url>
   <url>
-    <loc>https://danielmork.github.io/dlmtree/reference/predict.dlmtree.html</loc>
+    <loc>https://danielmork.github.io/dlmtree/reference/predict.hdlm.html</loc>
+  </url>
+  <url>
+    <loc>https://danielmork.github.io/dlmtree/reference/predict.hdlmm.html</loc>
   </url>
   <url>
     <loc>https://danielmork.github.io/dlmtree/reference/print.hdlm.html</loc>
