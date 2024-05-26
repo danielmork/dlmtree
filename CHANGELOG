@@ -1,5 +1,9 @@
 R package 'dlmtree' history of changes
 
+Version 1.0.0
+* Initial CRAN release
+* Spelling checks using `spell_check_package()` function from `spelling` package
+* S3 method `predict.dlmtree` is separately defined as `predict.hdlm` and `predict.hdlmm`
 Version 0.9.0
 * Beta prior for monotone CW selection
 * Bayes factor selection method
