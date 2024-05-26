@@ -39,7 +39,7 @@ tdlnm(
 \item{formula}{object of class formula, a symbolic description of the fixed
 effect model to be fitted, e.g. y ~ a + b}
 
-\item{data}{data frome containing variables used in the formula}
+\item{data}{data frame containing variables used in the formula}
 
 \item{exposure.data}{numerical matrix of complete exposure data with same
 length as data}

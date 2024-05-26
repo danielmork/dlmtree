@@ -38,7 +38,7 @@ reference:
   - starts_with("summary")
   - estDLM
   - ppRange
-  - predict.dlmtree
+  - starts_with("predict")
   - adj_coexposure
   - starts_with("print")
 - title: Visualization

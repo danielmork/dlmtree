@@ -154,8 +154,8 @@ Object of one of the classes: tdlm, tdlmm, tdlnm, hdlm, hdlmm
 \description{
 The 'dlmtree' function accommodates various response variable types, including continuous, binary, and zero-inflated count values.
 The function is designed to handle both single exposure and exposure mixtures. For a single exposure, users are offered options to model non-linear effects (tdlnm),
-linear effects (tdlm), or heterogenous subgroup/individualized effects (hdlm). In the case of exposure mixtures, the function supports
-lagged interactions (tdlmm), and heterogenous subgroup/individualized effects (hdlmm) allowing for a comprehensive exploration of mixture exposure heterogeneity.
+linear effects (tdlm), or heterogeneous subgroup/individualized effects (hdlm). In the case of exposure mixtures, the function supports
+lagged interactions (tdlmm), and heterogeneous subgroup/individualized effects (hdlmm) allowing for a comprehensive exploration of mixture exposure heterogeneity.
 Additionally, users can fine-tune parameters to impose effect shrinkage and perform exposure selection, enhancing the adaptability and precision of the modeling process.
 For more detailed documentation, visit: \href{https://danielmork.github.io/dlmtree/}{dlmtree website}.
 }

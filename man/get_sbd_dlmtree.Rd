@@ -17,7 +17,7 @@ A data frame with 10000 rows (observations) and 202 variables. All data is simul
   \item{MomPriorBMI}{Continuous mothers pre-pregnancy BMI.}
   \item{race}{Categorical race.}
   \item{Hispanic}{Binary indicator of Hispanic.}
-  \item{MomEdu}{Categorical maternal heighest educational attainment.}
+  \item{MomEdu}{Categorical maternal highest educational attainment.}
   \item{SmkAny}{Binary indicator of any smoking during pregnancy.}
   \item{Marital}{Categorical maternal marital status.}
   \item{Income}{Categorical income.}

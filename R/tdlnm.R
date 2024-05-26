@@ -9,7 +9,7 @@
 #'
 #' @param formula object of class formula, a symbolic description of the fixed
 #' effect model to be fitted, e.g. y ~ a + b
-#' @param data data frome containing variables used in the formula
+#' @param data data frame containing variables used in the formula
 #' @param exposure.data numerical matrix of complete exposure data with same
 #' length as data
 #' @param exposure.splits scalar indicating the number of splits (divided

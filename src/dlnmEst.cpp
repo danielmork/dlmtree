@@ -221,7 +221,7 @@ SEXP mixEst(arma::dmat dlm, int nlags, int nsamp){
   int i, t1, t2, iter, tmin1, tmax1, tmin2, tmax2;
   // Fill in estimates
   // This function is the same as the part in 
-  // predict.dlmtree.R code except for modifier part
+  // predict.hdlm/hdlmm.R code except for modifier part
   for (i = 0; i < rows; i++) {
     iter  = dlm(i, 0) - 1;
     tmin1 = dlm(i, 3) - 1;
