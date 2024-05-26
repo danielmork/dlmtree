@@ -1,5 +1,9 @@
+# dlmtree (development version)
+
+* Spelling checks using `spell_check_package()` function from `spelling` package
+
+* S3 method `predict.dlmtree` is separately defined as `predict.hdlm` and `predict.hdlmm`
+
 # dlmtree 1.0.0
 
-# dlmtree 0.9.0.1
-
-* Added a `NEWS.md` file to track changes to the package.
+Initial CRAN release
