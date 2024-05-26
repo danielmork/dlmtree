@@ -47,11 +47,12 @@ devtools::install_github("danielmork/dlmtree")
 library(dlmtree)
 ```
 
-<!-- Installing package from CRAN with: -->
-<!-- ``` r -->
-<!-- install.packages("dlmtree") -->
-<!-- library(dlmtree) -->
-<!-- ``` -->
+Installing package from CRAN:
+
+``` r
+install.packages("dlmtree")
+library(dlmtree)
+```
 
 ### References
 
