@@ -1,7 +1,7 @@
 Package: dlmtree
 Type: Package
 Title: Bayesian Treed Distributed Lag Models
-Version: 1.0.0
+Version: 1.0.0.9000
 Authors@R: c(
     person("Daniel", "Mork", email = "dmork@hsph.harvard.edu", role = c("aut", "cre", "cph"), comment = c(ORCID = "0000-0002-7924-0706")),
     person("Seongwon", "Im", email = "Seongwon.Im@colostate.edu", role = "aut", comment = c(ORCID = "0009-0000-8447-5852")),
