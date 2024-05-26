@@ -8,18 +8,6 @@
 #' @param cw.only print only results for exposures with critical windows
 #' @param ... additional parameters
 #'
-#' @examples
-#' D <- sim.hdlmm(sim = "D", n = 1000)
-#' fit <- dlmtree(y ~ ., 
-#'                data = D$dat,
-#'                exposure.data = D$exposures,
-#'                dlm.type = "linear",
-#'                family = "gaussian",
-#'                mixture = TRUE,
-#'                het = TRUE)
-#' fit_sum <- summary(fit)
-#' print(fit_sum)
-#'
 #' @returns output of hdlmm fit in R console
 #' @export
 #'
@@ -147,6 +135,11 @@ print.summary.hdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
   #                   ppRange(which(x$TreeStructs[[ex.name]]$marg.cw))))
   #   }
   # }
+
+  if(x$ctr$response == "gaussian"){
+    cat("\nresidual standard errors: ")
+    cat(round(x$rse, 3))
+  }
 
   cat("\n---\n")
 

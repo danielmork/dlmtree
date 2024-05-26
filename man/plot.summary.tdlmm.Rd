@@ -51,15 +51,3 @@ for marginal exposure effects as well as interactions between two exposures.
 \details{
 plot.summary.tdlmm
 }
-\examples{
-D <- sim.tdlmm(sim = "B", error = 25, n = 1000)
-fit <- dlmtree(y ~ .,
-               data = D$dat, exposure.data = D$exposures,
-               mixture.interactions = "noself", 
-               dlm.type = "linear", family = "gaussian",
-               mixture = TRUE)
-fit_sum <- summary(fit)
-plot(fit_sum, exposure1 = "e1")
-plot(fit_sum, exposure1 = "e1", exposure2 = "e2")
-
-}

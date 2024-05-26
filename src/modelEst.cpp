@@ -33,7 +33,6 @@ void tdlmModelEst(modelCtr *ctr){
   if(!(ctr->zinb)){ 
     const VectorXd ZR = ctr->Zw.transpose() * ctr->R; 
     ctr->gamma        = ctr->Vg * ZR; 
-    
     // * Update sigma^2 and xi_sigma2
     if (!(ctr->binomial)) {
       rHalfCauchyFC(&(ctr->sigma2), (double)ctr->n + (double)ctr->totTerm, 
@@ -71,8 +70,8 @@ void tdlmModelEst(modelCtr *ctr){
       
       // Update the V_gamma cholesky using LLT Decomposition, Lower triangular part of matrix L
       ctr->VgChol = ctr->Vg.llt().matrixL();
-      ctr->Y      = ctr->kappa.array() / ctr->Omega.array();  // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
-      ctr->R      = ctr->Y - ctr->fhat; // Recalc R using new Y
+      ctr->Ystar      = ctr->kappa.array() / ctr->Omega.array();  // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
+      ctr->R      = ctr->Ystar - ctr->fhat; // Recalc R using new Y
     }
 
 

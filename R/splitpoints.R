@@ -9,6 +9,7 @@
 #' For positive integer values of round, the variable will be rounded and split points will be reported at the resulting level
 #'
 #' @examples
+#' \donttest{
 #' # Split points with HDLM 
 #' D <- sim.hdlmm(sim = "B", n = 1000)
 #' fit <- dlmtree(y ~ ., 
@@ -19,7 +20,8 @@
 #'                het = TRUE)
 #' splitpoints(fit, var = "mod_num", round = 2)
 #' splitpoints(fit, var = "mod_scale", round = 2)
-#'
+#' }
+#' 
 #' @returns A data frame with split points and the probability that a split point was >= that split point value
 #' @export
 splitpoints <- function(object, var, round = NULL) 

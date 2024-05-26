@@ -7,17 +7,6 @@
 #' @param digits integer number of digits to round
 #' @param ... additional parameters
 #'
-#' @examples
-#' D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
-#' fit <- dlmtree(y ~ .,
-#'                data = D$dat,
-#'                exposure.data = D$exposures[[1]],
-#'                dlm.type = "linear",
-#'                family = "logit",
-#'                binomial.size = 1)
-#' fit_sum <- summary(fit)
-#' print(fit_sum)
-#'
 #' @returns output of tdlm fit in R console
 #' @export
 #'
@@ -35,6 +24,7 @@ print.summary.tdlm <- function(x, digits = 3, ...)
     cat("-", Reduce(paste, deparse1(x$formula)), "\n")
   }
 
+  cat("- sample size:", format(x$n, big.mark = ","), "\n")
   cat("- family:", x$ctr$response, "\n")
   cat("-", x$ctr$n.trees, "trees\n")
   cat("-", x$ctr$n.burn, "burn-in iterations\n")
@@ -96,8 +86,8 @@ print.summary.tdlm <- function(x, digits = 3, ...)
     }
 
     r.out <- data.frame("Mean" = round(x$r.mean, digits),
-                          "Lower" = round(x$r.ci[1], digits),
-                          "Upper" = round(x$r.ci[2], digits))
+                        "Lower" = round(x$r.ci[1], digits),
+                        "Upper" = round(x$r.ci[2], digits))
     row.names(r.out) <- "Dispersion"
       #ifelse(x$r.ci[1,] > 0 | x$b2.ci[2,] < 0,
       #      paste0("*", names(x$b2.mean)),
@@ -129,4 +119,9 @@ print.summary.tdlm <- function(x, digits = 3, ...)
   cat("---\n")
   cat("* = CI does not contain zero\n")
   
+  if(x$ctr$response == "gaussian"){
+    cat("\nresidual standard errors: ")
+    cat(round(x$rse, 3))
+  } 
+  cat("\n---\n")
 }

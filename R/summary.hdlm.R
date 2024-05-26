@@ -7,16 +7,7 @@
 #' @param conf.level confidence level for computation of credible intervals
 #' @param ... additional parameters
 #'
-#' @examples
-#' D <- sim.hdlmm(sim = "B", n = 1000)
-#' fit <- dlmtree(y ~ ., 
-#'                data = D$dat,
-#'                exposure.data = D$exposures,
-#'                dlm.type = "linear",
-#'                family = "gaussian",
-#'                het = TRUE)
-#' summary(fit)
-#'
+#' 
 #' @returns list of type 'summary.hdlm'
 #' @export
 #'
@@ -43,6 +34,8 @@ summary.hdlm <- function(object, conf.level = 0.95, ...)
               "conf.level"   = conf.level,
               "sig.to.noise" = ifelse(is.null(object$sigma2), NA,
                                         var(object$fhat) / mean(object$sigma2)),
+              "rse"          = sd(object$sigma2),
+              "n"            = nrow(object$data),
               "modPrior"     = object$zeta,
               "pip"          = pip_df,
               "gamma.mean"   = gamma.mean,

@@ -15,7 +15,6 @@
 #' @param ... additional parameters
 #'
 #' @returns Summary of monotone fit
-#' @export summary.monotone
 #' @export
 #'
 summary.monotone <- function(object,
@@ -123,6 +122,8 @@ summary.monotone <- function(object,
               "conf.level"        = conf.level,
               "sig.to.noise"      = ifelse(is.null(object$sigma2), NA,
                                        var(object$fhat) / mean(object$sigma2)),
+              "rse"               = sd(object$sigma2),
+              "n"                 = nrow(object$data),
               "plot.dat"          = plot.dat,
               "matfit"            = matfit,
               "cilower"           = cilower,
@@ -139,7 +140,7 @@ summary.monotone <- function(object,
               "formula.zi"        = object$formula.zi)
 
 
-  class(ret) <- "summary.tdlnm"
+  class(ret) <- "summary.monotone"
   
   if (mcmc) {
     ret$dlm_mcmc                  <- dlmest

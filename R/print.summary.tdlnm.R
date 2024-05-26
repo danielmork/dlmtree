@@ -6,16 +6,6 @@
 #' @param x an object of type 'summary.tdlnm', result of call to summary.tdlnm()
 #' @param digits integer number of digits to round
 #' @param ... additional parameters
-#'
-#' @examples
-#' D <- sim.tdlnm(sim = "A", error.to.signal = 1)
-#' fit <- dlmtree(formula = y ~ .,
-#'                data = D$dat,
-#'                exposure.data = D$exposures,
-#'                dlm.type = "nonlinear",
-#'                family = "gaussian")
-#' fit_sum <- summary(fit)
-#' print(fit_sum)
 #' 
 #' @returns output of tdlnm fit in R console
 #' @export
@@ -33,7 +23,7 @@ print.summary.tdlnm <- function(x, digits = 3, ...)
   } else {
     cat("-", Reduce(paste, deparse1(x$formula)), "\n")
   }
-
+  cat("- sample size:", format(x$n, big.mark = ","), "\n")
   cat("- family:", x$ctr$response, "\n")
   cat("-", x$ctr$n.trees, "trees\n")
   cat("-", x$ctr$n.burn, "burn-in iterations\n")
@@ -113,6 +103,10 @@ print.summary.tdlnm <- function(x, digits = 3, ...)
 
   cat("\ncritical windows: ")
   cw <- ppRange(which((colSums(x$cilower > 0) + colSums(x$ciupper < 0)) > 0))
-
   cat(cw, "\n")
+
+  if(x$ctr$response == "gaussian"){
+    cat("\nresidual standard errors: ")
+    cat(round(x$rse, 3), "\n")
+  }
 }

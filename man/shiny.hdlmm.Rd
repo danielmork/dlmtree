@@ -18,17 +18,3 @@ Method for executing a shiny app to provide comprehensive analysis with HDLMM. T
 \details{
 shiny.hdlmm
 }
-\examples{
-D <- sim.hdlmm(sim = "D", n = 1000)
-fit <- dlmtree(y ~ ., 
-               data = D$dat,
-               exposure.data = D$exposures,
-               dlm.type = "linear",
-               family = "gaussian",
-               mixture = TRUE,
-               het = TRUE)
-if (interactive()) {
- shiny(fit)
-}
-
-}

@@ -14,15 +14,6 @@
 #' @param verbose true (default) or false: print output
 #' @param ... additional parameters
 #'
-#' @examples
-#' D <- sim.tdlnm(sim = "A", error.to.signal = 1)
-#' fit <- dlmtree(formula = y ~ .,
-#'                data = D$dat,
-#'                exposure.data = D$exposures,
-#'                dlm.type = "nonlinear",
-#'                family = "gaussian")
-#' summary(fit)
-#'
 #' @returns list of type 'summary.tdlnm'
 #' @export
 #'
@@ -135,6 +126,8 @@ summary.tdlnm <- function(object,
               "conf.level"        = conf.level,
               "sig.to.noise"      = ifelse(is.null(object$sigma2), NA,
                                         var(object$fhat) / mean(object$sigma2)),
+              "rse"               = sd(object$sigma2),
+              "n"                 = nrow(object$data),
               "plot.dat"          = plot.dat,
               "matfit"            = matfit,
               "cilower"           = cilower,

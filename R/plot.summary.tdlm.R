@@ -8,21 +8,10 @@
 #' @param ... additional plotting parameters for title and labels
 #' 'start.time' which sets the first time value
 #'
-#' @examples
-#' D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
-#' fit <- dlmtree(y ~ .,
-#'                data = D$dat,
-#'                exposure.data = D$exposures[[1]],
-#'                dlm.type = "linear",
-#'                family = "logit",
-#'                binomial.size = 1)
-#' fit_sum <- summary(fit)
-#' plot(fit_sum)
-#'
 #' @returns A plot of distributed lag effect estimated with tdlm
 #' @export
 #'
-plot.summary.tdlm <- function(x,  trueDLM = NULL, ...) {
+plot.summary.tdlm <- function(x, trueDLM = NULL, ...) {
 
   args <- list(...)
   main <- ifelse(!is.null(args$main), args$main, "DLM")

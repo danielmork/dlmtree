@@ -2,6 +2,13 @@ useDynLib(dlmtree, .registration=TRUE)
 importFrom(Rcpp, evalCpp)
 exportPattern("^[[:alpha:]]+")
 
+S3method(print, tdlnm)
+S3method(print, tdlm)
+S3method(print, tdlmm)
+S3method(print, hdlm)
+S3method(print, hdlmm)
+S3method(print, monotone)
+
 S3method(summary, tdlnm)
 S3method(summary, tdlm)
 S3method(summary, tdlmm)
@@ -18,6 +25,7 @@ S3method(print, summary.monotone)
 
 S3method(plot, summary.tdlm)
 S3method(plot, summary.tdlnm)
+S3method(plot, summary.monotone)
 S3method(plot, summary.tdlmm)
 S3method(predict, dlmtree)
 
@@ -32,12 +40,15 @@ import(shinythemes)
 importFrom("stats", "as.formula", "model.frame", "model.matrix",
            "model.response", "pnorm", "quantile", "rbinom", "rnorm",
            "sd", "terms.formula", "var", "IQR", "median", "runif", "toeplitz",
-           "aggregate", "complete.cases", "delete.response",
+           "aggregate", "complete.cases", "delete.response", "cov", "predict",
            "dnorm", "na.fail", "reorder", "rnbinom", "setNames", "step", "time")
 
-importFrom("utils", "combn", "data")
+importFrom("utils", "combn", "data", "packageDescription", "methods", "download.file")
 
-importFrom(utils,packageDescription)
+importFrom("tidyr", "pivot_longer")
+
+importFrom("mgcv", "bam", "predict.bam")
+
 
 export(dlmtree)
 
@@ -46,6 +57,7 @@ export(sim.tdlmm)
 export(sim.hdlmm)
 
 export(summary.tdlnm)
+export(summary.monotone)
 export(summary.tdlm)
 export(summary.tdlmm)
 export(summary.hdlm)
@@ -56,12 +68,15 @@ export(estDLM)
 export(predict.dlmtree)
 export(pip)
 export(splitpoints)
+export(adj_coexposure)
 
 export(plot.summary.tdlnm)
 export(plot.summary.tdlm)
+export(plot.summary.monotone)
 export(plot.summary.tdlmm)
 
 export(print.summary.tdlnm)
+export(print.summary.monotone)
 export(print.summary.tdlmm)
 export(print.summary.tdlm)
 export(print.summary.hdlm)

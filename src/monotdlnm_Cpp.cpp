@@ -256,7 +256,6 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn, exposure
     }
   }
   
-  
   // * Propose new nested tree at each terminal node
   for (Node* eta : dlnmTerm) {
 
@@ -358,9 +357,10 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn, exposure
 // [[Rcpp::export]]
 Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
 {
+  // Rcout << "monotone \n";
   // * Set up model control
   tdlmCtr *ctr      = new tdlmCtr;
-  if (ctr->debug){Rcout << "Create data\n";}
+  // if (ctr->debug){Rcout << "Create data\n";}
 
   ctr->debug        = as<bool>(model["debug"]);
   ctr->iter         = as<int>(model["nIter"]);
@@ -372,13 +372,15 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   ctr->treePrior    = as<std::vector<double> >(model["treePriorTime"]);
   ctr->treePrior2   = as<std::vector<double> >(model["treePriorExp"]);
   ctr->binomial     = as<bool>(model["binomial"]);
+  ctr->zinb         = as<bool>(model["zinb"]); 
   ctr->shrinkage    = as<int>(model["shrinkage"]);
   ctr->verbose      = as<bool>(model["verbose"]);
   ctr->diagnostics  = as<bool>(model["diagnostics"]);
   
   // * Set up model data
-  ctr->Y          = as<VectorXd>(model["Y"]);
-  ctr->n          = ctr->Y.size();
+  ctr->Y0         = as<VectorXd>(model["Y"]);
+  ctr->Ystar      = as<VectorXd>(model["Y"]);
+  ctr->n          = ctr->Y0.size();
   ctr->Z          = as<MatrixXd>(model["Z"]);
   ctr->pZ         = ctr->Z.cols();
   ctr->Zw         = ctr->Z;
@@ -394,8 +396,8 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   ctr->Omega.resize(ctr->n);                   ctr->Omega.setOnes();
   if (ctr->binomial) {
     ctr->binomialSize = as<VectorXd>(model["binomialSize"]);
-    ctr->kappa        = ctr->Y - 0.5 * (ctr->binomialSize);
-    ctr->Y            = ctr->kappa;
+    ctr->kappa        = ctr->Y0 - 0.5 * (ctr->binomialSize);
+    ctr->Ystar        = ctr->kappa;
   }
   
   // * Create exposure data management
@@ -524,14 +526,15 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
     ctr->Vg     = ctr->VgInv.inverse();
     ctr->VgChol = ctr->Vg.llt().matrixL();
     // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
-    ctr->Y      = ctr->kappa.array() / ctr->Omega.array();
+    ctr->Ystar      = ctr->kappa.array() / ctr->Omega.array();
   }
   ctr->tau.resize(ctr->nTrees);                     ctr->tau.setOnes();
-  ctr->R          = ctr->Y;
+  ctr->R          = ctr->Ystar;
   ctr->totTerm    = 0;
   ctr->sumTermT2  = 0.0;
   ctr->nu         = 1.0; // ! Need to define nu and sigma2 prior to ModelEst
   ctr->sigma2     = 1.0;
+  
   tdlmModelEst(ctr);     // initial draws for gamma, sigma2, omega (binomial)
 
   rHalfCauchyFC(&(ctr->nu), ctr->nTrees, 0.0);
@@ -569,7 +572,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
     } // end update trees
 
     // * Update model
-    ctr->R = ctr->Y - ctr->fhat;
+    ctr->R = ctr->Ystar - ctr->fhat;
     tdlmModelEst(ctr);
 
     rHalfCauchyFC(&(ctr->nu), ctr->totTerm, ctr->sumTermT2 / ctr->sigma2);
@@ -642,7 +645,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   // delete ctr; // Cannot delete this for some reason?
 
   return(Rcpp::List::create(
-    Named("DLM")              = wrap(DLM),
+    Named("TreeStructs")      = wrap(DLM),
     Named("fhat")             = wrap(fhat),
     Named("sigma2")           = wrap(sigma2),
     Named("Yhat")             = wrap(YhatOut),

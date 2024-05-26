@@ -39,6 +39,7 @@ reference:
   - estDLM
   - ppRange
   - predict.dlmtree
+  - adj_coexposure
   - starts_with("print")
 - title: Visualization
   desc: Visualize distributed lag functions
@@ -59,7 +60,7 @@ reference:
   - exposureCov
   - pm25Exposures
   - zinbCo
-  - sbd_dlmtree
+  - get_sbd_dlmtree
   
 - title: Cpp source code & Misc.
   contents:

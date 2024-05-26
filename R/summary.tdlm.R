@@ -7,16 +7,6 @@
 #' @param conf.level confidence level for computation of credible intervals
 #' @param ... additional parameters
 #'
-#' @examples
-#' D <- sim.tdlmm(sim = "A", mean.p = 0.5, n = 1000)
-#' fit <- dlmtree(y ~ .,
-#'                data = D$dat,
-#'                exposure.data = D$exposures[[1]],
-#'                dlm.type = "linear",
-#'                family = "logit",
-#'                binomial.size = 1)
-#' summary(fit)
-#'
 #' @returns list of type 'summary.tdlm'
 #' @export
 #'
@@ -36,10 +26,13 @@ summary.tdlm <- function(object, conf.level = 0.95, ...){
   ce                <- colSums(dlmest)
   cumulative.effect <- c("mean" = mean(ce), quantile(ce, ci.lims))
   xvals             <- seq(object$Xrange[1], object$Xrange[2], length.out = 50)
-  cumulative.effect <- data.frame("vals" = xvals,
-                                  "mean" = cumulative.effect[1] * xvals,
-                                  "lower" = cumulative.effect[2] * xvals,
-                                  "upper" = cumulative.effect[3] * xvals)
+  
+  # Deprecated
+  # cumulative.effect <- data.frame("vals" = xvals,
+  #                                 "mean" = cumulative.effect[1] * xvals,
+  #                                 "lower" = cumulative.effect[2] * xvals,
+  #                                 "upper" = cumulative.effect[3] * xvals)
+  
 
   # Fixed effect estimates
   gamma.mean  <- colMeans(object$gamma)
@@ -68,6 +61,8 @@ summary.tdlm <- function(object, conf.level = 0.95, ...){
               "conf.level"        = conf.level,
               "sig.to.noise"      = ifelse(is.null(object$sigma2), NA,
                                         var(object$fhat) / mean(object$sigma2)),
+              "rse"               = sd(object$sigma2),
+              "n"                 = nrow(object$data),
               "matfit"            = matfit,
               "cilower"           = cilower,
               "ciupper"           = ciupper,

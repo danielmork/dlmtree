@@ -4,7 +4,7 @@
 \alias{plot.summary.tdlnm}
 \title{Returns variety of plots for model summary of class 'tdlnm'}
 \usage{
-\method{plot}{summary.tdlnm}(x, plot.type = "mean", val = c(), time = c(), trueDLM = NULL, ...)
+\method{plot}{summary.tdlnm}(x, plot.type = "mean", val = c(), time = c(), ...)
 }
 \arguments{
 \item{x}{object of class 'summary.tdlnm', output of summary of 'tdlnm'}
@@ -19,8 +19,6 @@ exposure values (requires package gganimate)}
 
 \item{time}{time value for slice plot}
 
-\item{trueDLM}{A vector of true effects that can be obtained from the simulated data. Only applicable for simulation studies}
-
 \item{...}{additional plotting parameters for title and labels
 'flab' which sets the effect label for surface plots,
 'start.time' which sets the first time value}
@@ -33,15 +31,4 @@ Method for returning variety of plots for model summary of class 'tdlnm'
 }
 \details{
 plot.summary.tdlnm
-}
-\examples{
-D <- sim.tdlnm(sim = "A", error.to.signal = 1)
-fit <- dlmtree(formula = y ~ .,
-               data = D$dat,
-               exposure.data = D$exposures,
-               dlm.type = "nonlinear",
-               family = "gaussian")
-fit_sum <- summary(fit)
-plot(fit_sum)
-
 }

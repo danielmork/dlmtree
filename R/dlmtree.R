@@ -7,86 +7,81 @@
 #' linear effects (tdlm), or heterogenous subgroup/individualized effects (hdlm). In the case of exposure mixtures, the function supports 
 #' lagged interactions (tdlmm), and heterogenous subgroup/individualized effects (hdlmm) allowing for a comprehensive exploration of mixture exposure heterogeneity. 
 #' Additionally, users can fine-tune parameters to impose effect shrinkage and perform exposure selection, enhancing the adaptability and precision of the modeling process.
+#' For more detailed documentation, visit: [dlmtree website](https://danielmork.github.io/dlmtree/).
 #'
 #' @param formula object of class formula, a symbolic description of the fixed
-#' effect model to be fitted, e.g. y ~ a + b
-#' @param data data frame containing variables used in the formula
+#' effect model to be fitted, e.g. y ~ a + b.
+#' @param data data frame containing variables used in the formula.
 #' @param exposure.data numerical matrix of exposure data with same length as data, for a mixture setting (tdlmm, hdlmm): 
-#' named list containing equally sized numerical matrices of exposure data having same length as data
-#' @param dlm.type dlm model specification: "linear" (default), "nonlinear", "monotone"
-#' @param family 'gaussian' for continuous response, 'logit' for binomial, 'zinb' for zero-inflated negative binomial
-#' @param mixture flag for mixture, set to TRUE for TDLMM and HDLMM. (default = FALSE)
-#' @param het flag for heterogeneity, set to TRUE for HDLM and HDLMM. (default = FALSE)
-#' @param n.trees integer for number of trees in ensemble
-#' @param n.burn integer for length of burn-in
-#' @param n.iter integer for number of iterations to run model after burn-in
-#' @param n.thin integer thinning factor, i.e. keep every tenth iteration
+#' named list containing equally sized numerical matrices of exposure data having same length as data.
+#' @param dlm.type dlm model specification: "linear" (default), "nonlinear", "monotone".
+#' @param family 'gaussian' for continuous response, 'logit' for binomial, 'zinb' for zero-inflated negative binomial.
+#' @param mixture flag for mixture, set to TRUE for tdlmm and hdlmm. (default: FALSE)
+#' @param het flag for heterogeneity, set to TRUE for hdlm and hdlmm. (default: FALSE)
+#' @param n.trees integer for number of trees in ensemble.
+#' @param n.burn integer for length of MCMC burn-in.
+#' @param n.iter integer for number of MCMC iterations to run model after burn-in.
+#' @param n.thin integer MCMC thinning factor, i.e. keep every tenth iteration.
 #' @param shrinkage character "all" (default), "trees", "exposures", "none",
-#' turns on horseshoe-like shrinkage priors for different parts of model
+#' turns on horseshoe-like shrinkage priors for different parts of model.
 #' @param dlmtree.params numerical vector of alpha and beta hyperparameters
-#' controlling dlm tree depth. default: alpha = 0.95, beta = 2
-#' @param dlmtree.step.prob numerical vector for probability of each step for dlm tree updates: of 1) grow/prune,
-#' 2) change, 3) switch exposure, defaults to (0.25, 0.25, 0.25)
-#' @param binomial.size integer type scalar (if all equal, default = 1) or
-#' vector defining binomial size for 'logit' family
-#' @param formula.zi (Only applies to family = 'zinb') object of class formula, a symbolic description of the fixed effect of
+#' controlling dlm tree depth. (default: alpha = 0.95, beta = 2)
+#' @param dlmtree.step.prob numerical vector for probability of each step for dlm tree updates: 1) grow/prune,
+#' 2) change, 3) switch exposure. (default: c(0.25, 0.25, 0.25))
+#' @param binomial.size integer type scalar (if all equal, default: 1) or
+#' vector defining binomial size for 'logit' family.
+#' @param formula.zi (only applies to family = 'zinb') object of class formula, a symbolic description of the fixed effect of
 #' zero-inflated (ZI) model to be fitted, e.g. y ~ a + b. This only applies to ZINB where covariates for
-#' ZI model are different from NB model. This is set to the NB formula unless stated otherwise.
-#' response with logit link, or 'zinb' for zero-inflated negative binomial with logit link
+#' ZI model are different from NB model. This is set to the argument 'formula' by default.
 #' @param tdlnm.exposure.splits scalar indicating the number of splits (divided
 #' evenly across quantiles of the exposure data) or list with two components:
 #' 'type' = 'values' or 'quantiles', and 'split.vals' = a numerical
 #' vector indicating the corresponding exposure values or quantiles for splits.
 #' @param tdlnm.exposure.se numerical matrix of exposure standard errors with same
 #' size as exposure.data or a scalar smoothing factor representing a uniform
-#' smoothing factor applied to each exposure measurement, defaults to sd(exposure.data)/2
-#' @param tdlnm.time.split.prob probability vector of a spliting probabilities for time lags. The default is uniform probabilities.
+#' smoothing factor applied to each exposure measurement. (default: sd(exposure.data)/2)
+#' @param tdlnm.time.split.prob probability vector of a spliting probabilities for time lags. (default: uniform probabilities)
 #' @param hdlm.modifiers string vector containing desired modifiers to be included in a modifier tree.
 #' The strings in the vector must match the names of the columns of the data. 
 #' By default, a modifier tree considers all covariates in the formula as modifiers unless stated otherwise.
-#' @param hdlm.modifier.splits integer value to determine the possible number of splitting points that will be used for a modifier tree
+#' @param hdlm.modifier.splits integer value to determine the possible number of splitting points that will be used for a modifier tree.
 #' @param hdlm.modtree.params numerical vector of alpha and beta hyperparameters
-#' controlling modifier tree depth. default: alpha = 0.95, beta = 2
+#' controlling modifier tree depth. (default: alpha = 0.95, beta = 2)
 #' @param hdlm.modtree.step.prob numerical vector for probability of each step for modifier tree updates: 1) grow, 2) prune,
-#' 3) change. Default is (0.25, 0.25, 0.25) 
-#' @param hdlm.dlmtree.type specification of dlmtree type for HDLM: shared (default) or nested
+#' 3) change. (default: c(0.25, 0.25, 0.25))
+#' @param hdlm.dlmtree.type specification of dlmtree type for HDLM: shared (default) or nested.
 #' @param hdlm.selection.prior scalar hyperparameter for sparsity of modifiers. Must be between 0.5 and 1. 
 #' Smaller value corresponds to increased sparsity of modifiers.
 #' @param mixture.interactions 'noself' (default) which estimates interactions only between two 
 #' different exposures, 'all' which also allows interactions within the same exposure, or 'none' 
-#' which eliminates all interactions and estimates only main effects of each exposure
-#' @param mixture.prior positive scalar hyperparameter for sparsity of exposures
+#' which eliminates all interactions and estimates only main effects of each exposure.
+#' @param mixture.prior positive scalar hyperparameter for sparsity of exposures. (default: 1)
 #' @param monotone.gamma0 vector (with length equal to number of lags) of means for logit-transformed prior probability of split at each lag; 
-#' e.g., gamma_0l = 0 implies mean prior probability of split at lag l = 0.5
+#' e.g., gamma_0l = 0 implies mean prior probability of split at lag l = 0.5.
 #' @param monotone.sigma symmetric matrix (usually with only diagonal elements) corresponding to gamma_0 to define variances on prior probability of split; 
 #' e.g., gamma_0l = 0 with lth diagonal element of sigma=2.701 implies that 95% of the time the prior probability of split is between 0.005 and 0.995, 
-#' as a second example setting gamma_0l=4.119 and the corresponding diagonal element of sigma=0.599 implies that 95% of the time the prior probability of a split is between 0.8 and 0.99
-#' @param monotone.tree.time.params BART parameters for monotone time tree
-#' @param monotone.tree.exp.params BART parameters for monotone exposure tree
+#' as a second example setting gamma_0l=4.119 and the corresponding diagonal element of sigma=0.599 implies that 95% of the time the prior probability of a split is between 0.8 and 0.99.
+#' @param monotone.tree.time.params numerical vector of hyperparameters for monotone time tree.
+#' @param monotone.tree.exp.params numerical vector of hyperparameters for monotone exposure tree.
 #' @param monotone.time.kappa scaling factor in dirichlet prior that goes alongside `tdlnm.time.split.prob` to 
-#' control the amount of prior information given to the model for deciding probabilities of splits between adjacent lags
-#' @param subset integer vector to analyze only a subset of data and exposures
-#' @param lowmem true or false (default): turn on memory saver for DLNM, slower computation time
-#' @param verbose true (default) or false: print output
-#' @param save.data true (default) or false: save data used for model fitting. This must be set to TRUE to use shiny() on HDLM or HDLMM
-#' @param diagnostics true or false (default) keep model diagnostic such as the number of
+#' control the amount of prior information given to the model for deciding probabilities of splits between adjacent lags.
+#' @param subset integer vector to analyze only a subset of data and exposures.
+#' @param lowmem TRUE or FALSE (default): turn on memory saver for DLNM, slower computation time.
+#' @param verbose TRUE (default) or FALSE: print output
+#' @param save.data TRUE (default) or FALSE: save data used for model fitting. This must be set to TRUE to use shiny() on hdlm or hdlmm
+#' @param diagnostics TRUE or FALSE (default) keep model diagnostic such as the number of
 #' terminal nodes and acceptance ratio.
 #' @param initial.params initial parameters for fixed effects model, FALSE = none (default), 
-#' "glm" = generate using GLM, or user defined, length must equal number of parameters in fixed effects model
+#' "glm" = generate using GLM, or user defined, length must equal number of parameters in fixed effects model.
 #'
 #' @details Model is recommended to be run for at minimum 5000 burn-in
 #' iterations followed by 15000 sampling iterations with a thinning factor of 5.
 #' Convergence can be checked by re-running the model and validating consistency
 #' of results. Examples are provided below for the syntax for running different types of models.
+#' For more examples, visit: [dlmtree website](https://danielmork.github.io/dlmtree/).
 #' 
 #' @md
-#' @examples
-#' D <- sim.tdlnm(sim = "A", error.to.signal = 1)
-#' fit <- dlmtree(formula = y ~ .,
-#'                data = D$dat,
-#'                exposure.data = D$exposures,
-#'                dlm.type = "nonlinear",
-#'                family = "gaussian")
+#' @example inst/examples/dlmtree_example.R
 #'
 #' @returns Object of one of the classes: tdlm, tdlmm, tdlnm, hdlm, hdlmm
 #' @export
@@ -121,7 +116,7 @@ dlmtree <- function(formula,
                     hdlm.modtree.step.prob = c(.25, .25, .25), 
                     hdlm.dlmtree.type = "shared",      
                     hdlm.selection.prior = 0.5,
-                    # HDLM/HDLMM parameters
+                    # Mixture parameters
                     mixture.interactions = "noself",  
                     mixture.prior = 1,     
                     # Monotone parameters
@@ -131,7 +126,7 @@ dlmtree <- function(formula,
                     monotone.tree.exp.params = c(.95, 2), 
                     monotone.time.kappa = NULL, 
                     # Diagnostic parameters
-                    subset = 1:nrow(data),
+                    subset = NULL,
                     lowmem = FALSE,
                     #max.threads = 0,
                     verbose = TRUE,
@@ -144,7 +139,7 @@ dlmtree <- function(formula,
                     #...)
 {
   model <- list()
-  options(stringsAsFactors = FALSE)
+  options(stringsAsFactors = F)
   piecewise.linear = FALSE
 
   # print("Checking MCMC input...")
@@ -216,6 +211,13 @@ dlmtree <- function(formula,
       
     model$pExp <- ncol(exposure.data) # lag
 
+    # TDLM 
+    if (dlm.type == "linear") {
+      tdlnm.exposure.splits <- 0
+    }
+
+    model$monotone <- ifelse(dlm.type == "monotone", TRUE, FALSE)
+
     # Monotone default set up
     if(is.null(monotone.gamma0)){
       monotone.gamma0 <- rep(0, ncol(exposure.data))
@@ -224,27 +226,33 @@ dlmtree <- function(formula,
     if(is.null(monotone.sigma)){
       monotone.sigma <- diag(ncol(exposure.data)) * 1.502^2
     }
-                              
-    # TDLM 
-    if (dlm.type == "linear") {
-      tdlnm.exposure.splits <- 0
+
+    # Exposure smoothing/error (TDLNM, monotone)
+    # Set default
+    if(is.null(tdlnm.exposure.se)){
+      tdlnm.exposure.se <- sd(exposure.data)/2
     }
 
-    # Exposure smoothing/error (TDLM, TDLNM)
-    if (!is.null(tdlnm.exposure.se)) {
-      if (!is.numeric(tdlnm.exposure.se)) {
-        stop("`tdlnm.exposure.se` must be a scalar or numeric matrix")
-      }
-  
-      if (length(tdlnm.exposure.se) == 1) {
-        tdlnm.exposure.se <- matrix(tdlnm.exposure.se, nrow(exposure.data), ncol(exposure.data))
-      }
-  
-      if (!all(dim(exposure.data) == dim(tdlnm.exposure.se))) {
-        stop("`tdlnm.exposure.se` and `exposure.data` must have same dimensions")
-      }
-    } 
+    if(is.null(tdlnm.time.split.prob)){
+      tdlnm.time.split.prob <- rep(1 / (model$pExp - 1), model$pExp - 1)
+    }
+
+    # check the dimension
+    if (!is.numeric(tdlnm.exposure.se)) {
+      stop("`tdlnm.exposure.se` must be a scalar or numeric matrix")
+    }
+
+    if (length(tdlnm.exposure.se) == 1) {
+      tdlnm.exposure.se <- matrix(tdlnm.exposure.se, nrow(exposure.data), ncol(exposure.data))
+    }
+    
+    if (!all(dim(exposure.data) == dim(tdlnm.exposure.se))) {
+      stop("`tdlnm.exposure.se` and `exposure.data` must have same dimensions")
+    }
+
   } else { # HDLMM, TDLMM
+    exp.centered <- FALSE # Check exposure centering for TDLMM
+
     # TDLNM (no mixture) 
     if (dlm.type == "nonlinear") {
       stop("The mixture setting is not applicable to `non-linear` model. Set mixture to FALSE.")
@@ -279,6 +287,15 @@ dlmtree <- function(formula,
       if (any(is.na(exposure.data[[i]]))) {
         stop("missing values in exposure data")
       }
+
+      # Check exposure centering for TDLMM
+      if (het == FALSE & mean(exposure.data[[i]]) < 1e-10){
+        exp.centered <- TRUE
+      }
+    }
+
+    if(exp.centered){
+      message("Caution: At least one of the exposure data may have been centered. This could result in an inaccurate estimate of marginal exposure effect when using TDLMM \n")
     }
   }
 
@@ -292,7 +309,7 @@ dlmtree <- function(formula,
       binomial.size <- rep(binomial.size, nrow(data))
     if (length(binomial.size) != nrow(data))
       stop("`binomial.size` must be positive integer and same length as data")
-    model$binomialSize <- force(binomial.size)
+    model$binomialSize <- binomial.size
     model$binomial <- 1
   }
 
@@ -302,7 +319,7 @@ dlmtree <- function(formula,
     model$zinb    <- 1
     model$sigma2  <- 1
   }
-
+  
   # Mixture interactions
   # print("Checking mixture interaction...")
   if (!(mixture.interactions %in% c("none", "noself", "all"))) {
@@ -357,24 +374,26 @@ dlmtree <- function(formula,
   # dlmtree
   model$treePriorTDLM <- dlmtree.params
   model$stepProbTDLM  <- prop.table(c(dlmtree.step.prob[1], dlmtree.step.prob[1], dlmtree.step.prob[2]))
+  model$timeSplits0 <- tdlnm.time.split.prob
 
   # modtree
   model$treePriorMod  <- hdlm.modtree.params
   model$stepProbMod   <- prop.table(c(hdlm.modtree.step.prob[1], hdlm.modtree.step.prob[2], hdlm.modtree.step.prob[3], 1 - sum(hdlm.modtree.step.prob)))
 
-  # Monotone model priors
-  model$shape       <- ifelse(!is.null(tdlnm.exposure.se), "Smooth",
-                              ifelse(tdlnm.exposure.splits == 0, "Linear", "Step Function"))
-                               
+  # Monotone model priors            
+  if (!mixture) { # if statement to avoid a warning when running TDLMM
+    model$shape     <- ifelse(mean(tdlnm.exposure.splits) == 0, "Linear",
+                              ifelse(mean(tdlnm.exposure.se) != 0, "Smooth",
+                                      "Step Function"))
+  }
+
   if (dlm.type == "monotone") {
-    model$monotone        <-  TRUE
     model$zirtGamma0      <-  monotone.gamma0
     model$zirtSigma       <-  monotone.sigma
     model$treePriorTime   <-  monotone.tree.time.params
     model$treePriorExp    <-  monotone.tree.exp.params
     model$timeKappa       <-  ifelse(is.null(monotone.time.kappa), 1.0, monotone.time.kappa)
     model$updateTimeKappa <-  ifelse(is.null(monotone.time.kappa), TRUE, FALSE)
-    model$debug           <-  FALSE
   }
 
   # Modifier prior for HDLM, HDLMM
@@ -389,15 +408,16 @@ dlmtree <- function(formula,
   }
 
   model$mixPrior  <- mixture.prior # Exposure selection sparsity
-  model$shrinkage <- switch(shrinkage, "all" = 3, "trees" = 2, "exposures" = 1, "none" = 0)
+  model$shrinkage <- ifelse(dlm.type == "monotone", FALSE,
+                      switch(shrinkage, "all" = 3, "trees" = 2, "exposures" = 1, "none" = 0))
 
   # Diagnostics
   model$lowmem      <- lowmem
   model$verbose     <- verbose
   model$diagnostics <- diagnostics
   model$debug       <- FALSE
-  #model$maxThreads <-   max.threads
-  #model$debug <-        debug
+  #model$maxThreads <- max.threads
+  #model$debug      <- debug
   
   if (model$verbose) {
     cat("Preparing data...\n")
@@ -415,7 +435,7 @@ dlmtree <- function(formula,
           data <- data[subset,]
           exposure.data <- exposure.data[subset,]
 
-          if (!is.null(tdlnm.exposure.se))
+          if (model$shape != "Linear")
             tdlnm.exposure.se <- tdlnm.exposure.se[subset,]
 
           if (model$family == "logit")
@@ -442,8 +462,8 @@ dlmtree <- function(formula,
     formula.zi <- formula
   }
 
-  model$formula <- force(as.formula(formula))
-  model$formula.zi  <- force(as.formula(formula.zi))
+  model$formula <- as.formula(formula)
+  model$formula.zi  <- as.formula(formula.zi)
 
   tf   <- terms.formula(model$formula, data = data)
   tf.zi    <- terms.formula(model$formula.zi, data = data) 
@@ -453,18 +473,14 @@ dlmtree <- function(formula,
     stop("no valid response in formula")
   }
 
-  model$intercept <- force(ifelse(attr(tf, "intercept"), TRUE, FALSE))
-  model$intercept.zi <- force(ifelse(attr(tf.zi, "intercept"), TRUE, FALSE))
+  model$intercept <- ifelse(attr(tf, "intercept"), TRUE, FALSE)
+  model$intercept.zi <- ifelse(attr(tf.zi, "intercept"), TRUE, FALSE)
 
   # Sanity check for variables and the names
   if (length(which(attr(tf, "term.labels") %in% colnames(data))) == 0 & 
       length(which(attr(tf.zi, "term.labels") %in% colnames(data))) == 0 & 
       !model$intercept & !model$intercept.zi) 
     stop("no valid variables in formula")
-
-
-
-
 
   # *** Exposure splits ***
   # print("Exposure split...")
@@ -511,17 +527,16 @@ dlmtree <- function(formula,
       names(model$X)        <- model$expNames
       model$expProb         <- rep(1/length(model$X), length(model$X))
     } else {
-      model$X       <- force(exposure.data)
-      model$Xrange  <- force(range(exposure.data))
-      if (is.null(tdlnm.exposure.se)) {
+      model$X       <- exposure.data
+      model$Xrange  <- range(exposure.data)
+
+      if (mean(tdlnm.exposure.se) == 0) {
         model$smooth <- FALSE
         model$SE <- matrix(0.0, 0, 0)
       } else {
         model$smooth <- TRUE
-        model$SE <- force(sd(exposure.data)/2)
+        model$SE <- tdlnm.exposure.se
       }
-
-      model$timeSplits0 = force(rep(1 / (model$pExp - 1), model$pExp - 1))
 
       if (length(tdlnm.exposure.splits) == 1) {
         # TDLM
@@ -530,28 +545,32 @@ dlmtree <- function(formula,
           model$splitProb <- as.double(c())
           model$Xsplits   <- as.double(c())
           model$nSplits   <- 0
-          model$Xscale    <- force(sd(model$X))
-          model$X         <- force(model$X / model$Xscale)
-          model$Tcalc     <- force(sapply(1:ncol(model$X),
-                                      function(i) rowSums(model$X[, 1:i, drop = F])))
+          model$Xscale    <- sd(model$X)
+          model$X         <- model$X / model$Xscale
+          model$Tcalc     <- sapply(1:ncol(model$X),
+                                      function(i) rowSums(model$X[, 1:i, drop = F]))
 
         # TDLNM: Splits defined by quantiles of exposure
         } else {
-          model$class <- "tdlnm"
+          model$class <- ifelse(model$monotone, "monotone", "tdlnm")
+          # if (dlm.type == "monotone") 
+          #   model$class <- "monotone"
           if (is.list(tdlnm.exposure.splits)) {
             stop("tdlnm.exposure.splits must be a scalar or list with two inputs: 'type' and 'split.vals'")
           } else {
-            model$Xsplits   <- force(sort(unique(quantile(model$X,
+            model$Xsplits   <- sort(unique(quantile(model$X,
                                                         (1:(tdlnm.exposure.splits - 1)) /
-                                                          tdlnm.exposure.splits))))
-            model$nSplits   <- force(length(model$Xsplits))
-            model$splitProb <- force(rep(1 / model$nSplits, model$nSplits))
+                                                          tdlnm.exposure.splits)))
+            model$nSplits   <- length(model$Xsplits)
+            model$splitProb <- rep(1 / model$nSplits, model$nSplits)
           }
         }
 
       # TDLNM: Splits defined by specific values or quantiles
       } else {
-        model$class <- "tdlnm"
+        model$class <- ifelse(model$monotone, "monotone", "tdlnm")
+        # if (dlm.type == "monotone") 
+        #   model$class <- "monotone"
 
         # if tdlnm.exposure.splits entered incorrectly, infer user input and inform
         if (!is.list(tdlnm.exposure.splits)) {
@@ -569,27 +588,27 @@ dlmtree <- function(formula,
 
         # use specific values as splitting points
         if (tdlnm.exposure.splits$type == "values") {
-          model$Xsplits <- force(sort(unique(tdlnm.exposure.splits$split.vals)))
-          model$Xsplits <- force(model$Xsplits[which(model$Xsplits > min(model$X) &
-                                                    model$Xsplits < max(model$X))])
+          model$Xsplits <- sort(unique(tdlnm.exposure.splits$split.vals))
+          model$Xsplits <- model$Xsplits[which(model$Xsplits > min(model$X) &
+                                                    model$Xsplits < max(model$X))]
 
         # use specific quantiles as splitting points
         } else if (tdlnm.exposure.splits$type == "quantiles") {
           if (any(tdlnm.exposure.splits$split.vals > 1 | tdlnm.exposure.splits$split.vals < 0))
             stop("`tdlnm.exposure.splits$split.vals` must be between zero and one if using quantiles")
-          model$Xsplits <- force(sort(unique(quantile(model$X,
-                                                      tdlnm.exposure.splits$split.vals))))
-          model$Xsplits <- force(model$Xsplits[which(model$Xsplits > min(model$X) &
-                                                    model$Xsplits < max(model$X))])
+          model$Xsplits <- sort(unique(quantile(model$X,
+                                                      tdlnm.exposure.splits$split.vals)))
+          model$Xsplits <- model$Xsplits[which(model$Xsplits > min(model$X) &
+                                                    model$Xsplits < max(model$X))]
         } else {
           stop("`tdlnm.exposure.splits$type` must be one of `values` or `quantiles`")
         }
 
-        model$nSplits <- force(length(model$Xsplits))
+        model$nSplits <- length(model$Xsplits)
         if (model$nSplits == 0)
           stop("no exposure splits specified, please check `tdlnm.exposure.splits` input")
 
-        model$splitProb <- force(rep(1 / model$nSplits, model$nSplits))
+        model$splitProb <- rep(1 / model$nSplits, model$nSplits)
         
         # memory warning
         if (prod(dim(model$X)) * model$nSplits * 8 > 1024^3 & model$verbose)
@@ -603,14 +622,14 @@ dlmtree <- function(formula,
   # Precalculate counts below each splitting values
   if (length(model$Xsplits) > 0) {
     model$Xscale <- 1
-    model$Tcalc <- force(sapply(1:ncol(model$X), function(i) {
-      rep(i / model$Xscale, nrow(model$X)) }))
+    model$Tcalc <- sapply(1:ncol(model$X), function(i) {
+      rep(i / model$Xscale, nrow(model$X)) })
     if (model$smooth) {
-      model$Xcalc <- force(sapply(model$Xsplits, function(i) {
-        rowSums(pnorm((i - model$X) / model$SE)) }) / model$Xscale)
+      model$Xcalc <- sapply(model$Xsplits, function(i) {
+        rowSums(pnorm((i - model$X) / model$SE)) }) / model$Xscale
     } else {
-      model$Xcalc <- force(sapply(model$Xsplits, function(i) {
-        rowSums(model$X < i) }) / model$Xscale)
+      model$Xcalc <- sapply(model$Xsplits, function(i) {
+        rowSums(model$X < i) }) / model$Xscale
     }
   }
   
@@ -674,8 +693,6 @@ dlmtree <- function(formula,
     }
   }
 
-
-
   # *** Scale data and setup exposures ***
   # print("Checking collinearity...")
   data <- droplevels(data)
@@ -686,7 +703,7 @@ dlmtree <- function(formula,
     stop("missing values in model data, use `complete.cases()` to subset data")
 
   # Response
-  model$Y <- force(model.response(mf))
+  model$Y <- model.response(mf)
 
   # Check response & model specification
   # Binary response
@@ -719,22 +736,22 @@ dlmtree <- function(formula,
   }
 
   # Covariates for main model
-  model$Z <- force(model.matrix(model$formula, data = mf))     
-  QR <- qr(crossprod(model$Z))                           
-  model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)])]      
+  model$Z <- model.matrix(model$formula, data = mf)
+  QR <- qr(crossprod(model$Z))
+  model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)])]
   model$droppedCovar <- colnames(model$Z)[QR$pivot[-seq_len(QR$rank)]]
-  model$Z <- force(scaleModelMatrix(model$Z))
+  model$Z <- scaleModelMatrix(model$Z)
   if (length(model$droppedCovar) > 0 & model$verbose) {
     warning("variables {", paste0(model$droppedCovar, collapse = ", "), "} dropped due to perfect collinearity\n")
   }
   rm(QR)
 
   # Covariates for ZI model
-  model$Z.zi <- force(model.matrix(model$formula.zi, data = mf.zi))   
+  model$Z.zi <- model.matrix(model$formula.zi, data = mf.zi)
   QR.zi <- qr(crossprod(model$Z.zi)) 
-  model$Z.zi <- model$Z.zi[,sort(QR.zi$pivot[seq_len(QR.zi$rank)])]           
+  model$Z.zi <- model$Z.zi[,sort(QR.zi$pivot[seq_len(QR.zi$rank)])]
   model$droppedCovar.zi <- colnames(model$Z.zi)[QR.zi$pivot[-seq_len(QR.zi$rank)]]
-  model$Z.zi <- force(scaleModelMatrix(model$Z.zi))
+  model$Z.zi <- scaleModelMatrix(model$Z.zi)
   if (length(model$droppedCovar.zi) > 0 & model$verbose & family == "zinb") {
     warning("variables {", paste0(model$droppedCovar.zi, collapse = ", "), "} dropped due to perfect collinearity\n")
   }
@@ -746,25 +763,25 @@ dlmtree <- function(formula,
     model$Ymean   <- sum(range(model$Y))/2
     #model$Yscale  <- diff(range(model$Y - model$Ymean))
     model$Yscale  <- sd(model$Y - model$Ymean)
-    model$Y       <- force((model$Y - model$Ymean) / model$Yscale)
+    model$Y       <- (model$Y - model$Ymean) / model$Yscale
   } else {
     model$Yscale  <- 1
     model$Ymean   <- 0
-    model$Y       <- force(scale(model$Y, center = 0, scale = 1))
+    model$Y       <- scale(model$Y, center = 0, scale = 1)
   }
 
   # Store the processed values
-  model$Y <- force(c(model$Y))
+  model$Y <- c(model$Y)
 
   model$Zscale <- attr(model$Z, "scaled:scale")
   model$Zmean <- attr(model$Z, "scaled:center")
   model$Znames <- colnames(model$Z)
-  model$Z <- force(matrix(model$Z, nrow(model$Z), ncol(model$Z)))
+  model$Z <- matrix(model$Z, nrow(model$Z), ncol(model$Z))
 
   model$Zscale.zi <- attr(model$Z.zi, "scaled:scale")
   model$Zmean.zi <- attr(model$Z.zi, "scaled:center")
   model$Znames.zi <- colnames(model$Z.zi)
-  model$Z.zi <- force(matrix(model$Z.zi, nrow(model$Z.zi), ncol(model$Z.zi)))
+  model$Z.zi <- matrix(model$Z.zi, nrow(model$Z.zi), ncol(model$Z.zi))
 
   # print("Initializing parameters...")
   # TDLMM
@@ -778,8 +795,6 @@ dlmtree <- function(formula,
     }
   }
   
-
-
   # *** Run model ***
   if (verbose) {
     if(model$class == "monotone"){
@@ -791,34 +806,6 @@ dlmtree <- function(formula,
     }
   }
 
-
-  # print(model$nIter)
-  # print(model$nBurn)
-  # print(model$nThin)
-  # print(model$nTrees)
-  # print(model$verbose)
-  # print(model$diagnostics)
-  # print(model$binomial)
-  # print(model$stepProbTDLM)
-  # print(model$treePriorTDLM)
-  # print(model$shrinkage)
-  # print("----------------------------")
-  # print("----------------------------")
-  # print(model$Y)
-  # print(model$Z)
-  # print("----------------------------")
-  # print("----------------------------")
-  # print(model$binomialSize)
-  # print(model$nSplits)
-  # print(model$SE)
-  # print(model$Xsplits)
-  # print(model$Xcalc)
-  # print(model$Tcalc)
-  # print(model$lowmem)
-  # print(model$splitProb)
-  # print(model$timeSplits0)
-
-
   out <- switch(model$class,
                 "tdlm"  = tdlnm_Cpp(model),
                 "tdlmm" = tdlmm_Cpp(model),
@@ -828,59 +815,7 @@ dlmtree <- function(formula,
                 "hdlmm" = dlmtreeHDLMMGaussian(model),
                 "tdlnm" = tdlnm_Cpp(model),
                 "monotone" = monotdlnm_Cpp(model))
-  
 
-  # # print("Choosing which model to run...")
-  # if (is.null(fixed.tree.idx)) {
-  #   if (model$class %in% c("tdlm", "shared"))
-  #     if (model$monotone) {
-  #       out <- monotdlnm_Cpp(model) # monotone
-  #     } else {
-  #       if (model$class == "tdlm") {
-  #         out <- tdlnm_Cpp(model) # TDLM
-  #       } else {
-  #         out <- dlmtreeHDLMGaussian(model) # shared HDLM
-  #       }
-  #     }  
-  #   else if (model$class %in% c("tdlm2", "nested")) # nested HDLM
-  #     # if (ver == 2)
-  #     out <- dlmtreeTDLM_cpp(model) # nested
-  #     # else if (ver == 1)
-  #     #   out <- dlmtreeTDLMNestedGaussian(model)
-  #   else if (model$class == "tdlmm") # TDLMM
-  #     out <- tdlmm_Cpp(model)
-  #   else if (model$class == "hdlmm") # HDLMM
-  #     out <- dlmtreeHDLMMGaussian(model)
-  #   else if (model$class == "gp") {
-  #     model$covarianceType <- 0
-  #     if (covariance.type == "exponential") {
-  #       model$covarianceType <- 1
-  #       model$DistMat <- -toeplitz(0:(model$pExp - 1))
-  #     } else if (covariance.type == "gaussian") {
-  #       model$covarianceType <- 1
-  #       model$DistMat <- -toeplitz((0:(model$pExp - 1))^2)
-  #     } else if (covariance.type == "identity") {
-  #       model$covarianceType <- 0
-  #       model$DistMat <- diag(model$pExp)
-  #     }
-  #     out <- dlmtreeGPGaussian(model)
-  #   }
-
-  # } else {
-  #   idx <- sort(unique(do.call(c, fixed.tree.idx)))
-  #   if (length(idx) != length(model$Y) | any(idx > length(model$Y))) {
-  #     stop("fixed.tree.idx must contain all indices once")
-  #   }
-
-  #   model$fixedIdx <- lapply(fixed.tree.idx, function(i) i - 1)
-
-  #   if (model$class == "gp") {
-  #     model$DistMat <- -toeplitz(0:(model$pExp - 1))
-  #     out <- dlmtreeGPFixedGaussian(model)
-  #   } else {
-  #     out <- dlmtreeTDLMFixedGaussian(model)
-  #   }
-  # }
 
   # print("Model finished running")
   if (verbose) {
@@ -991,7 +926,7 @@ dlmtree <- function(formula,
                                             labels = model$expNames)
     }
 
-  } else if (model$class %in% c("tdlm", "tdlnm")) {
+  } else if (model$class %in% c("tdlm", "tdlnm", "monotone")) {
     # rescale DLM estimates
     model$TreeStructs           <- as.data.frame(model$TreeStructs)
     colnames(model$TreeStructs) <- c("Iter", "Tree", "xmin", "xmax", "tmin", "tmax", "est", "intcp")
@@ -1137,6 +1072,8 @@ dlmtree <- function(formula,
     model$modSplitIdx <- NULL
     model$fullIdx     <- NULL
 
+
+    # Redundant code
     if (model$class == "gp") {
       colnames(model$TreeStructs) <- c("Rule", "Iter", "Tree", "modTerm", paste0("Lag", 1:model$pExp))
       model$TreeStructs[,-c(1:4)] <- model$TreeStructs[,-c(1:4)] * model$Yscale / model$Xscale
@@ -1207,6 +1144,9 @@ dlmtree <- function(formula,
   names(model.out)  <- names(model)
   rm(model)
   gc()
+  
+  # return the call
+  model.out$call <- match.call()
   
   class(model.out)  <- model.out$class
   return(model.out)

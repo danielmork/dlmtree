@@ -22,15 +22,3 @@ Method for creating a summary object of class 'hdlm'
 \details{
 summary.hdlmm
 }
-\examples{
-D <- sim.hdlmm(sim = "D", n = 1000)
-fit <- dlmtree(y ~ ., 
-               data = D$dat,
-               exposure.data = D$exposures,
-               dlm.type = "linear",
-               family = "gaussian",
-               mixture = TRUE,
-               het = TRUE)
-summary(fit)
-
-}

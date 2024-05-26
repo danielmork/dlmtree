@@ -14,15 +14,6 @@
 #' @param keep.mcmc keep all mcmc iterations (large memory requirement)
 #' @param ... additional parameters
 #'
-#' @examples
-#' D <- sim.tdlmm(sim = "B", error = 25, n = 1000)
-#' fit <- dlmtree(y ~ .,
-#'                data = D$dat, exposure.data = D$exposures,
-#'                mixture.interactions = "noself", 
-#'                dlm.type = "linear", family = "gaussian",
-#'                mixture = TRUE)
-#' summary(fit)
-#'
 #' @returns list of type 'summary.tdlmm'
 #' @export
 #'
@@ -296,6 +287,8 @@ summary.tdlmm <- function(object,
   # ---- Return ----
   res$sig2noise <- ifelse(is.null(object$sigma2), NA,
                           var(object$fhat) / mean(object$sigma2))
+  res$rse       <- sd(object$sigma2)
+  res$n         <- nrow(object$data)
 
   class(res) <- "summary.tdlmm"
   
