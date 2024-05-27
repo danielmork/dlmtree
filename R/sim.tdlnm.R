@@ -34,7 +34,7 @@ sim.tdlnm <- function(sim = "A", error.to.signal = 1)
   if (sim == "A") {
     cenval <- 1
 
-    dlnm.fun <- function(exposure.data, cenval, sum = T) {
+    dlnm.fun <- function(exposure.data, cenval, sum = TRUE) {
       if (sum) {
         -rowSums(exposure.data[, 11:15] > 2)
       } else {
@@ -51,7 +51,7 @@ sim.tdlnm <- function(sim = "A", error.to.signal = 1)
   } else if (sim == "B") {
     cenval <- 1
 
-    dlnm.fun <- function(exposure.data, cenval, sum = T) {
+    dlnm.fun <- function(exposure.data, cenval, sum = TRUE) {
       if (sum) {
         rowSums((cenval - exposure.data[, 11:15]))
       } else {
@@ -68,7 +68,7 @@ sim.tdlnm <- function(sim = "A", error.to.signal = 1)
   } else if (sim == "C") {
     cenval <- 1
 
-    dlnm.fun <- function(exposure.data, cenval, sum = T) {
+    dlnm.fun <- function(exposure.data, cenval, sum = TRUE) {
       flogistic <- function(x) ((1/(1+exp(5*(x-2.5)))) - 1)
 
       if (sum) {
@@ -87,14 +87,14 @@ sim.tdlnm <- function(sim = "A", error.to.signal = 1)
   } else if (sim == "D") {
     cenval <- 1
 
-    dlnm.fun <- function(exposure.data, cenval, sum = T) {
+    dlnm.fun <- function(exposure.data, cenval, sum = TRUE) {
       flogistic <- function(x) ((1/(1+exp(5*(x-2.5)))) - 1)
       ftime     <- function(t) (exp(-.0025 * (t-13)^4))
       f         <- function(x, t) (flogistic(x) * ftime(t))
 
       if (sum) {
         sapply(1:nrow(exposure.data), function(i) {
-          sum(f(exposure.data[i,,drop=T], (1:ncol(exposure.data))))
+          sum(f(exposure.data[i,,drop=TRUE], (1:ncol(exposure.data))))
         })
       } else {
         dlnm <- t(sapply(1:nrow(exposure.data), function(i) {
@@ -107,7 +107,7 @@ sim.tdlnm <- function(sim = "A", error.to.signal = 1)
     }
   }
 
-  f <- dlnm.fun(pm25Exposures, cenval, T)
+  f <- dlnm.fun(pm25Exposures, cenval, TRUE)
   e <- rnorm(length(f), 0, sqrt(var(f) * error.to.signal))
   y <- c + f + e
 

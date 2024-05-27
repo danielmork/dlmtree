@@ -11,7 +11,7 @@
 #' @param outcome outcome required for WAIC calculation
 #' @param fixed.idx fixed index
 #' @param est.dlm flag for estimating dlm effect
-#' @param verbose true (default) or false: print output
+#' @param verbose TRUE (default) or FALSE: print output
 #' @param ... additional parameters
 #'
 #' @returns Posterior predictive distribution draws
@@ -33,7 +33,7 @@ predict.hdlm <- function(object,
   new.exposure.data <- matrix(new.exposure.data, ncol = object$pExp)
 
   if (!is.data.frame(new.data)) {
-    step("`new.data` must be a data.frame with same colunm names as original model")
+    stop("`new.data` must be a data.frame with same colunm names as original model")
   }
 
   if (!all(object$modNames %in% colnames(new.data))) {
@@ -156,13 +156,13 @@ predict.hdlm <- function(object,
     }
       
     out$dlmest <- sapply(1:object$pExp, function(t) { # t: for each lag, rowMeans: Mean of estimate for an individual of all MCMC sample
-      rowMeans(draws[,t,,drop=F])
+      rowMeans(draws[,t,,drop=FALSE])
     })
     out$dlmest.lower <- sapply(1:object$pExp, function(t) {
-      apply(draws[,t,,drop=F], 1, quantile, probs = 0.025)
+      apply(draws[,t,,drop=FALSE], 1, quantile, probs = 0.025)
     })
     out$dlmest.upper <- sapply(1:object$pExp, function(t) {
-      apply(draws[,t,,drop=F], 1, quantile, probs = 0.975)
+      apply(draws[,t,,drop=FALSE], 1, quantile, probs = 0.975)
     })
   }
   

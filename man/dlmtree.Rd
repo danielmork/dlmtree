@@ -140,7 +140,7 @@ control the amount of prior information given to the model for deciding probabil
 
 \item{verbose}{TRUE (default) or FALSE: print output}
 
-\item{save.data}{TRUE (default) or FALSE: save data used for model fitting. This must be set to TRUE to use shiny() on hdlm or hdlmm}
+\item{save.data}{TRUE (default) or FALSE: save data used for model fitting. This must be set to TRUE to use shiny() function on hdlm or hdlmm}
 
 \item{diagnostics}{TRUE or FALSE (default) keep model diagnostic such as the number of
 terminal nodes and acceptance ratio.}

@@ -158,7 +158,7 @@ sim.hdlmm <- function(sim = "A",
   f <- rep(NA, n.samp)
 
   if (!(sim %in% c("D", "E"))) {
-    f <- sapply(1:n.samp, function(i) sum(exposure.data[i,] * dlmFun(dat[i, , drop = F])))
+    f <- sapply(1:n.samp, function(i) sum(exposure.data[i,] * dlmFun(dat[i, , drop = FALSE])))
 
   } else if (sim == "D") {
     for (group in 1:length(fixedIdx)) { 
@@ -167,7 +167,7 @@ sim.hdlmm <- function(sim = "A",
       
       for (i in 1:n.group) {
         currentIdx    <- indices[i]
-        f[currentIdx] <- sum(exposure.data[[group]][currentIdx, ] * dlmFun(dat[currentIdx, , drop = F]))
+        f[currentIdx] <- sum(exposure.data[[group]][currentIdx, ] * dlmFun(dat[currentIdx, , drop = FALSE]))
       } 
     }
   } else if (sim == "E") {
@@ -179,14 +179,14 @@ sim.hdlmm <- function(sim = "A",
         currentIdx <- indices[i]
 
         if (group == 1) {
-          effList   <- dlmFun(dat[currentIdx, , drop = F])
+          effList   <- dlmFun(dat[currentIdx, , drop = FALSE])
 
           e1_effect <- sum(exposure.data[[1]][currentIdx, ] * effList$e1)
           e2_effect <- sum(exposure.data[[2]][currentIdx, ] * effList$e2)
 
-          f[currentIdx] <- dat[currentIdx, , drop = F]$mod_scale * e1_effect + int.size * (e1_effect * e2_effect) # z1e1 + e1xe2 
+          f[currentIdx] <- dat[currentIdx, , drop = FALSE]$mod_scale * e1_effect + int.size * (e1_effect * e2_effect) # z1e1 + e1xe2 
         } else {
-          f[currentIdx] <- dat[currentIdx, , drop = F]$mod_scale * sum(exposure.data[[1]][currentIdx, ] * dlmFun(dat[currentIdx, , drop = F])) # z1e1
+          f[currentIdx] <- dat[currentIdx, , drop = FALSE]$mod_scale * sum(exposure.data[[1]][currentIdx, ] * dlmFun(dat[currentIdx, , drop = FALSE])) # z1e1
         } 
       }
     }

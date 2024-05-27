@@ -10,7 +10,8 @@ adj_coexposure(
   contrast_perc = c(0.25, 0.75),
   contrast_exp = list(),
   conf.level = 0.95,
-  keep.mcmc = FALSE
+  keep.mcmc = FALSE,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -29,6 +30,8 @@ This takes precedence over contrast_perc if both inputs are used.}
 Default is 0.95.}
 
 \item{keep.mcmc}{If TRUE, return posterior samples.}
+
+\item{verbose}{TRUE (default) or FALSE: print output}
 }
 \value{
 data.frame of plot data with exposure name, posterior mean, and

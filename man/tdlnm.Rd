@@ -25,7 +25,7 @@ tdlnm(
   monotone.tree.time.params = c(0.95, 2),
   monotone.tree.exp.params = c(0.95, 2),
   monotone.time.kappa = NULL,
-  shrinkage = ifelse(monotone, F, T),
+  shrinkage = ifelse(monotone, FALSE, TRUE),
   subset = NULL,
   lowmem = FALSE,
   verbose = TRUE,
@@ -81,7 +81,7 @@ beta = 2}
 2) change, defaults to (0.25, 0.25) or equal
 probability of each step for tree updates}
 
-\item{monotone}{false (default) or true: estimate monotone effects}
+\item{monotone}{FALSE (default) or TRUE: estimate monotone effects}
 
 \item{monotone.gamma0}{---------UPDATE---------}
 
@@ -98,17 +98,17 @@ probability of each step for tree updates}
 
 \item{subset}{integer vector to analyze only a subset of data and exposures}
 
-\item{lowmem}{false (default) / true: turn on memory saver for DLNM, slower computation time}
+\item{lowmem}{FALSE (default) or TRUE: turn on memory saver for DLNM, slower computation time}
 
-\item{verbose}{true (default) or false: print progress bar output}
+\item{verbose}{TRUE (default) or FALSE: print progress bar output}
 
-\item{diagnostics}{true or false (default) keep model diagnostic such as
+\item{diagnostics}{TRUE or FALSE (default) keep model diagnostic such as
 terminal nodes, acceptance details, etc.}
 
 \item{initial.params}{initial parameters for fixed effects model, FALSE = none (default), 
 "glm" = generate using GLM, or user defined, length must equal number of parameters in fixed effects model}
 
-\item{debug}{if true, outputs debugging messages}
+\item{debug}{if TRUE, outputs debugging messages}
 
 \item{...}{NA}
 }

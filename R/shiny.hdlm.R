@@ -1,11 +1,11 @@
 #' shiny.hdlm
 #'
-#' @title Executes a shiny app for HDLM.
-#' @description Method for executing a shiny app to provide comprehensive analysis with HDLM. The shiny app includes PIP, split points, individualized & subgroup-specific effects.
+#' @title Executes a 'shiny' app for HDLM.
+#' @description Method for executing a 'shiny' app to provide comprehensive analysis with HDLM. The app includes PIP, split points, individualized & subgroup-specific effects.
 #'
 #' @param fit an object of class 'hdlm'
 #'
-#' @returns A shinyapp interface 
+#' @returns A 'shiny' app interface 
 #' @export
 shiny.hdlm <- function(fit)
 {
@@ -264,9 +264,9 @@ shiny.hdlm <- function(fit)
         draws <- array(do.call(c, draws), c(n, fit$pExp, fit$mcmcIter))
         
         # Exposure effect plot
-        dlmest        <- sapply(1:(fit$pExp), function(t) {rowMeans(draws[, t, , drop=F])}) # All of n / t = 1 / all mcmc
-        dlmest.lower  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=F], 1, quantile, probs = (1 - 0.95)/2)})
-        dlmest.upper  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=F], 1, quantile, probs = 1 - (1 - 0.95)/2)})
+        dlmest        <- sapply(1:(fit$pExp), function(t) {rowMeans(draws[, t, , drop=FALSE])}) # All of n / t = 1 / all mcmc
+        dlmest.lower  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=FALSE], 1, quantile, probs = (1 - 0.95)/2)})
+        dlmest.upper  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=FALSE], 1, quantile, probs = 1 - (1 - 0.95)/2)})
         
         # Prepare a data.frame for plotting
         dlmest_df <- data.frame("time" = 1:(fit$pExp), 
@@ -368,9 +368,9 @@ shiny.hdlm <- function(fit)
                 draws <- array(do.call(c, draws), c(n, fit$pExp, fit$mcmcIter))
                 
                 # Exposure effect plot
-                dlmest        <- sapply(1:(fit$pExp), function(t) {rowMeans(draws[, t, , drop=F])}) # All of n / t = 1 / all mcmc
-                dlmest.lower  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=F], 1, quantile, probs = (1 - 0.95)/2)})
-                dlmest.upper  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=F], 1, quantile, probs = 1 - (1 - 0.95)/2)})
+                dlmest        <- sapply(1:(fit$pExp), function(t) {rowMeans(draws[, t, , drop=FALSE])}) # All of n / t = 1 / all mcmc
+                dlmest.lower  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=FALSE], 1, quantile, probs = (1 - 0.95)/2)})
+                dlmest.upper  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=FALSE], 1, quantile, probs = 1 - (1 - 0.95)/2)})
                 
                 dlm_list[[cluster]]       <- dlmest
                 dlm_lower_list[[cluster]] <- dlmest.lower
@@ -448,9 +448,9 @@ shiny.hdlm <- function(fit)
                 draws <- array(do.call(c, draws), c(n, fit$pExp, fit$mcmcIter))
                 
                 # Exposure effect plot
-                dlmest        <- sapply(1:(fit$pExp), function(t) {rowMeans(draws[, t, , drop=F])}) # All of n / t = 1 / all mcmc
-                dlmest.lower  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=F], 1, quantile, probs = (1 - 0.95)/2)})
-                dlmest.upper  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=F], 1, quantile, probs = 1 - (1 - 0.95)/2)})
+                dlmest        <- sapply(1:(fit$pExp), function(t) {rowMeans(draws[, t, , drop=FALSE])}) # All of n / t = 1 / all mcmc
+                dlmest.lower  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=FALSE], 1, quantile, probs = (1 - 0.95)/2)})
+                dlmest.upper  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=FALSE], 1, quantile, probs = 1 - (1 - 0.95)/2)})
                 
                 dlm_list[[cluster]]       <- dlmest
                 dlm_lower_list[[cluster]] <- dlmest.lower
@@ -543,9 +543,9 @@ shiny.hdlm <- function(fit)
                   draws <- array(do.call(c, draws), c(n, fit$pExp, fit$mcmcIter))
                   
                   # Exposure effect plot
-                  dlmest <- sapply(1:(fit$pExp), function(t) {rowMeans(draws[, t, , drop=F])}) # All of n / t = 1 / all mcmc
-                  dlmest.lower <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=F], 1, quantile, probs = (1 - 0.95)/2)})
-                  dlmest.upper <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=F], 1, quantile, probs = 1 - (1 - 0.95)/2)})
+                  dlmest <- sapply(1:(fit$pExp), function(t) {rowMeans(draws[, t, , drop=FALSE])}) # All of n / t = 1 / all mcmc
+                  dlmest.lower <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=FALSE], 1, quantile, probs = (1 - 0.95)/2)})
+                  dlmest.upper <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=FALSE], 1, quantile, probs = 1 - (1 - 0.95)/2)})
                   
                   dlm_list[[cluster]]       <- dlmest
                   dlm_lower_list[[cluster]] <- dlmest.lower
@@ -631,9 +631,9 @@ shiny.hdlm <- function(fit)
                   draws <- array(do.call(c, draws), c(n, fit$pExp, fit$mcmcIter))
                   
                   # Exposure effect plot
-                  dlmest        <- sapply(1:(fit$pExp), function(t) {rowMeans(draws[, t, , drop=F])}) # All of n / t = 1 / all mcmc
-                  dlmest.lower  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=F], 1, quantile, probs = (1 - 0.95)/2)})
-                  dlmest.upper  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=F], 1, quantile, probs = 1 - (1 - 0.95)/2)})
+                  dlmest        <- sapply(1:(fit$pExp), function(t) {rowMeans(draws[, t, , drop=FALSE])}) # All of n / t = 1 / all mcmc
+                  dlmest.lower  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=FALSE], 1, quantile, probs = (1 - 0.95)/2)})
+                  dlmest.upper  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=FALSE], 1, quantile, probs = 1 - (1 - 0.95)/2)})
                   
                   dlm_list[[cluster]]       <- dlmest
                   dlm_lower_list[[cluster]] <- dlmest.lower
@@ -722,9 +722,9 @@ shiny.hdlm <- function(fit)
                   draws <- array(do.call(c, draws), c(n, fit$pExp, fit$mcmcIter))
                   
                   # Exposure effect plot
-                  dlmest        <- sapply(1:(fit$pExp), function(t) {rowMeans(draws[, t, , drop=F])}) # All of n / t = 1 / all mcmc
-                  dlmest.lower  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=F], 1, quantile, probs = (1 - 0.95)/2)})
-                  dlmest.upper  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=F], 1, quantile, probs = 1 - (1 - 0.95)/2)})
+                  dlmest        <- sapply(1:(fit$pExp), function(t) {rowMeans(draws[, t, , drop=FALSE])}) # All of n / t = 1 / all mcmc
+                  dlmest.lower  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=FALSE], 1, quantile, probs = (1 - 0.95)/2)})
+                  dlmest.upper  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=FALSE], 1, quantile, probs = 1 - (1 - 0.95)/2)})
                   
                   dlm_list[[cluster]]       <- dlmest
                   dlm_lower_list[[cluster]] <- dlmest.lower
@@ -802,9 +802,9 @@ shiny.hdlm <- function(fit)
                   draws <- array(do.call(c, draws), c(n, fit$pExp, fit$mcmcIter))
                   
                   # Exposure effect plot
-                  dlmest        <- sapply(1:(fit$pExp), function(t) {rowMeans(draws[, t, , drop=F])}) # All of n / t = 1 / all mcmc
-                  dlmest.lower  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=F], 1, quantile, probs = (1 - 0.95)/2)})
-                  dlmest.upper  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=F], 1, quantile, probs = 1 - (1 - 0.95)/2)})
+                  dlmest        <- sapply(1:(fit$pExp), function(t) {rowMeans(draws[, t, , drop=FALSE])}) # All of n / t = 1 / all mcmc
+                  dlmest.lower  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=FALSE], 1, quantile, probs = (1 - 0.95)/2)})
+                  dlmest.upper  <- sapply(1:(fit$pExp), function(t) {apply(draws[, t, , drop=FALSE], 1, quantile, probs = 1 - (1 - 0.95)/2)})
                   
                   dlm_list[[cluster]]       <- dlmest
                   dlm_lower_list[[cluster]] <- dlmest.lower
@@ -852,7 +852,7 @@ shiny.hdlm <- function(fit)
             # 1 modifier
             incProgress(1/2, detail = paste(" weighted subgroup effect: ", sub_mod1))
             grpDLM <- estDLM(fit, fit$data[complete.cases(fit$data),],
-                            createGrpIdx(fit, fit$data[complete.cases(fit$data),], sub_mod1), verbose = F)
+                            createGrpIdx(fit, fit$data[complete.cases(fit$data),], sub_mod1), verbose = FALSE)
             incProgress(1/2, detail = "")
             
             plotDLM(grpDLM) + 
@@ -862,7 +862,7 @@ shiny.hdlm <- function(fit)
             # 2 modifiers
             incProgress(1/2, detail = paste(" weighted subgroup effect: ", sub_mod1, " & ", sub_mod2))
             grpDLM <- estDLM(fit, fit$data[complete.cases(fit$data),],
-                            create2GrpIdx(fit, fit$data[complete.cases(fit$data),], sub_mod1, sub_mod2), verbose = F)
+                            create2GrpIdx(fit, fit$data[complete.cases(fit$data),], sub_mod1, sub_mod2), verbose = FALSE)
             incProgress(1/2, detail = "")
             
             plotDLM(grpDLM, groups = 2) + 

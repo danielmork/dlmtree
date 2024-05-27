@@ -10,8 +10,8 @@
 #' predictions at all other exposure values
 #' @param conf.level confidence level for computation of credible intervals
 #' @param exposure.se scalar smoothing factor, if different from model
-#' @param mcmc true or false (default): return MCMC samplers
-#' @param verbose true (default) or false: print output
+#' @param mcmc TRUE or FALSE (default): return MCMC samplers
+#' @param verbose TRUE (default) or FALSE: print output
 #' @param ... additional parameters
 #'
 #' @returns list of type 'summary.tdlnm'

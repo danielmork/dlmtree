@@ -10,7 +10,7 @@
 #' @param exposure exposure of interest for 'hdlmm' method
 #' @param return.mcmc store mcmc in the output
 #' @param mem.safe boolean memory parameter for rule index
-#' @param verbose true (default) or false: print output
+#' @param verbose TRUE (default) or FALSE: print output
 #'
 #' @returns A list of distributed lag effects per subgroups
 #' @export 
@@ -89,7 +89,7 @@ estDLM <- function(object,
   out$groupIndex  <- group.index
 
   tempMod         <- data.frame(Rule = unique(TreeStructs$Rule))
-  rules           <- strsplit(tempMod$Rule, " & ", T)
+  rules           <- strsplit(tempMod$Rule, " & ", TRUE)
   mark            <- ceiling(length(rules) / 42)
 
   # Analyze trees for each group index list
@@ -141,7 +141,7 @@ estDLM <- function(object,
   #       sapply(1:max(DLM$Iter), function(i) {
   #         rowSums(
   #           sapply(1:max(DLM$Tree), function(t) {
-  #             colSums(gDLM[which(DLM$Iter == i & DLM$Tree == t),, drop = F])
+  #             colSums(gDLM[which(DLM$Iter == i & DLM$Tree == t),, drop = FALSE])
   #           })
   #         )
   #       })

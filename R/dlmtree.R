@@ -68,7 +68,7 @@
 #' @param subset integer vector to analyze only a subset of data and exposures.
 #' @param lowmem TRUE or FALSE (default): turn on memory saver for DLNM, slower computation time.
 #' @param verbose TRUE (default) or FALSE: print output
-#' @param save.data TRUE (default) or FALSE: save data used for model fitting. This must be set to TRUE to use shiny() on hdlm or hdlmm
+#' @param save.data TRUE (default) or FALSE: save data used for model fitting. This must be set to TRUE to use shiny() function on hdlm or hdlmm
 #' @param diagnostics TRUE or FALSE (default) keep model diagnostic such as the number of
 #' terminal nodes and acceptance ratio.
 #' @param initial.params initial parameters for fixed effects model, FALSE = none (default), 
@@ -139,7 +139,7 @@ dlmtree <- function(formula,
                     #...)
 {
   model <- list()
-  options(stringsAsFactors = F)
+  options(stringsAsFactors = FALSE)
   piecewise.linear = FALSE
 
   # print("Checking MCMC input...")
@@ -419,7 +419,7 @@ dlmtree <- function(formula,
   #model$maxThreads <- max.threads
   #model$debug      <- debug
   
-  if (model$verbose) {
+  if (verbose) {
     cat("Preparing data...\n")
   }
 
@@ -499,7 +499,7 @@ dlmtree <- function(formula,
         model$X[[i]]$Xrange <- range(model$X[[i]]$X)
         model$X[[i]]$Xquant <- quantile(model$X[[i]]$X, 0:100/100) *  model$X[[i]]$Xscale
         model$X[[i]]$intX   <- mean(model$X[[i]]$X)
-        model$X[[i]]$Tcalc  <- sapply(1:ncol(model$X[[i]]$X), function(j) {rowSums(model$X[[i]]$X[, 1:j, drop = F])}) 
+        model$X[[i]]$Tcalc  <- sapply(1:ncol(model$X[[i]]$X), function(j) {rowSums(model$X[[i]]$X[, 1:j, drop = FALSE])}) 
       }
 
       names(model$X)        <- model$expNames
@@ -510,7 +510,7 @@ dlmtree <- function(formula,
       model$Xrange  <- range(model$X)
       model$Xscale  <- sd(model$X)
       model$X       <- model$X / model$Xscale
-      model$Tcalc   <- sapply(1:ncol(model$X), function(i) rowSums(model$X[, 1:i, drop = F]))
+      model$Tcalc   <- sapply(1:ncol(model$X), function(i) rowSums(model$X[, 1:i, drop = FALSE]))
     }
   } else {
     if (mixture) { # TDLMM
@@ -522,7 +522,7 @@ dlmtree <- function(formula,
         model$X[[i]]$Xrange <- range(model$X[[i]]$X)
         model$X[[i]]$Xquant <- quantile(model$X[[i]]$X, 0:100/100) *  model$X[[i]]$Xscale
         model$X[[i]]$intX   <- mean(model$X[[i]]$X)
-        model$X[[i]]$Tcalc  <- sapply(1:ncol(model$X[[i]]$X), function(j) {rowSums(model$X[[i]]$X[, 1:j, drop = F])}) 
+        model$X[[i]]$Tcalc  <- sapply(1:ncol(model$X[[i]]$X), function(j) {rowSums(model$X[[i]]$X[, 1:j, drop = FALSE])}) 
       }
       names(model$X)        <- model$expNames
       model$expProb         <- rep(1/length(model$X), length(model$X))
@@ -548,7 +548,7 @@ dlmtree <- function(formula,
           model$Xscale    <- sd(model$X)
           model$X         <- model$X / model$Xscale
           model$Tcalc     <- sapply(1:ncol(model$X),
-                                      function(i) rowSums(model$X[, 1:i, drop = F]))
+                                      function(i) rowSums(model$X[, 1:i, drop = FALSE]))
 
         # TDLNM: Splits defined by quantiles of exposure
         } else {
@@ -950,7 +950,7 @@ dlmtree <- function(formula,
     # if (is.null(fixed.tree.idx)) {
     colnames(model$modProb) <- colnames(model$modCount) <- colnames(model$modInf) <- names(model$Mo)
     modNames    <- names(model$Mo)                     
-    splitRules  <- strsplit(model$termRules, "&", T)
+    splitRules  <- strsplit(model$termRules, "&", TRUE)
 
     rule <- sapply(splitRules, function(str) {
               paste0(lapply(sort(str), function(rule) {
@@ -959,18 +959,18 @@ dlmtree <- function(formula,
                   return("")
                 # *** Continuous ***
                 # >=
-                } else if (length(spl <- strsplit(rule, ">=", T)[[1]]) == 2) {
+                } else if (length(spl <- strsplit(rule, ">=", TRUE)[[1]]) == 2) {
                   return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1], "']] >= ",
                                 model$modSplitValRef[[as.numeric(spl[1]) + 1]][
                                   as.numeric(spl[2]) + 1]))
                 # >
-                } else if (length(spl <- strsplit(rule, "<", T)[[1]]) == 2) {
+                } else if (length(spl <- strsplit(rule, "<", TRUE)[[1]]) == 2) {
                   return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1], "']] < ",
                                 model$modSplitValRef[[as.numeric(spl[1]) + 1]][
                                   as.numeric(spl[2]) + 1]))
                 # *** Categorical ***
                 # in
-                } else if (length(spl <- strsplit(rule, "[]", T)[[1]]) == 2) {
+                } else if (length(spl <- strsplit(rule, "[]", TRUE)[[1]]) == 2) {
                   inList <- paste0("c('", paste0(model$modSplitValRef[[
                     as.numeric(spl[1]) + 1]][
                       eval(parse(text = paste0("c(", spl[2], ")"))) + 1
@@ -978,7 +978,7 @@ dlmtree <- function(formula,
                   return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1],
                                 "']] %in% ", inList))
                 # not in
-                } else if (length(spl <- strsplit(rule, "][", T)[[1]]) == 2) {
+                } else if (length(spl <- strsplit(rule, "][", TRUE)[[1]]) == 2) {
                   inList <- paste0("c('", paste0(model$modSplitValRef[[
                     as.numeric(spl[1]) + 1]][
                       eval(parse(text = paste0("c(", spl[2], ")"))) + 1
@@ -992,7 +992,7 @@ dlmtree <- function(formula,
 
     # Mixture interaction for hdlmm
     if (model$class == "hdlmm" & model$interaction > 0) {
-      splitRulesMIX <- strsplit(model$termRuleMIX, "&", T) 
+      splitRulesMIX <- strsplit(model$termRuleMIX, "&", TRUE) 
       ruleMIX <- sapply(splitRulesMIX, function(str) {
                 paste0(lapply(sort(str), function(rule) {
                   # no rule
@@ -1000,18 +1000,18 @@ dlmtree <- function(formula,
                     return("")
                   # *** Continuous ***
                   # >=
-                  } else if (length(spl <- strsplit(rule, ">=", T)[[1]]) == 2) {
+                  } else if (length(spl <- strsplit(rule, ">=", TRUE)[[1]]) == 2) {
                     return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1], "']] >= ",
                                   model$modSplitValRef[[as.numeric(spl[1]) + 1]][
                                     as.numeric(spl[2]) + 1]))
                   # >
-                  } else if (length(spl <- strsplit(rule, "<", T)[[1]]) == 2) {
+                  } else if (length(spl <- strsplit(rule, "<", TRUE)[[1]]) == 2) {
                     return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1], "']] < ",
                                   model$modSplitValRef[[as.numeric(spl[1]) + 1]][
                                     as.numeric(spl[2]) + 1]))
                   # *** Categorical ***
                   # in
-                  } else if (length(spl <- strsplit(rule, "[]", T)[[1]]) == 2) {
+                  } else if (length(spl <- strsplit(rule, "[]", TRUE)[[1]]) == 2) {
                     inList <- paste0("c('", paste0(model$modSplitValRef[[
                       as.numeric(spl[1]) + 1]][
                         eval(parse(text = paste0("c(", spl[2], ")"))) + 1
@@ -1019,7 +1019,7 @@ dlmtree <- function(formula,
                     return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1],
                                   "']] %in% ", inList))
                   # not in
-                  } else if (length(spl <- strsplit(rule, "][", T)[[1]]) == 2) {
+                  } else if (length(spl <- strsplit(rule, "][", TRUE)[[1]]) == 2) {
                     inList <- paste0("c('", paste0(model$modSplitValRef[[
                       as.numeric(spl[1]) + 1]][
                         eval(parse(text = paste0("c(", spl[2], ")"))) + 1

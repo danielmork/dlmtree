@@ -29,7 +29,7 @@ splitpoints <- function(object, var, round = NULL)
   sp2         <- object$TreeStructs$Rule[!duplicated(object$TreeStructs[,2:4])]
   treeRules   <- object$TreeStructs %>% group_by(Iter, Tree) %>% 
     summarize(Rules = paste0(Rule, collapse = " & "))
-  splitRules2 <- table(do.call(c, lapply(strsplit(treeRules$Rules, " & ", T), unique)))
+  splitRules2 <- table(do.call(c, lapply(strsplit(treeRules$Rules, " & ", TRUE), unique)))
   
   # check if continuous
   categorical <- length(splitRules2[grepl(var, names(splitRules2)) & 
@@ -43,20 +43,20 @@ splitpoints <- function(object, var, round = NULL)
               sum(sort(splitRules2[grepl(var, names(splitRules2)) & 
                                     grepl(">=", names(splitRules2))]))
     
-    splits <- data.frame(loc = as.numeric(sapply(strsplit(names(varsp), " >= ", T), function(i) i[2])),
+    splits <- data.frame(loc = as.numeric(sapply(strsplit(names(varsp), " >= ", TRUE), function(i) i[2])),
                          val = as.numeric(varsp))
     
     colnames(splits) <- c("location","proportion")
     
     if (nrow(splits) == 0) {
-      cat("There are either no splits")
+      message("There are either no splits")
     }
     
     if (!is.null(round)) {
       if (is.numeric(splits$location)) {
         splits$location <- round(splits$location,round)
       } else {
-        cat("rounding is not permitted when var is not numeric.")
+        message("rounding is not permitted when var is not numeric.")
       }
     }
     

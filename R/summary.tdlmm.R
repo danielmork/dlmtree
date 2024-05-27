@@ -126,7 +126,7 @@ summary.tdlmm <- function(object,
 
       idx <- which(object$MIX$exp1 == i & object$MIX$exp2 == j)
       if (length(idx) > 0) {
-        est <- mixEst(as.matrix(object$MIX[idx,,drop = F]), res$nLags, res$mcmcIter)
+        est <- mixEst(as.matrix(object$MIX[idx,,drop = FALSE]), res$nLags, res$mcmcIter)
         m   <- paste0(object$expNames[i + 1], "-", object$expNames[j + 1])
         res$MIX[[m]] <-
           list("matfit"   =  sapply(1:res$nLags, function(k) rowMeans(est[,k,])),
@@ -153,9 +153,9 @@ summary.tdlmm <- function(object,
 
         # Fold surface of self interaction
         if (i == j) {
-          est <- 0.5 * est * array(upper.tri(diag(res$nLags), diag = T), dim(est)) +
+          est <- 0.5 * est * array(upper.tri(diag(res$nLags), diag = TRUE), dim(est)) +
             0.5 * aperm(est, c(2, 1, 3)) *
-            array(upper.tri(diag(res$nLags), diag = T), dim(est))
+            array(upper.tri(diag(res$nLags), diag = TRUE), dim(est))
           
           if (keep.mcmc) {
             res$MIX[[m]]$mcmc   <- est

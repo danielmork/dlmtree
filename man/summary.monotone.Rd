@@ -28,9 +28,9 @@ predictions at all other exposure values}
 
 \item{exposure.se}{scalar smoothing factor, if different from model}
 
-\item{mcmc}{true or false (default): return MCMC samplers}
+\item{mcmc}{TRUE or FALSE (default): return MCMC samplers}
 
-\item{verbose}{true (default) or false: print output}
+\item{verbose}{TRUE (default) or FALSE: print output}
 
 \item{...}{additional parameters}
 }

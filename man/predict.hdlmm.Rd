@@ -34,7 +34,7 @@
 
 \item{est.dlm}{flag for estimating dlm effect}
 
-\item{verbose}{true (default) or false: print output}
+\item{verbose}{TRUE (default) or FALSE: print output}
 
 \item{...}{additional parameters}
 }

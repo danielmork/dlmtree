@@ -38,7 +38,7 @@
 #' @param step.prob numerical vector for probability of 1) grow/prune, and
 #' 2) change, defaults to (0.25, 0.25) or equal
 #' probability of each step for tree updates
-#' @param monotone false (default) or true: estimate monotone effects
+#' @param monotone FALSE (default) or TRUE: estimate monotone effects
 #' @param monotone.gamma0 ---------UPDATE---------
 #' @param monotone.sigma ---------UPDATE---------
 #' @param monotone.tree.time.params ---------UPDATE---------
@@ -47,13 +47,13 @@
 #' @param shrinkage int, 1 (default) turn on tree-specific shrinkage priors,
 #' 0 turn off
 #' @param subset integer vector to analyze only a subset of data and exposures
-#' @param lowmem false (default) / true: turn on memory saver for DLNM, slower computation time
-#' @param verbose true (default) or false: print progress bar output
-#' @param diagnostics true or false (default) keep model diagnostic such as
+#' @param lowmem FALSE (default) or TRUE: turn on memory saver for DLNM, slower computation time
+#' @param verbose TRUE (default) or FALSE: print progress bar output
+#' @param diagnostics TRUE or FALSE (default) keep model diagnostic such as
 #' terminal nodes, acceptance details, etc.
 #' @param initial.params initial parameters for fixed effects model, FALSE = none (default), 
 #' "glm" = generate using GLM, or user defined, length must equal number of parameters in fixed effects model
-#' @param debug if true, outputs debugging messages
+#' @param debug if TRUE, outputs debugging messages
 #' @param ... NA
 #'
 #' @details Model is recommended to be run for at minimum 5000 burn-in iterations
@@ -85,7 +85,7 @@ tdlnm <- function(formula,
                   monotone.tree.exp.params = c(.95, 2),
                   monotone.time.kappa = NULL,
 
-                  shrinkage = ifelse(monotone, F, T),
+                  shrinkage = ifelse(monotone, FALSE, TRUE),
                   subset = NULL,
                   lowmem = FALSE,
                   verbose = TRUE,
@@ -98,7 +98,7 @@ tdlnm <- function(formula,
           dlm.type = `nonlinear` for TDLNM and dlm.type = `linear` for TDLM. For example codes, use ?dlmtree.")
 
 #   model <- list()
-#   options(stringsAsFactors = F)
+#   options(stringsAsFactors = FALSE)
 #   piecewise.linear = FALSE
 
 #   # ---- Check inputs ----
@@ -277,7 +277,7 @@ tdlnm <- function(formula,
 #       model$Xscale <- force(sd(model$X))
 #       model$X <- force(model$X / model$Xscale)
 #       model$Tcalc <- force(sapply(1:ncol(model$X),
-#                                   function(i) rowSums(model$X[, 1:i, drop = F])))
+#                                   function(i) rowSums(model$X[, 1:i, drop = FALSE])))
 
 #     # splits defined by quantiles of exposure
 #     } else {
