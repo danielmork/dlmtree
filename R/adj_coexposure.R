@@ -64,7 +64,9 @@ adj_coexposure <- function(exposure.data,
   # Loop over pairs of exposures
   for (predExp in names(predLevels)) {
     for (respExp in names(predLevels)) {
-      cat("\nPredicting", respExp, "at lower/upper values of", predExp)
+      if(verbose){
+        cat("\nPredicting", respExp, "at lower/upper values of", predExp)
+      }
       if (predExp == respExp) { 
         # If predictor/response exposure same, set to 25/75 percentiles.
         predLevels[[predExp]][[respExp]] <- contrast_exp[[predExp]]
