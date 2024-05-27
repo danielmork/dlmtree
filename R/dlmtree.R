@@ -419,7 +419,7 @@ dlmtree <- function(formula,
   #model$maxThreads <- max.threads
   #model$debug      <- debug
   
-  if (model$verbose) {
+  if (verbose) {
     cat("Preparing data...\n")
   }
 

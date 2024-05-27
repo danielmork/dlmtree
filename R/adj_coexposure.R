@@ -17,6 +17,7 @@
 #' @param conf.level Confidence level used for estimating credible intervals.
 #' Default is 0.95.
 #' @param keep.mcmc If TRUE, return posterior samples.
+#' @param verbose TRUE (default) or FALSE: print output
 #'
 #' @return data.frame of plot data with exposure name, posterior mean, and
 #' credible intervals, or posterior samples if keep.mcmc = TRUE
@@ -28,8 +29,9 @@ adj_coexposure <- function(exposure.data,
                            contrast_perc = c(0.25, 0.75),
                            contrast_exp = list(),
                            conf.level = 0.95,
-                           keep.mcmc = FALSE) {
-
+                           keep.mcmc = FALSE,
+                           verbose = TRUE) 
+{
   if (!inherits(object, "tdlmm"))
     stop("adj_coexposure is intended to be used with TDLMM")
 
@@ -51,8 +53,10 @@ adj_coexposure <- function(exposure.data,
 
   if (!all.equal(names(contrast_exp), names(exposure.data)))
     stop("named list contrast_exp must have same names as exposure.data")
-  print(do.call(cbind.data.frame, contrast_exp))
-  
+
+  if(verbose){
+    print(do.call(cbind.data.frame, contrast_exp))
+  }
   
   # predLevels[[predictor]][[response]] =
   #  use level of 'predictor' to estimate 'response'.
@@ -74,7 +78,9 @@ adj_coexposure <- function(exposure.data,
         names(newdat) <- predExp
         predLevels[[predExp]][[respExp]] <- predict(model, newdata = newdat)
       }
-      cat(":", predLevels[[predExp]][[respExp]])
+      if(verbose){
+        cat(":", predLevels[[predExp]][[respExp]])
+      }
     }
   }
   

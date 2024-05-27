@@ -31,7 +31,7 @@ predict.hdlmm <- function(object,
   out       <- list()
 
   if (!is.data.frame(new.data)) {
-    step("`new.data` must be a data.frame with same colunm names as original model")
+    stop("`new.data` must be a data.frame with same colunm names as original model")
   }
 
   if (!all(object$modNames %in% colnames(new.data))) {

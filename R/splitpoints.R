@@ -49,14 +49,14 @@ splitpoints <- function(object, var, round = NULL)
     colnames(splits) <- c("location","proportion")
     
     if (nrow(splits) == 0) {
-      cat("There are either no splits")
+      message("There are either no splits")
     }
     
     if (!is.null(round)) {
       if (is.numeric(splits$location)) {
         splits$location <- round(splits$location,round)
       } else {
-        cat("rounding is not permitted when var is not numeric.")
+        message("rounding is not permitted when var is not numeric.")
       }
     }
     

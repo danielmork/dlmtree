@@ -33,7 +33,7 @@ predict.hdlm <- function(object,
   new.exposure.data <- matrix(new.exposure.data, ncol = object$pExp)
 
   if (!is.data.frame(new.data)) {
-    step("`new.data` must be a data.frame with same colunm names as original model")
+    stop("`new.data` must be a data.frame with same colunm names as original model")
   }
 
   if (!all(object$modNames %in% colnames(new.data))) {
