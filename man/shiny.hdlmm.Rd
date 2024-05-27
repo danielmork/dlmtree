@@ -2,7 +2,7 @@
 % Please edit documentation in R/shiny.hdlmm.R
 \name{shiny.hdlmm}
 \alias{shiny.hdlmm}
-\title{Executes a shiny app for HDLMM.}
+\title{Executes a 'shiny' app for HDLMM.}
 \usage{
 \method{shiny}{hdlmm}(fit)
 }
@@ -10,10 +10,10 @@
 \item{fit}{an object of class 'hdlmm'}
 }
 \value{
-A shinyapp interface
+A 'shiny' app interface
 }
 \description{
-Method for executing a shiny app to provide comprehensive analysis with HDLMM. The shiny app includes PIP, split points, individualized & subgroup-specific effects.
+Method for executing a 'shiny' app to provide comprehensive analysis with HDLMM. The app includes PIP, split points, individualized & subgroup-specific effects for exposure of interest.
 }
 \details{
 shiny.hdlmm

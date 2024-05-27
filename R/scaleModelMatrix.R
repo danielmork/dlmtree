@@ -11,10 +11,10 @@
 scaleModelMatrix <- function(M)
 {
   if (is.vector(M)) {
-    vec <- T
+    vec <- TRUE
     M   <- as.matrix(M)
   } else {
-    vec <- F
+    vec <- FALSE
   }
 
   M.center  <- sapply(1:ncol(M), function(j) ifelse(diff(range(M[,j])) > 0 & length(unique(M[,j])) > 2, mean(M[,j]), 0))

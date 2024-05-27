@@ -158,9 +158,9 @@ predict.hdlmm <- function(object,
     out$dlmest <- vector("list", length = object$nExp)
     for (exp in object$expNames) {
       out$dlmest[[exp]] <- list()
-      out$dlmest[[exp]][["dlmest"]]       <- sapply(1:object$pExp, function(t) {rowMeans(main_draws[[exp]][,t,,drop=F])}) 
-      out$dlmest[[exp]][["dlmest.lower"]] <- sapply(1:object$pExp, function(t) {apply(main_draws[[exp]][,t,,drop=F], 1, quantile, probs = 0.025)})
-      out$dlmest[[exp]][["dlmest.upper"]] <- sapply(1:object$pExp, function(t) {apply(main_draws[[exp]][,t,,drop=F], 1, quantile, probs = 0.975)})
+      out$dlmest[[exp]][["dlmest"]]       <- sapply(1:object$pExp, function(t) {rowMeans(main_draws[[exp]][,t,,drop=FALSE])}) 
+      out$dlmest[[exp]][["dlmest.lower"]] <- sapply(1:object$pExp, function(t) {apply(main_draws[[exp]][,t,,drop=FALSE], 1, quantile, probs = 0.025)})
+      out$dlmest[[exp]][["dlmest.upper"]] <- sapply(1:object$pExp, function(t) {apply(main_draws[[exp]][,t,,drop=FALSE], 1, quantile, probs = 0.975)})
     }
   }
 
@@ -246,9 +246,9 @@ predict.hdlmm <- function(object,
       for (mix in object$mixNames) {
         out$mixest[[mix]] <- vector("list", length = n)
         for (i in 1:n) {
-          out$mixest[[mix]][[i]]$mixest       <- matrix(mapply(function(x, y) {matMean(mix_draws[[mix]][x,y,i,,drop=F])}, c(grid$Var1), c(grid$Var2)), nrow = object$pExp)
-          out$mixest[[mix]][[i]]$mixest.lower <- matrix(mapply(function(x, y) {matQt(mix_draws[[mix]][x,y,i,,drop=F], 0.025)}, c(grid$Var1), c(grid$Var2)), nrow = object$pExp)
-          out$mixest[[mix]][[i]]$mixest.upper <- matrix(mapply(function(x, y) {matQt(mix_draws[[mix]][x,y,i,,drop=F], 0.975)}, c(grid$Var1), c(grid$Var2)), nrow = object$pExp)
+          out$mixest[[mix]][[i]]$mixest       <- matrix(mapply(function(x, y) {matMean(mix_draws[[mix]][x,y,i,,drop=FALSE])}, c(grid$Var1), c(grid$Var2)), nrow = object$pExp)
+          out$mixest[[mix]][[i]]$mixest.lower <- matrix(mapply(function(x, y) {matQt(mix_draws[[mix]][x,y,i,,drop=FALSE], 0.025)}, c(grid$Var1), c(grid$Var2)), nrow = object$pExp)
+          out$mixest[[mix]][[i]]$mixest.upper <- matrix(mapply(function(x, y) {matQt(mix_draws[[mix]][x,y,i,,drop=FALSE], 0.975)}, c(grid$Var1), c(grid$Var2)), nrow = object$pExp)
         }
       }
     }

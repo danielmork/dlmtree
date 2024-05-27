@@ -85,7 +85,7 @@ tdlnm <- function(formula,
                   monotone.tree.exp.params = c(.95, 2),
                   monotone.time.kappa = NULL,
 
-                  shrinkage = ifelse(monotone, F, T),
+                  shrinkage = ifelse(monotone, FALSE, TRUE),
                   subset = NULL,
                   lowmem = FALSE,
                   verbose = TRUE,
@@ -98,7 +98,7 @@ tdlnm <- function(formula,
           dlm.type = `nonlinear` for TDLNM and dlm.type = `linear` for TDLM. For example codes, use ?dlmtree.")
 
 #   model <- list()
-#   options(stringsAsFactors = F)
+#   options(stringsAsFactors = FALSE)
 #   piecewise.linear = FALSE
 
 #   # ---- Check inputs ----
@@ -277,7 +277,7 @@ tdlnm <- function(formula,
 #       model$Xscale <- force(sd(model$X))
 #       model$X <- force(model$X / model$Xscale)
 #       model$Tcalc <- force(sapply(1:ncol(model$X),
-#                                   function(i) rowSums(model$X[, 1:i, drop = F])))
+#                                   function(i) rowSums(model$X[, 1:i, drop = FALSE])))
 
 #     # splits defined by quantiles of exposure
 #     } else {

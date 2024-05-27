@@ -7,7 +7,7 @@
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-Estimate and interpretation of treed distributed lag models (DLMs). The methods estimate constrained DLMs using the Bayesian additive regression trees (BART) framework. Includes various extensions of treed DLMs. These include: treed DLMs and distributed lag mixture models as described in Mork and Wilson (2023) \doi{ 10.1111/biom.13568}; treed distributed lag nonlinear models as described in Mork and Wilson (2021) \doi{ 10.1093/biostatistics/kxaa051}; heterogeneous DLMs as described in Mork et al. (2024) \doi{10.1080/01621459.2023.2258595}. The package also includes a Shiny App to help interpret results.
+Estimate and interpretation of treed distributed lag models (DLMs). The methods estimate constrained DLMs using the Bayesian additive regression trees (BART) framework. Includes various extensions of treed DLMs. These include: treed DLMs and distributed lag mixture models as described in Mork and Wilson (2023) \doi{ 10.1111/biom.13568}; treed distributed lag nonlinear models as described in Mork and Wilson (2021) \doi{ 10.1093/biostatistics/kxaa051}; heterogeneous DLMs as described in Mork et al. (2024) \doi{10.1080/01621459.2023.2258595}. The package also includes a 'shiny' interface to help interpret results.
 }
 \seealso{
 Useful links:

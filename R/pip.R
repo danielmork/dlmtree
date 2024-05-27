@@ -29,8 +29,8 @@ pip <- function(object, type=1) {
   } else if (type == 2) { # interaction PIPs
     sp          <- cbind.data.frame(Rule = object$termRules, object$TreeStructs[,2:4])
     sp          <- sp[!duplicated(sp),]
-    splitRules  <- lapply(strsplit(sp$Rule, "&", T), function(i) {
-      sort(as.numeric(sapply(strsplit(i, ">=|<|\\[\\]|\\]\\[", perl = T), function(j) j[1])))
+    splitRules  <- lapply(strsplit(sp$Rule, "&", TRUE), function(i) {
+      sort(as.numeric(sapply(strsplit(i, ">=|<|\\[\\]|\\]\\[", perl = TRUE), function(j) j[1])))
     })
     splitCount  <- lapply(1:object$mcmcIter, function(i) list())
     treeMods    <- lapply(1:object$mcmcIter, function(i) rep(0, object$nTrees))
@@ -44,7 +44,7 @@ pip <- function(object, type=1) {
         for (s in 1:(n-1)) {
           for (e in (s+1):n) {
             splitCount[[it]][[paste0(object$modNames[splitRules[[i]][s]+1], ".", 
-                                     object$modNames[splitRules[[i]][e]+1])]] <- T
+                                     object$modNames[splitRules[[i]][e]+1])]] <- TRUE
           }
         }
       }
@@ -55,7 +55,7 @@ pip <- function(object, type=1) {
     sc.mean <- sort(colMeans(!is.na(sc)))
     sc.mat  <- data.frame()
     for (i in 1:length(sc.mean)) {
-      names   <- sort(strsplit(names(sc.mean)[i], ".", T)[[1]])
+      names   <- sort(strsplit(names(sc.mean)[i], ".", TRUE)[[1]])
       sc.mat  <- rbind.data.frame(sc.mat,
                                   data.frame("var1" = names[1], "var2" = names[2], "pip" = sc.mean[i]),
                                   data.frame("var1" = names[2], "var2" = names[1], "pip" = sc.mean[i]))

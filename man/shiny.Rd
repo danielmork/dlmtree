@@ -7,7 +7,10 @@
 shiny(fit)
 }
 \arguments{
-\item{fit}{an object to which S3method is applied}
+\item{fit}{an object of class hdlm or hdlmm to which S3method is applied}
+}
+\value{
+A 'shiny' interface for further analysis on heterogeneous analyses. The interface includes tabs for modifier selection, personalized exposure effects and subgroup-specific effects.
 }
 \description{
 shiny generic function for S3method

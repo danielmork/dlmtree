@@ -89,7 +89,7 @@ estDLM <- function(object,
   out$groupIndex  <- group.index
 
   tempMod         <- data.frame(Rule = unique(TreeStructs$Rule))
-  rules           <- strsplit(tempMod$Rule, " & ", T)
+  rules           <- strsplit(tempMod$Rule, " & ", TRUE)
   mark            <- ceiling(length(rules) / 42)
 
   # Analyze trees for each group index list
@@ -141,7 +141,7 @@ estDLM <- function(object,
   #       sapply(1:max(DLM$Iter), function(i) {
   #         rowSums(
   #           sapply(1:max(DLM$Tree), function(t) {
-  #             colSums(gDLM[which(DLM$Iter == i & DLM$Tree == t),, drop = F])
+  #             colSums(gDLM[which(DLM$Iter == i & DLM$Tree == t),, drop = FALSE])
   #           })
   #         )
   #       })
