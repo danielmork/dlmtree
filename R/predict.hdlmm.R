@@ -11,7 +11,7 @@
 #' @param outcome outcome required for WAIC calculation
 #' @param fixed.idx fixed index
 #' @param est.dlm flag for estimating dlm effect
-#' @param verbose true (default) or false: print output
+#' @param verbose TRUE (default) or FALSE: print output
 #' @param ... additional parameters
 #'
 #' @returns Posterior predictive distribution draws

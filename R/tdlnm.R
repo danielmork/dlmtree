@@ -38,22 +38,26 @@
 #' @param step.prob numerical vector for probability of 1) grow/prune, and
 #' 2) change, defaults to (0.25, 0.25) or equal
 #' probability of each step for tree updates
-#' @param monotone false (default) or true: estimate monotone effects
-#' @param monotone.gamma0 ---------UPDATE---------
-#' @param monotone.sigma ---------UPDATE---------
-#' @param monotone.tree.time.params ---------UPDATE---------
-#' @param monotone.tree.exp.params ---------UPDATE---------
-#' @param monotone.time.kappa ---------UPDATE---------
+#' @param monotone FALSE (default) or TRUE: estimate monotone effects
+#' @param monotone.gamma0 vector (with length equal to number of lags) of means for logit-transformed prior probability of split at each lag; 
+#' e.g., gamma_0l = 0 implies mean prior probability of split at lag l = 0.5.
+#' @param monotone.sigma symmetric matrix (usually with only diagonal elements) corresponding to gamma_0 to define variances on prior probability of split; 
+#' e.g., gamma_0l = 0 with lth diagonal element of sigma=2.701 implies that 95% of the time the prior probability of split is between 0.005 and 0.995, 
+#' as a second example setting gamma_0l=4.119 and the corresponding diagonal element of sigma=0.599 implies that 95% of the time the prior probability of a split is between 0.8 and 0.99.
+#' @param monotone.tree.time.params numerical vector of hyperparameters for monotone time tree.
+#' @param monotone.tree.exp.params numerical vector of hyperparameters for monotone exposure tree.
+#' @param monotone.time.kappa scaling factor in dirichlet prior that goes alongside `tdlnm.time.split.prob` to 
+#' control the amount of prior information given to the model for deciding probabilities of splits between adjacent lags.
 #' @param shrinkage int, 1 (default) turn on tree-specific shrinkage priors,
 #' 0 turn off
 #' @param subset integer vector to analyze only a subset of data and exposures
-#' @param lowmem false (default) / true: turn on memory saver for DLNM, slower computation time
-#' @param verbose true (default) or false: print progress bar output
-#' @param diagnostics true or false (default) keep model diagnostic such as
+#' @param lowmem FALSE (default) or TRUE: turn on memory saver for DLNM, slower computation time
+#' @param verbose TRUE (default) or FALSE: print progress bar output
+#' @param diagnostics TRUE or FALSE (default) keep model diagnostic such as
 #' terminal nodes, acceptance details, etc.
 #' @param initial.params initial parameters for fixed effects model, FALSE = none (default), 
 #' "glm" = generate using GLM, or user defined, length must equal number of parameters in fixed effects model
-#' @param debug if true, outputs debugging messages
+#' @param debug if TRUE, outputs debugging messages
 #' @param ... NA
 #'
 #' @details Model is recommended to be run for at minimum 5000 burn-in iterations

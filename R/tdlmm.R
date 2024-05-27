@@ -26,7 +26,7 @@
 #' @param formula.zi object of class formula, a symbolic description of the ZI
 #' model to be fitted, e.g. y ~ a + b. This only applies to ZINB where covariates for
 #' ZI model is different from NB model. This is same as the main formula by default
-#' @param keep_XZ false (default) or true: keep the model scale exposure and covariate data
+#' @param keep_XZ FALSE (default) or TRUE: keep the model scale exposure and covariate data
 #' @param mixture.interactions 'noself' (default) which estimates interactions
 #' only between two different exposures, 'all' which also allows
 #' interactions within the same exposure, or 'none' which eliminates all
@@ -41,8 +41,8 @@
 #' @param shrinkage character "all" (default), "trees", "exposures", "none",
 #' turns on horseshoe-like shrinkage priors for different parts of model
 #' @param subset integer vector to analyze only a subset of data and exposures
-#' @param verbose true (default) or false: print output
-#' @param diagnostics true or false (default) keep model diagnostic such as
+#' @param verbose TRUE (default) or FALSE: print output
+#' @param diagnostics TRUE or FALSE (default) keep model diagnostic such as
 #' terminal nodes, acceptance details, etc.
 #' @param initial.params initial parameters for fixed effects model, FALSE = none (default), "glm" = generate using GLM, or user defined, length must equal number of parameters in fixed effects model
 #' @param ... NA

@@ -10,7 +10,7 @@
 #' @param exposure exposure of interest for 'hdlmm' method
 #' @param return.mcmc store mcmc in the output
 #' @param mem.safe boolean memory parameter for rule index
-#' @param verbose true (default) or false: print output
+#' @param verbose TRUE (default) or FALSE: print output
 #'
 #' @returns A list of distributed lag effects per subgroups
 #' @export 
