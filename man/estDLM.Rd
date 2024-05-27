@@ -30,7 +30,7 @@ estDLM(
 
 \item{mem.safe}{boolean memory parameter for rule index}
 
-\item{verbose}{true (default) or false: print output}
+\item{verbose}{TRUE (default) or FALSE: print output}
 }
 \value{
 A list of distributed lag effects per subgroups

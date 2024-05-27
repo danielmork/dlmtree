@@ -55,7 +55,7 @@ vector defining binomial size for 'logit' family}
 model to be fitted, e.g. y ~ a + b. This only applies to ZINB where covariates for
 ZI model is different from NB model. This is same as the main formula by default}
 
-\item{keep_XZ}{false (default) or true: keep the model scale exposure and covariate data}
+\item{keep_XZ}{FALSE (default) or TRUE: keep the model scale exposure and covariate data}
 
 \item{mixture.interactions}{'noself' (default) which estimates interactions
 only between two different exposures, 'all' which also allows
@@ -77,9 +77,9 @@ turns on horseshoe-like shrinkage priors for different parts of model}
 
 \item{subset}{integer vector to analyze only a subset of data and exposures}
 
-\item{verbose}{true (default) or false: print output}
+\item{verbose}{TRUE (default) or FALSE: print output}
 
-\item{diagnostics}{true or false (default) keep model diagnostic such as
+\item{diagnostics}{TRUE or FALSE (default) keep model diagnostic such as
 terminal nodes, acceptance details, etc.}
 
 \item{initial.params}{initial parameters for fixed effects model, FALSE = none (default), "glm" = generate using GLM, or user defined, length must equal number of parameters in fixed effects model}

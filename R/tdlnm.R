@@ -65,6 +65,7 @@
 #' Convergence can be checked by re-running the model and validating consistency
 #' of results.
 #'
+#' @md
 #' @returns object of class 'tdlnm' or 'tdlm'
 #'
 tdlnm <- function(formula,
