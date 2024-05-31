@@ -94,9 +94,6 @@
     <loc>https://danielmork.github.io/dlmtree/reference/exposureCov.html</loc>
   </url>
   <url>
-    <loc>https://danielmork.github.io/dlmtree/reference/get_sbd_dlmtree.html</loc>
-  </url>
-  <url>
     <loc>https://danielmork.github.io/dlmtree/reference/index.html</loc>
   </url>
   <url>
@@ -127,10 +124,7 @@
     <loc>https://danielmork.github.io/dlmtree/reference/ppRange.html</loc>
   </url>
   <url>
-    <loc>https://danielmork.github.io/dlmtree/reference/predict.hdlm.html</loc>
-  </url>
-  <url>
-    <loc>https://danielmork.github.io/dlmtree/reference/predict.hdlmm.html</loc>
+    <loc>https://danielmork.github.io/dlmtree/reference/predict.dlmtree.html</loc>
   </url>
   <url>
     <loc>https://danielmork.github.io/dlmtree/reference/print.hdlm.html</loc>
@@ -176,6 +170,9 @@
   </url>
   <url>
     <loc>https://danielmork.github.io/dlmtree/reference/ruleIdx.html</loc>
+  </url>
+  <url>
+    <loc>https://danielmork.github.io/dlmtree/reference/sbd_dlmtree.html</loc>
   </url>
   <url>
     <loc>https://danielmork.github.io/dlmtree/reference/scaleModelMatrix.html</loc>

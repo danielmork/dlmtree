@@ -97,7 +97,7 @@ controlling for a model given by 'formula'.</p>
 <span>  monotone.tree.time.params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.95</span>, <span class="fl">2</span><span class="op">)</span>,</span>
 <span>  monotone.tree.exp.params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.95</span>, <span class="fl">2</span><span class="op">)</span>,</span>
 <span>  monotone.time.kappa <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  shrinkage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">monotone</span>, <span class="cn">FALSE</span>, <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>  shrinkage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">monotone</span>, <span class="cn">F</span>, <span class="cn">T</span><span class="op">)</span>,</span>
 <span>  subset <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  lowmem <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -116,7 +116,7 @@ effect model to be fitted, e.g. y ~ a + b</p></dd>
 
 
 <dt>data</dt>
-<dd><p>data frame containing variables used in the formula</p></dd>
+<dd><p>data frome containing variables used in the formula</p></dd>
 
 
 <dt>exposure.data</dt>
@@ -184,7 +184,7 @@ probability of each step for tree updates</p></dd>
 
 
 <dt>monotone</dt>
-<dd><p>FALSE (default) or TRUE: estimate monotone effects</p></dd>
+<dd><p>false (default) or true: estimate monotone effects</p></dd>
 
 
 <dt>monotone.gamma0</dt>
@@ -217,15 +217,15 @@ probability of each step for tree updates</p></dd>
 
 
 <dt>lowmem</dt>
-<dd><p>FALSE (default) or TRUE: turn on memory saver for DLNM, slower computation time</p></dd>
+<dd><p>false (default) / true: turn on memory saver for DLNM, slower computation time</p></dd>
 
 
 <dt>verbose</dt>
-<dd><p>TRUE (default) or FALSE: print progress bar output</p></dd>
+<dd><p>true (default) or false: print progress bar output</p></dd>
 
 
 <dt>diagnostics</dt>
-<dd><p>TRUE or FALSE (default) keep model diagnostic such as
+<dd><p>true or false (default) keep model diagnostic such as
 terminal nodes, acceptance details, etc.</p></dd>
 
 
@@ -235,7 +235,7 @@ terminal nodes, acceptance details, etc.</p></dd>
 
 
 <dt>debug</dt>
-<dd><p>if TRUE, outputs debugging messages</p></dd>
+<dd><p>if true, outputs debugging messages</p></dd>
 
 
 <dt>...</dt>
