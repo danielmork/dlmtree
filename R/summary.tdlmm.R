@@ -64,6 +64,15 @@ summary.tdlmm <- function(object,
   names(res$marg.values) <- res$expNames
 
 
+  if(verbose){
+    cat("Specified co-exposure values:\n")
+    for(exp in 1:length(res$expNames)){
+      cat("-", res$expNames[exp], ":", res$marg.values[exp])
+      cat("\n")
+    }
+    cat("\n")
+  }
+
   # ---- Bayes factor variable selection ----
   res$expSel        <- rep(FALSE, res$nExp)
   names(res$expSel) <- res$expNames
