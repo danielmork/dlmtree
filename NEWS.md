@@ -1,3 +1,6 @@
+# dlmtree 1.0.0.1
+* a split point for Subgroup tab in shiny interface set to the mode of proportion
+
 # dlmtree 1.0.0
 * initial CRAN release
 * spelling checks using `spell_check_package()` function from `spelling` package
