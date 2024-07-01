@@ -375,7 +375,7 @@ dlmtree <- function(formula,
   model$treePriorTDLM <- dlmtree.params
   model$stepProbTDLM  <- ifelse(model$nExp == 1,
                                 prop.table(c(dlmtree.step.prob[1], dlmtree.step.prob[1], dlmtree.step.prob[2])),
-                                prop.table(c(dlmtree.step.prob[1], dlmtree.step.prob[1], dlmtree.step.prob[2], 1 - (2*dlmtree.step.prob[1] + dlmtree.step.prob[2])))
+                                prop.table(c(dlmtree.step.prob[1], dlmtree.step.prob[1], dlmtree.step.prob[2], 1 - (2*dlmtree.step.prob[1] + dlmtree.step.prob[2]))))
   model$timeSplits0 <- tdlnm.time.split.prob
 
   # modtree
