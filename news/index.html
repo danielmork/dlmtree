@@ -55,11 +55,60 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.0.0" id="dlmtree-100">dlmtree 1.0.0<a class="anchor" aria-label="anchor" href="#dlmtree-100"></a></h2><p class="text-muted">CRAN release: 2024-05-31</p>
-</div>
+<h2 class="pkg-version" data-toc-text="1.0.0.1" id="dlmtree-1001">dlmtree 1.0.0.1<a class="anchor" aria-label="anchor" href="#dlmtree-1001"></a></h2>
+<ul><li>a split point for Subgroup tab in shiny interface set to the mode of proportion</li>
+</ul></div>
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.9.0.1" id="dlmtree-0901">dlmtree 0.9.0.1<a class="anchor" aria-label="anchor" href="#dlmtree-0901"></a></h2>
-<ul><li>Added a <code>NEWS.md</code> file to track changes to the package.</li>
+<h2 class="pkg-version" data-toc-text="1.0.0" id="dlmtree-100">dlmtree 1.0.0<a class="anchor" aria-label="anchor" href="#dlmtree-100"></a></h2><p class="text-muted">CRAN release: 2024-05-31</p>
+<ul><li>initial CRAN release</li>
+<li>spelling checks using <code>spell_check_package()</code> function from <code>spelling</code> package</li>
+<li>S3 method <code>predict.dlmtree</code> is separately defined as <code>predict.hdlm</code> and <code>predict.hdlmm</code>
+</li>
+<li>combined model fitting functions <code>tdlnm</code> and <code>tdlmm</code> into <code>dlmtree</code>
+</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.9.0" id="dlmtree-090">dlmtree 0.9.0<a class="anchor" aria-label="anchor" href="#dlmtree-090"></a></h2>
+<ul><li>Beta prior for monotone CW selection</li>
+<li>Bayes factor selection method</li>
+<li>zero inflated tree method</li>
+<li>monotone DLNM</li>
+<li>precalculation in tdlnm for large speed improvement</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.8.1.1" id="dlmtree-0811">dlmtree 0.8.1.1<a class="anchor" aria-label="anchor" href="#dlmtree-0811"></a></h2>
+<ul><li>fix to single covariate model</li>
+<li>add functions for posterior analysis with dlmtree class (<code>pip</code> and <code>splitpoints</code>)</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.8.1.0" id="dlmtree-0810">dlmtree 0.8.1.0<a class="anchor" aria-label="anchor" href="#dlmtree-0810"></a></h2>
+<ul><li>fix to allow intercept only models</li>
+<li>updated tdlnm algorithm for increased performance (memory restriction for large datasets)</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.8.0.0" id="dlmtree-0800">dlmtree 0.8.0.0<a class="anchor" aria-label="anchor" href="#dlmtree-0800"></a></h2>
+<ul><li>add HDLM functionality (<code>dlmtree</code>)</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.7.1.1" id="dlmtree-0711">dlmtree 0.7.1.1<a class="anchor" aria-label="anchor" href="#dlmtree-0711"></a></h2>
+<ul><li>fix <code>summary.tdlmm</code> if nMix=1 or nExp=1</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.7.1.0" id="dlmtree-0710">dlmtree 0.7.1.0<a class="anchor" aria-label="anchor" href="#dlmtree-0710"></a></h2>
+<ul><li>combined identity and logistic link into single c++ file</li>
+<li>several code efficiencies</li>
+<li>updated print output of <code>tdlmm.summary</code>
+</li>
+<li>removed prior on dirichlet hyperparameter</li>
+<li>exposure selection based on Beta-Binomial distribution</li>
+<li>
+<code>keep.mcmc</code> in summary</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.6.2.0" id="dlmtree-0620">dlmtree 0.6.2.0<a class="anchor" aria-label="anchor" href="#dlmtree-0620"></a></h2>
+<ul><li>separated <code>tdlmm</code> from <code>tdlnm</code> function</li>
+<li>included exposure selection into summary</li>
+<li>prior on dirichlet hyperparameter ~Gamma(1, nTrees/4)</li>
 </ul></div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>

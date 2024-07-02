@@ -97,12 +97,19 @@ Wilson (2021) &lt;doi: <a href="https://doi.org/10.1093/biostatistics/kxaa051" c
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/danielmork/dlmtree" class="external-link">dlmtree</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"sbd_dlmtree"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="load-data">Load data<a class="anchor" aria-label="anchor" href="#load-data"></a>
+</h3>
+<p>Simulated data is available on <a href="https://github.com/danielmork/dlmtree/tree/master/vignettes/articles" class="external-link">GitHub</a>.
+It can be loaded with the following code.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sbd_dlmtree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_sbd_dlmtree.html">get_sbd_dlmtree</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</div>
 <div class="section level3">
 <h3 id="data-preparation">Data preparation<a class="anchor" aria-label="anchor" href="#data-preparation"></a>
 </h3>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Response and covariates</span></span>
 <span><span class="va">sbd_cov</span> <span class="op">&lt;-</span> <span class="va">sbd_dlmtree</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>            <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">bwgaz</span>, <span class="va">ChildSex</span>, <span class="va">MomAge</span>, <span class="va">GestAge</span>, <span class="va">MomPriorBMI</span>, <span class="va">Race</span>,</span>
@@ -120,7 +127,7 @@ Wilson (2021) &lt;doi: <a href="https://doi.org/10.1093/biostatistics/kxaa051" c
 <div class="section level3">
 <h3 id="fitting-the-model">Fitting the model<a class="anchor" aria-label="anchor" href="#fitting-the-model"></a>
 </h3>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tdlnm.fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dlmtree.html">dlmtree</a></span><span class="op">(</span>formula <span class="op">=</span> <span class="va">bwgaz</span> <span class="op">~</span> <span class="va">ChildSex</span> <span class="op">+</span> <span class="va">MomAge</span> <span class="op">+</span> <span class="va">MomPriorBMI</span> <span class="op">+</span> </span>
 <span>                                        <span class="va">Race</span> <span class="op">+</span> <span class="va">Hispanic</span> <span class="op">+</span> <span class="va">SmkAny</span> <span class="op">+</span> <span class="va">EstMonthConcept</span>,</span>
 <span>                     data <span class="op">=</span> <span class="va">sbd_cov</span>,</span>
@@ -143,10 +150,10 @@ Wilson (2021) &lt;doi: <a href="https://doi.org/10.1093/biostatistics/kxaa051" c
 <div class="section level3">
 <h3 id="model-fit-summary">Model fit summary<a class="anchor" aria-label="anchor" href="#model-fit-summary"></a>
 </h3>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tdlnm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tdlnm.fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Centered DLNM at exposure value 0</span></span></code></pre></div>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tdlnm.sum</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; TDLNM summary</span></span>
@@ -196,7 +203,7 @@ Wilson (2021) &lt;doi: <a href="https://doi.org/10.1093/biostatistics/kxaa051" c
 <div class="section level3">
 <h3 id="exposure-time-surface">Exposure-time surface<a class="anchor" aria-label="anchor" href="#exposure-time-surface"></a>
 </h3>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, </span>
 <span>     main <span class="op">=</span> <span class="st">"Plot title"</span>, </span>
 <span>     xlab <span class="op">=</span> <span class="st">"Time axis label"</span>, </span>
@@ -207,25 +214,25 @@ Wilson (2021) &lt;doi: <a href="https://doi.org/10.1093/biostatistics/kxaa051" c
 <div class="section level3">
 <h3 id="slicing-on-exposure-concentration">Slicing on exposure-concentration<a class="anchor" aria-label="anchor" href="#slicing-on-exposure-concentration"></a>
 </h3>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># slicing on exposure-concentration</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"slice"</span>, val <span class="op">=</span> <span class="fl">1</span>, main <span class="op">=</span> <span class="st">"Slice at concentration 1"</span><span class="op">)</span> </span></code></pre></div>
 <p><img src="TDLNM_files/figure-html/unnamed-chunk-3-1.png" width="700"></p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"slice"</span>, val <span class="op">=</span> <span class="fl">2</span>, main <span class="op">=</span> <span class="st">"Slice at concentration 2"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="TDLNM_files/figure-html/unnamed-chunk-3-2.png" width="700"></p>
 </div>
 <div class="section level3">
 <h3 id="slicing-on-time-lag">Slicing on time lag<a class="anchor" aria-label="anchor" href="#slicing-on-time-lag"></a>
 </h3>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># slicing on exposure-concentration</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"slice"</span>, time <span class="op">=</span> <span class="fl">7</span>, main <span class="op">=</span> <span class="st">"Slice at time 7"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="TDLNM_files/figure-html/unnamed-chunk-4-1.png" width="700"></p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"slice"</span>, time <span class="op">=</span> <span class="fl">15</span>, main <span class="op">=</span> <span class="st">"Slice at time 15"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="TDLNM_files/figure-html/unnamed-chunk-4-2.png" width="700"></p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"slice"</span>, time <span class="op">=</span> <span class="fl">33</span>, main <span class="op">=</span> <span class="st">"Slice at time 33"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="TDLNM_files/figure-html/unnamed-chunk-4-3.png" width="700"></p>
 </div>

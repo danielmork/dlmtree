@@ -97,12 +97,19 @@ lag mixture model (TDLMM). More details can be found in Mork and Wilson
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/danielmork/dlmtree" class="external-link">dlmtree</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"sbd_dlmtree"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="load-data">Load data<a class="anchor" aria-label="anchor" href="#load-data"></a>
+</h3>
+<p>Simulated data is available on <a href="https://github.com/danielmork/dlmtree/tree/master/vignettes/articles" class="external-link">GitHub</a>.
+It can be loaded with the following code.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sbd_dlmtree</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_sbd_dlmtree.html">get_sbd_dlmtree</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</div>
 <div class="section level3">
 <h3 id="data-preparation">Data preparation<a class="anchor" aria-label="anchor" href="#data-preparation"></a>
 </h3>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Response and covariates</span></span>
 <span><span class="va">sbd_cov</span> <span class="op">&lt;-</span> <span class="va">sbd_dlmtree</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>            <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">bwgaz</span>, <span class="va">ChildSex</span>, <span class="va">MomAge</span>, <span class="va">GestAge</span>, <span class="va">MomPriorBMI</span>, <span class="va">Race</span>,</span>
@@ -120,7 +127,7 @@ lag mixture model (TDLMM). More details can be found in Mork and Wilson
 <div class="section level3">
 <h3 id="fitting-the-model">Fitting the model<a class="anchor" aria-label="anchor" href="#fitting-the-model"></a>
 </h3>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tdlmm.fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dlmtree.html">dlmtree</a></span><span class="op">(</span>formula <span class="op">=</span> <span class="va">bwgaz</span> <span class="op">~</span> <span class="va">ChildSex</span> <span class="op">+</span> <span class="va">MomAge</span> <span class="op">+</span> <span class="va">MomPriorBMI</span> <span class="op">+</span></span>
 <span>                                        <span class="va">Race</span> <span class="op">+</span> <span class="va">Hispanic</span> <span class="op">+</span> <span class="va">SmkAny</span> <span class="op">+</span> <span class="va">EstMonthConcept</span>,</span>
 <span>                     data <span class="op">=</span> <span class="va">sbd_cov</span>,</span>
@@ -134,7 +141,7 @@ lag mixture model (TDLMM). More details can be found in Mork and Wilson
 <span><span class="co">#&gt; Burn-in % complete </span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
-<span><span class="co">#&gt; MCMC iterations (est time: 3.9 minutes)</span></span>
+<span><span class="co">#&gt; MCMC iterations (est time: 2.9 minutes)</span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
 <span><span class="co">#&gt; Compiling results...</span></span></code></pre></div>
@@ -142,18 +149,16 @@ lag mixture model (TDLMM). More details can be found in Mork and Wilson
 <div class="section level3">
 <h3 id="model-fit-summary">Model fit summary<a class="anchor" aria-label="anchor" href="#model-fit-summary"></a>
 </h3>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Marginalization with co-exposure fixed at exact levels for each exposure</span></span>
 <span><span class="va">tdlmm.sum.exact</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tdlmm.fit</span>, marginalize <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Reconstructing main effects...</span></span>
-<span><span class="co">#&gt; Reconstructing interaction effects...</span></span>
-<span><span class="co">#&gt; 0%...25%...50%...75%...100%</span></span>
-<span><span class="co">#&gt; Calculating marginal effects...</span></span>
-<span><span class="co">#&gt; Calculating fixed effects...</span></span></code></pre></div>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="co"># Marginalization with co-exposure fixed at 25th percentile</span></span>
-<span><span class="va">tdlmm.sum.percentile</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tdlmm.fit</span>, marginalize <span class="op">=</span> <span class="fl">25</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Specified co-exposure values:</span></span>
+<span><span class="co">#&gt; - PM25 : 3</span></span>
+<span><span class="co">#&gt; - TEMP : 2</span></span>
+<span><span class="co">#&gt; - SO2 : 1</span></span>
+<span><span class="co">#&gt; - CO : 2</span></span>
+<span><span class="co">#&gt; - NO2 : 1</span></span>
+<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Reconstructing main effects...</span></span>
 <span><span class="co">#&gt; Reconstructing interaction effects...</span></span>
 <span><span class="co">#&gt; 0%...25%...50%...75%...100%</span></span>
@@ -161,14 +166,37 @@ lag mixture model (TDLMM). More details can be found in Mork and Wilson
 <span><span class="co">#&gt; Calculating fixed effects...</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
-<span><span class="co"># Marginalization with co-exposure fixed at the empirical means (default)</span></span>
-<span><span class="va">tdlmm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tdlmm.fit</span>, marginalize <span class="op">=</span> <span class="st">"mean"</span>, log10BF.crit <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span><span class="co"># Marginalization with co-exposure fixed at 25th percentile</span></span>
+<span><span class="va">tdlmm.sum.percentile</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tdlmm.fit</span>, marginalize <span class="op">=</span> <span class="fl">25</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Specified co-exposure values:</span></span>
+<span><span class="co">#&gt; - PM25 : 5.183927</span></span>
+<span><span class="co">#&gt; - TEMP : 1.374847</span></span>
+<span><span class="co">#&gt; - SO2 : 0.9961942</span></span>
+<span><span class="co">#&gt; - CO : 2.09893</span></span>
+<span><span class="co">#&gt; - NO2 : 1.872199</span></span>
+<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Reconstructing main effects...</span></span>
 <span><span class="co">#&gt; Reconstructing interaction effects...</span></span>
 <span><span class="co">#&gt; 0%...25%...50%...75%...100%</span></span>
 <span><span class="co">#&gt; Calculating marginal effects...</span></span>
 <span><span class="co">#&gt; Calculating fixed effects...</span></span></code></pre></div>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="co"># Marginalization with co-exposure fixed at the empirical means (default)</span></span>
+<span><span class="va">tdlmm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tdlmm.fit</span>, marginalize <span class="op">=</span> <span class="st">"mean"</span>, log10BF.crit <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Specified co-exposure values:</span></span>
+<span><span class="co">#&gt; - PM25 : 6.842084</span></span>
+<span><span class="co">#&gt; - TEMP : 3.187414</span></span>
+<span><span class="co">#&gt; - SO2 : 1.992197</span></span>
+<span><span class="co">#&gt; - CO : 3.219101</span></span>
+<span><span class="co">#&gt; - NO2 : 3.077839</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Reconstructing main effects...</span></span>
+<span><span class="co">#&gt; Reconstructing interaction effects...</span></span>
+<span><span class="co">#&gt; 0%...25%...50%...75%...100%</span></span>
+<span><span class="co">#&gt; Calculating marginal effects...</span></span>
+<span><span class="co">#&gt; Calculating fixed effects...</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tdlmm.sum</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; TDLMM summary</span></span>
@@ -188,26 +216,26 @@ lag mixture model (TDLMM). More details can be found in Mork and Wilson
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Fixed effects:</span></span>
 <span><span class="co">#&gt;                        Mean  Lower  Upper</span></span>
-<span><span class="co">#&gt; *(Intercept)          0.172  0.043  0.307</span></span>
+<span><span class="co">#&gt; *(Intercept)          0.172  0.044  0.299</span></span>
 <span><span class="co">#&gt; *ChildSexM           -2.063 -2.085 -2.041</span></span>
-<span><span class="co">#&gt;  MomAge               0.001 -0.001  0.002</span></span>
+<span><span class="co">#&gt;  MomAge               0.000 -0.001  0.002</span></span>
 <span><span class="co">#&gt; *MomPriorBMI         -0.020 -0.022 -0.019</span></span>
-<span><span class="co">#&gt;  RaceAsianPI          0.027 -0.058  0.117</span></span>
-<span><span class="co">#&gt;  RaceBlack            0.033 -0.063  0.124</span></span>
-<span><span class="co">#&gt;  Racewhite            0.016 -0.067  0.100</span></span>
+<span><span class="co">#&gt;  RaceAsianPI          0.028 -0.066  0.115</span></span>
+<span><span class="co">#&gt;  RaceBlack            0.033 -0.063  0.126</span></span>
+<span><span class="co">#&gt;  Racewhite            0.017 -0.070  0.095</span></span>
 <span><span class="co">#&gt; *HispanicNonHispanic  0.248  0.224  0.272</span></span>
-<span><span class="co">#&gt; *SmkAnyY             -0.393 -0.441 -0.346</span></span>
-<span><span class="co">#&gt;  EstMonthConcept2     0.073 -0.003  0.145</span></span>
-<span><span class="co">#&gt; *EstMonthConcept3     0.107  0.009  0.211</span></span>
-<span><span class="co">#&gt; *EstMonthConcept4     0.158  0.038  0.282</span></span>
-<span><span class="co">#&gt; *EstMonthConcept5     0.255  0.126  0.388</span></span>
-<span><span class="co">#&gt; *EstMonthConcept6     0.200  0.064  0.333</span></span>
-<span><span class="co">#&gt; *EstMonthConcept7     0.223  0.084  0.354</span></span>
-<span><span class="co">#&gt; *EstMonthConcept8     0.199  0.068  0.331</span></span>
-<span><span class="co">#&gt; *EstMonthConcept9     0.291  0.164  0.418</span></span>
-<span><span class="co">#&gt; *EstMonthConcept10    0.182  0.070  0.296</span></span>
-<span><span class="co">#&gt; *EstMonthConcept11    0.135  0.040  0.236</span></span>
-<span><span class="co">#&gt;  EstMonthConcept12    0.006 -0.062  0.077</span></span>
+<span><span class="co">#&gt; *SmkAnyY             -0.395 -0.442 -0.348</span></span>
+<span><span class="co">#&gt; *EstMonthConcept2     0.082  0.011  0.154</span></span>
+<span><span class="co">#&gt; *EstMonthConcept3     0.123  0.033  0.219</span></span>
+<span><span class="co">#&gt; *EstMonthConcept4     0.156  0.039  0.275</span></span>
+<span><span class="co">#&gt; *EstMonthConcept5     0.233  0.104  0.363</span></span>
+<span><span class="co">#&gt; *EstMonthConcept6     0.175  0.039  0.313</span></span>
+<span><span class="co">#&gt; *EstMonthConcept7     0.211  0.080  0.343</span></span>
+<span><span class="co">#&gt; *EstMonthConcept8     0.210  0.087  0.327</span></span>
+<span><span class="co">#&gt; *EstMonthConcept9     0.303  0.187  0.412</span></span>
+<span><span class="co">#&gt; *EstMonthConcept10    0.185  0.073  0.288</span></span>
+<span><span class="co">#&gt; *EstMonthConcept11    0.120  0.027  0.211</span></span>
+<span><span class="co">#&gt;  EstMonthConcept12   -0.010 -0.075  0.055</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; * = CI does not contain zero</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -216,48 +244,56 @@ lag mixture model (TDLMM). More details can be found in Mork and Wilson
 <span><span class="co">#&gt; * = Exposure selected by Bayes Factor</span></span>
 <span><span class="co">#&gt; (x.xx) = Relative effect size</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  *PM25 (0.7): 11-20</span></span>
-<span><span class="co">#&gt;  *TEMP (0.7): 5-19</span></span>
-<span><span class="co">#&gt;  *SO2 (0.21): </span></span>
-<span><span class="co">#&gt;  *CO (0.63): </span></span>
-<span><span class="co">#&gt;  *NO2 (0.26): 23</span></span>
+<span><span class="co">#&gt;  *PM25 (0.81): 4-5,11-20</span></span>
+<span><span class="co">#&gt;  *TEMP (0.6): 4-20</span></span>
+<span><span class="co">#&gt;  *NO2 (0.84): 8-19,23-25</span></span>
 <span><span class="co">#&gt; --</span></span>
 <span><span class="co">#&gt; Interaction effects: critical windows</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  PM25/TEMP (0.8):</span></span>
-<span><span class="co">#&gt;  12/6-19</span></span>
-<span><span class="co">#&gt;  13/6-19</span></span>
-<span><span class="co">#&gt;  14/6-20</span></span>
-<span><span class="co">#&gt;  15/6-20</span></span>
-<span><span class="co">#&gt;  16/6-20</span></span>
-<span><span class="co">#&gt;  17/6-21</span></span>
-<span><span class="co">#&gt;  18/5-22</span></span>
-<span><span class="co">#&gt;  19/5-22</span></span>
-<span><span class="co">#&gt;  20/6-21</span></span>
+<span><span class="co">#&gt;  PM25/TEMP (0.93):</span></span>
+<span><span class="co">#&gt;  12/6-16</span></span>
+<span><span class="co">#&gt;  13/6-16</span></span>
+<span><span class="co">#&gt;  14/6-16</span></span>
+<span><span class="co">#&gt;  15/6-16</span></span>
+<span><span class="co">#&gt;  16/6-12,14-16</span></span>
+<span><span class="co">#&gt;  17/5-18</span></span>
+<span><span class="co">#&gt;  18/5-19</span></span>
+<span><span class="co">#&gt;  19/5-18</span></span>
+<span><span class="co">#&gt;  PM25/NO2 (0.95):</span></span>
+<span><span class="co">#&gt;  11/11-21,23</span></span>
+<span><span class="co">#&gt;  12/8-25</span></span>
+<span><span class="co">#&gt;  13/7-25</span></span>
+<span><span class="co">#&gt;  14/7-24</span></span>
+<span><span class="co">#&gt;  15/6-25</span></span>
+<span><span class="co">#&gt;  16/6-24</span></span>
+<span><span class="co">#&gt;  17/7-24</span></span>
+<span><span class="co">#&gt;  18/7-24</span></span>
+<span><span class="co">#&gt;  19/7-24</span></span>
+<span><span class="co">#&gt;  20/7-12,18</span></span>
 <span><span class="co">#&gt; ---</span></span>
-<span><span class="co">#&gt; residual standard errors: 0.005</span></span></code></pre></div>
+<span><span class="co">#&gt; residual standard errors: 0.007</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="main-exposure-effect">Main exposure effect<a class="anchor" aria-label="anchor" href="#main-exposure-effect"></a>
 </h3>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">p1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlmm.sum</span>, exposure1 <span class="op">=</span> <span class="st">"PM25"</span>, main <span class="op">=</span> <span class="st">"PM2.5"</span><span class="op">)</span></span>
 <span><span class="va">p2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlmm.sum</span>, exposure1 <span class="op">=</span> <span class="st">"TEMP"</span>, main <span class="op">=</span> <span class="st">"Temperature"</span><span class="op">)</span></span>
 <span><span class="va">p3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlmm.sum</span>, exposure1 <span class="op">=</span> <span class="st">"SO2"</span>, main <span class="op">=</span> <span class="st">"SO2"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">p1</span></span></code></pre></div>
 <p><img src="TDLMM_files/figure-html/tdlmm.plot-1.png" width="700"></p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">p2</span></span></code></pre></div>
 <p><img src="TDLMM_files/figure-html/tdlmm.plot-2.png" width="700"></p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">p3</span></span></code></pre></div>
 <p><img src="TDLMM_files/figure-html/tdlmm.plot-3.png" width="700"></p>
 </div>
 <div class="section level3">
 <h3 id="lagged-interaction-effect">Lagged interaction effect<a class="anchor" aria-label="anchor" href="#lagged-interaction-effect"></a>
 </h3>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlmm.sum</span>, exposure1 <span class="op">=</span> <span class="st">"PM25"</span>, exposure2 <span class="op">=</span> <span class="st">"TEMP"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="TDLMM_files/figure-html/unnamed-chunk-3-1.png" width="700"></p>
 </div>
@@ -267,7 +303,7 @@ lag mixture model (TDLMM). More details can be found in Mork and Wilson
 <p>Here we consider going from the 25th to the 75th percentile in each
 exposure while adjusting for the expected changes in other exposures due
 to their correlations with the exposure of interest.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="va">dlm_coexp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/adj_coexposure.html">adj_coexposure</a></span><span class="op">(</span><span class="va">sbd_exp</span>, <span class="va">tdlmm.fit</span>, contrast_perc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">0.75</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;         PM25     TEMP       SO2       CO      NO2</span></span>
@@ -299,7 +335,7 @@ to their correlations with the exposure of interest.</p>
 <span><span class="co">#&gt; Predicting SO2 at lower/upper values of NO2: 1.297695 1.702796</span></span>
 <span><span class="co">#&gt; Predicting CO at lower/upper values of NO2: 2.25247 2.968066</span></span>
 <span><span class="co">#&gt; Predicting NO2 at lower/upper values of NO2: 1.872199 2.875369</span></span></code></pre></div>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">dlm_coexp</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Time</span>, y <span class="op">=</span> <span class="va">Effect</span>, ymin <span class="op">=</span> <span class="va">Lower</span>, ymax <span class="op">=</span> <span class="va">Upper</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_hline</a></span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">0</span>, color <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_ribbon.html" class="external-link">geom_ribbon</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"grey"</span><span class="op">)</span> <span class="op">+</span></span>
