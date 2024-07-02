@@ -201,6 +201,7 @@ dlmtree <- function(formula,
 
   # Single exposure models (TDLM, TDLNM, Monotone)
   if (!mixture) {
+    
     if (!is.numeric(exposure.data)) {
       stop("`exposure.data` must be a numeric matrix for single exposure models")
     }
@@ -374,6 +375,9 @@ dlmtree <- function(formula,
   # dlmtree
   model$treePriorTDLM <- dlmtree.params
   model$stepProbTDLM  <- prop.table(c(dlmtree.step.prob[1], dlmtree.step.prob[1], dlmtree.step.prob[2]))
+  if(mixture){
+    model$stepProbTDLM  <- prop.table(c(dlmtree.step.prob[1], dlmtree.step.prob[1], dlmtree.step.prob[2], dlmtree.step.prob[2]))
+  }
   model$timeSplits0 <- tdlnm.time.split.prob
 
   # modtree
