@@ -41,7 +41,7 @@ shiny.hdlmm <- function(fit)
           geom_line(aes(x = as.numeric(time - 1), y = est)) +
           facet_wrap(~group)
     if (groups == 2) {
-      p <- p + facet_grid(grp1 ~ grp2)
+      p <- p + facet_grid(grp2 ~ grp1)
     } else {
       p <- p + facet_wrap(~group)
     }
@@ -328,9 +328,8 @@ shiny.hdlmm <- function(fit)
             # print("num")
             # 
             # Find the middle splitpoint
-            spl       <- splitpoints(fit, var = sub_mod1, round = 2)
-            spl$cumu  <- cumsum(spl$proportion)
-            mid_loc   <- spl$location[length(which(spl$cumu < 0.5)) + 1]
+            spl <- splitpoints(fit, var = sub_mod1, round = 3)
+            mid_loc <- spl$location[which(spl$proportion == max(spl$proportion))]
             
             mod_num   <- c(paste0(sub_mod1," < ", mid_loc), paste0(mid_loc, " =< ", sub_mod1))
             list_num  <- vector("list", length = length(mod_num))
@@ -502,14 +501,12 @@ shiny.hdlmm <- function(fit)
             
               # Find the middle splitpoint
               # modifier 1
-              spl       <- splitpoints(fit, var = sub_mod1, round = 2)
-              spl$cumu  <- cumsum(spl$proportion)
-              mid_loc1  <- spl$location[length(which(spl$cumu < 0.5)) + 1]
+              spl <- splitpoints(fit, var = sub_mod1, round = 3)
+              mid_loc1 <- spl$location[which(spl$proportion == max(spl$proportion))]
     
-              # modifier 1
-              spl       <- splitpoints(fit, var = sub_mod2, round = 2)
-              spl$cumu  <- cumsum(spl$proportion)
-              mid_loc2  <- spl$location[length(which(spl$cumu < 0.5)) + 1]
+              # modifier 2
+              spl <- splitpoints(fit, var = sub_mod2, round = 3)
+              mid_loc2 <- spl$location[which(spl$proportion == max(spl$proportion))]
     
               mod1_num  <- c(paste0(sub_mod1, " < ", mid_loc1), paste0(mid_loc1, " =< ", sub_mod1))
               mod2_num  <- c(paste0(sub_mod2, " < ", mid_loc2), paste0(mid_loc2, " =< ", sub_mod2))
@@ -598,9 +595,8 @@ shiny.hdlmm <- function(fit)
             } else {      # num x cat
               # Find the middle splitpoint
               # modifier 1
-              spl       <- splitpoints(fit, var = sub_mod1, round = 2)
-              spl$cumu  <- cumsum(spl$proportion)
-              mid_loc1  <- spl$location[length(which(spl$cumu < 0.5)) + 1]
+              spl <- splitpoints(fit, var = sub_mod1, round = 3)
+              mid_loc1 <- spl$location[which(spl$proportion == max(spl$proportion))]
               
               mod1_num    <- c(paste0(sub_mod1, " < ", mid_loc1), paste0(mid_loc1, " =< ", sub_mod1))
               mod2_cat    <- pull(unique(fit$data[, sub_mod2]))
@@ -693,9 +689,8 @@ shiny.hdlmm <- function(fit)
               mod1_cat  <- pull(unique(fit$data[, sub_mod1]))
               
               # modifier 2
-              spl       <- splitpoints(fit, var = sub_mod2, round = 2)
-              spl$cumu  <- cumsum(spl$proportion)
-              mid_loc2  <- spl$location[length(which(spl$cumu < 0.5)) + 1]
+              spl <- splitpoints(fit, var = sub_mod2, round = 3)
+              mid_loc2 <- spl$location[which(spl$proportion == max(spl$proportion))]
               mod2_num  <- c(paste0(sub_mod2, " < ", mid_loc2), paste0(mid_loc2, " =< ", sub_mod2))
               
               comb        <- expand.grid(mod1_cat, mod2_num) %>% mutate(comb = paste0(Var1, " & ", Var2))
