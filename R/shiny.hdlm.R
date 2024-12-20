@@ -846,8 +846,8 @@ shiny.hdlm <- function(fit)
           if (sub_mod2 == "No selection"){
             # 1 modifier
             incProgress(1/2, detail = paste(" weighted subgroup effect: ", sub_mod1))
-            grpDLM <- estDLM(fit, fit$data[complete.cases(fit$data),],
-                            createGrpIdx(fit, fit$data[complete.cases(fit$data),], sub_mod1), verbose = FALSE)
+            grpDLM <- estDLM(fit, fit$data,
+                            createGrpIdx(fit, fit$data, sub_mod1), verbose = FALSE)
             incProgress(1/2, detail = "")
             
             plotDLM(grpDLM) + 
@@ -856,8 +856,8 @@ shiny.hdlm <- function(fit)
           } else {
             # 2 modifiers
             incProgress(1/2, detail = paste(" weighted subgroup effect: ", sub_mod1, " & ", sub_mod2))
-            grpDLM <- estDLM(fit, fit$data[complete.cases(fit$data),],
-                            create2GrpIdx(fit, fit$data[complete.cases(fit$data),], sub_mod1, sub_mod2), verbose = FALSE)
+            grpDLM <- estDLM(fit, fit$data,
+                            create2GrpIdx(fit, fit$data, sub_mod1, sub_mod2), verbose = FALSE)
             incProgress(1/2, detail = "")
             
             plotDLM(grpDLM, groups = 2) + 

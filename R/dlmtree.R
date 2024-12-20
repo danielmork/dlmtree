@@ -172,7 +172,7 @@ dlmtree <- function(formula,
 
   # Stop for unavailable models
   if (het) { # HDLM & HDLMM
-    if (family %in% c("logit", "zinb")) {
+    if (family %in% c("zinb")) {
       stop("'logit' or 'zinb' are unavailable for heterogeneous models. Set family to 'gaussian'.")
     }
 

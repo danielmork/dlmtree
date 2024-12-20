@@ -13,9 +13,6 @@ using Eigen::Lower;
 double calcLogRatioTDLM(treeMHR mhr0, treeMHR mhr, double RtR, double RtZVgZtR,
                         dlmtreeCtr* ctr, double stepMhr, double treevar)
 {
-  // Rcout << stepMhr << " " << mhr.logVThetaChol << " " << mhr0.logVThetaChol <<
-  // " " << mhr.beta << " " << mhr0.beta << " " << treevar << " " <<
-  // mhr.totTerm << " " << mhr0.totTerm << "\n";
   if (ctr->binomial) {
     return(stepMhr + mhr.logVThetaChol - mhr0.logVThetaChol +
            0.5 * (mhr.beta - mhr0.beta) -
@@ -71,16 +68,16 @@ treeMHR dlmtreeNestedMHR(std::vector<Node*> modTerm,
     VectorXd XtVzInvR(totTerm);
     MatrixXd tempV(totTerm, totTerm);
     if (ctr->binomial) {
-      tempV           = Xtemp.transpose() *  (Xtemp.array().colwise() * ctr->Omega.array()).matrix();
-      tempV.noalias() -= ZtX.transpose() * VgZtX;
-      XtVzInvR        = (Xtemp.array().colwise() * ctr->Omega.array()).matrix().transpose() * ctr->R;
+      const Eigen::MatrixXd Xdw = (ctr->Omega).asDiagonal() * Xtemp;  
+      tempV           = Xtemp.transpose() *  Xdw;
+      XtVzInvR        = Xdw.transpose() * ctr->R;
       
     } else {
       tempV           = Xtemp.transpose() * Xtemp;
-      tempV.noalias() -= ZtX.transpose() * VgZtX;
       XtVzInvR        = Xtemp.transpose() * ctr->R;
     }
     
+    tempV.noalias() -= ZtX.transpose() * VgZtX;
     XtVzInvR.noalias()        -= VgZtX.transpose() * ZtR;
     tempV.diagonal().array()  += 1.0 / treevar;
     const MatrixXd VTheta     = tempV.inverse();
@@ -134,7 +131,7 @@ treeMHR dlmtreeNestedMHR(std::vector<Node*> modTerm,
       }
       
       if (ctr->binomial) {
-        MatrixXd Xwtemp = (Xtemp.array().colwise() * Otemp.array()).matrix();
+        MatrixXd Xwtemp = Otemp.asDiagonal() * Xtemp;
         modTerm[s]->nodevals->XtX       = Xtemp.transpose() * Xwtemp;
         modTerm[s]->nodevals->ZtXmat    = Ztemp.transpose() * Xtemp;
         modTerm[s]->nodevals->VgZtXmat  = ctr->Vg * modTerm[s]->nodevals->ZtXmat;
@@ -155,7 +152,7 @@ treeMHR dlmtreeNestedMHR(std::vector<Node*> modTerm,
     
     LInv.resize(pX, pX);      LInv.setZero();
     LInv.diagonal().array() += 1.0 / treevar;
-    if ((ctr->pZ < totTerm) || ctr->binomial) {
+    if ((ctr->pZ < totTerm) && !ctr->binomial) {
       XXiblock.block(start, start, pX, pX) = (modTerm[s]->nodevals->XtX + LInv).inverse();
     } else {
       XXiblock.block(start, start, pX, pX) = modTerm[s]->nodevals->XtX + LInv;
@@ -169,7 +166,7 @@ treeMHR dlmtreeNestedMHR(std::vector<Node*> modTerm,
   
   // Rcout << "e";
   MatrixXd VTheta(totTerm, totTerm);    VTheta.setZero();
-  if ((ctr->pZ < totTerm) || ctr->binomial) {
+  if ((ctr->pZ < totTerm) && !ctr->binomial) {
     MatrixXd ZtXXi = ZtX * XXiblock;
     VTheta.triangularView<Lower>() = ZtXXi.transpose() *
       (ctr->VgInv - ZtXXi * ZtX.transpose()).inverse() * ZtXXi;
@@ -389,8 +386,10 @@ Rcpp::List dlmtreeTDLM_cpp(const Rcpp::List model)
   ctr->shrinkage    = as<int>(model["shrinkage"]);
 
   // * Set up model data
-  ctr->Y      = as<VectorXd>(model["Y"]);
-  ctr->n      = ctr->Y.size();
+  // ctr->Y      = as<VectorXd>(model["Y"]);
+  ctr->Y0     = as<Eigen::VectorXd>(model["Y"]);      
+  ctr->Ystar  = as<Eigen::VectorXd>(model["Y"]);  
+  ctr->n      = ctr->Y0.size();
   ctr->Z      = as<MatrixXd>(model["Z"]);
   ctr->Zw     = ctr->Z;
   ctr->pZ     = ctr->Z.cols();
@@ -403,10 +402,11 @@ Rcpp::List dlmtreeTDLM_cpp(const Rcpp::List model)
   ctr->binomialSize.resize(ctr->n);           ctr->binomialSize.setZero();
   ctr->kappa.resize(ctr->n);                  ctr->kappa.setOnes();
   ctr->Omega.resize(ctr->n);                  ctr->Omega.setOnes();
+  // Rcout << ctr->binomial;
   if (ctr->binomial) {
     ctr->binomialSize = as<VectorXd>(model["binomialSize"]);
-    ctr->kappa        = ctr->Y - 0.5 * (ctr->binomialSize);
-    ctr->Y            = ctr->kappa;
+    ctr->kappa        = ctr->Y0 - 0.5 * (ctr->binomialSize);
+    ctr->Ystar            = ctr->kappa;
   }
 
   // * Setup modifier data
@@ -420,27 +420,27 @@ Rcpp::List dlmtreeTDLM_cpp(const Rcpp::List model)
   // * Setup exposure data
   ctr->XcenterIdx = 0;
   exposureDat *Exp;
-  if (as<int>(model["nSplits"]) == 0) { // DLM
+  // if (as<int>(model["nSplits"]) == 0) { // DLM
     if (ctr->binomial)
       Exp = new exposureDat(as<MatrixXd>(model["Tcalc"]));
     else
       Exp = new exposureDat(as<MatrixXd>(model["Tcalc"]),
                             ctr->Z, ctr->Vg);
-  } else { // DLNM
-    if (ctr->binomial)
-      Exp = new exposureDat(as<MatrixXd>(model["X"]),
-                            as<MatrixXd>(model["SE"]),
-                            as<VectorXd>(model["Xsplits"]),
-                            as<MatrixXd>(model["Xcalc"]),
-                            as<MatrixXd>(model["Tcalc"]));
-    else
-      Exp = new exposureDat(as<MatrixXd>(model["X"]),
-                            as<MatrixXd>(model["SE"]),
-                            as<VectorXd>(model["Xsplits"]),
-                            as<MatrixXd>(model["Xcalc"]),
-                            as<MatrixXd>(model["Tcalc"]),
-                            ctr->Z, ctr->Vg);
-  }
+  // } else { // DLNM
+  //   if (ctr->binomial)
+  //     Exp = new exposureDat(as<MatrixXd>(model["X"]),
+  //                           as<MatrixXd>(model["SE"]),
+  //                           as<VectorXd>(model["Xsplits"]),
+  //                           as<MatrixXd>(model["Xcalc"]),
+  //                           as<MatrixXd>(model["Tcalc"]));
+  //   else
+  //     Exp = new exposureDat(as<MatrixXd>(model["X"]),
+  //                           as<MatrixXd>(model["SE"]),
+  //                           as<VectorXd>(model["Xsplits"]),
+  //                           as<MatrixXd>(model["Xcalc"]),
+  //                           as<MatrixXd>(model["Tcalc"]),
+  //                           ctr->Z, ctr->Vg);
+  // }
   ctr->pX       = Exp->pX;
   ctr->nSplits  = Exp->nSplits;
 
@@ -495,11 +495,12 @@ Rcpp::List dlmtreeTDLM_cpp(const Rcpp::List model)
     
   // * Initial draws
   (ctr->fhat).resize(ctr->n);   (ctr->fhat).setZero();
-  ctr->R = ctr->Y;
+  ctr->R = ctr->Ystar;  
   (ctr->gamma).resize(ctr->pZ);
 
   // Load initial params for faster convergence in binomial model
   if (ctr->binomial) {
+    // Rcout << "init";
     ctr->gamma  = as<VectorXd>(model["initParams"]);
     ctr->Omega  = rcpp_pgdraw(ctr->binomialSize, ctr->fhat + ctr->Z * ctr->gamma);
     ctr->Zw     = ctr->Omega.asDiagonal() * ctr->Z;
@@ -508,13 +509,16 @@ Rcpp::List dlmtreeTDLM_cpp(const Rcpp::List model)
     ctr->Vg     = ctr->VgInv.inverse();
     ctr->VgChol = ctr->Vg.llt().matrixL();
     // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
-    ctr->Y      = ctr->kappa.array() / ctr->Omega.array();
+    ctr->Ystar      = ctr->kappa.array() / ctr->Omega.array();
+    // Rcout << "end\n";
   }
   ctr->totTerm    = 0;
   ctr->sumTermT2  = 0;
   ctr->nu         = 1.0; // ! Need to define for first update of sigma2
   ctr->sigma2     = 1.0;
+  // Rcout << "modelest";
   tdlmModelEst(ctr);
+  // Rcout << "end\n";
 
   rHalfCauchyFC(&(ctr->nu), ctr->nTrees, 0.0);
   (ctr->tau).resize(ctr->nTrees);     (ctr->tau).setOnes();
@@ -532,6 +536,7 @@ Rcpp::List dlmtreeTDLM_cpp(const Rcpp::List model)
   // * Begin MCMC
   for (ctr->b = 1; ctr->b <= (ctr->iter + ctr->burn); (ctr->b)++) {
     Rcpp::checkUserInterrupt();
+    // Rcout << ctr->b << ":";
     ctr->record = 0;
     if ((ctr->b > ctr->burn) && (((ctr->b - ctr->burn) % ctr->thin) == 0)){
       ctr->record = floor((ctr->b - ctr->burn) / ctr->thin);
@@ -546,6 +551,7 @@ Rcpp::List dlmtreeTDLM_cpp(const Rcpp::List model)
     ctr->modInf.setZero();
     
     for (t = 0; t < ctr->nTrees; t++) {
+      // Rcout << t;
       dlmtreeTDLMTreeMCMC(t, modTrees[t], expNS, ctr, dgn, Mod, Exp);
       ctr->fhat += (ctr->Rmat).col(t);
       if (t < ctr->nTrees - 1){
@@ -554,9 +560,10 @@ Rcpp::List dlmtreeTDLM_cpp(const Rcpp::List model)
     } // end update trees
 
     // * Update model
-    ctr->R = ctr->Y - ctr->fhat;
+    ctr->R = ctr->Ystar - ctr->fhat;    
     tdlmModelEst(ctr);
     rHalfCauchyFC(&(ctr->nu), ctr->totTerm, ctr->sumTermT2 / ctr->sigma2);
+    // Rcout << "\n";
     
     // * Update modifier selection
     if ((ctr->b > 1000) || (ctr->b > (0.5 * ctr->burn))) {

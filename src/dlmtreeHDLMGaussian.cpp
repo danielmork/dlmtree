@@ -8,7 +8,8 @@
 using namespace Rcpp;
 
 
-void dlmtreeHDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
+void dlmtreeHDLMGaussian_TreeMCMC(int t, NodeStruct* expNS, NodeStruct* modNS, 
+                                  Node* modTree, Node* dlmTree,
                                   dlmtreeCtr* ctr, dlmtreeLog *dgn,
                                   modDat* Mod, exposureDat* Exp);
 
@@ -17,6 +18,22 @@ treeMHR dlmtreeTDLM_MHR(std::vector<Node*> modTerm,
                         dlmtreeCtr* ctr, 
                         Eigen::VectorXd ZtR, 
                         double treevar);
+
+double calcLogRatioHDLM(treeMHR mhr0, treeMHR mhr, double RtR, double RtZVgZtR,
+                        dlmtreeCtr* ctr, double stepMhr, double treevar)
+{
+  if (ctr->binomial) {
+    return(stepMhr + mhr.logVThetaChol - mhr0.logVThetaChol +
+           0.5 * (mhr.beta - mhr0.beta) -
+           log(treevar) * 0.5 * round(mhr.totTerm - mhr0.totTerm));
+  } else {
+    return(stepMhr + mhr.logVThetaChol - mhr0.logVThetaChol -
+          (0.5 * (ctr->n + 1.0) *
+            (log(0.5 * (RtR - RtZVgZtR - mhr.beta) + ctr->xiInvSigma2) -
+            log(0.5 * (RtR - RtZVgZtR - mhr0.beta) + ctr->xiInvSigma2))) -
+          (log(treevar) * 0.5 * round(mhr.totTerm - mhr0.totTerm)));
+  }
+}
 
 
 //' dlmtree model with shared HDLM approach
@@ -35,8 +52,10 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
   ctr->thin       = as<int>(model["nThin"]);
   ctr->nRec       = floor(ctr->iter / ctr->thin);
   ctr->nTrees     = as<int>(model["nTrees"]);
-  ctr->Y          = as<Eigen::VectorXd>(model["Y"]);
-  ctr->n          = (ctr->Y).size();
+  // ctr->Y      = as<VectorXd>(model["Y"]);
+  ctr->Y0     = as<Eigen::VectorXd>(model["Y"]);      
+  ctr->Ystar  = as<Eigen::VectorXd>(model["Y"]);  
+  ctr->n          = (ctr->Y0).size();
   ctr->modZeta    = as<double>(model["zeta"]);
   ctr->modKappa   = 100;
 
@@ -48,7 +67,7 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
   ctr->Vg     = ctr->VgInv.inverse();
   ctr->VgChol = (ctr->Vg).llt().matrixL();
   
-  ctr->binomial     = 0;
+  ctr->binomial     = as<bool>(model["binomial"]);;
   ctr->zinb         = 0;
   ctr->verbose      = bool (model["verbose"]);
   ctr->diagnostics  = bool (model["diagnostics"]);
@@ -57,6 +76,17 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
   ctr->treePrior    = as<std::vector<double> >(model["treePriorMod"]);
   ctr->treePriorMod = as<std::vector<double> >(model["treePriorTDLM"]);
   ctr->shrinkage    = as<int>(model["shrinkage"]);
+
+  // * Set up data for logistic model
+  ctr->binomialSize.resize(ctr->n);           ctr->binomialSize.setZero();
+  ctr->kappa.resize(ctr->n);                  ctr->kappa.setOnes();
+  ctr->Omega.resize(ctr->n);                  ctr->Omega.setOnes();
+  // Rcout << ctr->binomial;
+  if (ctr->binomial) {
+    ctr->binomialSize = as<VectorXd>(model["binomialSize"]);
+    ctr->kappa        = ctr->Y0 - 0.5 * (ctr->binomialSize);
+    ctr->Ystar            = ctr->kappa;
+  }
 
   // ---- Setup modifier data ----
   modDat *Mod = new modDat(as<std::vector<int> >(model["modIsNum"]),
@@ -69,16 +99,27 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
 
   // ---- Pre-calculate single node tree matrices ----
   exposureDat *Exp;
-  if (as<int>(model["nSplits"]) == 0) {
-    Exp = new exposureDat(as<Eigen::MatrixXd>(model["Tcalc"]), ctr->Z, ctr->Vg);
-  } else {
-    Exp = new exposureDat(as<Eigen::MatrixXd>(model["X"]),
-                          as<Eigen::MatrixXd>(model["SE"]),
-                          as<Eigen::VectorXd>(model["Xsplits"]),
-                          as<Eigen::MatrixXd>(model["Xcalc"]),
-                          as<Eigen::MatrixXd>(model["Tcalc"]),
-                          ctr->Z, ctr->Vg);
-  }
+  // if (as<int>(model["nSplits"]) == 0) { // DLM
+    if (ctr->binomial)
+      Exp = new exposureDat(as<MatrixXd>(model["Tcalc"]));
+    else
+      Exp = new exposureDat(as<MatrixXd>(model["Tcalc"]),
+                            ctr->Z, ctr->Vg);
+  // } else { // DLNM
+  //   if (ctr->binomial)
+  //     Exp = new exposureDat(as<MatrixXd>(model["X"]),
+  //                           as<MatrixXd>(model["SE"]),
+  //                           as<VectorXd>(model["Xsplits"]),
+  //                           as<MatrixXd>(model["Xcalc"]),
+  //                           as<MatrixXd>(model["Tcalc"]));
+  //   else
+  //     Exp = new exposureDat(as<MatrixXd>(model["X"]),
+  //                           as<MatrixXd>(model["SE"]),
+  //                           as<VectorXd>(model["Xsplits"]),
+  //                           as<MatrixXd>(model["Xcalc"]),
+  //                           as<MatrixXd>(model["Tcalc"]),
+  //                           ctr->Z, ctr->Vg);
+  // }
   ctr->pX         = Exp->pX;
   ctr->nSplits    = Exp->nSplits;
 
@@ -104,8 +145,6 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
     dlmTrees[t]->nodestruct = expNS->clone();
     Exp->updateNodeVals(dlmTrees[t]);
   }
-  delete modNS;
-  delete expNS;
 
 
   // ---- Logs ----
@@ -125,30 +164,26 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
   (dgn->termNodesMod).resize(ctr->nTrees, ctr->nRec);   (dgn->termNodesMod).setZero();
   (dgn->termNodesDLM).resize(ctr->nTrees, ctr->nRec);   (dgn->termNodesDLM).setZero();
 
-  // ---- DLM estimates ----
-  // if (ctr->nSplits == 0) {
-  //   dgn->exDLM.resize(ctr->pX, ctr->n); dgn->exDLM.setZero();
-  //   dgn->ex2DLM.resize(ctr->pX, ctr->n); dgn->ex2DLM.setZero();
-  //   dgn->cumDLM.resize(ctr->n); dgn->cumDLM.setZero();
-  //   dgn->cum2DLM.resize(ctr->n); dgn->cum2DLM.setZero();
-  // }
-
   // ---- Initial draws ----
   (ctr->fhat).resize(ctr->n); (ctr->fhat).setZero();
-  ctr->R = ctr->Y;
+  ctr->R = ctr->Ystar;
   (ctr->gamma).resize(ctr->pZ);
+
   // Load initial params for faster convergence in binomial model
   if (ctr->binomial) {
-    ctr->gamma    = as<VectorXd>(model["initParams"]);
-    ctr->Omega    = rcpp_pgdraw(ctr->binomialSize, ctr->fhat + ctr->Z * ctr->gamma);
-    ctr->Zw       = ctr->Omega.asDiagonal() * ctr->Z;
-    ctr->VgInv    = ctr->Z.transpose() * ctr->Zw;
+    // Rcout << "init";
+    ctr->gamma  = as<VectorXd>(model["initParams"]);
+    ctr->Omega  = rcpp_pgdraw(ctr->binomialSize, ctr->fhat + ctr->Z * ctr->gamma);
+    ctr->Zw     = ctr->Omega.asDiagonal() * ctr->Z;
+    ctr->VgInv  = ctr->Z.transpose() * ctr->Zw;
     ctr->VgInv.diagonal().array() += 1 / 100000.0;
-    ctr->Vg       = ctr->VgInv.inverse();
-    ctr->VgChol   = ctr->Vg.llt().matrixL();
+    ctr->Vg     = ctr->VgInv.inverse();
+    ctr->VgChol = ctr->Vg.llt().matrixL();
     // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
-    ctr->Y        = ctr->kappa.array() / ctr->Omega.array();
+    ctr->Ystar      = ctr->kappa.array() / ctr->Omega.array();
+    // Rcout << "end\n";
   }
+
   ctr->totTerm    = 0;
   ctr->sumTermT2  = 0;
   ctr->nu         = 1.0; // Need to define for first update of sigma2
@@ -193,7 +228,7 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
     ctr->modInf.setZero();
 
     for (t = 0; t < ctr->nTrees; t++) {
-      dlmtreeHDLMGaussian_TreeMCMC(t, modTrees[t], dlmTrees[t], ctr, dgn, Mod, Exp);
+      dlmtreeHDLMGaussian_TreeMCMC(t, expNS, modNS, modTrees[t], dlmTrees[t], ctr, dgn, Mod, Exp);
       ctr->fhat += (ctr->Rmat).col(t);
 
       if (t < ctr->nTrees - 1){
@@ -202,7 +237,7 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
     }
 
     // -- Update model --
-    ctr->R  = ctr->Y - ctr->fhat;
+    ctr->R = ctr->Ystar - ctr->fhat;    
     tdlmModelEst(ctr);
     xiInv   = R::rgamma(1, 1.0 / (1.0 + 1.0 / (ctr->nu)));
     ctr->nu = 1.0 / R::rgamma(0.5 * ctr->totTerm + 0.5,
@@ -252,16 +287,8 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
 
 
   // -- Prepare outout --
-  // Eigen::MatrixXd exDLM, ex2DLM;
-  // Eigen::VectorXd cumDLM, cum2DLM;
   Eigen::MatrixXd TreeStructs;
   Rcpp::StringVector termRule(dgn->termRule.size());
-  // if (ctr->nSplits == 0) {
-  //   exDLM = dgn->exDLM.transpose();
-  //   ex2DLM = dgn->ex2DLM.transpose();
-  //   cumDLM = dgn->cumDLM;
-  //   cum2DLM = dgn->cum2DLM;
-  // }
   TreeStructs.resize((dgn->DLMexp).size(), 9);
   for (s = 0; s < (dgn->DLMexp).size(); ++s){
     TreeStructs.row(s) = dgn->DLMexp[s];
@@ -291,6 +318,8 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
   delete dgn;
   delete Exp;
   delete Mod;
+  delete modNS;
+  delete expNS;
   for (s = 0; s < modTrees.size(); ++s) {
     delete modTrees[s];
     delete dlmTrees[s];
@@ -320,21 +349,26 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
 } // end dlmtreeHDLMGaussian
 
 
-void dlmtreeHDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
+void dlmtreeHDLMGaussian_TreeMCMC(int t, NodeStruct* expNS, NodeStruct* modNS, 
+                                  Node* modTree, Node* dlmTree,
                                   dlmtreeCtr* ctr, dlmtreeLog *dgn,
                                   modDat* Mod, exposureDat* Exp)
 {
   int step;
   int success     = 0;
-  double stepMhr  = 0;
-  double ratio    = 0;
+  double stepMhr  = 0.0;
+  double ratio    = 0.0;
   double treevar  = (ctr->nu) * (ctr->tau)(t);
 
   std::size_t s;
   std::vector<Node*> modTerm, dlmTerm, newDlmTerm, newModTerm;
-  Eigen::VectorXd ZtR = (ctr->Z).transpose() * (ctr->R);
-  double RtR          = (ctr->R).dot(ctr->R);
-  double RtZVgZtR     = ZtR.dot((ctr->Vg).selfadjointView<Eigen::Lower>() * ZtR);
+  VectorXd ZtR      = ctr->Zw.transpose() * ctr->R;
+  double RtR        = 0.0;
+  double RtZVgZtR   = 0.0;
+  if (!(ctr->binomial)) {
+    RtR       = ctr->R.dot(ctr->R);
+    RtZVgZtR  = ZtR.dot(ctr->Vg * ZtR);
+  }
 
   treeMHR mhr0, mhr;
 
@@ -344,81 +378,109 @@ void dlmtreeHDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
   mhr0    = dlmtreeTDLM_MHR(modTerm, dlmTerm, ctr, ZtR, treevar);
 
   // -- Propose new TDLM tree --
-  switch (dlmTerm.size()) {
-    case 1: step  = 0; break;
-    default: step = sampleInt(ctr->stepProb, 1);;
-  } 
+  stepMhr = 0;
+  success = 1;
 
-  stepMhr = tdlmProposeTree(dlmTree, Exp, ctr, step);
-  success = dlmTree->isProposed();
+  // *** Create a new tree for proposal ***
+  Node* newTree = new Node(0, 1);               // Start from the root
+  newTree->nodestruct = expNS->clone();   // Construct nodestruct
+  drawTree(newTree, newTree, ctr->treePrior[0], ctr->treePrior[1]); // Grow a tree structure from the root
+  newTree->setUpdate(1);                  // Set a flag for updateNodeVals
+  newDlmTerm = newTree->listTerminal();  // List the number of terminal nodes for the new tree
+  for (Node* nt : newDlmTerm) {          // Go through the new terminal node
+    Exp->updateNodeVals(nt);      // Update the calculations
+  }
+  
 
-  if (success) {
-    newDlmTerm = dlmTree->listTerminal(1);
+  // if (success) {
+  modTree->setUpdateXmat(1);
+  mhr = dlmtreeTDLM_MHR(modTerm, newDlmTerm, ctr, ZtR, treevar);
+  
+  ratio = calcLogRatioHDLM(mhr0, mhr, RtR, RtZVgZtR, ctr, stepMhr, treevar);
+
+  if ((log(R::runif(0, 1)) < ratio) && (ratio == ratio)) {
+    mhr0    = mhr;
+    success = 2;
+
+    // replace with new tree
+    dlmTree->replaceTree(newTree);
+    dlmTree->accept();
+    dlmTerm = dlmTree->listTerminal();
+    for (Node* n : modTerm) {
+      n->nodevals->updateXmat = 0;
+    }
+
+  } else {
     modTree->setUpdateXmat(1);
-    mhr = dlmtreeTDLM_MHR(modTerm, newDlmTerm, ctr, ZtR, treevar);
-    
-    ratio =
-      stepMhr +
-      mhr.logVThetaChol - mhr0.logVThetaChol -
-      (0.5 * (ctr->n + 1.0) *
-        (log(0.5 * (RtR - RtZVgZtR - mhr.beta) + ctr->xiInvSigma2) -
-         log(0.5 * (RtR - RtZVgZtR - mhr0.beta) + ctr->xiInvSigma2))); // -
-      // (log(treevar) * 0.5 * mhr0.nModTerm * (mhr.nDlmTerm - mhr0.nDlmTerm));
-    if (step == 0){
-      ratio -= log(treevar) * 0.5 * modTerm.size();
-    }
-    if (step == 1){
-      ratio += log(treevar) * 0.5 * modTerm.size();
-    }
-
-    if ((log(R::runif(0, 1)) < ratio) && (ratio == ratio)) {
-      mhr0    = mhr;
-      success = 2;
-      dlmTree->accept();
-      dlmTerm = dlmTree->listTerminal();
-      for (Node* n : modTerm) {
-        n->nodevals->updateXmat = 0;
-      }
-    } else {
-      modTree->setUpdateXmat(1);
-    }
-  } // end dlmTree proposal
+  }
+  // } // end dlmTree proposal
+  // Reset new tree value 
+  if (newTree != 0){
+    delete newTree;
+  }
   dlmTree->reject();
+  newTree = 0;
 
 
   // -- Propose new modifier tree --
-  switch (modTerm.size()) {
-    case 1: step  = 0; break;
-    case 2: step  = sampleInt(ctr->stepProbMod, 1 - ctr->stepProbMod[3]); break;
-    default: step = sampleInt(ctr->stepProbMod, 1);
+  // switch (modTerm.size()) {
+  //   case 1: step  = 0; break;
+  //   case 2: step  = sampleInt(ctr->stepProbMod, 1 - ctr->stepProbMod[3]); break;
+  //   default: step = sampleInt(ctr->stepProbMod, 1);
+  // }
+  // stepMhr = modProposeTree(modTree, Mod, ctr, step);
+  // success = modTree->isProposed();
+
+  // if (success) {
+  //   newModTerm = modTree->listTerminal(1);
+  //   mhr   = dlmtreeTDLM_MHR(newModTerm, dlmTerm, ctr, ZtR, treevar);
+  //   ratio = calcLogRatioHDLM(mhr0, mhr, RtR, RtZVgZtR, ctr, stepMhr, treevar);
+
+  //   if ((log(R::runif(0, 1)) < ratio) && (ratio == ratio)) {
+  //     mhr0    = mhr;
+  //     success = 2;
+  //     modTree->accept();
+  //     modTerm = modTree->listTerminal();
+  //   } 
+  // } // end modTree proposal
+  // modTree->reject();
+
+
+  // *** Create a new modifier tree for proposal ***
+  stepMhr = 0;
+  success = 1;
+  newTree = new Node(0, 1);
+  newTree->nodestruct = modNS->clone();   // Construct nodestruct
+  drawTree(newTree, newTree, ctr->treePrior[0], ctr->treePrior[1]); // Grow a tree structure from the root
+  newTree->setUpdate(1);                  // Set a flag for updateNodeVals
+  newTree->setUpdateXmat(1);                  // Set a flag for updateNodeVals
+
+  newModTerm = newTree->listTerminal(1);
+  for (Node* tn : newModTerm) {
+    Mod->updateNodeVals(tn);
+    if (tn->nodevals->idx.size() == 0) {
+      success = 0;
+    } // end reject if empty
   }
-  stepMhr = modProposeTree(modTree, Mod, ctr, step);
-  success = modTree->isProposed();
 
-  if (success && (stepMhr == stepMhr)) {
-    newModTerm = modTree->listTerminal(1);
+  if (success) {
     mhr   = dlmtreeTDLM_MHR(newModTerm, dlmTerm, ctr, ZtR, treevar);
-    ratio = stepMhr + mhr.logVThetaChol - mhr0.logVThetaChol -
-      (0.5 * (ctr->n + 1.0) *
-        (log(0.5 * (RtR - RtZVgZtR - mhr.beta) + ctr->xiInvSigma2) -
-         log(0.5 * (RtR - RtZVgZtR - mhr0.beta) + ctr->xiInvSigma2)));// -
-      // (log(treevar)*0.5*mhr0.nDlmTerm*round(mhr.nModTerm - mhr0.nModTerm));
-    if (step == 0){
-      ratio -= log(treevar) * 0.5 * dlmTerm.size();
-    }
+    ratio = calcLogRatioHDLM(mhr0, mhr, RtR, RtZVgZtR, ctr, stepMhr, treevar);
 
-    if (step == 1){
-      ratio += log(treevar) * 0.5 * dlmTerm.size();
-    }
-    
     if ((log(R::runif(0, 1)) < ratio) && (ratio == ratio)) {
       mhr0    = mhr;
       success = 2;
+
+      // replace with new tree
+      modTree->replaceTree(newTree);
       modTree->accept();
       modTerm = modTree->listTerminal();
     } 
-  } // end modTree proposal
-  modTree->reject();
+  }
+  // Reset new tree value 
+  if (newTree != 0)
+    delete newTree;
+  newTree = 0;
 
 
   // -- Update variance and residuals --
@@ -467,11 +529,6 @@ void dlmtreeHDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
         //   }
         // }
       } // end loop over tdlm nodes
-      
-      // if (ctr->nSplits == 0) {
-      //   for (int i : modTerm[s]->nodevals->idx)
-      //     ctr->exDLM.col(i) += draw;
-      // }
     } // end loop over modifier nodes to update partial DLM est
   } // end record
 
@@ -502,10 +559,29 @@ treeMHR dlmtreeTDLM_MHR(std::vector<Node*> modTerm,
   if (pXDlm == 1) {
     // Single Modifier node
     if (pXMod == 1) {
-      double VTheta     = 1.0 / (ctr->VTheta1Inv + 1.0 / treevar);
-      double XtVzInvR   = (ctr->X1).dot(ctr->R) - (ctr->VgZtX1).dot(ZtR);
-      double ThetaHat   = VTheta * XtVzInvR;
+      double XtVzInvR = 0.0;
+      double VTheta = 0.0;
+      double tempV = 0.0;
+      if (ctr->binomial) {
+        const Eigen::VectorXd Xdw = (ctr->Omega).asDiagonal() * ctr->X1;  
+        ZtX             = ctr->Zw.transpose() * ctr->X1;
+        VgZtX           = ctr->Vg * ZtX;
+        tempV           = ctr->X1.dot(Xdw);
+        tempV          -= ZtX.col(0).dot(VgZtX.col(0));
+        XtVzInvR        = Xdw.dot(ctr->R);
+        
+      } else {
+        ZtX             = ctr->ZtX1;
+        VgZtX           = ctr->VgZtX1;
+        tempV           = ctr->X1.dot(ctr->X1);
+        tempV          -= ctr->ZtX1.dot(ctr->VgZtX1);
+        XtVzInvR        = ctr->X1.dot(ctr->R);
+      }
+      XtVzInvR         -= (VgZtX.col(0)).dot(ZtR);
+      tempV            += 1.0 / treevar;
+      VTheta            = 1.0 / tempV;
       double VThetaChol = sqrt(VTheta);
+      double ThetaHat   = VTheta * XtVzInvR;
       out.draw.resize(1);
       out.draw(0)       = VThetaChol * R::rnorm(0, sqrt(ctr->sigma2)) + ThetaHat;
       out.fitted        = ctr->X1 * out.draw(0);
@@ -514,29 +590,47 @@ treeMHR dlmtreeTDLM_MHR(std::vector<Node*> modTerm,
       out.termT2        = (out.draw).dot(out.draw);
       out.nDlmTerm      = 1.0; 
       out.nModTerm      = 1.0;
+      out.totTerm       = 1.0;
 
       return(out);
     } // return single TDLM and single modifier node
 
-    X.col(0) = ctr->X1;
-
   // Multiple TDLM nodes
   } else {
-    for (s = 0; s < dlmTerm.size(); ++s) {
+
+    for (s = 0; s < dlmTerm.size(); ++s) { // loop over dlmTerm
       X.col(s) = dlmTerm[s]->nodevals->X;
       if (pXMod == 1) {
-        ZtX.col(s)    = dlmTerm[s]->nodevals->ZtX;
-        VgZtX.col(s)  = dlmTerm[s]->nodevals->VgZtX;
+        if (ctr->binomial) {
+          ZtX.col(s)    = ctr->Zw.transpose() * X.col(s);
+          VgZtX.col(s)  = ctr->Vg * ZtX.col(s);
+          
+        } else {
+          ZtX.col(s)    = dlmTerm[s]->nodevals->ZtX;
+          VgZtX.col(s)  = dlmTerm[s]->nodevals->VgZtX;
+        }
       }
-    }
+    } // end loop over dlmTerm
+
     // Single Modifier node
     if (pXMod == 1) {
       Eigen::MatrixXd tempV, VTheta, VThetaChol;
       Eigen::VectorXd XtVzInvR, ThetaHat, ThetaDraw;
-      tempV             = X.transpose() * X - ZtX.transpose() * VgZtX;
+
+      if (ctr->binomial) {
+        const Eigen::MatrixXd Xdw = (ctr->Omega).asDiagonal() * X;  
+        tempV           = X.transpose() *  Xdw;
+        XtVzInvR        = Xdw.transpose() * ctr->R;
+        
+      } else {
+        tempV           = X.transpose() * X;
+        XtVzInvR        = X.transpose() * ctr->R;
+      }
+
+      tempV.noalias() -= ZtX.transpose() * VgZtX;
       tempV.diagonal().array() += 1.0 / treevar;
       VTheta            = tempV.inverse();
-      XtVzInvR          = X.transpose() * ctr->R - VgZtX.transpose() * ZtR;
+      XtVzInvR         -= VgZtX.transpose() * ZtR;
       VThetaChol        = VTheta.llt().matrixL();
       ThetaHat          = VTheta * XtVzInvR;
       out.draw          = ThetaHat;
@@ -545,15 +639,17 @@ treeMHR dlmtreeTDLM_MHR(std::vector<Node*> modTerm,
       out.beta          = ThetaHat.dot(XtVzInvR);
       out.logVThetaChol = VThetaChol.diagonal().array().log().sum();
       out.termT2        = (out.draw).dot(out.draw);
-      out.nDlmTerm      = double(pXDlm); out.nModTerm = 1.0;
+      out.nDlmTerm      = double(pXDlm); 
+      out.nModTerm      = 1.0;
+      out.totTerm       = out.nDlmTerm;
 
       return(out);
     }
-  }
+  } // End if 1 modifier node
 
   // Multiple Modifier nodes
   Eigen::MatrixXd Xtemp, Ztemp;
-  Eigen::VectorXd Rtemp;
+  Eigen::VectorXd Rtemp, Otemp;
   Eigen::MatrixXd XXiblock(pXComb, pXComb); XXiblock.setZero();
   Eigen::VectorXd XtR(pXComb); XtR.setZero();
   Eigen::MatrixXd LInv(pXDlm, pXDlm); LInv.setZero();
@@ -563,28 +659,39 @@ treeMHR dlmtreeTDLM_MHR(std::vector<Node*> modTerm,
   int j;
   int start = 0;
   for (Node* n : modTerm) {
-    if (n->nodevals->updateXmat) { // update matrices for current node                                  
+    if (n->nodevals->updateXmat || ctr->binomial) { // update matrices for current node                                  
       Xtemp.resize(n->nodevals->idx.size(), pXDlm); Xtemp.setZero();
       Ztemp.resize(n->nodevals->idx.size(), ctr->pZ); Ztemp.setZero();
       Rtemp.resize(n->nodevals->idx.size()); Rtemp.setZero();
-      
+      Otemp.resize(n->nodevals->idx.size()); Otemp.setZero();
+
       j = 0;
       for (int i : n->nodevals->idx) {
         Xtemp.row(j) = X.row(i);
-        Ztemp.row(j) = ctr->Z.row(i);
+        Ztemp.row(j) = ctr->Zw.row(i);
         Rtemp(j) = ctr->R(i);
+        if (ctr->binomial)
+          Otemp(j) = ctr->Omega(i);
         ++j;
       } // end loop over node indices
       
-      n->nodevals->XtX.resize(pXDlm, pXDlm);
-      n->nodevals->XtX        = Xtemp.transpose() * Xtemp;
-      n->nodevals->ZtXmat.resize(ctr->pZ, pXDlm);
-      n->nodevals->ZtXmat     = Ztemp.transpose() * Xtemp;
-      n->nodevals->VgZtXmat.resize(ctr->pZ, pXDlm);
-      n->nodevals->VgZtXmat   = ctr->Vg * n->nodevals->ZtXmat;
-      n->nodevals->updateXmat = 0;
+      n->nodevals->XtX.resize(pXDlm, pXDlm); n->nodevals->XtX.setZero();
+      n->nodevals->ZtXmat.resize(ctr->pZ, pXDlm); n->nodevals->ZtXmat.setZero();
+      n->nodevals->VgZtXmat.resize(ctr->pZ, pXDlm); n->nodevals->VgZtXmat.setZero();
+      if (ctr->binomial) {
+        MatrixXd Xwtemp = Otemp.asDiagonal() * Xtemp;
+        n->nodevals->XtX       = Xtemp.transpose() * Xwtemp;
+        n->nodevals->ZtXmat    = Ztemp.transpose() * Xtemp;
+        n->nodevals->VgZtXmat  = ctr->Vg * n->nodevals->ZtXmat;
+        XtR.segment(start, pXDlm) = Xwtemp.transpose() * Rtemp;
+      } else {
+        n->nodevals->XtX       = Xtemp.transpose() * Xtemp;
+        n->nodevals->ZtXmat    = Ztemp.transpose() * Xtemp;
+        n->nodevals->VgZtXmat  = ctr->Vg * n->nodevals->ZtXmat;
+        XtR.segment(start, pXDlm) = Xtemp.transpose() * Rtemp;
+        n->nodevals->updateXmat = 0;
+      }
       
-      XtR.segment(start, pXDlm) = Xtemp.transpose() * Rtemp;
       
     } else { // reuse precalculated matrices      
       for (int i : n->nodevals->idx) {
@@ -592,21 +699,30 @@ treeMHR dlmtreeTDLM_MHR(std::vector<Node*> modTerm,
       } // end loop over node indices
       
     } // end update xblock and ztx block
-    XXiblock.block(start, start, pXDlm, pXDlm)  = (n->nodevals->XtX + LInv).inverse();
-    ZtX.block(0, start, ctr->pZ, pXDlm)         = n->nodevals->ZtXmat;
-    VgZtX.block(0, start, ctr->pZ, pXDlm)       = n->nodevals->VgZtXmat;
-    // }
+     
+    if ((ctr->pZ < pXComb) && !ctr->binomial) {
+      XXiblock.block(start, start, pXDlm, pXDlm)  = (n->nodevals->XtX + LInv).inverse();
+    } else {
+      XXiblock.block(start, start, pXDlm, pXDlm) = n->nodevals->XtX + LInv;
+    }
+    ZtX.block(0, start, ctr->pZ, pXDlm)   = n->nodevals->ZtXmat;
+    VgZtX.block(0, start, ctr->pZ, pXDlm) = n->nodevals->VgZtXmat;
     
     start += pXDlm;
-  }
+  } // end loop over modifier tree terminal nodes
 
-  Eigen::MatrixXd ZtXXi       = ZtX * XXiblock;
-  Eigen::MatrixXd VTheta      = XXiblock;
-  VTheta.noalias() += ZtXXi.transpose() * (ctr->VgInv - ZtXXi * ZtX.transpose()).inverse() * ZtXXi;
-  Eigen::VectorXd XtVzInvR    = XtR;
-  XtVzInvR.noalias() -= VgZtX.transpose() * ZtR;
-  Eigen::VectorXd ThetaHat    = VTheta * XtVzInvR;
-  Eigen::MatrixXd VThetaChol  = VTheta.llt().matrixL();
+  Eigen::MatrixXd VTheta(pXComb, pXComb); VTheta.setZero();
+  if ((ctr->pZ < pXComb) && !ctr->binomial) {
+    Eigen::MatrixXd ZtXXi = ZtX * XXiblock;
+    VTheta.triangularView<Lower>() = XXiblock + ZtXXi.transpose() *
+      (ctr->VgInv - ZtXXi * ZtX.transpose()).inverse() * ZtXXi;
+  } else {
+    VTheta.triangularView<Lower>() = (XXiblock - ZtX.transpose() * ctr->Vg * ZtX).inverse();
+  }
+  
+  Eigen::VectorXd XtVzInvR    = XtR - VgZtX.transpose() * ZtR;
+  Eigen::VectorXd ThetaHat    = VTheta.selfadjointView<Lower>() * XtVzInvR;
+  Eigen::MatrixXd VThetaChol  = VTheta.selfadjointView<Lower>().llt().matrixL();
 
   // Calculate fitted values 
   // -> This is the same as out.Xd * out.draw in TDLMM code
@@ -622,11 +738,13 @@ treeMHR dlmtreeTDLM_MHR(std::vector<Node*> modTerm,
       out.fitted(i) = X.row(i) * drawTemp;
     }
   }
+
   out.beta          = ThetaHat.dot(XtVzInvR);
   out.logVThetaChol = VThetaChol.diagonal().array().log().sum();
   out.termT2        = (out.draw).dot(out.draw);
   out.nDlmTerm      = pXDlm * 1.0; 
   out.nModTerm      = pXMod * 1.0;
+  out.totTerm       = out.nModTerm * out.nDlmTerm;
   
   return(out);
 }

@@ -170,7 +170,6 @@ public:
   MatrixXd exDLM;
   VectorXd modCount;
   VectorXd modInf;
-  VectorXd kappa;
   
   // Gaussian Process
   MatrixXd X;
