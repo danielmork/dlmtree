@@ -159,7 +159,6 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn, exposure
   double ratio    = 0.0;
   double treevar  = ctr->nu * ctr->tau(t);
   std::vector<Node*> dlnmTerm, newDlnmTerm, nestedTerm;
-  Node* nestedTree;
   treeMHR mhr0, mhr;
   
   // List current tree terminal nodes

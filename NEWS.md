@@ -2,6 +2,7 @@
 * new feature: heterogeneous dlm for binary outcomes
 * shared tree hdlm draws proposed modifier tree from root
 * fix to shiny.hdlm and shiny.hdlmm to remove bug where no data is selected
+* fix to combine.models.R to correctly combine tree posterior samples
 
 # dlmtree 1.0.0.1
 * a split point for Subgroup tab in shiny interface set to the mode of proportion

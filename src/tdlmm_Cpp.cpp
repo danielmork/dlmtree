@@ -581,9 +581,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
 
   // Mixture & Shrinkage
   ctr->modKappa = as<double>(model["mixPrior"]);
-  bool updateKappa = false; 
   if (ctr->modKappa < 0) {
-    updateKappa = true;
     ctr->modKappa = 1;
   }
   ctr->shrinkage = as<int>(model["shrinkage"]);  

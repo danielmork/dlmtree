@@ -354,7 +354,7 @@ void dlmtreeHDLMGaussian_TreeMCMC(int t, NodeStruct* expNS, NodeStruct* modNS,
                                   dlmtreeCtr* ctr, dlmtreeLog *dgn,
                                   modDat* Mod, exposureDat* Exp)
 {
-  int step;
+  // int step;
   int success     = 0;
   double stepMhr  = 0.0;
   double ratio    = 0.0;
