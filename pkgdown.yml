@@ -1,14 +1,13 @@
 pandoc: 3.1.11
-pkgdown: 2.0.9
+pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
-  HDLM: HDLM.html
-  HDLMM: HDLMM.html
-  TDLM: TDLM.html
-  TDLMM: TDLMM.html
-  TDLNM: TDLNM.html
-last_built: 2024-07-02T17:57Z
+  articles/HDLM: HDLM.html
+  articles/HDLMM: HDLMM.html
+  articles/TDLM: TDLM.html
+  articles/TDLMM: TDLMM.html
+  articles/TDLNM: TDLNM.html
+last_built: 2025-02-13T02:08Z
 urls:
   reference: https://danielmork.github.io/dlmtree/reference
   article: https://danielmork.github.io/dlmtree/articles
-
