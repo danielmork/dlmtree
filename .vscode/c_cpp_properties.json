@@ -1,0 +1,27 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/opt/R/arm64/include",
+                "/Library/Frameworks/R.framework/Headers",
+                "/Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/library",
+                "/Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/library/Rcpp/include",
+                "/Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/library/RcppEigen/include",
+                "/Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/library/RcppEigen/include",
+                "/Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/library/RcppEigen/include",
+                "/Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/library/Rcpp/include"
+            ],
+            "defines": [],
+            "macFrameworkPath": [
+                "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "macos-clang-arm64"
+        }
+    ],
+    "version": 4
+}
