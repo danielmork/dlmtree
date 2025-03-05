@@ -106,7 +106,7 @@ plot.summary.tdlmm <- function(x,
     if (!is.null(trueDLM)) { # draws an additional line of true DLM effect
       p <- ggplot(dat) +
             geom_hline(yintercept = ifelse(is.null(scale), 0, 1), color = "red", linetype = "dashed") +
-            geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey") +
+            geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey", alpha = 0.7) +
             geom_line(aes(x = `X`, y = `Est`)) +
             geom_line(aes(x = `X`, y = `trueDLM`), col = "blue", linetype = "dashed") + # SI
             theme_bw(base_size = base_size) +
@@ -116,7 +116,7 @@ plot.summary.tdlmm <- function(x,
     } else { # No true DLM (original code)
       p <- ggplot(dat) +
             geom_hline(yintercept = ifelse(is.null(scale), 0, 1), color = "red", linetype = "dashed") +
-            geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey") +
+            geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey", alpha = 0.7) +
             geom_line(aes(x = `X`, y = `Est`)) +
             theme_bw(base_size = base_size) +
             scale_y_continuous(expand = c(0, 0)) +

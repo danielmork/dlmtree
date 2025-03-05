@@ -35,7 +35,7 @@ plot.summary.tdlm <- function(x, trueDLM = NULL, ...) {
   if (!is.null(trueDLM)) {
     p <- ggplot(d) +
           geom_hline(yintercept = 0, color = "red") +
-          geom_ribbon(aes(x = X, ymin = CIMin, ymax = CIMax), fill = "grey") +
+          geom_ribbon(aes(x = X, ymin = CIMin, ymax = CIMax), fill = "grey", alpha = 0.7) +
           geom_line(aes(x = X, y = Est)) +
           geom_line(aes(x = X, y = trueDLM), col = "blue", linetype = "dashed") + # SI
           theme_bw() +
@@ -44,7 +44,7 @@ plot.summary.tdlm <- function(x, trueDLM = NULL, ...) {
   } else {
     p <- ggplot(d) +
           geom_hline(yintercept = 0, color = "red") +
-          geom_ribbon(aes(x = X, ymin = CIMin, ymax = CIMax), fill = "grey") +
+          geom_ribbon(aes(x = X, ymin = CIMin, ymax = CIMax), fill = "grey", alpha = 0.7) +
           geom_line(aes(x = X, y = Est)) +
           theme_bw() +
           scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +

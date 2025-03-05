@@ -77,7 +77,7 @@ plot.summary.tdlnm <- function(x, plot.type = "mean", val = c(), time = c(), ...
     ylab <- ifelse(!is.null(args$ylab), args$ylab, "Cumulative effect")
     p <- ggplot(x$cumulative.effect, aes(x = vals, y = mean, ymin = lower, ymax = upper)) +
       geom_hline(yintercept = 0, color = "red") +
-      geom_ribbon(fill = "grey") +
+      geom_ribbon(fill = "grey", alpha = 0.7) +
       geom_line() +
       theme_bw() +
       scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
@@ -104,7 +104,7 @@ plot.summary.tdlnm <- function(x, plot.type = "mean", val = c(), time = c(), ...
                      x$plot.dat$Xmax > val)
       p <- ggplot(x$plot.dat[idx,]) +
         geom_hline(yintercept = 0, color = "red") +
-        geom_ribbon(aes(x = Tmin + start.time, ymin = CIMin, ymax = CIMax), fill = "grey") +
+        geom_ribbon(aes(x = Tmin + start.time, ymin = CIMin, ymax = CIMax), fill = "grey", alpha = 0.7) +
         geom_line(aes(x = Tmin + start.time, y = Est)) +
         theme_bw() +
         scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
@@ -117,7 +117,7 @@ plot.summary.tdlnm <- function(x, plot.type = "mean", val = c(), time = c(), ...
                      x$plot.dat$Tmax + start.time > time)
       p <- ggplot(x$plot.dat[idx,]) +
         geom_hline(yintercept = 0, color = "red") +
-        geom_ribbon(aes(x = PredVal, ymin = CIMin, ymax = CIMax), fill = "grey") +
+        geom_ribbon(aes(x = PredVal, ymin = CIMin, ymax = CIMax), fill = "grey", alpha = 0.7) +
         geom_line(aes(x = PredVal, y = Est)) +
         theme_bw() +
         scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
