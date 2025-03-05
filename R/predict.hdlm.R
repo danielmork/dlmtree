@@ -65,11 +65,6 @@ predict.hdlm <- function(object,
                           new.mf,
                           xlev = object$termLevels)
 
-  # z <-      z[, sort(object$QR$pivot[ seq_len(object$QR$rank) ]) ]
-  # if (length(object$droppedCovar) > 0 & object$verbose)
-  #   warning("variables {", paste0(object$droppedCovar, collapse = ", "),
-  #           "} dropped from original due to perfect collinearity\n")
-
   n   <- nrow(z)
   mod <- lapply(object$modNames, function(m) {
     if (!is.numeric(object$MoUnique[[m]])) {
@@ -116,15 +111,6 @@ predict.hdlm <- function(object,
       } else { 
         idx <- which(eval(parse(text = rule)))
       }
-
-      # if (object$dlmType == "gp") {
-      #   est <- matrix(rep(as.numeric(object$TreeStructs[i, -c(1:4)]), each = length(idx)), length(idx), object$pExp)
-      #   draws[[Iter]][idx,] <- draws[[Iter]][idx,] + est
-      # } else { # TDLM
-      #   t   <- object$TreeStructs$tmin[i]:object$TreeStructs$tmax[i] # Get the time
-      #   est <- object$TreeStructs$est[i] # Get the effect
-      #   draws[[Iter]][idx, t] <- draws[[Iter]][idx, t] + est # Add to matrix
-      # }
     }
   } else { # When we specify MCMC iterations
     for (i in 1:nrow(object$TreeStructs)) {
@@ -135,14 +121,6 @@ predict.hdlm <- function(object,
       Iter  <- object$TreeStructs$Iter[i]
       idx   <- fixed.idx[[object$TreeStructs$fixedIdx[i] + 1]]
 
-      # if (object$dlmType == "gp") {
-      #   est <- matrix(rep(as.numeric(object$TreeStructs[i, -c(1:4)]), each = length(idx)), length(idx), object$pExp)
-      #   draws[[Iter]][idx,] <- draws[[Iter]][idx,] + est
-      # } else {
-      #   t   <- object$TreeStructs$tmin[i]:object$TreeStructs$tmax[i]
-      #   est <- object$TreeStructs$est[i]
-      #   draws[[Iter]][idx, t] <- draws[[Iter]][idx, t] + est
-      # }
     }
   }
 
@@ -171,10 +149,6 @@ predict.hdlm <- function(object,
   }
 
   # draws[i,,]: extract all MCMC samples of ith observation where col of a matrix is the MCMC sample: p x MCMC
-  # t(draws[i,,]): MCMC x p
-  # (t(draws[i,,]) %*% new.exposure.data[i,]): (MCMC x p)x(p x 1)
-  # t(t(draws[i,,]) %*% new.exposure.data[i,]): 1 x MCMC
-  # do.call(rbind, lapply) -> Do the above for all observations and combine them to a data frame using rbind
   fhat.draws <- do.call(rbind, lapply(1:n, function(i) {
     t(t(draws[i,,]) %*% new.exposure.data[i,])
   }))

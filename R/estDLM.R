@@ -133,29 +133,6 @@ estDLM <- function(object,
   out$dlmCum  <- list()
 
 
-  # # ---- dlmType: GP ----
-  # if (object$dlmType == "gp") {
-  #   for (i in 1:length(group.index)) {
-  #     gDLM <- DLM[,5:(4 + object$pExp)] * DLM[[paste0("Weight", i)]]
-  #     mcmc <-
-  #       sapply(1:max(DLM$Iter), function(i) {
-  #         rowSums(
-  #           sapply(1:max(DLM$Tree), function(t) {
-  #             colSums(gDLM[which(DLM$Iter == i & DLM$Tree == t),, drop = FALSE])
-  #           })
-  #         )
-  #       })
-  #     if (return.mcmc) {
-  #       out$mcmc[[names(group.index)[i]]] <- mcmc
-  #     }
-        
-  #     out$dlmMean[[names(group.index)[i]]] <- rowMeans(mcmc)
-  #     out$dlmCI[[names(group.index)[i]]] <- apply(mcmc, 1, quantile, probs = ci.lims)
-  #     out$dlmCum[[names(group.index)[i]]] <- c(mean = mean(rowMeans(mcmc)), quantile(colSums(mcmc), probs = ci.lims))
-  #   }
-  #   out$dlFunction <- "dlm"
-
-
   # ---- dlmType: TDLM ----
   # } else if (object$dlFunction == "dlm") {
   # } else {
@@ -171,26 +148,6 @@ estDLM <- function(object,
     }
     out$dlFunction <- "dlm"
 
-  # ---- dlmType: TDLNM ----
-  # } #else {
-  #   for (i in 1:length(group.index)) {
-  #     DLM$w.est <- DLM$est * DLM[[paste0("Weight", i)]]
-  #     if (is.na(object$SE[1])) {
-  #       cen.quant <- which.min(abs(object$Xsplits - cenval))
-  #       out$mcmc[[names(group.index)[i]]] <-
-  #         dlnmEst(as.matrix(DLM[,c("Iter", "Tree", "xmin", "xmax",
-  #                                  "tmin", "tmax", "w.est")]),
-  #                 object$Xsplits, object$pExp,  object$mcmcIter, cen.quant, 0)
-  #     } else {
-  #       out$mcmc[[names(group.index)[i]]] <-
-  #         dlnmEst(as.matrix(DLM[,c("Iter", "Tree", "xmin", "xmax",
-  #                                  "tmin", "tmax", "w.est")]),
-  #                 object$Xsplits, object$pExp,  object$mcmcIter,
-  #                 cenval, mean(object$SE))
-  #     }
-  #   }
-  #   out$dlFunction <- "dlnm"
-  # }
   lags          <- length(out$dlmMean[[1]])
   out$plotData  <- do.call(rbind, lapply(names(group.index), function(n) {
     data.frame(group = n, time = 1:lags, est = out$dlmMean[[n]], 

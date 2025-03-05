@@ -236,38 +236,6 @@ summary.tdlmm <- function(object,
            "ci.lower" = quantile(cumulative, res$ci.lims[1]),
            "ci.upper" = quantile(cumulative, res$ci.lims[2]))
 
-    # DLM non-linear effects
-    # if (any(names(res$MIX) == paste0(ex.name, "-", ex.name))) {
-    #   quad <- sapply(1:res$mcmcIter, function(i) {
-    #     diag(res$MIX[[paste0(ex.name, "-", ex.name)]]$mcmc[,,i]) })
-    #   med <- object$X[[ex.name]]$Xquant["50%"] *
-    #     (marg - object$X[[ex.name]]$intX * quad +
-    #        object$X[[ex.name]]$Xquant["50%"] * quad)
-    #   res$DLM[[ex.name]]$marg.nonlin.matfit <-
-    #     sapply(object$X[[ex.name]]$Xquant, function(x) {
-    #       apply(x * (marg - object$X[[ex.name]]$intX * quad + x * quad) - med,
-    #             1, mean)
-    #     })
-    #   res$DLM[[ex.name]]$marg.nonlin.cilower <-
-    #     sapply(object$X[[ex.name]]$Xquant, function(x) {
-    #       apply(x * (marg - object$X[[ex.name]]$intX * quad + x * quad) - med,
-    #             1, quantile, probs = res$ci.lims[1])
-    #     })
-    #   res$DLM[[ex.name]]$marg.nonlin.ciupper <-
-    #     sapply(object$X[[ex.name]]$Xquant, function(x) {
-    #       apply(x * (marg - object$X[[ex.name]]$intX * quad + x * quad) - med,
-    #             1, quantile, probs = res$ci.lims[2])
-    #     })
-    #   res$DLM[[ex.name]]$marg.nonlin.cw <-
-    #     (res$DLM[[ex.name]]$marg.nonlin.cilower > 0 |
-    #        res$DLM[[ex.name]]$marg.nonlin.ciupper < 0)
-    #
-    #   colnames(res$DLM[[ex.name]]$marg.nonlin.matfit) <-
-    #     colnames(res$DLM[[ex.name]]$marg.nonlin.cilower) <-
-    #     colnames(res$DLM[[ex.name]]$marg.nonlin.ciupper) <-
-    #     colnames(res$DLM[[ex.name]]$marg.nonlin.cw) <-
-    #     as.character(object$X[[ex.name]]$Xquant)
-    # }
   }
 
   # ---- Fixed effect estimates ----

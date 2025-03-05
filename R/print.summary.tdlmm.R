@@ -110,9 +110,6 @@ print.summary.tdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
                           "Lower" = round(x$r.ci[1], digits),
                           "Upper" = round(x$r.ci[2], digits))
     row.names(r.out) <- "Dispersion"
-      #ifelse(x$r.ci[1,] > 0 | x$b2.ci[2,] < 0,
-      #      paste0("*", names(x$b2.mean)),
-      #      paste0(" ", names(x$b2.mean)))
     print(r.out)
     cat("---\n")
   }

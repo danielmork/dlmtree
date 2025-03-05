@@ -259,11 +259,6 @@ predict.hdlmm <- function(object,
     cat("\nCalculating predicted response...")
   }
     
-  # draws[i,,]: extract all MCMC samples of ith observation where col of a matrix is the MCMC sample: p x MCMC
-  # t(draws[i,,]): MCMC x p
-  # (t(draws[i,,]) %*% new.exposure.data[i,]): (MCMC x p)x(p x 1)
-  # t(t(draws[i,,]) %*% new.exposure.data[i,]): 1 x MCMC
-  # do.call(rbind, lapply) -> Do the above for all observations and combine them to a data frame using rbind -> n x MCMC
   # Estimate fhat
   fhat.draws <- matrix(0, nrow = n, ncol = object$mcmcIter)
 
@@ -280,9 +275,6 @@ predict.hdlmm <- function(object,
 
       tmp <- do.call(rbind, lapply(1:n, function(i) { # (1 x p)(p x p)(p x 1) per MCMC
             unlist(lapply(lapply(1:object$mcmcIter, function(j) {t(new.exposure.data[[e2]][i, ]) %*% mix_draws[[mix]][,,i,j]}), function(iter) {iter %*% new.exposure.data[[e1]][i, ]}))
-            # left = lapply(1:object$mcmcIter, function(j) {t(new.exposure.data[[e2]][i, ]) %*% mix_draws[[mix]][,,i,j]})
-            # right = lapply(left, function(iter) {iter %*% new.exposure.data[[e1]][i, ]})
-            # return(unlist(right))
           }
         )
       )

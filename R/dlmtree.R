@@ -573,8 +573,6 @@ dlmtree <- function(formula,
       # TDLNM: Splits defined by specific values or quantiles
       } else {
         model$class <- ifelse(model$monotone, "monotone", "tdlnm")
-        # if (dlm.type == "monotone") 
-        #   model$class <- "monotone"
 
         # if tdlnm.exposure.splits entered incorrectly, infer user input and inform
         if (!is.list(tdlnm.exposure.splits)) {
@@ -644,7 +642,6 @@ dlmtree <- function(formula,
     if (length(model$modNames) == 1) {
       if (model$modNames == "all") {
         # Take out the unused columns and extract column names
-        # model$modNames <- colnames(data)[-which(colnames(data) == all.vars(model$formula[[2]]))]
         model$modNames <- attr(tf, "term.labels")
       }
     }
@@ -1110,19 +1107,6 @@ dlmtree <- function(formula,
         }
       }
     }
-
-    # # Fixed tree index
-    # } else {
-    #   model$TreeStructs <- as.data.frame(model$TreeStructs)
-    #   # if (model$class == "gp") {
-    #   #   colnames(model$TreeStructs) <- c("Iter", "Tree", "fixedIdx", paste0("Lag", 1:model$pExp))
-    #   #   model$TreeStructs[,-c(1:3)] <- model$TreeStructs[,-c(1:3)] *
-    #   #     model$Yscale / model$Xscale
-    #   # } else {
-    #   colnames(model$TreeStructs) <- c("Iter", "Tree", "fixedIdx", "dlnmTerm", "xmin", "xmax", "tmin", "tmax", "est")
-    #   model$TreeStructs$est <- model$TreeStructs$est * model$Yscale / model$Xscale
-    #   # }
-    # } # End of if (is.null(fixed.tree.idx)) - else statement
   }
 
   # Remove model and exposure data unless stated otherwise

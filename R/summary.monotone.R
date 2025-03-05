@@ -50,9 +50,6 @@ summary.monotone <- function(object,
     cat("Centered DLNM at exposure value", cenval, "\n")
   }
   cen.quant <- which.min(abs(pred.at - cenval))
-  # if (object$shape == "Piecewise Linear") {
-  #   dlmest <- dlnmPLEst(as.matrix(object$TreeStructs), pred.at, Lags, Iter, cen.quant)
-  # } else 
 
   if (exposure.se == 0) {
     dlmest <- dlnmEst(as.matrix(object$TreeStructs), pred.at, Lags, Iter, cen.quant, exposure.se)
@@ -63,8 +60,6 @@ summary.monotone <- function(object,
   # Bayes factor
   splitIter <- t(object$zirtSplitCounts)
   splitProb <- rowMeans(splitIter > 0)
-  # logBF <- log10(splitProb) - log10(1 - splitProb) -
-  #   (log10(1 - (1 - object$zirtGamma0)) - log10((1 - object$zirtGamma0)))
 
   # Generate cumulative estimtes
   cumexp <- as.data.frame(t(sapply(1:length(pred.at), function(i) {
@@ -82,17 +77,7 @@ summary.monotone <- function(object,
   colnames(plot.dat) <- c("Tmin", "Tmax", "Xmin", "Xmax", "PredVal", "Est", "SD", "CIMin", "CIMax", "Effect")
   for (i in 1:Lags) {
     for (j in 1:length(pred.at)) {
-      # if (object$monotone & zirt.cond) {
-      #   if (sum(splitIter[,i]) == 0 | splitProb[i] < 0.5) {
-      #     plot.dat[(i - 1) * length(pred.at) + j, ] <-
-      #       c(i - 1, i, edge.vals[j], edge.vals[j + 1], pred.at[j],
-      #         0, 0, 0, 0, 0)
-      #     next;
-      #   }
-      #   coordest <- dlmest[i,j,which(splitIter[,i] == 1)]
-      # } else {
       coordest  <- dlmest[i,j,]  
-      # }
       me        <- mean(coordest)
       s         <- sd(coordest)
       ci        <- quantile(coordest, ci.lims)
@@ -133,7 +118,6 @@ summary.monotone <- function(object,
               "pred.at"           = pred.at,
               "gamma.mean"        = gamma.mean,
               "gamma.ci"          = gamma.ci,
-              # "logBF" = logBF,
               "splitProb"         = splitProb,
               "splitIter"         = splitIter,
               "formula"           = object$formula,
