@@ -89,6 +89,7 @@
 dlmtree <- function(formula,
                     data,
                     exposure.data,
+                    ...,
                     dlm.type = "linear",
                     family = "gaussian",
                     mixture = FALSE,
