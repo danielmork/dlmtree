@@ -1,14 +1,10 @@
-#' summary.hdlm
-#'
-#' @title Creates a summary object of class 'hdlm'
-#' @description Method for creating a summary object of class 'hdlm'
+#' @method summary hdlm
+#' @rdname summary
 #'
 #' @param object an object of class 'hdlm'
 #' @param conf.level confidence level for computation of credible intervals
 #' @param ... additional parameters
 #'
-#' 
-#' @returns list of type 'summary.hdlm'
 #' @export
 #'
 summary.hdlm <- function(object, conf.level = 0.95, ...)

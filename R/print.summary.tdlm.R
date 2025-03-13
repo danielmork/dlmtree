@@ -1,15 +1,13 @@
-#' print.summary.tdlm
-#'
-#' @title Prints an overview with summary of model class 'tdlm'
-#' @description Method for printing an overview with summary of model class 'tdlm'
+#' Print method for summary of model class 'tdlm', 'tdlmm', 'tdlnm', 'hdlm', 'hdlmm', 'monotone'
+#' @method print summary.tdlm
+#' @rdname print.summary
 #' 
-#' @param x an object of type 'summary.tdlnm', result of call to summary.tdlnm()
+#' @param x a summary object, result of call to summary()
 #' @param digits integer number of digits to round
 #' @param ... additional parameters
 #'
-#' @returns output of tdlm fit in R console
 #' @export
-#'
+#' 
 print.summary.tdlm <- function(x, digits = 3, ...)
 {
   cat("---\n")

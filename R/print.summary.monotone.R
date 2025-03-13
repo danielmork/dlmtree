@@ -1,15 +1,12 @@
-#' print.summary.monotone
-#'
-#' @title Prints an overview with summary of model class 'monotone'
-#' @description Method for printing an overview with summary of model class 'monotone'
+#' @method print summary.monotone
+#' @rdname print.summary
 #' 
-#' @param x an object of type 'summary.monotone', result of call to summary.monotone()
+#' @param x a summary object, result of call to summary()
 #' @param digits integer number of digits to round
 #' @param ... additional parameters
 #'
-#' @returns output in R console
 #' @export
-#'
+#' 
 print.summary.monotone <- function(x, digits = 3, ...)
 {
   cat("---\n")

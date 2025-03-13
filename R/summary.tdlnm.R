@@ -1,7 +1,5 @@
-#' summary.tdlnm
-#'
-#' @title Creates a summary object of class 'tdlnm'
-#' @description Method for creating a summary object of class 'tdlnm'
+#' @method summary tdlnm
+#' @rdname summary
 #'
 #' @param object an object of class 'tdlnm', result of a call to tdlnm
 #' @param pred.at numerical vector of exposure values to make predictions for
@@ -14,7 +12,6 @@
 #' @param verbose TRUE (default) or FALSE: print output
 #' @param ... additional parameters
 #'
-#' @returns list of type 'summary.tdlnm'
 #' @export
 #'
 summary.tdlnm <- function(object,

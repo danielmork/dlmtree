@@ -1,7 +1,5 @@
-#' summary.monotone
-#'
-#' @title Creates a summary object of class 'monotone'
-#' @description Method for creating a summary object of class 'monotone'
+#' @method summary monotone
+#' @rdname summary
 #'
 #' @param object an object of class 'monotone'
 #' @param pred.at numerical vector of exposure values to make predictions for
@@ -14,7 +12,6 @@
 #' @param verbose TRUE (default) or FALSE: print output
 #' @param ... additional parameters
 #'
-#' @returns Summary of monotone fit
 #' @export
 #'
 summary.monotone <- function(object,

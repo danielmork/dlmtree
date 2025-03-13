@@ -1,13 +1,10 @@
-#' summary.hdlmm
-#'
-#' @title Creates a summary object of class 'hdlmm'
-#' @description Method for creating a summary object of class 'hdlm'
+#' @method summary hdlmm
+#' @rdname summary
 #'
 #' @param object an object of class 'hdlmm'
 #' @param conf.level confidence level for computation of credible intervals
 #' @param ... additional parameters
 #'
-#' @returns list of type 'summary.hdlmm'
 #' @export
 #'
 summary.hdlmm <- function(object, conf.level = 0.95, ...)

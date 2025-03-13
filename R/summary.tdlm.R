@@ -1,13 +1,12 @@
-#' summary.tdlm
-#'
-#' @title Creates a summary object of class 'tdlm'
-#' @description Method for creating a summary object of class 'tdlm'
+#' Summary method for model class 'tdlm', 'tdlmm', 'tdlnm', 'hdlm', 'hdlmm', 'monotone'
+#' @method summary tdlm
+#' @rdname summary
 #'
 #' @param object an object of dlm class 'tdlm' (i.e. a linear effect DLM)
 #' @param conf.level confidence level for computation of credible intervals
 #' @param ... additional parameters
 #'
-#' @returns list of type 'summary.tdlm'
+#' @returns list object for model class 'summary.tdlm', 'summary.tdlmm', 'summary.tdlnm', 'summary.hdlm', 'summary.hdlmm', 'summary.monotone'
 #' @export
 #'
 summary.tdlm <- function(object, conf.level = 0.95, ...){

@@ -1,16 +1,13 @@
-#' print.summary.tdlmm
+#' @method print summary.tdlmm
+#' @rdname print.summary
 #'
-#' @title Prints an overview with summary of model class 'tdlmm'
-#' @description Method for printing an overview with summary of model class 'tdlmm'
-#' 
-#' @param x an object of type 'summary.tdlmm', result of call to summary.tdlmm()
+#' @param x a summary object, result of call to summary()
 #' @param digits integer number of digits to round
 #' @param cw.only print only results for exposures with critical windows
 #' @param ... additional parameters
 #'
-#' @returns output of tdlmm fit in R console
 #' @export
-#'
+#' 
 print.summary.tdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
 {
   cat("---\n")

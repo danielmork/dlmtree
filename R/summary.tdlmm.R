@@ -1,7 +1,5 @@
-#' summary.tdlmm
-#'
-#' @title Creates a summary object of class 'tdlmm'
-#' @description Method for creating a summary object of class 'tdlmm'
+#' @method summary tdlmm
+#' @rdname summary
 #'
 #' @param object an object of type 'tdlmm', the output from tdlmm()
 #' @param conf.level confidence level (default = 0.95)
@@ -14,7 +12,6 @@
 #' @param keep.mcmc keep all mcmc iterations (large memory requirement)
 #' @param ... additional parameters
 #'
-#' @returns list of type 'summary.tdlmm'
 #' @export
 #'
 summary.tdlmm <- function(object,

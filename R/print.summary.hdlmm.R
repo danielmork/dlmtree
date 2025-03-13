@@ -1,16 +1,13 @@
-#' print.summary.hdlmm
-#'
-#' @title Prints an overview with summary of model class 'hdlmm'
-#' @description Method for printing an overview with summary of model class 'hdlmm'
+#' @method print summary.hdlmm
+#' @rdname print.summary
 #' 
-#' @param x an object of type 'summary.hdlmm', result of call to summary.hdlmm()
+#' @param x a summary object, result of call to summary()
 #' @param digits integer number of digits to round
 #' @param cw.only print only results for exposures with critical windows
 #' @param ... additional parameters
 #'
-#' @returns output of hdlmm fit in R console
 #' @export
-#'
+#' 
 print.summary.hdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
 {
   cat("---\n")
