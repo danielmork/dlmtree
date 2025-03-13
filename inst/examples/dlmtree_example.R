@@ -41,7 +41,7 @@
 
 
 
-  # Heterogenious TDLM (HDLM), similar to first example but with heterogenious exposure response
+  # Heterogeneous TDLM (HDLM), similar to first example but with heterogeneous exposure response
   D <- sim.hdlmm(sim = "B", n = 1000)
   hdlm.fit <- dlmtree(y ~ .,
                       data = D$dat,
@@ -85,7 +85,7 @@
 
 
 
-  # heterogenious version of TDLMM
+  # heterogeneous version of TDLMM
   D <- sim.hdlmm(sim = "D", n = 1000)
   hdlmm.fit <- dlmtree(y ~ .,
                        data = D$dat,
