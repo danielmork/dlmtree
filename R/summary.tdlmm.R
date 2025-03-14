@@ -135,7 +135,7 @@ summary.tdlmm <- function(object,
         est <- mixEst(as.matrix(object$MIX[idx,,drop = FALSE]), res$nLags, res$mcmcIter)
         m   <- paste0(object$expNames[i + 1], "-", object$expNames[j + 1])
         res$MIX[[m]] <-
-          list("matfit"   =  sapply(1:res$nLags, function(k) rowMeans(est[,k,])),
+          list("matfit"   =  sapply(1:res$nLags, function(k) rowMeans(est[,k,,drop=FALSE])),
                "cilower"  =  sapply(1:res$nLags, function(k) {
                               apply(est[,k,], 1, quantile, probs = res$ci.lims[1]) }),
                "ciupper"  =  sapply(1:res$nLags, function(k) {
@@ -167,7 +167,7 @@ summary.tdlmm <- function(object,
             res$MIX[[m]]$mcmc   <- est
           }
 
-          res$MIX[[m]]$matfit   <- sapply(1:res$nLags, function(k) {rowMeans(est[,k,]) })
+          res$MIX[[m]]$matfit   <- sapply(1:res$nLags, function(k) {rowMeans(est[,k,,drop=FALSE]) })
           res$MIX[[m]]$cilower  <- sapply(1:res$nLags, function(k) {apply(est[,k,], 1,  quantile, probs = res$ci.lims[1]) })
           res$MIX[[m]]$ciupper  <- sapply(1:res$nLags, function(k) {apply(est[,k,], 1, quantile, probs = res$ci.lims[2]) })
         }

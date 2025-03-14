@@ -10,29 +10,32 @@
 #'
 combine.models <- function(mlist) {
   out     <- mlist[[1]]
+  if (length(unique(sapply(mlist, function(l) l$mcmcIter))) != 1)
+    stop("all chains must have same number of posterior samples")
   iter    <- out$mcmcIter
-  out$DLM <- do.call(rbind, lapply(1:length(mlist), function(i) {
-    d <- mlist[[i]]$DLM
+  out$TreeStructs <- do.call(rbind, lapply(1:length(mlist), function(i) {
+    d <- mlist[[i]]$TreeStructs
     d$Iter <- d$Iter + (i - 1) * iter
     d
   }))
+  colnames(out$TreeStructs) <- colnames(mlist[[1]]$TreeStructs)
   out$mcmcIter      <- mlist[[1]]$mcmcIter * length(mlist)
   out$nIter         <- mlist[[1]]$nIter * length(mlist)
-  colnames(out$DLM) <- colnames(mlist[[1]]$DLM)
   out$sigma2        <- do.call(c, lapply(mlist, function(l) l$sigma2))
   out$kappa         <- do.call(c, lapply(mlist, function(l) l$kappa))
   out$nu            <- do.call(c, lapply(mlist, function(l) l$nu))
   out$tau           <- do.call(rbind, lapply(mlist, function(l) l$tau))
   out$termNodes     <- do.call(rbind, lapply(mlist, function(l) l$termNodes))
   out$gamma         <- do.call(rbind, lapply(mlist, function(l) l$gamma))
+  out$fhat            <- rowMeans(do.call(cbind, lapply(mlist, function(l) l$fhat)))
+  out$Yhat            <- rowMeans(do.call(cbind, lapply(mlist, function(l) l$Yhat)))
+  out$sigma2        <- do.call(c, lapply(mlist, function(l) l$sigma2))
   if(out$monotone) {
     out$zirtGamma   <- do.call(rbind, lapply(mlist, function(l) l$zirtGamma ))
-    out$zirtCov     <- do.call(rbind, lapply(mlist, function(l) l$zirtCov))
+    # out$zirtCov     <- do.call(rbind, lapply(mlist, function(l) l$zirtCov))
     out$timeProbs   <- do.call(rbind, lapply(mlist, function(l) l$timeProbs))
-    out$timeCounts  <- do.call(rbind, lapply(mlist, function(l) l$timeCounts))
+    out$zirtSplitCounts  <- do.call(rbind, lapply(mlist, function(l) l$zirtSplitCounts))
   }
-  out$sigma2        <- do.call(c, lapply(mlist, function(l) l$sigma2))
-  # out$Yhat <- rowMeans(do.call(cbind, lapply(mlist, function(l) l$Yhat)))
   return(out)
 }
 
@@ -53,8 +56,8 @@ combine.models.tdlmm <- function(mlist) {
   out$mcmcIter  <- mlist[[1]]$mcmcIter * length(mlist)
   out$nIter     <- mlist[[1]]$nIter * length(mlist)
 
-  out$DLM <- do.call(rbind, lapply(1:length(mlist), function(i) {
-    d <- mlist[[i]]$DLM
+  out$TreeStructs <- do.call(rbind, lapply(1:length(mlist), function(i) {
+    d <- mlist[[i]]$TreeStructs
     d$Iter <- d$Iter + (i - 1) * iter
     d
   }))
@@ -63,7 +66,7 @@ combine.models.tdlmm <- function(mlist) {
     d$Iter <- d$Iter + (i - 1) * iter
     d
   }))
-  colnames(out$DLM) <- colnames(mlist[[1]]$DLM)
+  colnames(out$TreeStructs) <- colnames(mlist[[1]]$TreeStructs)
   colnames(out$MIX) <- colnames(mlist[[1]]$MIX)
 
   out$expCount    <- do.call(rbind, lapply(mlist, function(l) l$expCount))

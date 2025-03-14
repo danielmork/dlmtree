@@ -1,3 +1,8 @@
+# dlmtree 1.0.0.2
+* fix to shiny.hdlm and shiny.hdlmm to remove bug where no data is selected
+* fix to combine.models.R to correctly combine tree posterior samples
+* fix to summary.tdlmm in rowMeans to stop autodrop of dimension
+
 # dlmtree 1.0.0.1
 * a split point for Subgroup tab in shiny interface set to the mode of proportion
 
