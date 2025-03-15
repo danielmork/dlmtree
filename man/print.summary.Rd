@@ -14,7 +14,7 @@
 \usage{
 print.summary(x, ...)
 
-\method{print.summary}{hdlm}(x, digits = 3, cw.only = TRUE, ...)
+\method{print.summary}{hdlm}(x, digits = 3, ...)
 
 \method{print.summary}{hdlmm}(x, digits = 3, cw.only = TRUE, ...)
 

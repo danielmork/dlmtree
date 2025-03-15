@@ -2,7 +2,7 @@
 #' @rdname print.summary
 #'
 #' @export
-print.summary.hdlm <- function(x, digits = 3, cw.only = TRUE, ...)
+print.summary.hdlm <- function(x, digits = 3, ...)
 {
   cat("---\n")
   cat("HDLM summary\n\n")
