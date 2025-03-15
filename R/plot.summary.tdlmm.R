@@ -35,9 +35,8 @@ plot.summary.tdlmm <- function(x,
   if (is.null(exposure1)) {
     if (type == "marginal") {
       cat("Plotting DLM marginal effects:\n")
-    } #else if (type == "nonlinear") {
-    #cat("Plotting DLM marginal nonlinear effects:\n")
-    #}
+    } 
+    
     for (ex.name in x$expNames) {
       if (!cw.plots.only | any(x$DLM[[ex.name]]$marg.cw)) {
         plot(plot.summary.tdlmm(x, type, ex.name, NULL, time1, time2, ...))
@@ -94,7 +93,7 @@ plot.summary.tdlmm <- function(x,
         dat[, c("Est", "CIMin", "CIMax")] <- exp(dat[, c("Est", "CIMin", "CIMax")])
       }
 
-      if (!is.null(trueDLM)) {  # SI: df for a plot returning trueDLM
+      if (!is.null(trueDLM)) {  # df for a plot returning trueDLM
         if (is.null(scale)) {
           dat$trueDLM <- trueDLM
         } else {

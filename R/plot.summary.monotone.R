@@ -32,7 +32,6 @@ plot.summary.monotone <- function(x, plot.type = "mean", val = c(), time = c(), 
                                       ymin = Xmin,
                                       ymax = Xmax, fill = Est)) +
       geom_rect() +
-      # scale_color_viridis(aesthetics = "fill", option = "D") +
       scale_fill_viridis_c() +
       scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
       theme_bw() +
@@ -44,7 +43,6 @@ plot.summary.monotone <- function(x, plot.type = "mean", val = c(), time = c(), 
                                       ymin = Xmin,
                                       ymax = Xmax, fill = SD)) +
       geom_rect() +
-      # scale_color_viridis(aesthetics = "fill", option = "B") +
       scale_fill_viridis_c() +
       scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
       theme_bw() +
@@ -55,7 +53,6 @@ plot.summary.monotone <- function(x, plot.type = "mean", val = c(), time = c(), 
                                       ymin = Xmin,
                                       ymax = Xmax, fill = CIMin)) +
       geom_rect() +
-      # scale_color_viridis(aesthetics = "fill", option = "A") +
       scale_fill_viridis_c() +
       scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
       theme_bw() +
@@ -67,7 +64,6 @@ plot.summary.monotone <- function(x, plot.type = "mean", val = c(), time = c(), 
                                       ymin = Xmin,
                                       ymax = Xmax, fill = CIMax)) +
       geom_rect() +
-      # scale_color_viridis(aesthetics = "fill", option = "A") +
       scale_fill_viridis_c() +
       scale_y_continuous(expand = c(0, 0)) + scale_x_continuous(expand = c(0, 0)) +
       theme_bw() +

@@ -95,14 +95,14 @@ predict.hdlmm <- function(object,
     
   # Main effect for mixture
   main_draws  <- list()
-  draws       <- lapply(1:object$mcmcIter, function(i) matrix(0.0, n, object$pExp)) # Creates a list of which elements are empty n x p matrix    
+  draws       <- lapply(1:object$mcmcIter, function(i) matrix(0.0, n, object$pExp)) 
   for (exp in object$expNames) {
     main_draws[[exp]] <- draws
   }
 
   # Iterate through MCMC to add the estimate
-  if (is.null(object$fixedIdx)) { # No specified MCMC iterations
-    for (exp in object$expNames) { # Extra step here for mixture setting
+  if (is.null(object$fixedIdx)) { 
+    for (exp in object$expNames) { 
       for (i in 1:nrow(object$TreeStructs)) {
         # progress bar
         if (verbose && (i %% mark_main == 0)) {
@@ -144,8 +144,6 @@ predict.hdlmm <- function(object,
     }
   }
 
-  # do.call generates c(draws)
-  # Convert from a list form of [[MCMC]](nxp) to (n x p x MCMC) array form
   main_draws <- lapply(main_draws, function(exp) {array(do.call(c, exp), c(n, object$pExp, object$mcmcIter))})
 
   # Raw predicted DLM and interval
@@ -223,9 +221,7 @@ predict.hdlmm <- function(object,
       }
     }
 
-    # do.call generates c(draws)
     # Convert from a list form of [[MCMC]](p x p x n) to (p x p x n x MCMC) 4D array form
-    # for each pairwise interaction
     mix_draws <- lapply(mix_draws, function(draws) { 
       array(do.call(c, draws), c(object$pExp, object$pExp, n, object$mcmcIter))
     })

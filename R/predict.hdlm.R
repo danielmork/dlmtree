@@ -125,15 +125,14 @@ predict.hdlm <- function(object,
   }
 
   # Generate mcmcIter number of matrices (n x pExp)
-  # do.call generates c(draws)
-  draws <- array(do.call(c, draws), c(n, object$pExp, object$mcmcIter)) # Convert from a list form of [[MCMC]](nxp) to (n x p x MCMC) array form
+  draws <- array(do.call(c, draws), c(n, object$pExp, object$mcmcIter)) 
 
   if (est.dlm) {
     if (verbose) {
       cat("\nestimating individualized DLMs...")
     }
       
-    out$dlmest <- sapply(1:object$pExp, function(t) { # t: for each lag, rowMeans: Mean of estimate for an individual of all MCMC sample
+    out$dlmest <- sapply(1:object$pExp, function(t) { 
       rowMeans(draws[,t,,drop=FALSE])
     })
     out$dlmest.lower <- sapply(1:object$pExp, function(t) {
@@ -148,8 +147,8 @@ predict.hdlm <- function(object,
     cat("\nestimating exposure effects...")
   }
 
-  # draws[i,,]: extract all MCMC samples of ith observation where col of a matrix is the MCMC sample: p x MCMC
-  fhat.draws <- do.call(rbind, lapply(1:n, function(i) {
+
+    fhat.draws <- do.call(rbind, lapply(1:n, function(i) {
     t(t(draws[i,,]) %*% new.exposure.data[i,])
   }))
   out$fhat      <- rowMeans(fhat.draws) # fhat mean for all observation
