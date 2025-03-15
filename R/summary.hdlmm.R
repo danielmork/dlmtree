@@ -1,47 +1,42 @@
 #' @method summary hdlmm
 #' @rdname summary
 #'
-#' @param object an object of class 'hdlmm'
-#' @param conf.level confidence level for computation of credible intervals
-#' @param ... additional parameters
-#'
 #' @export
-#'
-summary.hdlmm <- function(object, conf.level = 0.95, ...)
+summary.hdlmm <- function(x, conf.level = 0.95, ...)
 {
-  nLags   <- max(object$TreeStructs$tmax)
-  Iter    <- max(object$TreeStructs$Iter)
+  nLags   <- max(x$TreeStructs$tmax)
+  Iter    <- max(x$TreeStructs$Iter)
   ci.lims <- c((1 - conf.level) / 2, 1 - (1 - conf.level) / 2)
 
   # Fixed effect estimates
-  gamma.mean  <- colMeans(object$gamma)
-  gamma.ci    <- apply(object$gamma, 2, quantile, probs = ci.lims)
+  gamma.mean  <- colMeans(x$gamma)
+  gamma.ci    <- apply(x$gamma, 2, quantile, probs = ci.lims)
 
   # posterior inclusion probability of modifiers
-  pip_df <- data.frame("PIP" = pip(object))
+  pip_df <- data.frame("PIP" = pip(x))
 
   # Return
-  ret <- list("ctr" = list(class    = object$class,
-                           n.trees  = object$nTrees,
-                           n.iter   = object$nIter,
-                           n.thin   = object$nThin,
-                           n.burn   = object$nBurn,
-                           response = object$family),
+  ret <- list("ctr" = list(class    = x$class,
+                           n.trees  = x$nTrees,
+                           n.iter   = x$nIter,
+                           n.thin   = x$nThin,
+                           n.burn   = x$nBurn,
+                           response = x$family),
               "nLags"         = nLags,
-              "nExp"          = object$nExp,
-              "nMix"          = object$nMix,
-              "interaction"   = object$interaction,
-              "mixPrior"      = object$mixPrior,
-              "modPrior"      = object$zeta,
+              "nExp"          = x$nExp,
+              "nMix"          = x$nMix,
+              "interaction"   = x$interaction,
+              "mixPrior"      = x$mixPrior,
+              "modPrior"      = x$zeta,
               "conf.level"    = conf.level,
-              "sig.to.noise"  = ifelse(is.null(object$sigma2), NA,
-                                        var(object$fhat) / mean(object$sigma2)),
-              "rse"          = sd(object$sigma2),
-              "n"            = nrow(object$data),
+              "sig.to.noise"  = ifelse(is.null(x$sigma2), NA,
+                                        var(x$fhat) / mean(x$sigma2)),
+              "rse"          = sd(x$sigma2),
+              "n"            = nrow(x$data),
               "pip"           = pip_df,
               "gamma.mean"    = gamma.mean,
               "gamma.ci"      = gamma.ci,
-              "formula"       = object$formula)
+              "formula"       = x$formula)
 
   class(ret) <- "summary.hdlmm"
   

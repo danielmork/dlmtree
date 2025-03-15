@@ -8,19 +8,18 @@ dlmtree(
   formula,
   data,
   exposure.data,
-  ...,
   dlm.type = "linear",
   family = "gaussian",
   mixture = FALSE,
   het = FALSE,
-  control.mcmc = ctrl.mcmc(),
-  control.hyperparam = ctrl.hyperparam(),
-  control.family = ctrl.family(),
-  control.tdlnm = ctrl.tdlnm(),
-  control.het = ctrl.het(),
-  control.mixture = ctrl.mixture(),
-  control.monotone = ctrl.monotone(),
-  control.diagnose = ctrl.diagnose()
+  control.mcmc = list(),
+  control.hyper = list(),
+  control.family = list(),
+  control.tdlnm = list(),
+  control.het = list(),
+  control.mix = list(),
+  control.monotone = list(),
+  control.diagnose = list()
 )
 }
 \arguments{
@@ -40,21 +39,21 @@ named list containing equally sized numerical matrices of exposure data having s
 
 \item{het}{flag for heterogeneity, set to TRUE for hdlm and hdlmm (default: FALSE).}
 
-\item{control.mcmc}{a list of MCMC control parameters. in the fitting process.}
+\item{control.mcmc}{list of MCMC control parameters. This is passed to \link{dlmtree.control.mcmc}.}
 
-\item{control.hyperparam}{a list of hyperparameter control parameters.}
+\item{control.hyper}{list of hyperparameter control parameters. This is passed to \link{dlmtree.control.hyper}}
 
-\item{control.family}{a list of family control parameters.}
+\item{control.family}{list of family control parameters. This is passed to \link{dlmtree.control.family}}
 
-\item{control.tdlnm}{a list of TDLNM control parameters.}
+\item{control.tdlnm}{list of TDLNM control parameters. This is passed to \link{dlmtree.control.tdlnm}}
 
-\item{control.het}{a list of control parameters for heterogeneous models.}
+\item{control.het}{list of control parameters for heterogeneous models. This is passed to \link{dlmtree.control.het}}
 
-\item{control.mixture}{a list of mixture control parameters.}
+\item{control.mix}{list of mixture control parameters. This is passed to \link{dlmtree.control.mix}}
 
-\item{control.monotone}{a list of control parameters for monotone model.}
+\item{control.monotone}{list of control parameters for monotone model. This is passed to \link{dlmtree.control.monotone}}
 
-\item{control.diagnose}{a list of control parameters for diagnostics.}
+\item{control.diagnose}{list of control parameters for diagnostics. This is passed to \link{dlmtree.control.diagnose}}
 }
 \value{
 Object of one of the classes: tdlm, tdlmm, tdlnm, hdlm, hdlmm

@@ -1,45 +1,26 @@
 #' @method summary tdlnm
 #' @rdname summary
 #'
-#' @param object an object of class 'tdlnm', result of a call to tdlnm
-#' @param pred.at numerical vector of exposure values to make predictions for
-#' at each time period
-#' @param cenval scalar exposure value that acts as a reference point for
-#' predictions at all other exposure values
-#' @param conf.level confidence level for computation of credible intervals
-#' @param exposure.se scalar smoothing factor, if different from model
-#' @param mcmc TRUE or FALSE (default): return MCMC samplers
-#' @param verbose TRUE (default) or FALSE: print output
-#' @param ... additional parameters
-#'
 #' @export
-#'
-summary.tdlnm <- function(object,
-                          pred.at = NULL,
-                          cenval = 0,
-                          conf.level = 0.95,
-                          exposure.se = NULL,
-                          mcmc = FALSE,
-                          verbose = TRUE, 
-                          ...)
+summary.tdlnm <- function(x, conf.level = 0.95, pred.at = NULL, cenval = 0, exposure.se = NULL, mcmc = FALSE, verbose = TRUE, ...)
 {
-  Iter    <- object$mcmcIter
-  Lags    <- object$pExp
+  Iter    <- x$mcmcIter
+  Lags    <- x$pExp
   ci.lims <- c((1 - conf.level) / 2, 1 - (1 - conf.level) / 2)
 
-  if (is.null(exposure.se) && !is.na(object$SE[1])) {
-    exposure.se <- mean(as.matrix(object$SE))
+  if (is.null(exposure.se) && !is.na(x$SE[1])) {
+    exposure.se <- mean(as.matrix(x$SE))
   } else if (is.null(exposure.se)) {
     exposure.se <- 0
   }
 
   # Determine how to break up data for summary
   if (is.null(pred.at)) {
-    pred.at <- object$Xsplits
+    pred.at <- x$Xsplits
   } else {
-    pred.at <- sort(unique(pred.at[which(pred.at >= object$Xrange[1] & pred.at <= object$Xrange[2])]))
+    pred.at <- sort(unique(pred.at[which(pred.at >= x$Xrange[1] & pred.at <= x$Xrange[2])]))
   }
-  edge.vals <- sort(c(object$Xrange, rowMeans(cbind(pred.at[-1], pred.at[-length(pred.at)]))))
+  edge.vals <- sort(c(x$Xrange, rowMeans(cbind(pred.at[-1], pred.at[-length(pred.at)]))))
 
 
   # Calculate DLNM estimates for gridded values 'pred.at'
@@ -47,13 +28,11 @@ summary.tdlnm <- function(object,
     cat("Centered DLNM at exposure value", cenval, "\n")
   }
   cen.quant <- which.min(abs(pred.at - cenval))
-  # if (object$shape == "Piecewise Linear") {
-  #   dlmest <- dlnmPLEst(as.matrix(object$TreeStructs), pred.at, Lags, Iter, cen.quant)
-  # } else 
+
   if (exposure.se == 0) {
-    dlmest <- dlnmEst(as.matrix(object$TreeStructs), pred.at, Lags, Iter, cen.quant, exposure.se)
+    dlmest <- dlnmEst(as.matrix(x$TreeStructs), pred.at, Lags, Iter, cen.quant, exposure.se)
   } else {
-    dlmest <- dlnmEst(as.matrix(object$TreeStructs), pred.at, Lags, Iter, cenval, exposure.se)
+    dlmest <- dlnmEst(as.matrix(x$TreeStructs), pred.at, Lags, Iter, cenval, exposure.se)
   }
 
   # Bayes factor
@@ -94,21 +73,21 @@ summary.tdlnm <- function(object,
   plot.dat$Effect <- factor(plot.dat$Effect, levels = c(-1, 0, 1), labels = c("-", " ", "+"))
 
   # Fixed effect estimates
-  gamma.mean  <- colMeans(object$gamma)
-  gamma.ci    <- apply(object$gamma, 2, quantile, probs = ci.lims)
+  gamma.mean  <- colMeans(x$gamma)
+  gamma.ci    <- apply(x$gamma, 2, quantile, probs = ci.lims)
 
   # Return
-  ret <- list("ctr" = list(class    = object$class,
-                           n.trees  = object$nTrees,
-                           n.iter   = object$nIter,
-                           n.thin   = object$nThin,
-                           n.burn   = object$nBurn,
-                           response = object$family),
+  ret <- list("ctr" = list(class    = x$class,
+                           n.trees  = x$nTrees,
+                           n.iter   = x$nIter,
+                           n.thin   = x$nThin,
+                           n.burn   = x$nBurn,
+                           response = x$family),
               "conf.level"        = conf.level,
-              "sig.to.noise"      = ifelse(is.null(object$sigma2), NA,
-                                        var(object$fhat) / mean(object$sigma2)),
-              "rse"               = sd(object$sigma2),
-              "n"                 = nrow(object$data),
+              "sig.to.noise"      = ifelse(is.null(x$sigma2), NA,
+                                        var(x$fhat) / mean(x$sigma2)),
+              "rse"               = sd(x$sigma2),
+              "n"                 = nrow(x$data),
               "plot.dat"          = plot.dat,
               "matfit"            = matfit,
               "cilower"           = cilower,
@@ -120,8 +99,8 @@ summary.tdlnm <- function(object,
               "gamma.ci"          = gamma.ci,
               "splitProb"         = splitProb,
               "splitIter"         = splitIter,
-              "formula"           = object$formula,
-              "formula.zi"        = object$formula.zi)
+              "formula"           = x$formula,
+              "formula.zi"        = x$formula.zi)
 
   class(ret) <- "summary.tdlnm"
   

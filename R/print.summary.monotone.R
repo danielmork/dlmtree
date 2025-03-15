@@ -1,12 +1,7 @@
-#' @method print summary.monotone
+#' @method print.summary monotone
 #' @rdname print.summary
-#' 
-#' @param x a summary object, result of call to summary()
-#' @param digits integer number of digits to round
-#' @param ... additional parameters
 #'
 #' @export
-#' 
 print.summary.monotone <- function(x, digits = 3, ...)
 {
   cat("---\n")

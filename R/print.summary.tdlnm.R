@@ -1,13 +1,7 @@
-#' @method print summary.tdlnm
+#' @method print.summary tdlnm
 #' @rdname print.summary
 #'
-#' @param x a summary object, result of call to summary()
-#' @param digits integer number of digits to round
-#' @param ... additional parameters
-#'
-#' @returns output of model summary in R console
 #' @export
-#' 
 print.summary.tdlnm <- function(x, digits = 3, ...)
 {
   cat("---\n")

@@ -1,13 +1,7 @@
-#' @method print summary.tdlmm
+#' @method print.summary tdlmm
 #' @rdname print.summary
 #'
-#' @param x a summary object, result of call to summary()
-#' @param digits integer number of digits to round
-#' @param cw.only print only results for exposures with critical windows
-#' @param ... additional parameters
-#'
 #' @export
-#' 
 print.summary.tdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
 {
   cat("---\n")

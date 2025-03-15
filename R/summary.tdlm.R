@@ -1,20 +1,13 @@
-#' Summary method for model class 'tdlm', 'tdlmm', 'tdlnm', 'hdlm', 'hdlmm', 'monotone'
 #' @method summary tdlm
 #' @rdname summary
 #'
-#' @param object an object of dlm class 'tdlm' (i.e. a linear effect DLM)
-#' @param conf.level confidence level for computation of credible intervals
-#' @param ... additional parameters
-#'
-#' @returns list object for model class 'summary.tdlm', 'summary.tdlmm', 'summary.tdlnm', 'summary.hdlm', 'summary.hdlmm', 'summary.monotone'
 #' @export
-#'
-summary.tdlm <- function(object, conf.level = 0.95, ...){
-  Lags    <- max(object$TreeStructs$tmax)
-  Iter    <- max(object$TreeStructs$Iter)
+summary.tdlm <- function(x, conf.level = 0.95, ...){
+  Lags    <- max(x$TreeStructs$tmax)
+  Iter    <- max(x$TreeStructs$Iter)
   ci.lims <- c((1 - conf.level) / 2, 1 - (1 - conf.level) / 2)
 
-  dlmest  <- dlmEst(as.matrix(object$TreeStructs)[,-c(3:4)], Lags, Iter)
+  dlmest  <- dlmEst(as.matrix(x$TreeStructs)[,-c(3:4)], Lags, Iter)
 
   # DLM Estimates
   matfit  <- rowMeans(dlmest)
@@ -24,44 +17,38 @@ summary.tdlm <- function(object, conf.level = 0.95, ...){
   # Cumulative effect estimates
   ce                <- colSums(dlmest)
   cumulative.effect <- c("mean" = mean(ce), quantile(ce, ci.lims))
-  xvals             <- seq(object$Xrange[1], object$Xrange[2], length.out = 50)
-  
-  # Deprecated
-  # cumulative.effect <- data.frame("vals" = xvals,
-  #                                 "mean" = cumulative.effect[1] * xvals,
-  #                                 "lower" = cumulative.effect[2] * xvals,
-  #                                 "upper" = cumulative.effect[3] * xvals)
+  xvals             <- seq(x$Xrange[1], x$Xrange[2], length.out = 50)
   
 
   # Fixed effect estimates
-  gamma.mean  <- colMeans(object$gamma)
-  gamma.ci    <- apply(object$gamma, 2, quantile, probs = ci.lims)
+  gamma.mean  <- colMeans(x$gamma)
+  gamma.ci    <- apply(x$gamma, 2, quantile, probs = ci.lims)
 
   # ZINB
   # binary
-  b1.mean     <- colMeans(object$b1)
-  b1.ci       <- apply(object$b1, 2, quantile, probs = ci.lims)
+  b1.mean     <- colMeans(x$b1)
+  b1.ci       <- apply(x$b1, 2, quantile, probs = ci.lims)
 
   # count
-  b2.mean     <- colMeans(object$b2)
-  b2.ci       <- apply(object$b2, 2, quantile, probs = ci.lims)
+  b2.mean     <- colMeans(x$b2)
+  b2.ci       <- apply(x$b2, 2, quantile, probs = ci.lims)
 
   # Dispersion parameter
-  r.mean      <- mean(object$r)
-  r.ci        <- quantile(object$r, probs = ci.lims)
+  r.mean      <- mean(x$r)
+  r.ci        <- quantile(x$r, probs = ci.lims)
 
   # Return
-  ret <- list("ctr" = list(class    = object$class,
-                           n.trees  = object$nTrees,
-                           n.iter   = object$nIter,
-                           n.thin   = object$nThin,
-                           n.burn   = object$nBurn,
-                           response = object$family),
+  ret <- list("ctr" = list(class    = x$class,
+                           n.trees  = x$nTrees,
+                           n.iter   = x$nIter,
+                           n.thin   = x$nThin,
+                           n.burn   = x$nBurn,
+                           response = x$family),
               "conf.level"        = conf.level,
-              "sig.to.noise"      = ifelse(is.null(object$sigma2), NA,
-                                        var(object$fhat) / mean(object$sigma2)),
-              "rse"               = sd(object$sigma2),
-              "n"                 = nrow(object$data),
+              "sig.to.noise"      = ifelse(is.null(x$sigma2), NA,
+                                        var(x$fhat) / mean(x$sigma2)),
+              "rse"               = sd(x$sigma2),
+              "n"                 = nrow(x$data),
               "matfit"            = matfit,
               "cilower"           = cilower,
               "ciupper"           = ciupper,
@@ -74,8 +61,8 @@ summary.tdlm <- function(object, conf.level = 0.95, ...){
               "b2.ci"             = b2.ci,
               "r.mean"            = r.mean,
               "r.ci"              = r.ci,
-              "formula"           = object$formula,
-              "formula.zi"        = object$formula.zi)
+              "formula"           = x$formula,
+              "formula.zi"        = x$formula.zi)
 
   class(ret) <- "summary.tdlm"
   

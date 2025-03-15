@@ -1,13 +1,7 @@
-#' @method print summary.hdlmm
+#' @method print.summary hdlmm
 #' @rdname print.summary
-#' 
-#' @param x a summary object, result of call to summary()
-#' @param digits integer number of digits to round
-#' @param cw.only print only results for exposures with critical windows
-#' @param ... additional parameters
 #'
 #' @export
-#' 
 print.summary.hdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
 {
   cat("---\n")

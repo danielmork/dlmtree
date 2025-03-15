@@ -1,45 +1,27 @@
 #' @method summary tdlmm
 #' @rdname summary
 #'
-#' @param object an object of type 'tdlmm', the output from tdlmm()
-#' @param conf.level confidence level (default = 0.95)
-#' @param marginalize value(s) for calculating marginal DLMs, defaults to
-#' "mean", can also specify a percentile from 1-99 for all other exposures, or
-#' a named vector with specific values for each exposure
-#' @param log10BF.crit Bayes Factor criteria for selecting exposures and
-#' interactions, such that log10(BayesFactor) > x. Default = 0.5
-#' @param verbose show progress in console
-#' @param keep.mcmc keep all mcmc iterations (large memory requirement)
-#' @param ... additional parameters
-#'
 #' @export
-#'
-summary.tdlmm <- function(object,
-                          conf.level = 0.95,
-                          marginalize = "mean",
-                          log10BF.crit = 0.5,
-                          verbose = TRUE,
-                          keep.mcmc = FALSE,
-                          ...)
+summary.tdlmm <- function(x, conf.level = 0.95, marginalize = "mean", log10BF.crit = 0.5, mcmc = FALSE, verbose = TRUE, ...)
 {
   res               <- list()
-  res$nIter         <- object$nIter
-  res$nThin         <- object$nThin
+  res$nIter         <- x$nIter
+  res$nThin         <- x$nThin
   res$mcmcIter      <- floor(res$nIter / res$nThin)
-  res$nBurn         <- object$nBurn
-  res$nTrees        <- object$nTrees
-  res$treePrior     <- object$treePriorTDLM
-  res$nLags         <- max(object$TreeStructs$tmax)
-  res$nExp          <- object$nExp
-  res$nMix          <- object$nMix
-  res$expNames      <- object$expNames
-  res$mixNames      <- object$mixNames
-  res$interaction   <- object$interaction
-  res$mixPrior      <- object$mixPrior
-  res$formula       <- object$formula
-  res$formula.zi    <- object$formula.zi
-  res$family        <- object$family
-  res$droppedCovar  <- object$droppedCovar
+  res$nBurn         <- x$nBurn
+  res$nTrees        <- x$nTrees
+  res$treePrior     <- x$treePriorTDLM
+  res$nLags         <- max(x$TreeStructs$tmax)
+  res$nExp          <- x$nExp
+  res$nMix          <- x$nMix
+  res$expNames      <- x$expNames
+  res$mixNames      <- x$mixNames
+  res$interaction   <- x$interaction
+  res$mixPrior      <- x$mixPrior
+  res$formula       <- x$formula
+  res$formula.zi    <- x$formula.zi
+  res$family        <- x$family
+  res$droppedCovar  <- x$droppedCovar
   res$conf.level    <- conf.level
   res$ci.lims       <- c((1 - conf.level) / 2, 1 - (1 - conf.level) / 2)
   res$log10BF.crit  <- log10BF.crit
@@ -47,12 +29,12 @@ summary.tdlmm <- function(object,
 
   # ---- Set levels for marginaliztion ----
   if (marginalize[1] == "mean") {
-    res$marg.values <- sapply(object$X, function(i) i$intX)
+    res$marg.values <- sapply(x$X, function(i) i$intX)
   } else if (length(marginalize) == 1 & is.numeric(marginalize)) {
     if (marginalize < 0 | marginalize > 100) {
       stop("A percentile for marginialization must be between 0 and 100")
     }
-    res$marg.values <- sapply(object$X, function(i) {i$Xquant[round(marginalize) + 1] })
+    res$marg.values <- sapply(x$X, function(i) {i$Xquant[round(marginalize) + 1] })
   } else if (length(marginalize) == res$nExp & is.numeric(marginalize)) {
     res$marg.values <- marginalize
   } else {
@@ -79,8 +61,8 @@ summary.tdlmm <- function(object,
                           lgamma((res$nExp + 1)*res$mixPrior) -
                           lgamma(2*res$nTrees + (res$nExp + 1)*res$mixPrior) -
                           lgamma(res$nExp*res$mixPrior))
-    BF <- (log10(colMeans(object$expCount > 0)) -
-             log10(colMeans(object$expCount == 0))) -
+    BF <- (log10(colMeans(x$expCount > 0)) -
+             log10(colMeans(x$expCount == 0))) -
       (log10(priorProbInc) - log10(1 - priorProbInc))
 
     res$expBF   <- 10^BF
@@ -93,22 +75,22 @@ summary.tdlmm <- function(object,
   }
   res$DLM <- list()
   for (i in 1:res$nExp) {
-    idx <- which(object$TreeStructs$exp == (i - 1))
-    est <- dlmEst(as.matrix(object$TreeStructs[idx, -(3:4)]), res$nLags, res$mcmcIter)
+    idx <- which(x$TreeStructs$exp == (i - 1))
+    est <- dlmEst(as.matrix(x$TreeStructs[idx, -(3:4)]), res$nLags, res$mcmcIter)
     # est: dim 1 = time, dim 2 = iteration
     res$DLM[[i]] <- list("mcmc" = est,
                          "marg" = array(0, dim(est)),
-                         "name" = object$expNames[i])
+                         "name" = x$expNames[i])
   }
   names(res$DLM)  <- res$expNames
   iqr_plus_mean   <- function(i) c(quantile(i, 0.25), mean(i), quantile(i, 0.75))
-  res$expInc      <- apply(object$expCount > 0, 2, mean)
+  res$expInc      <- apply(x$expCount > 0, 2, mean)
 
   if (res$nExp == 1) {
-    res$expVar <- apply(object$mixCount > 0, 2, mean)
+    res$expVar <- apply(x$mixCount > 0, 2, mean)
     #names(res$expVar) <- names(res$expInc)
   } else {
-    res$expVar <- apply((apply(object$muExp * object$expInf, 1, rank) - 1),
+    res$expVar <- apply((apply(x$muExp * x$expInf, 1, rank) - 1),
                                 1, iqr_plus_mean) / (res$nExp - 1)
   }
 
@@ -120,8 +102,8 @@ summary.tdlmm <- function(object,
     
   res$MIX <- list()
   nMix    <- 1
-  for (i in sort(unique(object$MIX$exp1))) {
-    for (j in sort(unique(object$MIX$exp2))) {
+  for (i in sort(unique(x$MIX$exp1))) {
+    for (j in sort(unique(x$MIX$exp2))) {
       if (verbose) {
         if (nMix == ceiling(0.25 * res$nMix)) {cat("25%...")}
         if (nMix == ceiling(0.5 * res$nMix)) {cat("50%...")}
@@ -130,20 +112,20 @@ summary.tdlmm <- function(object,
         nMix <- nMix + 1
       }
 
-      idx <- which(object$MIX$exp1 == i & object$MIX$exp2 == j)
+      idx <- which(x$MIX$exp1 == i & x$MIX$exp2 == j)
       if (length(idx) > 0) {
-        est <- mixEst(as.matrix(object$MIX[idx,,drop = FALSE]), res$nLags, res$mcmcIter)
-        m   <- paste0(object$expNames[i + 1], "-", object$expNames[j + 1])
+        est <- mixEst(as.matrix(x$MIX[idx,,drop = FALSE]), res$nLags, res$mcmcIter)
+        m   <- paste0(x$expNames[i + 1], "-", x$expNames[j + 1])
         res$MIX[[m]] <-
           list("matfit"   =  sapply(1:res$nLags, function(k) rowMeans(est[,k,,drop=FALSE])),
                "cilower"  =  sapply(1:res$nLags, function(k) {
                               apply(est[,k,], 1, quantile, probs = res$ci.lims[1]) }),
                "ciupper"  =  sapply(1:res$nLags, function(k) {
                               apply(est[,k,], 1, quantile, probs = res$ci.lims[2]) }),
-               "rows"     = object$expNames[i + 1],
-               "cols"     = object$expNames[j + 1])
+               "rows"     = x$expNames[i + 1],
+               "cols"     = x$expNames[j + 1])
 
-        if (keep.mcmc) {
+        if (mcmc) {
           res$MIX[[m]]$mcmc <- est
         }
 
@@ -163,7 +145,7 @@ summary.tdlmm <- function(object,
             0.5 * aperm(est, c(2, 1, 3)) *
             array(upper.tri(diag(res$nLags), diag = TRUE), dim(est))
           
-          if (keep.mcmc) {
+          if (mcmc) {
             res$MIX[[m]]$mcmc   <- est
           }
 
@@ -195,12 +177,12 @@ summary.tdlmm <- function(object,
   }
 
   if (res$interaction > 0) {
-    res$mixInc <- apply(object$mixCount > 0, 2, mean)
+    res$mixInc <- apply(x$mixCount > 0, 2, mean)
     if (res$nMix == 1) {
       res$mixVar <- c(1)
       names(res$mixVar) <- names(res$mixInc)
     } else {
-      res$mixVar <- apply((apply(object$muMix * object$mixInf, 1, rank) - 1),
+      res$mixVar <- apply((apply(x$muMix * x$mixInf, 1, rank) - 1),
                           1, iqr_plus_mean) / (res$nMix - 1)
     }
   }
@@ -214,7 +196,7 @@ summary.tdlmm <- function(object,
 
     # DLM marginal effects
     marg <- res$DLM[[ex.name]]$mcmc + res$DLM[[ex.name]]$marg
-    if (keep.mcmc) {
+    if (mcmc) {
       res$DLM[[ex.name]]$marg <- marg
     } else {
       res$DLM[[ex.name]]$mcmc <- NULL
@@ -239,30 +221,30 @@ summary.tdlmm <- function(object,
   if (verbose) {
     cat("Calculating fixed effects...\n")
   }
-  if (!object$zinb) {
+  if (!x$zinb) {
     # Gaussian / Logistic
-    res$gamma.mean  <- colMeans(object$gamma)
-    res$gamma.ci    <- apply(object$gamma, 2, quantile, probs = res$ci.lims)
+    res$gamma.mean  <- colMeans(x$gamma)
+    res$gamma.ci    <- apply(x$gamma, 2, quantile, probs = res$ci.lims)
   } else {
     # ZINB
     # binary
-    res$b1.mean <- colMeans(object$b1)
-    res$b1.ci   <- apply(object$b1, 2, quantile, probs = res$ci.lims)
+    res$b1.mean <- colMeans(x$b1)
+    res$b1.ci   <- apply(x$b1, 2, quantile, probs = res$ci.lims)
 
     # count
-    res$b2.mean <- colMeans(object$b2)
-    res$b2.ci   <- apply(object$b2, 2, quantile, probs = res$ci.lims)
+    res$b2.mean <- colMeans(x$b2)
+    res$b2.ci   <- apply(x$b2, 2, quantile, probs = res$ci.lims)
 
     # Dispersion parameter
-    res$r.mean  <- mean(object$r)
-    res$r.ci    <- quantile(object$r, probs = res$ci.lims)
+    res$r.mean  <- mean(x$r)
+    res$r.ci    <- quantile(x$r, probs = res$ci.lims)
   }
 
   # ---- Return ----
-  res$sig2noise <- ifelse(is.null(object$sigma2), NA,
-                          var(object$fhat) / mean(object$sigma2))
-  res$rse       <- sd(object$sigma2)
-  res$n         <- nrow(object$data)
+  res$sig2noise <- ifelse(is.null(x$sigma2), NA,
+                          var(x$fhat) / mean(x$sigma2))
+  res$rse       <- sd(x$sigma2)
+  res$n         <- nrow(x$data)
 
   class(res) <- "summary.tdlmm"
   
