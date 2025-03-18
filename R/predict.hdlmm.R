@@ -95,14 +95,14 @@ predict.hdlmm <- function(object,
     
   # Main effect for mixture
   main_draws  <- list()
-  draws       <- lapply(1:object$mcmcIter, function(i) matrix(0.0, n, object$pExp)) # Creates a list of which elements are empty n x p matrix    
+  draws       <- lapply(1:object$mcmcIter, function(i) matrix(0.0, n, object$pExp)) 
   for (exp in object$expNames) {
     main_draws[[exp]] <- draws
   }
 
   # Iterate through MCMC to add the estimate
-  if (is.null(object$fixedIdx)) { # No specified MCMC iterations
-    for (exp in object$expNames) { # Extra step here for mixture setting
+  if (is.null(object$fixedIdx)) { 
+    for (exp in object$expNames) { 
       for (i in 1:nrow(object$TreeStructs)) {
         # progress bar
         if (verbose && (i %% mark_main == 0)) {
@@ -144,8 +144,6 @@ predict.hdlmm <- function(object,
     }
   }
 
-  # do.call generates c(draws)
-  # Convert from a list form of [[MCMC]](nxp) to (n x p x MCMC) array form
   main_draws <- lapply(main_draws, function(exp) {array(do.call(c, exp), c(n, object$pExp, object$mcmcIter))})
 
   # Raw predicted DLM and interval
@@ -223,9 +221,7 @@ predict.hdlmm <- function(object,
       }
     }
 
-    # do.call generates c(draws)
     # Convert from a list form of [[MCMC]](p x p x n) to (p x p x n x MCMC) 4D array form
-    # for each pairwise interaction
     mix_draws <- lapply(mix_draws, function(draws) { 
       array(do.call(c, draws), c(object$pExp, object$pExp, n, object$mcmcIter))
     })
@@ -259,11 +255,6 @@ predict.hdlmm <- function(object,
     cat("\nCalculating predicted response...")
   }
     
-  # draws[i,,]: extract all MCMC samples of ith observation where col of a matrix is the MCMC sample: p x MCMC
-  # t(draws[i,,]): MCMC x p
-  # (t(draws[i,,]) %*% new.exposure.data[i,]): (MCMC x p)x(p x 1)
-  # t(t(draws[i,,]) %*% new.exposure.data[i,]): 1 x MCMC
-  # do.call(rbind, lapply) -> Do the above for all observations and combine them to a data frame using rbind -> n x MCMC
   # Estimate fhat
   fhat.draws <- matrix(0, nrow = n, ncol = object$mcmcIter)
 
@@ -280,9 +271,6 @@ predict.hdlmm <- function(object,
 
       tmp <- do.call(rbind, lapply(1:n, function(i) { # (1 x p)(p x p)(p x 1) per MCMC
             unlist(lapply(lapply(1:object$mcmcIter, function(j) {t(new.exposure.data[[e2]][i, ]) %*% mix_draws[[mix]][,,i,j]}), function(iter) {iter %*% new.exposure.data[[e1]][i, ]}))
-            # left = lapply(1:object$mcmcIter, function(j) {t(new.exposure.data[[e2]][i, ]) %*% mix_draws[[mix]][,,i,j]})
-            # right = lapply(left, function(iter) {iter %*% new.exposure.data[[e1]][i, ]})
-            # return(unlist(right))
           }
         )
       )

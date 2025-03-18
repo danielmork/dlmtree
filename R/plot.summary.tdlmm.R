@@ -35,9 +35,8 @@ plot.summary.tdlmm <- function(x,
   if (is.null(exposure1)) {
     if (type == "marginal") {
       cat("Plotting DLM marginal effects:\n")
-    } #else if (type == "nonlinear") {
-    #cat("Plotting DLM marginal nonlinear effects:\n")
-    #}
+    } 
+    
     for (ex.name in x$expNames) {
       if (!cw.plots.only | any(x$DLM[[ex.name]]$marg.cw)) {
         plot(plot.summary.tdlmm(x, type, ex.name, NULL, time1, time2, ...))
@@ -94,7 +93,7 @@ plot.summary.tdlmm <- function(x,
         dat[, c("Est", "CIMin", "CIMax")] <- exp(dat[, c("Est", "CIMin", "CIMax")])
       }
 
-      if (!is.null(trueDLM)) {  # SI: df for a plot returning trueDLM
+      if (!is.null(trueDLM)) {  # df for a plot returning trueDLM
         if (is.null(scale)) {
           dat$trueDLM <- trueDLM
         } else {
@@ -106,7 +105,7 @@ plot.summary.tdlmm <- function(x,
     if (!is.null(trueDLM)) { # draws an additional line of true DLM effect
       p <- ggplot(dat) +
             geom_hline(yintercept = ifelse(is.null(scale), 0, 1), color = "red", linetype = "dashed") +
-            geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey") +
+            geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey", alpha = 0.7) +
             geom_line(aes(x = `X`, y = `Est`)) +
             geom_line(aes(x = `X`, y = `trueDLM`), col = "blue", linetype = "dashed") + # SI
             theme_bw(base_size = base_size) +
@@ -116,7 +115,7 @@ plot.summary.tdlmm <- function(x,
     } else { # No true DLM (original code)
       p <- ggplot(dat) +
             geom_hline(yintercept = ifelse(is.null(scale), 0, 1), color = "red", linetype = "dashed") +
-            geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey") +
+            geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey", alpha = 0.7) +
             geom_line(aes(x = `X`, y = `Est`)) +
             theme_bw(base_size = base_size) +
             scale_y_continuous(expand = c(0, 0)) +

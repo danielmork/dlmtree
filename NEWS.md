@@ -1,7 +1,14 @@
+# dlmtree 1.0.1
+* change the documentation organization format of the main function using `list()` for input argument
+  - lists of arguments are linked to `control.R`
+  - remove the prefixes from control arguments
+* remove following scripts from the package: `tdlmm.R`, `tdlnm.R`
+* update credible interval bands to be transparent
+
 # dlmtree 1.0.0.2
-* fix to shiny.hdlm and shiny.hdlmm to remove bug where no data is selected
-* fix to combine.models.R to correctly combine tree posterior samples
-* fix to summary.tdlmm in rowMeans to stop autodrop of dimension
+* fix to `shiny.hdlm` and `shiny.hdlmm` to remove bug where no data is selected
+* fix to `combine.models.R` to correctly combine tree posterior samples
+* fix to `summary.tdlmm` in rowMeans to stop autodrop of dimension
 
 # dlmtree 1.0.0.1
 * a split point for Subgroup tab in shiny interface set to the mode of proportion

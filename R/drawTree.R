@@ -22,4 +22,3 @@ drawTree <- function(depth, alpha, beta) {
   return(n.term)
 }
 
-# hist(sapply(1:10000, function(i) drawTree(0, .5, .5)))

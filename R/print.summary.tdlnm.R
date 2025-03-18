@@ -1,15 +1,7 @@
-#' print.summary.tdlnm
+#' @method print.summary tdlnm
+#' @rdname print.summary
 #'
-#' @title Prints an overview with summary of model class 'tdlnm'
-#' @description Method for printing an overview with summary of model class 'tdlnm'
-#' 
-#' @param x an object of type 'summary.tdlnm', result of call to summary.tdlnm()
-#' @param digits integer number of digits to round
-#' @param ... additional parameters
-#' 
-#' @returns output of tdlnm fit in R console
 #' @export
-#'
 print.summary.tdlnm <- function(x, digits = 3, ...)
 {
   cat("---\n")
@@ -86,9 +78,7 @@ print.summary.tdlnm <- function(x, digits = 3, ...)
                         "Lower" = round(x$r.ci[1], digits),
                         "Upper" = round(x$r.ci[2], digits))
     row.names(r.out) <- "Dispersion"
-      #ifelse(x$r.ci[1,] > 0 | x$b2.ci[2,] < 0,
-      #      paste0("*", names(x$b2.mean)),
-      #      paste0(" ", names(x$b2.mean)))
+
     print(r.out)
     cat("---\n")
   }
