@@ -22,6 +22,7 @@ print.summary.tdlm <- function(x, digits = 3, ...)
   cat("-", x$ctr$n.burn, "burn-in iterations\n")
   cat("-", x$ctr$n.iter, "post-burn iterations\n")
   cat("-", x$ctr$n.thin, "thinning factor\n")
+  cat("- exposure measured at", x$n.lag, "time points\n")
   cat("-", x$conf.level, "confidence level\n")
 
   if (x$ctr$response != "zinb") {
