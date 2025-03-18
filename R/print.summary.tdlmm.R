@@ -11,7 +11,7 @@ print.summary.tdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
   cat("Model run info:\n")
 
   # Print ZI and NB part separately for ZINB
-  if (x$family == "zinb") {
+  if (x$ctr$response == "zinb") {
     cat("- ZI:", Reduce(paste, deparse1(x$formula.zi)), "\n")
     cat("- NB:", Reduce(paste, deparse1(x$formula)), "\n")
   } else {
@@ -19,11 +19,11 @@ print.summary.tdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
   }
 
   cat("- sample size:", format(x$n, big.mark = ","), "\n")
-  cat("- family:", x$family, "\n")
-  cat("- ", x$nTrees, " trees (alpha = ", x$treePrior[1], ", beta = ", x$treePrior[2], ")\n", sep = "")
-  cat("-", x$nBurn, "burn-in iterations\n")
-  cat("-", x$nIter, "post-burn iterations\n")
-  cat("-", x$nThin, "thinning factor\n")
+  cat("- family:", x$ctr$response, "\n")
+  cat("- ", x$ctr$n.trees, " trees (alpha = ", x$treePrior[1], ", beta = ", x$treePrior[2], ")\n", sep = "")
+  cat("-", x$ctr$n.burn, "burn-in iterations\n")
+  cat("-", x$ctr$n.iter, "post-burn iterations\n")
+  cat("-", x$ctr$n.thin, "thinning factor\n")
   cat("-", x$nExp, "exposures measured at", x$nLags, "time points\n")
   if (x$interaction > 0) {
     cat("-", x$nMix, "two-way interactions")
@@ -38,7 +38,7 @@ print.summary.tdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
 
 
   # Print fixed effect coefficient results (logistic)
-  if (x$family != "zinb") {
+  if (x$ctr$response != "zinb") {
     cat("\nFixed effects:\n")
     if (length(x$droppedCovar) > 0) {
       cat("dropped collinear covariates:", paste(x$droppedCovar, collapse = ", "),"\n")
@@ -58,7 +58,7 @@ print.summary.tdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
   }
 
   # Print fixed effect coefficient results (ZINB - Binary)
-  if (x$family == "zinb") {
+  if (x$ctr$response == "zinb") {
     cat("\nFixed effects (ZI model):\n")
     if (length(x$droppedCovar) > 0) {
       cat("dropped collinear covariates:", paste(x$droppedCovar, collapse = ", "),"\n")
@@ -93,10 +93,7 @@ print.summary.tdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
 
     # Print dispersion parameter, r
     cat("\nFixed effects (Dispersion):\n")
-    if (length(x$droppedCovar) > 0) {
-      cat("dropped collinear covariates:", paste(x$droppedCovar, collapse = ", "),"\n")
-    }
-      
+
     r.out <- data.frame("Mean" = round(x$r.mean, digits),
                           "Lower" = round(x$r.ci[1], digits),
                           "Upper" = round(x$r.ci[2], digits))
@@ -161,7 +158,7 @@ print.summary.tdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
 
   cat("\n---\n")
 
-  if(x$family == "gaussian"){
+  if(x$ctr$response == "gaussian"){
     cat("residual standard errors: ")
     cat(round(x$rse, 3), "\n")
   }

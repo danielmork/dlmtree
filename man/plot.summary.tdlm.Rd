@@ -4,12 +4,10 @@
 \alias{plot.summary.tdlm}
 \title{Plots a distributed lag function for model summary of 'tdlm'}
 \usage{
-\method{plot}{summary.tdlm}(x, trueDLM = NULL, ...)
+\method{plot}{summary.tdlm}(x, ...)
 }
 \arguments{
 \item{x}{object of class 'summary.tdlm', output of summary of 'tdlm'}
-
-\item{trueDLM}{A vector of true effects that can be obtained from the simulated data. Only applicable for simulation studies}
 
 \item{...}{additional plotting parameters for title and labels
 'start.time' which sets the first time value}
