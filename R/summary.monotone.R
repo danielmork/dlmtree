@@ -83,6 +83,7 @@ summary.monotone <- function(x, conf.level = 0.95, pred.at = NULL, cenval = 0, e
                            n.burn   = x$nBurn,
                            response = x$family),
               "conf.level"        = conf.level,
+              "n.lag"             = Lags,
               "sig.to.noise"      = ifelse(is.null(x$sigma2), NA,
                                        var(x$fhat) / mean(x$sigma2)),
               "rse"               = sd(x$sigma2),
@@ -98,8 +99,7 @@ summary.monotone <- function(x, conf.level = 0.95, pred.at = NULL, cenval = 0, e
               "gamma.ci"          = gamma.ci,
               "splitProb"         = splitProb,
               "splitIter"         = splitIter,
-              "formula"           = x$formula,
-              "formula.zi"        = x$formula.zi)
+              "formula"           = x$formula)
 
 
   class(ret) <- "summary.monotone"

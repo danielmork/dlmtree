@@ -20,13 +20,13 @@ print.summary.tdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
 
   cat("- sample size:", format(x$n, big.mark = ","), "\n")
   cat("- family:", x$ctr$response, "\n")
-  cat("- ", x$ctr$n.trees, " trees (alpha = ", x$treePrior[1], ", beta = ", x$treePrior[2], ")\n", sep = "")
+  cat("- ", x$ctr$n.trees, " trees\n")
   cat("-", x$ctr$n.burn, "burn-in iterations\n")
   cat("-", x$ctr$n.iter, "post-burn iterations\n")
   cat("-", x$ctr$n.thin, "thinning factor\n")
-  cat("-", x$nExp, "exposures measured at", x$nLags, "time points\n")
+  cat("-", x$n.exp, "exposures measured at", x$n.lag, "time points\n")
   if (x$interaction > 0) {
-    cat("-", x$nMix, "two-way interactions")
+    cat("-", x$n.mix, "two-way interactions")
     if (x$interaction == 1) {
       cat(" (no-self interactions)\n")
     } else {
@@ -40,8 +40,8 @@ print.summary.tdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
   # Print fixed effect coefficient results (logistic)
   if (x$ctr$response != "zinb") {
     cat("\nFixed effects:\n")
-    if (length(x$droppedCovar) > 0) {
-      cat("dropped collinear covariates:", paste(x$droppedCovar, collapse = ", "),"\n")
+    if (length(x$dropped.covar) > 0) {
+      cat("dropped collinear covariates:", paste(x$dropped.covar, collapse = ", "),"\n")
     }
       
     gamma.out <- data.frame("Mean" = round(x$gamma.mean, digits),
@@ -60,8 +60,8 @@ print.summary.tdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
   # Print fixed effect coefficient results (ZINB - Binary)
   if (x$ctr$response == "zinb") {
     cat("\nFixed effects (ZI model):\n")
-    if (length(x$droppedCovar) > 0) {
-      cat("dropped collinear covariates:", paste(x$droppedCovar, collapse = ", "),"\n")
+    if (length(x$dropped.covar) > 0) {
+      cat("dropped collinear covariates:", paste(x$dropped.covar, collapse = ", "),"\n")
     }
       
     b1.out <- data.frame("Mean" = round(x$b1.mean, digits),
@@ -77,8 +77,8 @@ print.summary.tdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
 
     # Print fixed effect coefficient results (ZINB - Count)
     cat("\nFixed effects (NB model):\n")
-    if (length(x$droppedCovar) > 0) {
-      cat("dropped collinear covariates:", paste(x$droppedCovar, collapse = ", "),"\n")
+    if (length(x$dropped.covar) > 0) {
+      cat("dropped collinear covariates:", paste(x$dropped.covar, collapse = ", "),"\n")
     }
     b2.out <- data.frame("Mean" = round(x$b2.mean, digits),
                          "Lower" = round(x$b2.ci[1,], digits),

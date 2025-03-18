@@ -4,7 +4,7 @@
 #' @export
 summary.hdlmm <- function(x, conf.level = 0.95, ...)
 {
-  nLags   <- max(x$TreeStructs$tmax)
+  Lags    <- max(x$TreeStructs$tmax)
   Iter    <- max(x$TreeStructs$Iter)
   ci.lims <- c((1 - conf.level) / 2, 1 - (1 - conf.level) / 2)
 
@@ -22,17 +22,17 @@ summary.hdlmm <- function(x, conf.level = 0.95, ...)
                            n.thin   = x$nThin,
                            n.burn   = x$nBurn,
                            response = x$family),
-              "nLags"         = nLags,
-              "nExp"          = x$nExp,
-              "nMix"          = x$nMix,
+              "n.lag"         = Lags,
+              "n.exp"         = x$nExp,
+              "n.mix"         = x$nMix,
               "interaction"   = x$interaction,
-              "mixPrior"      = x$mixPrior,
-              "modPrior"      = x$zeta,
+              "mix.prior"     = x$mixPrior,
+              "mod.prior"     = x$zeta,
               "conf.level"    = conf.level,
               "sig.to.noise"  = ifelse(is.null(x$sigma2), NA,
                                         var(x$fhat) / mean(x$sigma2)),
-              "rse"          = sd(x$sigma2),
-              "n"            = nrow(x$data),
+              "rse"           = sd(x$sigma2),
+              "n"             = nrow(x$data),
               "pip"           = pip_df,
               "gamma.mean"    = gamma.mean,
               "gamma.ci"      = gamma.ci,

@@ -15,9 +15,9 @@ print.summary.hdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
   cat("-", x$ctr$n.burn, "burn-in iterations\n")
   cat("-", x$ctr$n.iter, "post-burn iterations\n")
   cat("-", x$ctr$n.thin, "thinning factor\n")
-    cat("-", x$nExp, "exposures measured at", x$nLags, "time points\n")
+  cat("-", x$n.exp, "exposures measured at", x$n.lag, "time points\n")
   if (x$interaction > 0) {
-    cat("-", x$nMix, "two-way interactions")
+    cat("-", x$n.mix, "two-way interactions")
     if (x$interaction == 1) {
       cat(" (no-self interactions)\n")
     } else {
@@ -25,14 +25,14 @@ print.summary.hdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
     }
   }
 
-  cat("-", x$modPrior, "modifier sparsity prior\n")
-  cat("-", x$mixPrior, "exposure sparsity prior\n")
+  cat("-", x$mod.prior, "modifier sparsity prior\n")
+  cat("-", x$mix.prior, "exposure sparsity prior\n")
   cat("-", x$conf.level, "confidence level\n")
 
   # Print fixed effect coefficient results (logistic)
   cat("\nFixed effects:\n")
-  if (length(x$droppedCovar) > 0) {
-    cat("dropped collinear covariates:", paste(x$droppedCovar, collapse = ", "),"\n")
+  if (length(x$dropped.covar) > 0) {
+    cat("dropped collinear covariates:", paste(x$dropped.covar, collapse = ", "),"\n")
   }
     
   gamma.out <- data.frame("Mean" = round(x$gamma.mean, digits),

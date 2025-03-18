@@ -23,6 +23,7 @@ summary.hdlm <- function(x, conf.level = 0.95, ...)
                            n.burn   = x$nBurn,
                            response = x$family),
               "conf.level"   = conf.level,
+              "n.lag"        = Lags,
               "sig.to.noise" = ifelse(is.null(x$sigma2), NA,
                                         var(x$fhat) / mean(x$sigma2)),
               "rse"          = sd(x$sigma2),
