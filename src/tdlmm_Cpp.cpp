@@ -330,11 +330,10 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
   newTree = 0;
   
   // * Record tree 1
-  if (ctr->diagnostics) {
-    Eigen::VectorXd acc(7);
-    acc << 1, step1, success, m1, term1.size(), stepMhr, ratio;
-    (dgn->TreeAccept).push_back(acc);
-  }
+  Eigen::VectorXd acc(7);
+  acc << 1, step1, success, m1, term1.size(), stepMhr, ratio;
+  (dgn->TreeAccept).push_back(acc);
+  
 
 
 
@@ -441,12 +440,12 @@ void tdlmmTreeMCMC(int t, Node *tree1, Node *tree2, tdlmCtr *ctr, tdlmLog *dgn,
     delete newTree;
   newTree = 0;
 
+  
   // * Record tree 2
-  if (ctr->diagnostics) {
-    Eigen::VectorXd acc(7);
-    acc << 2, step2, success, m2, term2.size(), stepMhr, ratio;
-    (dgn->TreeAccept).push_back(acc);
-  }
+  Eigen::VectorXd acc2(7);
+  acc2 << 2, step2, success, m2, term2.size(), stepMhr, ratio;
+  (dgn->TreeAccept).push_back(acc2);
+  
 
 
 
@@ -996,10 +995,10 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
                             Named("sigma2") = wrap(sigma2),
                             Named("nu") = wrap(nu),
                             Named("tau") = wrap(tau),
-                            //Named("termNodes") = wrap(termNodes),
-                            //Named("termNodes2") = wrap(termNodes2), 
-                            // Named("tree1Exp") = wrap(tree1Exp),
-                            // Named("tree2Exp") = wrap(tree2Exp),
+                            Named("termNodes") = wrap(termNodes),
+                            Named("termNodes2") = wrap(termNodes2), 
+                            Named("tree1Exp") = wrap(tree1Exp),
+                            Named("tree2Exp") = wrap(tree2Exp),
                             Named("expProb") = wrap(expProb),
                             Named("expInf") = wrap(expInf),
                             Named("expCount") = wrap(expCount),

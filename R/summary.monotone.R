@@ -85,7 +85,7 @@ summary.monotone <- function(x, conf.level = 0.95, pred.at = NULL, cenval = 0, e
               "conf.level"        = conf.level,
               "n.lag"             = Lags,
               "sig.to.noise"      = ifelse(is.null(x$sigma2), NA,
-                                       var(x$fhat) / mean(x$sigma2)),
+                                           var(x$fhat) / mean(x$sigma2)),
               "rse"               = sd(x$sigma2),
               "n"                 = nrow(x$data),
               "plot.dat"          = plot.dat,
@@ -100,15 +100,44 @@ summary.monotone <- function(x, conf.level = 0.95, pred.at = NULL, cenval = 0, e
               "splitProb"         = splitProb,
               "splitIter"         = splitIter,
               "formula"           = x$formula)
-
+  
+  mcmc.samples <- list()    
+  if (mcmc) {
+    # dlm
+    mcmc.samples$dlm.mcmc                <- dlmest
+    dimnames(mcmc.samples$dlm.mcmc)[[1]] <- 1:Lags
+    dimnames(mcmc.samples$dlm.mcmc)[[2]] <- pred.at
+    
+    mcmc.samples$cumulative.mcmc           <- sapply(1:length(pred.at), function(i) { colSums(dlmest[,i,]) })
+    colnames(mcmc.samples$cumulative.mcmc) <- as.character(pred.at)
+    
+    # tree
+    mcmc.samples$tree.size <- x$termNodes
+    
+    # mhr parameters
+    mcmc.samples$accept <- x$treeAccept[, 1:2]
+    names(mcmc.samples$accept) <- c("step", "success")
+    
+    
+    # other parameters
+    if (x$zinb) {
+      param.vec <- c("tau", "nu", "sigma2", "b1", "b2")
+    } else {
+      param.vec <- c("tau", "nu", "sigma2", "gamma")
+    }
+    
+    hyper <- list()
+    for (param in param.vec) {
+      if (param %in% names(x)) {
+        hyper[[param]] <- x[[param]]
+      }
+    }
+    mcmc.samples$hyper <- do.call(cbind, hyper)
+    
+    ret$mcmc.samples <- mcmc.samples
+  }
 
   class(ret) <- "summary.monotone"
-  
-  if (mcmc) {
-    ret$dlm_mcmc                  <- dlmest
-    ret$cumulative_mcmc           <- sapply(1:length(pred.at), function(i) { colSums(dlmest[,i,]) })
-    colnames(ret$cumulative_mcmc) <- as.character(pred.at)
-  }
   
   return(ret)
 }

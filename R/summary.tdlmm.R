@@ -83,7 +83,7 @@ summary.tdlmm <- function(x, conf.level = 0.95, marginalize = "mean", log10BF.cr
                          "name" = x$expNames[i])
   }
   names(ret$DLM)  <- ret$exp.names
-  iqr_plus_mean   <- function(i) c(quantile(i, 0.25), mean(i), quantile(i, 0.75))
+  iqr.plus.mean   <- function(i) c(quantile(i, 0.25), mean(i), quantile(i, 0.75))
   ret$expInc      <- apply(x$expCount > 0, 2, mean)
 
   if (ret$n.exp == 1) {
@@ -91,7 +91,7 @@ summary.tdlmm <- function(x, conf.level = 0.95, marginalize = "mean", log10BF.cr
     #names(ret$expVar) <- names(ret$expInc)
   } else {
     ret$expVar <- apply((apply(x$muExp * x$expInf, 1, rank) - 1),
-                                1, iqr_plus_mean) / (ret$n.exp - 1)
+                                1, iqr.plus.mean) / (ret$n.exp - 1)
   }
 
 
@@ -183,7 +183,7 @@ summary.tdlmm <- function(x, conf.level = 0.95, marginalize = "mean", log10BF.cr
       names(ret$mixVar) <- names(ret$mixInc)
     } else {
       ret$mixVar <- apply((apply(x$muMix * x$mixInf, 1, rank) - 1),
-                          1, iqr_plus_mean) / (ret$n.mix - 1)
+                          1, iqr.plus.mean) / (ret$n.mix - 1)
     }
   }
 
@@ -248,7 +248,40 @@ summary.tdlmm <- function(x, conf.level = 0.95, marginalize = "mean", log10BF.cr
                           var(x$fhat) / mean(x$sigma2))
   ret$rse       <- sd(x$sigma2)
   ret$n         <- nrow(x$data)
-
+  
+  
+  mcmc.samples <- list()
+  if(mcmc){
+    # tree
+    mcmc.samples$tree1.size <- tdlmm.fit$termNodes
+    mcmc.samples$tree2.size <- tdlmm.fit$termNodes2
+    
+    # mhr parameters
+    mcmc.samples$accept <- x$treeAccept[, 1:3]
+    colnames(mcmc.samples$accept) <- c("tree", "step", "success")
+    
+    # exposure count
+    mcmc.samples$exp.count <- x$expCount
+    
+    # other parameters
+    if (x$zinb) {
+      param.vec <- c("tau", "nu", "sigma2", "b1", "b2")
+    } else {
+      param.vec <- c("tau", "nu", "sigma2", "gamma")
+    }
+    
+    hyper <- list()
+    for (param in param.vec) {
+      if (param %in% names(x)) {
+        hyper[[param]] <- x[[param]]
+      }
+    }
+    mcmc.samples$hyper <- do.call(cbind, hyper)
+    
+    ret$mcmc.samples <- mcmc.samples
+  }
+  
+  
   class(ret) <- "summary.tdlmm"
   
   return(ret)

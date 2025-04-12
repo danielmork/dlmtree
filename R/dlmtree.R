@@ -36,7 +36,7 @@
 #' @md
 #' @example inst/examples/dlmtree_example.R
 #'
-#' @returns Object of one of the classes: tdlm, tdlmm, tdlnm, hdlm, hdlmm
+#' @returns object of one of the classes: tdlm, tdlmm, tdlnm, hdlm, hdlmm, monotone
 #' @export
 #'
 dlmtree <- function(formula,
@@ -794,6 +794,10 @@ dlmtree <- function(formula,
   model$fhat    <- model$fhat * model$Yscale    
   model$sigma2  <- model$sigma2 * (model$Yscale^2)     
 
+  # Shrinkage
+  if(shrinkage > 1){
+    colnames(model$tau) <- paste0("tau", 1:n.trees)
+  }
 
   # Coefficients
   # Unscale fixed effect estimates

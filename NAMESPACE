@@ -34,10 +34,19 @@ S3method(predict, hdlmm)
 S3method(shiny, hdlm)
 S3method(shiny, hdlmm)
 
+S3method(diagnose, summary.tdlnm)
+S3method(diagnose, summary.tdlm)
+S3method(diagnose, summary.tdlmm)
+S3method(diagnose, summary.hdlm)
+S3method(diagnose, summary.hdlmm)
+S3method(diagnose, summary.monotone)
+
 import(ggplot2)
+import(ggridges)
 import(dplyr)
 import(shiny)
 import(shinythemes)
+import(coda)
 
 importFrom("stats", "as.formula", "model.frame", "model.matrix",
            "model.response", "pnorm", "quantile", "rbinom", "rnorm",
@@ -58,13 +67,6 @@ export(sim.tdlnm)
 export(sim.tdlmm)
 export(sim.hdlmm)
 
-# export(summary.tdlnm)
-# export(summary.monotone)
-# export(summary.tdlm)
-# export(summary.tdlmm)
-# export(summary.hdlm)
-# export(summary.hdlmm)
-
 export(combine.models)
 export(estDLM)
 export(pip)
@@ -75,13 +77,6 @@ export(plot.summary.tdlnm)
 export(plot.summary.tdlm)
 export(plot.summary.monotone)
 export(plot.summary.tdlmm)
-
-# export(print.summary.tdlnm)
-# export(print.summary.monotone)
-# export(print.summary.tdlmm)
-# export(print.summary.tdlm)
-# export(print.summary.hdlm)
-# export(print.summary.hdlmm)
 
 export(predict.hdlm)
 export(predict.hdlmm)

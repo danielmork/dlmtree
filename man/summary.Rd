@@ -13,9 +13,9 @@
 \usage{
 summary(x, conf.level = 0.95, ...)
 
-\method{summary}{hdlm}(x, conf.level = 0.95, ...)
+\method{summary}{hdlm}(x, conf.level = 0.95, mcmc = FALSE, ...)
 
-\method{summary}{hdlmm}(x, conf.level = 0.95, ...)
+\method{summary}{hdlmm}(x, conf.level = 0.95, mcmc = FALSE, ...)
 
 \method{summary}{monotone}(
   x,
@@ -28,7 +28,7 @@ summary(x, conf.level = 0.95, ...)
   ...
 )
 
-\method{summary}{tdlm}(x, conf.level = 0.95, ...)
+\method{summary}{tdlm}(x, conf.level = 0.95, mcmc = FALSE, ...)
 
 \method{summary}{tdlmm}(
   x,
@@ -58,6 +58,8 @@ summary(x, conf.level = 0.95, ...)
 
 \item{...}{additional parameters}
 
+\item{mcmc}{keep all mcmc iterations (large memory requirement)}
+
 \item{pred.at}{numerical vector of exposure values to make predictions for 
 at each time period}
 
@@ -65,8 +67,6 @@ at each time period}
 predictions at all other exposure values}
 
 \item{exposure.se}{scalar smoothing factor, if different from model}
-
-\item{mcmc}{keep all mcmc iterations (large memory requirement)}
 
 \item{verbose}{show progress in console}
 
@@ -78,7 +78,83 @@ a named vector with specific values for each exposure}
 such that log10(BayesFactor) > x. Default = 0.5.}
 }
 \value{
-list of summary outputs of the model fit
+list of summary outputs of the model fit containing:
+\describe{
+\item{\strong{Common outputs}}{
+    \describe{
+      \item{\code{ctr}}{list consisting of model parameters for MCMC, model class, response}
+      \item{\code{conf.level}}{confidence level for computation of credible intervals}
+      \item{\code{n.lag}}{number of lags}
+      \item{\code{sig.to.noise}}{the ratio of the variance of fitted values (signal) to the mean error variance (noise)}
+      \item{\code{rse}}{residual standard error}
+      \item{\code{n}}{sample size}
+      \item{\code{formula}}{formula used for model fitting}
+      \item{\code{gamma.mean}}{estimated regression coefficients of the fixed effect}
+      \item{\code{gamma.ci}}{95\% credible interval of estimated regression coefficients of the fixed effect}
+    }
+  }
+  \item{\strong{TDLM}}{
+    Outputs specific to TDLM
+    \describe{
+      \item{\code{matfit}}{estimated distributed lag effects}
+      \item{\code{cilower}}{lower bound of credible interval of estimated distributed lag effects}
+      \item{\code{ciupper}}{upper bound of credible interval of estimated distributed lag effects}
+      \item{\code{dlm.mcmc}}{mcmc samples of distributed lag effects}
+      \item{\code{cumulative.mcmc}}{mcmc samples of cumulative effects}
+    }
+  }
+  \item{\strong{TDLMM}}{
+    The variance of the input data.
+    \describe{
+      \item{\code{matfit}}{estimated distributed lag effects}
+      \item{\code{cilower}}{lower bound of credible interval of estimated distributed lag effects}
+      \item{\code{ciupper}}{upper bound of credible interval of estimated distributed lag effects}
+      \item{\code{dlm.mcmc}}{mcmc samples of distributed lag effects}
+      \item{\code{cumulative.mcmc}}{mcmc samples of cumulative effects}
+    }
+  }
+  \item{\strong{TDLNM}}{
+    The median (middle value) of the input data.
+    \describe{
+      \item{\code{matfit}}{estimated distributed lag effects}
+      \item{\code{cilower}}{lower bound of credible interval of estimated distributed lag effects}
+      \item{\code{ciupper}}{upper bound of credible interval of estimated distributed lag effects}
+      \item{\code{dlm.mcmc}}{mcmc samples of distributed lag effects}
+      \item{\code{cumulative.mcmc}}{mcmc samples of cumulative effects}
+    }
+  }
+  \item{\strong{HDLM}}{
+    The median (middle value) of the input data.
+    \describe{
+      \item{\code{matfit}}{estimated distributed lag effects}
+      \item{\code{cilower}}{lower bound of credible interval of estimated distributed lag effects}
+      \item{\code{ciupper}}{upper bound of credible interval of estimated distributed lag effects}
+      \item{\code{dlm.mcmc}}{mcmc samples of distributed lag effects}
+      \item{\code{cumulative.mcmc}}{mcmc samples of cumulative effects}
+    }
+  }
+  \item{\strong{HDLMM}}{
+    The median (middle value) of the input data.
+    \describe{
+      \item{\code{matfit}}{estimated distributed lag effects}
+      \item{\code{cilower}}{lower bound of credible interval of estimated distributed lag effects}
+      \item{\code{ciupper}}{upper bound of credible interval of estimated distributed lag effects}
+      \item{\code{dlm.mcmc}}{mcmc samples of distributed lag effects}
+      \item{\code{cumulative.mcmc}}{mcmc samples of cumulative effects}
+    }
+  }
+  
+  \code{hello}{saying bye}
+  \code{hello}{saying bye}
+  
+  \code{hello}{saying bye}
+  
+  
+  - hello
+  - this way maybe
+  
+  - hello
+}
 }
 \description{
 summary generic function for S3method
