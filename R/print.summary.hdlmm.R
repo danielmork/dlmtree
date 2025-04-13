@@ -1,8 +1,6 @@
-#' @method print.summary hdlmm
+#' @method print summary.hdlmm
 #' @rdname print.summary
-#'
-#' @export
-print.summary.hdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
+print.summary.hdlmm <- function(x, digits = 3, ...)
 {
   cat("---\n")
   cat("HDLMM summary\n\n")

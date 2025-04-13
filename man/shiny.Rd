@@ -13,10 +13,10 @@ shiny(fit)
 \method{shiny}{hdlmm}(fit)
 }
 \arguments{
-\item{fit}{an object of class 'hdlm', 'hdlmm' to which S3method is applied}
+\item{fit}{object of class 'hdlm', 'hdlmm' to which S3method is applied}
 }
 \value{
-'shiny' interface for further analysis on heterogeneous analyses. 
+shiny interface for further analysis on heterogeneous analyses. 
 The interface includes tabs for modifier selection, personalized exposure 
 effects and subgroup-specific effects.
 }

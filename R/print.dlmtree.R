@@ -1,7 +1,6 @@
 #' @method print tdlnm
 #' @rdname print
 #'
-#' @export
 print.tdlnm <- function(x, ...){
   
   cat("Object of class",x$class)
@@ -14,7 +13,6 @@ print.tdlnm <- function(x, ...){
 #' @method print tdlm
 #' @rdname print
 #'
-#' @export
 print.tdlm <- function(x, ...){
   
   cat("Object of class",x$class)
@@ -28,7 +26,6 @@ print.tdlm <- function(x, ...){
 #' @method print tdlmm
 #' @rdname print
 #'
-#' @export
 print.tdlmm <- function(x, ...){
   
   cat("Object of class",x$class)
@@ -41,7 +38,6 @@ print.tdlmm <- function(x, ...){
 #' @method print hdlm
 #' @rdname print
 #'
-#' @export
 print.hdlm <- function(x, ...){
   
   cat("Object of class",x$class)
@@ -56,7 +52,6 @@ print.hdlm <- function(x, ...){
 #' @method print hdlmm
 #' @rdname print
 #'
-#' @export
 print.hdlmm <- function(x, ...){
   
   cat("Object of class",x$class)
@@ -70,7 +65,6 @@ print.hdlmm <- function(x, ...){
 #' @method print monotone
 #' @rdname print
 #'
-#' @export
 print.monotone <- function(x, ...){
   
   cat("Object of class",x$class)

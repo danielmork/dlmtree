@@ -1,10 +1,6 @@
 #' @method diagnose summary.tdlnm
+#' @rdname diagnose
 diagnose.summary.tdlnm <- function(x, ...) {
-  
-  # check object class
-  if (class(x) != "summary.tdlnm") {
-    stop("The class of the model summary must be 'summary.tdlnm'")
-  }
   
   if (is.null(x$mcmc.samples)){
     stop("MCMC samples are missing. Make sure to set `mcmc = T` when running `summary()` function.")

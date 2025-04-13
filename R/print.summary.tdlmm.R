@@ -1,9 +1,12 @@
-#' @method print.summary tdlmm
+#' @method print summary.tdlmm
 #' @rdname print.summary
-#'
-#' @export
-print.summary.tdlmm <- function(x, digits = 3, cw.only = TRUE, ...)
+#' @keywords internal
+print.summary.tdlmm <- function(x, digits = 3, ...)
 {
+  # Default for critical window
+  cw.only = TRUE
+  
+  
   cat("---\n")
   cat("TDLMM summary\n\n")
 

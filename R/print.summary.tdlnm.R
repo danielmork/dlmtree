@@ -1,7 +1,6 @@
-#' @method print.summary tdlnm
+#' @method print summary.tdlnm
 #' @rdname print.summary
-#'
-#' @export
+#' @keywords internal
 print.summary.tdlnm <- function(x, digits = 3, ...)
 {
   cat("---\n")

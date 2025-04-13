@@ -253,8 +253,8 @@ summary.tdlmm <- function(x, conf.level = 0.95, marginalize = "mean", log10BF.cr
   mcmc.samples <- list()
   if(mcmc){
     # tree
-    mcmc.samples$tree1.size <- tdlmm.fit$termNodes
-    mcmc.samples$tree2.size <- tdlmm.fit$termNodes2
+    mcmc.samples$tree1.size <- x$termNodes
+    mcmc.samples$tree2.size <- x$termNodes2
     
     # mhr parameters
     mcmc.samples$accept <- x$treeAccept[, 1:3]
