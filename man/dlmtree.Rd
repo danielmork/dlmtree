@@ -56,7 +56,7 @@ named list containing equally sized numerical matrices of exposure data having s
 \item{control.diagnose}{list of control parameters for diagnostics. This is passed to \link{dlmtree.control.diagnose}}
 }
 \value{
-Object of one of the classes: tdlm, tdlmm, tdlnm, hdlm, hdlmm
+object of one of the classes: tdlm, tdlmm, tdlnm, hdlm, hdlmm, monotone
 }
 \description{
 The 'dlmtree' function accommodates various response variable types, including continuous, binary, and zero-inflated count values.

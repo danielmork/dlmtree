@@ -37,17 +37,17 @@ plot.summary.tdlmm <- function(x,
       cat("Plotting DLM marginal effects:\n")
     } 
     
-    for (ex.name in x$expNames) {
+    for (ex.name in x$exp.names) {
       if (!cw.plots.only | any(x$DLM[[ex.name]]$marg.cw)) {
         plot(plot.summary.tdlmm(x, type, ex.name, NULL, time1, time2, ...))
         readline(prompt = "Press [enter] to continue")
       }
     }
 
-    if (length(x$mixNames) > 0 & x$interaction > 0) {
+    if (length(x$mix.names) > 0 & x$interaction > 0) {
       cat("Plotting interaction effects:\n")
-      for (ex.name1 in x$expNames) {
-        for (ex.name2 in x$expNames) {
+      for (ex.name1 in x$exp.names) {
+        for (ex.name2 in x$exp.names) {
           if (paste0(ex.name1, "-", ex.name2) %in% names(x$MIX)) {
             if (!cw.plots.only | any(x$MIX[[paste0(ex.name1, "-", ex.name2)]]$cw)) {
               plot(plot.summary.tdlmm(x, type, ex.name1,
@@ -64,15 +64,15 @@ plot.summary.tdlmm <- function(x,
   # Plot setup
   args        <- list(...)
   start.time  <- ifelse(!is.null(args$start.time), args$start.time, 1)
-  Lags        <- start.time:(start.time + x$nLags - 1)
+  Lags        <- start.time:(start.time + x$n.lag - 1)
   base_size   <- ifelse(!is.null(args$base_size), args$base_size, 11)
 
   if (is.numeric(exposure1)) {
-    if (exposure1 > length(x$expNames)) {
+    if (exposure1 > length(x$exp.names)) {
       stop("exposure1 incorrectly specified")
     }
       
-    exposure1 <- x$expNames[exposure1]
+    exposure1 <- x$exp.names[exposure1]
   }
 
   # Plot DLM
@@ -128,11 +128,11 @@ plot.summary.tdlmm <- function(x,
     # Plot Mixture
   } else {
     if (is.numeric(exposure2)) {
-      if (exposure2 > length(x$expNames)){
+      if (exposure2 > length(x$exp.names)){
         stop("exposure2 incorrectly specified")
       }
         
-      exposure2 <- x$expNames[exposure2]
+      exposure2 <- x$exp.names[exposure2]
     }
 
     plotDat <- data.frame(x = rep(Lags, length(Lags)),

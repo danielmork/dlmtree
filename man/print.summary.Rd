@@ -12,29 +12,27 @@
 \alias{print.summary.tdlnm}
 \title{print.summary}
 \usage{
-print.summary(x, ...)
+print.summary(x, digits = 3, ...)
 
-\method{print.summary}{hdlm}(x, digits = 3, ...)
+\method{print}{summary.hdlm}(x, digits = 3, ...)
 
-\method{print.summary}{hdlmm}(x, digits = 3, cw.only = TRUE, ...)
+\method{print}{summary.hdlmm}(x, digits = 3, ...)
 
-\method{print.summary}{monotone}(x, digits = 3, ...)
+\method{print}{summary.monotone}(x, digits = 3, ...)
 
-\method{print.summary}{tdlm}(x, digits = 3, ...)
+\method{print}{summary.tdlm}(x, digits = 3, ...)
 
-\method{print.summary}{tdlmm}(x, digits = 3, cw.only = TRUE, ...)
+\method{print}{summary.tdlmm}(x, digits = 3, ...)
 
-\method{print.summary}{tdlnm}(x, digits = 3, ...)
+\method{print}{summary.tdlnm}(x, digits = 3, ...)
 }
 \arguments{
 \item{x}{a summary object resulting from summary() applied to an object of 
 class 'tdlm', 'tdlmm', 'tdlnm', 'hdlm', 'hdlmm', 'monotone'}
 
+\item{digits}{number of decimal places to round the numeric values to}
+
 \item{...}{additional parameters}
-
-\item{digits}{integer number of digits to round}
-
-\item{cw.only}{print only results for exposures with critical windows}
 }
 \value{
 summary output of a model fit printed in the R console
@@ -42,3 +40,4 @@ summary output of a model fit printed in the R console
 \description{
 print.summary generic function for S3method
 }
+\keyword{internal}

@@ -20,7 +20,10 @@
 #' pip(fit, type = 2)
 #' }
 #' 
-#' @returns A vector (type=1) or data.frame (type=2) of PIPs.
+#' @returns numeric vector of PIPs named with modifiers (type=1) or data.frame of PIPs with the following columns (type=2):
+#' \item{var1}{first modifier of joint modifiers}
+#' \item{var2}{second modifier of joint modifiers}
+#' \item{pip}{joint PIPs for the two modifiers}
 #' @export
 pip <- function(object, type=1) {
   if (type == 1) { # main effect PIPs

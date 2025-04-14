@@ -503,6 +503,9 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
   Eigen::MatrixXd modInf        = (dgn->modInf).transpose();
 
   Eigen::MatrixXd modAccept((dgn->treeModAccept).size(), 9);
+  for (s = 0; s < (dgn->treeModAccept).size(); s++){
+    modAccept.row(s) = dgn->treeModAccept[s];
+  }
   Eigen::MatrixXd dlmAccept((dgn->treeDLMAccept).size(), 9);
   for (s = 0; s < (dgn->treeDLMAccept).size(); s++){
     dlmAccept.row(s) = dgn->treeDLMAccept[s];
@@ -539,13 +542,14 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
                             Named("muMix")          = wrap(muMix),
                             Named("modCount")       = wrap(modCount),
                             Named("modInf")         = wrap(modInf),
-                            Named("treeDLMAccept")  = wrap(dlmAccept)));
+                            Named("treeDLMAccept")  = wrap(dlmAccept),
+                            Named("treeModAccept")  = wrap(modAccept)));
                             //Named("fhat") = wrap(fhat),
                             //Named("totTerm") = wrap(totTerm),
                             //Named("expInf") = wrap(expInf),
                             //Named("mixInf") = wrap(mixInf),
                             //Named("mixCount") = wrap(mixCount),
-                            //Named("treeModAccept") = wrap(modAccept)));
+                            //));
 
 } // end dlmtreeTDLMMGaussian
 
@@ -929,12 +933,12 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
   }
   newTree = 0;
 
+  
   // * Record tree 1
-  if (ctr->diagnostics) {
-    Eigen::VectorXd acc(9);
-    acc << ctr->record, t, 1, step1, success, m1, dlmTerm1.size(), stepMhr, ratio;
-    (dgn->treeDLMAccept).push_back(acc);
-  }
+  Eigen::VectorXd accDLM1(9);
+  accDLM1 << ctr->record, t, 1, step1, success, m1, dlmTerm1.size(), stepMhr, ratio;
+  (dgn->treeDLMAccept).push_back(accDLM1);
+
 
 
   // [New tree proposal method] 
@@ -1034,11 +1038,10 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
   newTree = 0;
 
   // * Record tree 2
-  if (ctr->diagnostics) {
-    Eigen::VectorXd acc(9);
-    acc << ctr->record, t, 2, step2, success, m2, dlmTerm2.size(), stepMhr, ratio;
-    (dgn->treeDLMAccept).push_back(acc);
-  }
+  Eigen::VectorXd accDLM2(9);
+  accDLM2 << ctr->record, t, 2, step2, success, m2, dlmTerm2.size(), stepMhr, ratio;
+  (dgn->treeDLMAccept).push_back(accDLM2);
+
 
 
   // *** Propose new modifier tree ***
@@ -1090,13 +1093,14 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
   } // end modTree proposal
   modTree->reject();
 
+  
   // * Record modifier tree
-  if (ctr->diagnostics) {
-    Eigen::VectorXd acc(9);
-    acc << ctr->record, t, 0, step, success, 0, modTerm.size(), stepMhr, ratio;
-    (dgn->treeDLMAccept).push_back(acc);
-  }
+  Eigen::VectorXd accMod(9);
+  accMod << ctr->record, t, 0, step, success, 0, modTerm.size(), stepMhr, ratio;
+  (dgn->treeModAccept).push_back(accMod);
 
+  
+  
   // *** Update parameters ***
   // Tree shrinkage
   double tauT2 = mhr0.term1T2 / m1Var + mhr0.term2T2 / m2Var;

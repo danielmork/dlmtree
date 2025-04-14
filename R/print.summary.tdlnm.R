@@ -1,26 +1,21 @@
-#' @method print.summary tdlnm
+#' @method print summary.tdlnm
 #' @rdname print.summary
-#'
-#' @export
+#' @keywords internal
 print.summary.tdlnm <- function(x, digits = 3, ...)
 {
   cat("---\n")
   cat("TDLNM summary\n\n")
 
   cat("Model run info:\n")
-  # Print ZI and NB part separately for ZINB
-  if (x$ctr$response == "zinb") {
-    cat("- ZI:", Reduce(paste, deparse1(x$formula.zi)), "\n")
-    cat("- NB:", Reduce(paste, deparse1(x$formula)), "\n")
-  } else {
-    cat("-", Reduce(paste, deparse1(x$formula)), "\n")
-  }
+
+  cat("-", Reduce(paste, deparse1(x$formula)), "\n")
   cat("- sample size:", format(x$n, big.mark = ","), "\n")
   cat("- family:", x$ctr$response, "\n")
   cat("-", x$ctr$n.trees, "trees\n")
   cat("-", x$ctr$n.burn, "burn-in iterations\n")
   cat("-", x$ctr$n.iter, "post-burn iterations\n")
   cat("-", x$ctr$n.thin, "thinning factor\n")
+  cat("- exposure measured at", x$n.lag, "time points\n")
   cat("-", x$conf.level, "confidence level\n")
 
   if (x$ctr$response != "zinb") {

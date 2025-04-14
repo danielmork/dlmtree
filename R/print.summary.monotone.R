@@ -1,7 +1,5 @@
-#' @method print.summary monotone
+#' @method print summary.monotone
 #' @rdname print.summary
-#'
-#' @export
 print.summary.monotone <- function(x, digits = 3, ...)
 {
   cat("---\n")
@@ -16,6 +14,7 @@ print.summary.monotone <- function(x, digits = 3, ...)
   cat("-", x$ctr$n.burn, "burn-in iterations\n")
   cat("-", x$ctr$n.iter, "post-burn iterations\n")
   cat("-", x$ctr$n.thin, "thinning factor\n")
+  cat("- exposure measured at", x$n.lag, "time points\n")
   cat("-", x$conf.level, "confidence level\n")
 
   cat("\nFixed effect coefficients:\n")

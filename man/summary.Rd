@@ -13,9 +13,9 @@
 \usage{
 summary(x, conf.level = 0.95, ...)
 
-\method{summary}{hdlm}(x, conf.level = 0.95, ...)
+\method{summary}{hdlm}(x, conf.level = 0.95, mcmc = FALSE, ...)
 
-\method{summary}{hdlmm}(x, conf.level = 0.95, ...)
+\method{summary}{hdlmm}(x, conf.level = 0.95, mcmc = FALSE, ...)
 
 \method{summary}{monotone}(
   x,
@@ -28,7 +28,7 @@ summary(x, conf.level = 0.95, ...)
   ...
 )
 
-\method{summary}{tdlm}(x, conf.level = 0.95, ...)
+\method{summary}{tdlm}(x, conf.level = 0.95, mcmc = FALSE, ...)
 
 \method{summary}{tdlmm}(
   x,
@@ -58,6 +58,8 @@ summary(x, conf.level = 0.95, ...)
 
 \item{...}{additional parameters}
 
+\item{mcmc}{keep all mcmc iterations (large memory requirement)}
+
 \item{pred.at}{numerical vector of exposure values to make predictions for 
 at each time period}
 
@@ -65,8 +67,6 @@ at each time period}
 predictions at all other exposure values}
 
 \item{exposure.se}{scalar smoothing factor, if different from model}
-
-\item{mcmc}{keep all mcmc iterations (large memory requirement)}
 
 \item{verbose}{show progress in console}
 

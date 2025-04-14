@@ -18,7 +18,9 @@ Imports:
     shiny,
     shinythemes,
     tidyr,
-    mgcv
+    mgcv,
+    ggridges,
+    coda
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen
 RoxygenNote: 7.3.2
 SystemRequirements: C++11
