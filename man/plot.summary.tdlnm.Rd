@@ -10,10 +10,11 @@
 \item{x}{object of class 'summary.tdlnm', output of summary of 'tdlnm'}
 
 \item{plot.type}{string indicating plot type, options are 'mean' (default)
-which shows mean exposure-time response surface, 'se', 'ci-min', 'ci-max',
-'slice' which takes a slice of the plot at a given 'val' or 'time',
-'animate' which creates a animation of slices of the surface plot across
-exposure values (requires package gganimate)}
+which shows mean exposure-time response surface, 'cumulative' which shows the cumulative effects per 
+exposure-concentration level, 'effect' which returns a grid of exposure concentration and lag
+ to determine if the credible interval contains zero, with the direction of the effect indicated,
+'se', 'ci-min', 'ci-max', 'slice' which takes a slice of the plot at a given 'val' or 'time',
+'animate' which creates a animation of slices of the surface plot across exposure values (requires package gganimate)}
 
 \item{val}{exposure value for slice plot}
 
