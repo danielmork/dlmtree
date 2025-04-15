@@ -1,3 +1,20 @@
+# dlmtree 1.1.0
+* new feature: `diagnose()` function - launches a Shiny panel for assessing MCMC convergence, which includes:
+  * trace plots and density plots for the estimated distributed lag function
+  * lag-wise convergence analysis
+  * tree update convergence
+  * trace plots and density plots for hyperparameters
+  * exposure selection (for mixture models)
+  * modifier selection (for heterogeneous models)
+
+* update `summary.X()` functions
+  * more consistent output formats
+  * add options to extract MCMC posterior samples
+
+* documentation improvement
+  * add more detailed descriptions in `Value` sections
+  * reduced redundancy across help files of S3method
+
 # dlmtree 1.0.1
 * change the documentation organization format of the main function using `list()` for input argument
   - lists of arguments are linked to `control.R`

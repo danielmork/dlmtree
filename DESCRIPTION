@@ -1,12 +1,12 @@
 Package: dlmtree
 Type: Package
 Title: Bayesian Treed Distributed Lag Models
-Version: 1.0.0
+Version: 1.1.0
 Authors@R: c(
     person("Daniel", "Mork", email = "dmork@hsph.harvard.edu", role = c("aut", "cre", "cph"), comment = c(ORCID = "0000-0002-7924-0706")),
     person("Seongwon", "Im", email = "Seongwon.Im@colostate.edu", role = "aut", comment = c(ORCID = "0009-0000-8447-5852")),
     person("Ander", "Wilson", email = "Ander.Wilson@colostate.edu", role = "aut", comment = c(ORCID = "0000-0003-4774-3883")))
-Description: Estimation of distributed lag models (DLMs) based on a Bayesian additive regression trees framework. Includes several extensions of DLMs: treed DLMs and distributed lag mixture models (Mork and Wilson, 2023) <doi:10.1111/biom.13568>; treed distributed lag nonlinear models (Mork and Wilson, 2022) <doi:10.1093/biostatistics/kxaa051>; heterogeneous DLMs (Mork, et. al., 2024) <doi:10.1080/01621459.2023.2258595>; monotone DLMs (Mork and Wilson, 2024) <doi:10.1214/23-BA1412>. The package also includes visualization tools and a 'shiny' interface to help interpret results.
+Description: Estimation of distributed lag models (DLMs) based on a Bayesian additive regression trees framework. Includes several extensions of DLMs: treed DLMs and distributed lag mixture models (Mork and Wilson, 2023) <doi:10.1111/biom.13568>; treed distributed lag nonlinear models (Mork and Wilson, 2022) <doi:10.1093/biostatistics/kxaa051>; heterogeneous DLMs (Mork, et. al., 2024) <doi:10.1080/01621459.2023.2258595>; monotone DLMs (Mork and Wilson, 2024) <doi:10.1214/23-BA1412>. The package also includes visualization tools and a 'shiny' interface to check model convergence and to help interpret results.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: false
