@@ -1,4 +1,4 @@
-#' @method print summary.tdlm
+#' @method print.summary tdlm
 #' @rdname print.summary
 print.summary.tdlm <- function(x, digits = 3, ...)
 {

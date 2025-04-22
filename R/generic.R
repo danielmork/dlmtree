@@ -60,7 +60,8 @@ summary <- function(x, conf.level = 0.95, ...){
 #' @param ... additional parameters
 #' 
 #' @returns summary output of a model fit printed in the R console
-#' @export print.summary
+#' @export
+#' @method print summary
 print.summary <- function(x, digits = 3, ...){
   UseMethod("print.summary")
 }

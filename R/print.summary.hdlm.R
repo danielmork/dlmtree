@@ -1,4 +1,4 @@
-#' @method print summary.hdlm
+#' @method print.summary hdlm
 #' @rdname print.summary
 print.summary.hdlm <- function(x, digits = 3, ...)
 {
