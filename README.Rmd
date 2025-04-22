@@ -13,12 +13,10 @@ knitr::opts_chunk$set(
 )
 ```
 
-# dlmtree  <a href="https://anderwilson.github.io/bdlim/"><img src="man/figures/logo.png" align="right" height="138" /></a>
-
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/dlmtree)](https://CRAN.R-project.org/package=dlmtree)
 [![R-CMD-check](https://github.com/danielmork/dlmtree/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/danielmork/dlmtree/actions/workflows/R-CMD-check.yaml)
-[![Downloads](https://cranlogs.r-pkg.org/badges/dlmtree)](https://CRAN.R-project.org/package=dlmtree)
+[![Downloads](https://cranlogs.r-pkg.org/badges/grand-total/dlmtree)](https://CRAN.R-project.org/package=dlmtree)
 <!-- badges: end -->
 
 `dlmtree` is an R package that provides constrained distributed lag models (DLMs) using a regression tree approach within the Bayesian additive regression trees (BART) framework, referred to as treed DLMs. The package includes various extensions of treed DLMs, allowing for the incorporation of different scenarios like linear, non-linear associations, mixture exposures, and heterogeneous exposure effects. The package is built user-friendly with a single function \texttt{dlmtree} with three arguments to specify treed DLMs. Functions for summarizing the model fit and visualization are also provided.

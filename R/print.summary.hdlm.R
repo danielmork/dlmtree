@@ -1,5 +1,5 @@
-#' @method print.summary hdlm
-#' @rdname print.summary
+#' @method print summary.hdlm
+#' @rdname print
 print.summary.hdlm <- function(x, digits = 3, ...)
 {
   cat("---\n")

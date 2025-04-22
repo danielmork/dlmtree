@@ -1,5 +1,5 @@
-#' @method print.summary tdlmm
-#' @rdname print.summary
+#' @method print summary.tdlmm
+#' @rdname print
 print.summary.tdlmm <- function(x, digits = 3, ...)
 {
   # Default for critical window
