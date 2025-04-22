@@ -1,5 +1,5 @@
-#' @method print.summary monotone
-#' @rdname print.summary
+#' @method print summary.monotone
+#' @rdname print
 print.summary.monotone <- function(x, digits = 3, ...)
 {
   cat("---\n")
