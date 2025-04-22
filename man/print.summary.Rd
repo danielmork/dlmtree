@@ -12,19 +12,19 @@
 \alias{print.summary.tdlnm}
 \title{print.summary}
 \usage{
-print.summary(x, digits = 3, ...)
+\method{print}{summary}(x, digits = 3, ...)
 
-\method{print}{summary.hdlm}(x, digits = 3, ...)
+\method{print.summary}{hdlm}(x, digits = 3, ...)
 
-\method{print}{summary.hdlmm}(x, digits = 3, ...)
+\method{print.summary}{hdlmm}(x, digits = 3, ...)
 
-\method{print}{summary.monotone}(x, digits = 3, ...)
+\method{print.summary}{monotone}(x, digits = 3, ...)
 
-\method{print}{summary.tdlm}(x, digits = 3, ...)
+\method{print.summary}{tdlm}(x, digits = 3, ...)
 
-\method{print}{summary.tdlmm}(x, digits = 3, ...)
+\method{print.summary}{tdlmm}(x, digits = 3, ...)
 
-\method{print}{summary.tdlnm}(x, digits = 3, ...)
+\method{print.summary}{tdlnm}(x, digits = 3, ...)
 }
 \arguments{
 \item{x}{a summary object resulting from summary() applied to an object of 
@@ -40,4 +40,3 @@ summary output of a model fit printed in the R console
 \description{
 print.summary generic function for S3method
 }
-\keyword{internal}

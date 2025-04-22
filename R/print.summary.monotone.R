@@ -1,4 +1,4 @@
-#' @method print summary.monotone
+#' @method print.summary monotone
 #' @rdname print.summary
 print.summary.monotone <- function(x, digits = 3, ...)
 {
