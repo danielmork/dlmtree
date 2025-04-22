@@ -13,7 +13,7 @@ diagnose.summary.tdlnm <- function(x, ...) {
     
     abs.x <- abs(x)
     if (abs.x < 1e-4) {
-      signif(x, 2) |> format(scientific = TRUE)
+      format(signif(x, 2), scientific = TRUE)
     } else if (abs.x < 1) {
       signif(x, 2)
     } else if (abs.x < 1000) {
