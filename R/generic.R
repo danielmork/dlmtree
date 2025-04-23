@@ -12,10 +12,15 @@ globalVariables(c("lower", "upper", "est", "Modifier", "PIP", "location", "propo
 #' 
 #' @description print generic function for S3method
 #' 
-#' @param x an object of class 'tdlm', 'tdlmm', 'tdlnm', 'hdlm', 'hdlmm', 'monotone'
-#' @param ... not used.
+#' @param x An object of class 'tdlm', 'tdlmm', 'tdlnm', 'hdlm', 'hdlmm', 'monotone', 
+#' representing a fitted model using dlmtree(); or a summary object produced by applying 
+#' summary() to one of these model objects.
+#' @param digits number of decimal places to round the numeric values to
+#' @param ... additional parameters
 #' 
-#' @return assorted model output including model formula call and available methods
+#' @return
+#' For a fitted model object, prints an assorted model output including model formula call and available methods.
+#' For a summary object, prints a summary output of a model fit in the R console.
 #' @export print
 print <- function(x, ...){
   UseMethod("print")
@@ -47,23 +52,6 @@ print <- function(x, ...){
 #' @export summary
 summary <- function(x, conf.level = 0.95, ...){
   UseMethod("summary")
-}
-
-
-#' print.summary
-#' 
-#' @description print.summary generic function for S3method
-#' 
-#' @param x a summary object resulting from summary() applied to an object of 
-#' class 'tdlm', 'tdlmm', 'tdlnm', 'hdlm', 'hdlmm', 'monotone'
-#' @param digits number of decimal places to round the numeric values to
-#' @param ... additional parameters
-#' 
-#' @returns summary output of a model fit printed in the R console
-#' @export
-#' @method print summary
-print.summary <- function(x, digits = 3, ...){
-  UseMethod("print.summary")
 }
 
 
