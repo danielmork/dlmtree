@@ -45,12 +45,17 @@ print(x, ...)
 \method{print}{summary.tdlnm}(x, digits = 3, ...)
 }
 \arguments{
-\item{x}{an object of class 'tdlm', 'tdlmm', 'tdlnm', 'hdlm', 'hdlmm', 'monotone'}
+\item{x}{An object of class 'tdlm', 'tdlmm', 'tdlnm', 'hdlm', 'hdlmm', 'monotone', 
+representing a fitted model using dlmtree(); or a summary object produced by applying 
+summary() to one of these model objects.}
 
-\item{...}{not used.}
+\item{...}{additional parameters}
+
+\item{digits}{number of decimal places to round the numeric values to}
 }
 \value{
-assorted model output including model formula call and available methods
+For a fitted model object, prints an assorted model output including model formula call and available methods.
+For a summary object, prints a summary output of a model fit in the R console.
 }
 \description{
 print generic function for S3method
