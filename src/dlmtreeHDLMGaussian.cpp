@@ -284,8 +284,15 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
   Eigen::MatrixXd modInf        = (dgn->modInf).transpose();
 
   Eigen::MatrixXd modAccept((dgn->treeModAccept).size(), 5);
+  for (s = 0; s < (dgn->treeModAccept).size(); ++s){
+    modAccept.row(s) = dgn->treeModAccept[s];
+  }
+    
   Eigen::MatrixXd dlmAccept((dgn->treeDLMAccept).size(), 5);
-
+  for (s = 0; s < (dgn->treeDLMAccept).size(); ++s){
+    dlmAccept.row(s) = dgn->treeDLMAccept[s];
+  }
+  
   delete prog;
   delete ctr;
   delete dgn;
@@ -386,6 +393,13 @@ void dlmtreeHDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
   dlmTree->reject();
 
 
+  
+  // * Record dlmtree
+  Eigen::VectorXd accDLM(5);
+  accDLM << step, success, dlmTerm.size(), stepMhr, ratio;
+  (dgn->treeDLMAccept).push_back(accDLM);
+  
+  
   // -- Propose new modifier tree --
   switch (modTerm.size()) {
     case 1: step  = 0; break;
@@ -420,6 +434,11 @@ void dlmtreeHDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
   } // end modTree proposal
   modTree->reject();
 
+  
+  // * Record modtree
+  Eigen::VectorXd accMod(5);
+  accMod << step, success, modTerm.size(), stepMhr, ratio;
+  (dgn->treeModAccept).push_back(accMod);
 
   // -- Update variance and residuals --
   if (ctr->shrinkage) {

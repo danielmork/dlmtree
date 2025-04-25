@@ -1,14 +1,11 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-
-# dlmtree <a href="https://anderwilson.github.io/bdlim/"><img src="man/figures/logo.png" align="right" height="138" /></a>
-
 <!-- badges: start -->
 
 [![CRAN
 status](https://www.r-pkg.org/badges/version/dlmtree)](https://CRAN.R-project.org/package=dlmtree)
 [![R-CMD-check](https://github.com/danielmork/dlmtree/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/danielmork/dlmtree/actions/workflows/R-CMD-check.yaml)
-[![Downloads](https://cranlogs.r-pkg.org/badges/dlmtree)](https://cran.rstudio.com/package=dlmtree)
+[![Downloads](https://cranlogs.r-pkg.org/badges/grand-total/dlmtree)](https://CRAN.R-project.org/package=dlmtree)
 <!-- badges: end -->
 
 `dlmtree` is an R package that provides constrained distributed lag
@@ -23,20 +20,20 @@ and visualization are also provided.
 
 ### Treed DLM Overview
 
-| Model                                                  |    Type    |  Family  | Mixture | Heterogeneity |
-|:-------------------------------------------------------|:----------:|:--------:|:-------:|:-------------:|
-| Treed distributed lag model (TDLM)$^2$                 |   Linear   | Gaussian |    X    |       X       |
-|                                                        |            |  Binary  |    X    |       X       |
-|                                                        |            |  Count   |    X    |       X       |
-| Treed distributed lag mixture model (TDLMM)$^2$        |   Linear   | Gaussian |    O    |       X       |
-|                                                        |            |  Binary  |    O    |       X       |
-|                                                        |            |  Count   |    O    |       X       |
-| Treed distributed non-linear lag model (TDLNM)$^{1,4}$ | Non-linear | Gaussian |    X    |       X       |
-|                                                        |            |  Binary  |    X    |       X       |
-|                                                        |  Monotone  | Gaussian |    X    |       X       |
-|                                                        |            |  Binary  |    X    |       X       |
-| Heterogeneous distributed lag model (HDLM)$^3$         |   Linear   | Gaussian |    X    |       O       |
-| Heterogeneous distributed lag mixture model (HDLMM)    |   Linear   | Gaussian |    O    |       O       |
+| Model                                                         |    Type    |  Family  | Mixture | Heterogeneity |
+|:--------------------------------------------------------------|:----------:|:--------:|:-------:|:-------------:|
+| Treed distributed lag model (TDLM)<sup>2</sup>                |   Linear   | Gaussian |    X    |       X       |
+|                                                               |            |  Binary  |    X    |       X       |
+|                                                               |            |  Count   |    X    |       X       |
+| Treed distributed lag mixture model (TDLMM)<sup>2</sup>       |   Linear   | Gaussian |    O    |       X       |
+|                                                               |            |  Binary  |    O    |       X       |
+|                                                               |            |  Count   |    O    |       X       |
+| Treed distributed non-linear lag model (TDLNM)<sup>1, 4</sup> | Non-linear | Gaussian |    X    |       X       |
+|                                                               |            |  Binary  |    X    |       X       |
+|                                                               |  Monotone  | Gaussian |    X    |       X       |
+|                                                               |            |  Binary  |    X    |       X       |
+| Heterogeneous distributed lag model (HDLM)<sup>3</sup>        |   Linear   | Gaussian |    X    |       O       |
+| Heterogeneous distributed lag mixture model (HDLMM)           |   Linear   | Gaussian |    O    |       O       |
 
 ### Model Selection Guide
 

@@ -1,22 +1,6 @@
-#' predict.hdlm
-#'
-#' @title Calculates predicted response for HDLM
-#' @description Method for calculating predicted response for HDLM
-#'
-#' @param object fitted dlmtree model with class hdlm
-#' @param new.data new data frame which contains the same covariates and modifiers used to fit HDLM model
-#' @param new.exposure.data new data frame/list which contains the same length of exposure lags used to fit HDLM model
-#' @param ci.level credible interval level for posterior predictive distribution
-#' @param type type of prediction: "response" (default) or "waic". "waic" must be specified with `outcome` parameter
-#' @param outcome outcome required for WAIC calculation
-#' @param fixed.idx fixed index
-#' @param est.dlm flag for estimating dlm effect
-#' @param verbose TRUE (default) or FALSE: print output
-#' @param ... additional parameters
-#'
-#' @returns Posterior predictive distribution draws
-#' @export
-predict.hdlm <- function(object, 
+#' @method predict hdlm
+#' @rdname predict
+predict.hdlm <- function(x, 
                          new.data, 
                          new.exposure.data,
                          ci.level = 0.95, 
@@ -30,13 +14,13 @@ predict.hdlm <- function(object,
   `%notin%` <- Negate(`%in%`)
   out       <- list()
     
-  new.exposure.data <- matrix(new.exposure.data, ncol = object$pExp)
+  new.exposure.data <- matrix(new.exposure.data, ncol = x$pExp)
 
   if (!is.data.frame(new.data)) {
     stop("`new.data` must be a data.frame with same colunm names as original model")
   }
 
-  if (!all(object$modNames %in% colnames(new.data))) {
+  if (!all(x$modNames %in% colnames(new.data))) {
     stop("`new.data` must have the same colunm names as the original model")
   }
     
@@ -48,36 +32,31 @@ predict.hdlm <- function(object,
     stop("`new.data` and `new.exposure.data` must have same number of rows")
   }
     
-  if (ncol(new.exposure.data) != object$pExp) {
+  if (ncol(new.exposure.data) != x$pExp) {
     stop("`new.exposure.data` must have the same number of measurments (columns) as original exposure data")
   }
 
   ci.lims <- c((1 - ci.level) / 2, 1 - (1 - ci.level) / 2)
 
   # ---- Setup covariate matrix and modifiers ----
-  new.mf  <- model.frame(delete.response(object$formula), 
+  new.mf  <- model.frame(delete.response(x$formula), 
                          new.data,
                          na.action = na.fail, 
                          drop.unused.levels = TRUE,
-                         xlev = object$termLevels)
+                         xlev = x$termLevels)
 
-  z       <- model.matrix(delete.response(object$formula), 
+  z       <- model.matrix(delete.response(x$formula), 
                           new.mf,
-                          xlev = object$termLevels)
-
-  # z <-      z[, sort(object$QR$pivot[ seq_len(object$QR$rank) ]) ]
-  # if (length(object$droppedCovar) > 0 & object$verbose)
-  #   warning("variables {", paste0(object$droppedCovar, collapse = ", "),
-  #           "} dropped from original due to perfect collinearity\n")
+                          xlev = x$termLevels)
 
   n   <- nrow(z)
-  mod <- lapply(object$modNames, function(m) {
-    if (!is.numeric(object$MoUnique[[m]])) {
-      if (!all(unique(new.data[[m]]) %in% object$MoUnique[[m]])) {
+  mod <- lapply(x$modNames, function(m) {
+    if (!is.numeric(x$MoUnique[[m]])) {
+      if (!all(unique(new.data[[m]]) %in% x$MoUnique[[m]])) {
         stop("column ", m, " of `new.data` contains additional categories not in original dataset")
       }
     } else {
-      if (min(new.data[[m]]) < object$MoUnique[[m]][1] || max(new.data[[m]]) > object$MoUnique[[m]][2]) {
+      if (min(new.data[[m]]) < x$MoUnique[[m]][1] || max(new.data[[m]]) > x$MoUnique[[m]][2]) {
         if (verbose) {
           warning("column ", m, "of `new.data` exceeds range of original dataset")
         }
@@ -87,81 +66,63 @@ predict.hdlm <- function(object,
     }
   )
 
-  names(mod) <- object$modNames
+  names(mod) <- x$modNames
 
   # ---- Predict z^T * gamma ----
-  ztg.draws     <- z %*% t(object$gamma)
+  ztg.draws     <- z %*% t(x$gamma)
   out$ztg       <- rowMeans(ztg.draws)
   out$ztg.lims  <- apply(ztg.draws, 1, quantile, probs = ci.lims)
 
   # ---- Predict DLMs ----
-  mark <- ceiling(nrow(object$TreeStructs) / 42)
+  mark <- ceiling(nrow(x$TreeStructs) / 42)
   if (verbose) {
     cat(paste0("\nReanalyzing trees for new.data: % complete\n",
                "[0--------25--------50--------75--------100]\n '"))
   }
 
-  draws <- lapply(1:object$mcmcIter, function(i) matrix(0.0, n, object$pExp)) # Creates a list of which elements are empty n x p matrix
+  draws <- lapply(1:x$mcmcIter, function(i) matrix(0.0, n, x$pExp)) # Creates a list of which elements are empty n x p matrix
 
   # Iterate through MCMC to add the estimate
-  if (is.null(object$fixedIdx)) { # No specified MCMC iterations
-    for (i in 1:nrow(object$TreeStructs)) {
+  if (is.null(x$fixedIdx)) { # No specified MCMC iterations
+    for (i in 1:nrow(x$TreeStructs)) {
       if (verbose && (i %% mark == 0)) {
         cat("'")
       }
-      Iter <- object$TreeStructs$Iter[i] # Iteration
-      rule <- object$TreeStructs$Rule[i] # Rule
+      Iter <- x$TreeStructs$Iter[i] # Iteration
+      rule <- x$TreeStructs$Rule[i] # Rule
       if (rule == "") { 
         idx <- 1:n
       } else { 
         idx <- which(eval(parse(text = rule)))
       }
-
-      # if (object$dlmType == "gp") {
-      #   est <- matrix(rep(as.numeric(object$TreeStructs[i, -c(1:4)]), each = length(idx)), length(idx), object$pExp)
-      #   draws[[Iter]][idx,] <- draws[[Iter]][idx,] + est
-      # } else { # TDLM
-      #   t   <- object$TreeStructs$tmin[i]:object$TreeStructs$tmax[i] # Get the time
-      #   est <- object$TreeStructs$est[i] # Get the effect
-      #   draws[[Iter]][idx, t] <- draws[[Iter]][idx, t] + est # Add to matrix
-      # }
     }
   } else { # When we specify MCMC iterations
-    for (i in 1:nrow(object$TreeStructs)) {
+    for (i in 1:nrow(x$TreeStructs)) {
       if (verbose && i %% mark == 0) {
         cat("'")
       }
        
-      Iter  <- object$TreeStructs$Iter[i]
-      idx   <- fixed.idx[[object$TreeStructs$fixedIdx[i] + 1]]
+      Iter  <- x$TreeStructs$Iter[i]
+      idx   <- fixed.idx[[x$TreeStructs$fixedIdx[i] + 1]]
 
-      # if (object$dlmType == "gp") {
-      #   est <- matrix(rep(as.numeric(object$TreeStructs[i, -c(1:4)]), each = length(idx)), length(idx), object$pExp)
-      #   draws[[Iter]][idx,] <- draws[[Iter]][idx,] + est
-      # } else {
-      #   t   <- object$TreeStructs$tmin[i]:object$TreeStructs$tmax[i]
-      #   est <- object$TreeStructs$est[i]
-      #   draws[[Iter]][idx, t] <- draws[[Iter]][idx, t] + est
-      # }
     }
   }
 
   # Generate mcmcIter number of matrices (n x pExp)
-  # do.call generates c(draws)
-  draws <- array(do.call(c, draws), c(n, object$pExp, object$mcmcIter)) # Convert from a list form of [[MCMC]](nxp) to (n x p x MCMC) array form
+  draws <- array(do.call(c, draws), c(n, x$pExp, x$mcmcIter)) 
 
   if (est.dlm) {
     if (verbose) {
       cat("\nestimating individualized DLMs...")
     }
       
-    out$dlmest <- sapply(1:object$pExp, function(t) { # t: for each lag, rowMeans: Mean of estimate for an individual of all MCMC sample
+    out$dlmest <- sapply(1:x$pExp, function(t) { 
       rowMeans(draws[,t,,drop=FALSE])
     })
-    out$dlmest.lower <- sapply(1:object$pExp, function(t) {
+    out$dlmest.lower <- sapply(1:x$pExp, function(t) {
       apply(draws[,t,,drop=FALSE], 1, quantile, probs = 0.025)
     })
-    out$dlmest.upper <- sapply(1:object$pExp, function(t) {
+    out$dlmest.upper <- sapply(1:x$pExp, function(t) {
       apply(draws[,t,,drop=FALSE], 1, quantile, probs = 0.975)
     })
   }
@@ -170,12 +131,8 @@ predict.hdlm <- function(object,
     cat("\nestimating exposure effects...")
   }
 
-  # draws[i,,]: extract all MCMC samples of ith observation where col of a matrix is the MCMC sample: p x MCMC
-  # t(draws[i,,]): MCMC x p
-  # (t(draws[i,,]) %*% new.exposure.data[i,]): (MCMC x p)x(p x 1)
-  # t(t(draws[i,,]) %*% new.exposure.data[i,]): 1 x MCMC
-  # do.call(rbind, lapply) -> Do the above for all observations and combine them to a data frame using rbind
-  fhat.draws <- do.call(rbind, lapply(1:n, function(i) {
+
+    fhat.draws <- do.call(rbind, lapply(1:n, function(i) {
     t(t(draws[i,,]) %*% new.exposure.data[i,])
   }))
   out$fhat      <- rowMeans(fhat.draws) # fhat mean for all observation
@@ -186,7 +143,7 @@ predict.hdlm <- function(object,
   # ---- Outcome predictions ----
   # fixed effect + DLM + normal error
   if (type == "response") {
-    y.draws     <- ztg.draws + fhat.draws + sapply(1:object$mcmcIter, function(i) rnorm(nrow(ztg.draws), 0, sqrt(object$sigma2[i])))
+    y.draws     <- ztg.draws + fhat.draws + sapply(1:x$mcmcIter, function(i) rnorm(nrow(ztg.draws), 0, sqrt(x$sigma2[i])))
     out$y       <- rowMeans(y.draws)
     out$y.lims  <- apply(y.draws, 1, quantile, probs = ci.lims)
 
@@ -196,7 +153,7 @@ predict.hdlm <- function(object,
       stop("must provide complete data outcome to calculate WAIC")
     }
 
-    probs <- sapply(1:object$mcmcIter, function(i) dnorm(outcome, ztg.draws[,i] + fhat.draws[,i], sqrt(object$sigma2[i])))
+    probs <- sapply(1:x$mcmcIter, function(i) dnorm(outcome, ztg.draws[,i] + fhat.draws[,i], sqrt(x$sigma2[i])))
     LPD   <- sum(log(rowMeans(probs)))
     pwaic <- sum(apply(log(probs), 1, var))
     return(list(waic = -2 * (LPD - pwaic), 

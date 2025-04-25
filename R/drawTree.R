@@ -7,7 +7,7 @@
 #' @param alpha tree shape parameter, 0 < alpha < 1
 #' @param beta tree size parameter, beta > 0
 #'
-#' @returns A integer value of number of terminal nodes
+#' @returns integer value of number of terminal nodes
 #' @export 
 #'
 drawTree <- function(depth, alpha, beta) {
@@ -22,4 +22,3 @@ drawTree <- function(depth, alpha, beta) {
   return(n.term)
 }
 
-# hist(sapply(1:10000, function(i) drawTree(0, .5, .5)))

@@ -12,7 +12,10 @@ pip(object, type = 1)
 \item{type}{Type=1 indicates single modifier PIPs. Type=2 indicates joint modifier PIPs for two modifiers.}
 }
 \value{
-A vector (type=1) or data.frame (type=2) of PIPs.
+numeric vector of PIPs named with modifiers (type=1) or data.frame of PIPs with the following columns (type=2):
+\item{var1}{first modifier of joint modifiers}
+\item{var2}{second modifier of joint modifiers}
+\item{pip}{joint PIPs for the two modifiers}
 }
 \description{
 Method for calculating posterior inclusion probabilities (PIPs) for modifiers in HDLM & HDLMM

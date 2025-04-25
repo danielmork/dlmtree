@@ -1,34 +1,20 @@
-#' print.summary.tdlnm
-#'
-#' @title Prints an overview with summary of model class 'tdlnm'
-#' @description Method for printing an overview with summary of model class 'tdlnm'
-#' 
-#' @param x an object of type 'summary.tdlnm', result of call to summary.tdlnm()
-#' @param digits integer number of digits to round
-#' @param ... additional parameters
-#' 
-#' @returns output of tdlnm fit in R console
-#' @export
-#'
+#' @method print summary.tdlnm
+#' @rdname print
 print.summary.tdlnm <- function(x, digits = 3, ...)
 {
   cat("---\n")
   cat("TDLNM summary\n\n")
 
   cat("Model run info:\n")
-  # Print ZI and NB part separately for ZINB
-  if (x$ctr$response == "zinb") {
-    cat("- ZI:", Reduce(paste, deparse1(x$formula.zi)), "\n")
-    cat("- NB:", Reduce(paste, deparse1(x$formula)), "\n")
-  } else {
-    cat("-", Reduce(paste, deparse1(x$formula)), "\n")
-  }
+
+  cat("-", Reduce(paste, deparse1(x$formula)), "\n")
   cat("- sample size:", format(x$n, big.mark = ","), "\n")
   cat("- family:", x$ctr$response, "\n")
   cat("-", x$ctr$n.trees, "trees\n")
   cat("-", x$ctr$n.burn, "burn-in iterations\n")
   cat("-", x$ctr$n.iter, "post-burn iterations\n")
   cat("-", x$ctr$n.thin, "thinning factor\n")
+  cat("- exposure measured at", x$n.lag, "time points\n")
   cat("-", x$conf.level, "confidence level\n")
 
   if (x$ctr$response != "zinb") {
@@ -86,9 +72,7 @@ print.summary.tdlnm <- function(x, digits = 3, ...)
                         "Lower" = round(x$r.ci[1], digits),
                         "Upper" = round(x$r.ci[2], digits))
     row.names(r.out) <- "Dispersion"
-      #ifelse(x$r.ci[1,] > 0 | x$b2.ci[2,] < 0,
-      #      paste0("*", names(x$b2.mean)),
-      #      paste0(" ", names(x$b2.mean)))
+
     print(r.out)
     cat("---\n")
   }

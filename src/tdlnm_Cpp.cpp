@@ -233,11 +233,10 @@ void tdlnmTreeMCMC(int t, Node *tree, tdlmCtr *ctr, tdlmLog *dgn,
       (dgn->DLMexp).push_back(rec);
     }
 
-    if (ctr->diagnostics) {
-      VectorXd acc(5);
-      acc << step, success, dlnmTerm.size(), stepMhr, ratio;
-      (dgn->TreeAccept).push_back(acc);
-    }
+    VectorXd acc(5);
+    acc << step, success, dlnmTerm.size(), stepMhr, ratio;
+    (dgn->TreeAccept).push_back(acc);
+    
   }
 } // end tdlnmGaussianTreeMCMC
 

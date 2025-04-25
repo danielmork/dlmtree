@@ -3,16 +3,25 @@
 #' @title Calculates subgroup-specific lag effects for heterogeneous models
 #' @description Method for calculating subgroup-specific lag effects for heterogeneous models: HDLM, HDLMM
 #'
-#' @param object an object of a model fit. Must be 'hdlm' or 'hdlmm'
-#' @param new.data a data frame with new observations with the same number of modifiers
-#' @param group.index a list of index (row numbers) for subgroup specification
+#' @param object object of a model fit. Must be 'hdlm' or 'hdlmm'
+#' @param new.data data frame with new observations with the same number of modifiers
+#' @param group.index list of index (row numbers) for subgroup specification
 #' @param conf.level confidence level for credible interval of effects
 #' @param exposure exposure of interest for 'hdlmm' method
-#' @param return.mcmc store mcmc in the output
+#' @param keep.mcmc store mcmc in the output
 #' @param mem.safe boolean memory parameter for rule index
 #' @param verbose TRUE (default) or FALSE: print output
 #'
-#' @returns A list of distributed lag effects per subgroups
+#' @returns A list with the following components:
+#' \item{conf.level}{Specified confidence level}
+#' \item{mod}{a list of modifers with a vector of values from the model}
+#' \item{n}{Number of observation per specified subgroup}
+#' \item{groupIndex}{list of index (row numbers) for specified subgroup}
+#' \item{dlmMean}{distributed lag effects per subgroups}
+#' \item{dlmCI}{credible intervals for distributed lag effects per subgroups}
+#' \item{dlmCum}{cumulative effects per subgroups}
+#' \item{dlFunction}{type of DLM class}
+#' \item{plotData}{data frame built for easier visualization of distributed lag effects for each subgroup (facet)}
 #' @export 
 #'
 estDLM <- function(object,
@@ -21,7 +30,7 @@ estDLM <- function(object,
                    conf.level = 0.95,
                    exposure = NULL,
                    #cenval = 0,
-                   return.mcmc = FALSE,
+                   keep.mcmc = FALSE,
                    mem.safe = FALSE,
                    verbose = TRUE)
 {
@@ -124,7 +133,7 @@ estDLM <- function(object,
   }
     
   DLM <- merge.data.frame(TreeStructs, tempMod, by = "Rule")
-  if (return.mcmc) {
+  if (keep.mcmc) {
     out$mcmc  <- list()
   }
     
@@ -133,64 +142,19 @@ estDLM <- function(object,
   out$dlmCum  <- list()
 
 
-  # # ---- dlmType: GP ----
-  # if (object$dlmType == "gp") {
-  #   for (i in 1:length(group.index)) {
-  #     gDLM <- DLM[,5:(4 + object$pExp)] * DLM[[paste0("Weight", i)]]
-  #     mcmc <-
-  #       sapply(1:max(DLM$Iter), function(i) {
-  #         rowSums(
-  #           sapply(1:max(DLM$Tree), function(t) {
-  #             colSums(gDLM[which(DLM$Iter == i & DLM$Tree == t),, drop = FALSE])
-  #           })
-  #         )
-  #       })
-  #     if (return.mcmc) {
-  #       out$mcmc[[names(group.index)[i]]] <- mcmc
-  #     }
-        
-  #     out$dlmMean[[names(group.index)[i]]] <- rowMeans(mcmc)
-  #     out$dlmCI[[names(group.index)[i]]] <- apply(mcmc, 1, quantile, probs = ci.lims)
-  #     out$dlmCum[[names(group.index)[i]]] <- c(mean = mean(rowMeans(mcmc)), quantile(colSums(mcmc), probs = ci.lims))
-  #   }
-  #   out$dlFunction <- "dlm"
-
-
   # ---- dlmType: TDLM ----
-  # } else if (object$dlFunction == "dlm") {
-  # } else {
-    for (i in 1:length(group.index)) {
-      DLM$w.est <- DLM$est * DLM[[paste0("Weight", i)]]
-      mcmc      <- dlmEst(as.matrix(DLM[,c("Iter", "Tree", "tmin", "tmax", "w.est")]), object$pExp, object$mcmcIter)
-      if (return.mcmc) {
-        out$mcmc[[names(group.index)[i]]]   <- mcmc
-      }
-      out$dlmMean[[names(group.index)[i]]]  <- rowMeans(mcmc)
-      out$dlmCI[[names(group.index)[i]]]    <- apply(mcmc, 1, quantile, probs = ci.lims)
-      out$dlmCum[[names(group.index)[i]]]   <- c(mean = mean(rowMeans(mcmc)), quantile(colSums(mcmc), probs = ci.lims))
+  for (i in 1:length(group.index)) {
+    DLM$w.est <- DLM$est * DLM[[paste0("Weight", i)]]
+    mcmc      <- dlmEst(as.matrix(DLM[,c("Iter", "Tree", "tmin", "tmax", "w.est")]), object$pExp, object$mcmcIter)
+    if (keep.mcmc) {
+      out$mcmc[[names(group.index)[i]]]   <- mcmc
     }
-    out$dlFunction <- "dlm"
+    out$dlmMean[[names(group.index)[i]]]  <- rowMeans(mcmc)
+    out$dlmCI[[names(group.index)[i]]]    <- apply(mcmc, 1, quantile, probs = ci.lims)
+    out$dlmCum[[names(group.index)[i]]]   <- c(mean = mean(rowMeans(mcmc)), quantile(colSums(mcmc), probs = ci.lims))
+  }
+  out$dlFunction <- "dlm"
 
-  # ---- dlmType: TDLNM ----
-  # } #else {
-  #   for (i in 1:length(group.index)) {
-  #     DLM$w.est <- DLM$est * DLM[[paste0("Weight", i)]]
-  #     if (is.na(object$SE[1])) {
-  #       cen.quant <- which.min(abs(object$Xsplits - cenval))
-  #       out$mcmc[[names(group.index)[i]]] <-
-  #         dlnmEst(as.matrix(DLM[,c("Iter", "Tree", "xmin", "xmax",
-  #                                  "tmin", "tmax", "w.est")]),
-  #                 object$Xsplits, object$pExp,  object$mcmcIter, cen.quant, 0)
-  #     } else {
-  #       out$mcmc[[names(group.index)[i]]] <-
-  #         dlnmEst(as.matrix(DLM[,c("Iter", "Tree", "xmin", "xmax",
-  #                                  "tmin", "tmax", "w.est")]),
-  #                 object$Xsplits, object$pExp,  object$mcmcIter,
-  #                 cenval, mean(object$SE))
-  #     }
-  #   }
-  #   out$dlFunction <- "dlnm"
-  # }
   lags          <- length(out$dlmMean[[1]])
   out$plotData  <- do.call(rbind, lapply(names(group.index), function(n) {
     data.frame(group = n, time = 1:lags, est = out$dlmMean[[n]], 
