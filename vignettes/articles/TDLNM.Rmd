@@ -53,12 +53,12 @@ sbd_exp <- sbd_exp %>% lapply(as.matrix)
 ### Fitting the model
 ```{r tdlnm.fit}
 tdlnm.fit <- dlmtree(formula = bwgaz ~ ChildSex + MomAge + MomPriorBMI + 
-                                        Race + Hispanic + SmkAny + EstMonthConcept,
+                       Race + Hispanic + SmkAny + EstMonthConcept,
                      data = sbd_cov,
                      exposure.data = sbd_exp[["TEMP"]],
                      dlm.type = "nonlinear",
                      family = "gaussian",
-                     tdlnm.exposure.splits = 20,
+                     control.tdlnm = list(exposure.splits = 20),
                      control.mcmc = list(n.burn = 2500, n.iter = 10000, n.thin = 5))
 ```
 
