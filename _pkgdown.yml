@@ -32,7 +32,7 @@ reference:
 - title: Model fitting
   contents: 
   - dlmtree
-  - control
+  - starts_with("dlmtree.control")
   - starts_with("diagnose")
 - title: Model summary
   desc: Obtain results from the model fit
