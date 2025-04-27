@@ -30,7 +30,10 @@ navbar:
       href: news/index.html
 reference:
 - title: Model fitting
-  contents: dlmtree
+  contents: 
+  - dlmtree
+  - control
+  - starts_with("diagnose")
 - title: Model summary
   desc: Obtain results from the model fit
   contents:
