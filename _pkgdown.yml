@@ -64,7 +64,6 @@ reference:
   - pm25Exposures
   - zinbCo
   - get_sbd_dlmtree
-  
 - title: Cpp source code & Misc.
   contents:
   - cppIntersection
@@ -87,8 +86,6 @@ reference:
   - ruleIdx
   - scaleModelMatrix
   - splitPIP
-  - tdlmm
-  - tdlnm
   - tdlmm_Cpp
   - tdlnm_Cpp
   - zeroToInfNormCDF
