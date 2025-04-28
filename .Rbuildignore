@@ -10,7 +10,13 @@ vignettes
 ^docs$
 ^pkgdown$
 ^\.github$
+^\.git$
+^\.gitignore$  
 ^vignettes/articles$
-^dlmtree\.Rcheck$
+^.*\.Rcheck$
 ^dlmtree.*\.tar\.gz$
 ^dlmtree.*\.tgz$
+^libs$       
+^build$
+^dlmtree\.Rcheck$
+.DS_Store

@@ -30,7 +30,10 @@ navbar:
       href: news/index.html
 reference:
 - title: Model fitting
-  contents: dlmtree
+  contents: 
+  - dlmtree
+  - starts_with("dlmtree.control")
+  - starts_with("diagnose")
 - title: Model summary
   desc: Obtain results from the model fit
   contents:
@@ -61,7 +64,6 @@ reference:
   - pm25Exposures
   - zinbCo
   - get_sbd_dlmtree
-  
 - title: Cpp source code & Misc.
   contents:
   - cppIntersection
@@ -84,8 +86,6 @@ reference:
   - ruleIdx
   - scaleModelMatrix
   - splitPIP
-  - tdlmm
-  - tdlnm
   - tdlmm_Cpp
   - tdlnm_Cpp
   - zeroToInfNormCDF
