@@ -53,19 +53,19 @@ sbd_exp <- sbd_exp %>% lapply(as.matrix)
 ### Fitting the model
 ```{r tdlnm.fit}
 tdlnm.fit <- dlmtree(formula = bwgaz ~ ChildSex + MomAge + MomPriorBMI + 
-                                        Race + Hispanic + SmkAny + EstMonthConcept,
+                       Race + Hispanic + SmkAny + EstMonthConcept,
                      data = sbd_cov,
                      exposure.data = sbd_exp[["TEMP"]],
                      dlm.type = "nonlinear",
                      family = "gaussian",
-                     tdlnm.exposure.splits = 20,
-                     n.burn = 2500, n.iter = 10000, n.thin = 5)
+                     control.tdlnm = list(exposure.splits = 20),
+                     control.mcmc = list(n.burn = 2500, n.iter = 10000, n.thin = 5))
 ```
 
 ### Model fit summary
 ```{r tdlnm.sum}
 tdlnm.sum <- summary(tdlnm.fit)
-tdlnm.sum
+print(tdlnm.sum)
 ```
 
 ### Exposure-time surface
@@ -91,4 +91,22 @@ plot(tdlnm.sum, plot.type = "slice", time = 7, main = "Slice at time 7")
 plot(tdlnm.sum, plot.type = "slice", time = 15, main = "Slice at time 15")
 plot(tdlnm.sum, plot.type = "slice", time = 33, main = "Slice at time 33")
 ```
+
+### different plot.type options
+```{r}
+# Standard error, credible intervals
+plot(tdlnm.sum, plot.type = "se", main = "Standard error")  
+plot(tdlnm.sum, plot.type = "ci-min", main = "Credible interval lower bound")
+plot(tdlnm.sum, plot.type = "ci-max", main = "Credible interval upper bound")
+```
+
+```{r}
+# Cumulative effect and significance
+plot(tdlnm.sum, plot.type = "cumulative", main = "Cumulative effect per exposure-concentration")
+plot(tdlnm.sum, plot.type = "effect", main = "Significant effects with directions")
+```
+
+
+
+
 
