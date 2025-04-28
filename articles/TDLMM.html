@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">dlmtree</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -106,19 +106,21 @@ It can be loaded with the following code.</p>
 </h3>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tdlmm.fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dlmtree.html">dlmtree</a></span><span class="op">(</span>formula <span class="op">=</span> <span class="va">bwgaz</span> <span class="op">~</span> <span class="va">ChildSex</span> <span class="op">+</span> <span class="va">MomAge</span> <span class="op">+</span> <span class="va">MomPriorBMI</span> <span class="op">+</span></span>
-<span>                                        <span class="va">Race</span> <span class="op">+</span> <span class="va">Hispanic</span> <span class="op">+</span> <span class="va">SmkAny</span> <span class="op">+</span> <span class="va">EstMonthConcept</span>,</span>
+<span>                       <span class="va">Race</span> <span class="op">+</span> <span class="va">Hispanic</span> <span class="op">+</span> <span class="va">SmkAny</span> <span class="op">+</span> <span class="va">EstMonthConcept</span>,</span>
 <span>                     data <span class="op">=</span> <span class="va">sbd_cov</span>,</span>
 <span>                     exposure.data <span class="op">=</span> <span class="va">sbd_exp</span>,</span>
-<span>                     family <span class="op">=</span> <span class="st">"gaussian"</span>, dlm.type <span class="op">=</span> <span class="st">"linear"</span>, mixture <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>                     mixture.interactions <span class="op">=</span> <span class="st">"noself"</span>,</span>
-<span>                     n.burn <span class="op">=</span> <span class="fl">2500</span>, n.iter <span class="op">=</span> <span class="fl">10000</span>, n.thin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
+<span>                     family <span class="op">=</span> <span class="st">"gaussian"</span>,</span>
+<span>                     dlm.type <span class="op">=</span> <span class="st">"linear"</span>,</span>
+<span>                     mixture <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                     control.mix <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>interactions <span class="op">=</span> <span class="st">"noself"</span><span class="op">)</span>,</span>
+<span>                     control.mcmc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>n.burn <span class="op">=</span> <span class="fl">2500</span>, n.iter <span class="op">=</span> <span class="fl">10000</span>, n.thin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Preparing data...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Running TDLMM:</span></span>
 <span><span class="co">#&gt; Burn-in % complete </span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
-<span><span class="co">#&gt; MCMC iterations (est time: 3.1 minutes)</span></span>
+<span><span class="co">#&gt; MCMC iterations (est time: 2.9 minutes)</span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
 <span><span class="co">#&gt; Compiling results...</span></span></code></pre></div>
@@ -128,7 +130,7 @@ It can be loaded with the following code.</p>
 </h3>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Marginalization with co-exposure fixed at exact levels for each exposure</span></span>
-<span><span class="va">tdlmm.sum.exact</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tdlmm.fit</span>, marginalize <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">tdlmm.sum.exact</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/summary.html">summary</a></span><span class="op">(</span><span class="va">tdlmm.fit</span>, marginalize <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Specified co-exposure values:</span></span>
 <span><span class="co">#&gt; - PM25 : 3</span></span>
 <span><span class="co">#&gt; - TEMP : 2</span></span>
@@ -143,7 +145,7 @@ It can be loaded with the following code.</p>
 <span><span class="co">#&gt; Calculating fixed effects...</span></span>
 <span></span>
 <span><span class="co"># Marginalization with co-exposure fixed at 25th percentile</span></span>
-<span><span class="va">tdlmm.sum.percentile</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tdlmm.fit</span>, marginalize <span class="op">=</span> <span class="fl">25</span><span class="op">)</span></span>
+<span><span class="va">tdlmm.sum.percentile</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/summary.html">summary</a></span><span class="op">(</span><span class="va">tdlmm.fit</span>, marginalize <span class="op">=</span> <span class="fl">25</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Specified co-exposure values:</span></span>
 <span><span class="co">#&gt; - PM25 : 5.183927</span></span>
 <span><span class="co">#&gt; - TEMP : 1.374847</span></span>
@@ -158,7 +160,7 @@ It can be loaded with the following code.</p>
 <span><span class="co">#&gt; Calculating fixed effects...</span></span>
 <span></span>
 <span><span class="co"># Marginalization with co-exposure fixed at the empirical means (default)</span></span>
-<span><span class="va">tdlmm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tdlmm.fit</span>, marginalize <span class="op">=</span> <span class="st">"mean"</span>, log10BF.crit <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span><span class="va">tdlmm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/summary.html">summary</a></span><span class="op">(</span><span class="va">tdlmm.fit</span>, marginalize <span class="op">=</span> <span class="st">"mean"</span>, log10BF.crit <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Specified co-exposure values:</span></span>
 <span><span class="co">#&gt; - PM25 : 6.842084</span></span>
 <span><span class="co">#&gt; - TEMP : 3.187414</span></span>
@@ -171,7 +173,7 @@ It can be loaded with the following code.</p>
 <span><span class="co">#&gt; 0%...25%...50%...75%...100%</span></span>
 <span><span class="co">#&gt; Calculating marginal effects...</span></span>
 <span><span class="co">#&gt; Calculating fixed effects...</span></span>
-<span><span class="va">tdlmm.sum</span></span>
+<span><span class="fu"><a href="../reference/print.html">print</a></span><span class="op">(</span><span class="va">tdlmm.sum</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; TDLMM summary</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -179,13 +181,13 @@ It can be loaded with the following code.</p>
 <span><span class="co">#&gt; - bwgaz ~ ChildSex + MomAge + MomPriorBMI + Race + Hispanic + SmkAny + EstMonthConcept </span></span>
 <span><span class="co">#&gt; - sample size: 10,000 </span></span>
 <span><span class="co">#&gt; - family: gaussian </span></span>
-<span><span class="co">#&gt; - 20 trees (alpha = 0.95, beta = 2)</span></span>
+<span><span class="co">#&gt; -  20  trees</span></span>
 <span><span class="co">#&gt; - 2500 burn-in iterations</span></span>
 <span><span class="co">#&gt; - 10000 post-burn iterations</span></span>
 <span><span class="co">#&gt; - 5 thinning factor</span></span>
 <span><span class="co">#&gt; - 5 exposures measured at 37 time points</span></span>
 <span><span class="co">#&gt; - 10 two-way interactions (no-self interactions)</span></span>
-<span><span class="co">#&gt; - 1 kappa sparsity prior</span></span>
+<span><span class="co">#&gt; - kappa sparsity prior</span></span>
 <span><span class="co">#&gt; - 0.95 confidence level</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Fixed effects:</span></span>
@@ -253,7 +255,7 @@ It can be loaded with the following code.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">p1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlmm.sum</span>, exposure1 <span class="op">=</span> <span class="st">"PM25"</span>, main <span class="op">=</span> <span class="st">"PM2.5"</span><span class="op">)</span></span>
 <span><span class="va">p2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlmm.sum</span>, exposure1 <span class="op">=</span> <span class="st">"TEMP"</span>, main <span class="op">=</span> <span class="st">"Temperature"</span><span class="op">)</span></span>
-<span><span class="va">p3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlmm.sum</span>, exposure1 <span class="op">=</span> <span class="st">"SO2"</span>, main <span class="op">=</span> <span class="st">"SO2"</span><span class="op">)</span></span>
+<span><span class="va">p3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlmm.sum</span>, exposure1 <span class="op">=</span> <span class="st">"NO2"</span>, main <span class="op">=</span> <span class="st">"NO2"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">p1</span></span></code></pre></div>
 <p><img src="TDLMM_files/figure-html/tdlmm.plot-1.png" width="700"></p>

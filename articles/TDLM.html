@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">dlmtree</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -106,18 +106,19 @@ It can be loaded with the following code.</p>
 </h3>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tdlm.fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dlmtree.html">dlmtree</a></span><span class="op">(</span>formula <span class="op">=</span> <span class="va">bwgaz</span> <span class="op">~</span> <span class="va">ChildSex</span> <span class="op">+</span> <span class="va">MomAge</span> <span class="op">+</span> <span class="va">MomPriorBMI</span> <span class="op">+</span></span>
-<span>                                        <span class="va">Race</span> <span class="op">+</span> <span class="va">Hispanic</span> <span class="op">+</span> <span class="va">SmkAny</span> <span class="op">+</span> <span class="va">EstMonthConcept</span>,</span>
+<span>                      <span class="va">Race</span> <span class="op">+</span> <span class="va">Hispanic</span> <span class="op">+</span> <span class="va">SmkAny</span> <span class="op">+</span> <span class="va">EstMonthConcept</span>,</span>
 <span>                    data <span class="op">=</span> <span class="va">sbd_cov</span>,</span>
 <span>                    exposure.data <span class="op">=</span> <span class="va">sbd_exp</span><span class="op">[[</span><span class="st">"PM25"</span><span class="op">]</span><span class="op">]</span>, <span class="co"># A single numeric matrix</span></span>
-<span>                    family <span class="op">=</span> <span class="st">"gaussian"</span>, dlm.type <span class="op">=</span> <span class="st">"linear"</span>,</span>
-<span>                    n.burn <span class="op">=</span> <span class="fl">2500</span>, n.iter <span class="op">=</span> <span class="fl">10000</span>, n.thin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
+<span>                    family <span class="op">=</span> <span class="st">"gaussian"</span>,</span>
+<span>                    dlm.type <span class="op">=</span> <span class="st">"linear"</span>,</span>
+<span>                    control.mcmc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>n.burn <span class="op">=</span> <span class="fl">2500</span>, n.iter <span class="op">=</span> <span class="fl">10000</span>, n.thin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; Preparing data...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Running TDLM:</span></span>
 <span><span class="co">#&gt; Burn-in % complete </span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
-<span><span class="co">#&gt; MCMC iterations (est time: 28 seconds)</span></span>
+<span><span class="co">#&gt; MCMC iterations (est time: 24 seconds)</span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
 <span><span class="co">#&gt; Compiling results...</span></span></code></pre>
@@ -126,8 +127,8 @@ It can be loaded with the following code.</p>
 <h3 id="model-fit-summary">Model fit summary<a class="anchor" aria-label="anchor" href="#model-fit-summary"></a>
 </h3>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tdlm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tdlm.fit</span><span class="op">)</span></span>
-<span><span class="va">tdlm.sum</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">tdlm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/summary.html">summary</a></span><span class="op">(</span><span class="va">tdlm.fit</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/print.html">print</a></span><span class="op">(</span><span class="va">tdlm.sum</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; TDLM summary</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -139,6 +140,7 @@ It can be loaded with the following code.</p>
 <span><span class="co">#&gt; - 2500 burn-in iterations</span></span>
 <span><span class="co">#&gt; - 10000 post-burn iterations</span></span>
 <span><span class="co">#&gt; - 5 thinning factor</span></span>
+<span><span class="co">#&gt; - exposure measured at 37 time points</span></span>
 <span><span class="co">#&gt; - 0.95 confidence level</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Fixed effect coefficients:</span></span>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">dlmtree</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,10 +40,40 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.0" id="dlmtree-110">dlmtree 1.1.0<a class="anchor" aria-label="anchor" href="#dlmtree-110"></a></h2><p class="text-muted">CRAN release: 2025-04-25</p>
+<ul><li>new feature: <code><a href="../reference/diagnose.html">diagnose()</a></code> function - launches a Shiny panel for assessing MCMC convergence, which includes:
+<ul><li>trace plots and density plots for the estimated distributed lag function</li>
+<li>lag-wise convergence analysis</li>
+<li>tree update convergence</li>
+<li>trace plots and density plots for hyperparameters</li>
+<li>exposure selection (for mixture models)</li>
+<li>modifier selection (for heterogeneous models)</li>
+</ul></li>
+<li>update <code>summary.X()</code> functions
+<ul><li>more consistent output formats</li>
+<li>add options to extract MCMC posterior samples</li>
+</ul></li>
+<li>documentation improvement
+<ul><li>add more detailed descriptions in <code>Value</code> sections</li>
+<li>reduced redundancy across help files of S3method</li>
+</ul></li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.1" id="dlmtree-101">dlmtree 1.0.1<a class="anchor" aria-label="anchor" href="#dlmtree-101"></a></h2>
+<ul><li>change the documentation organization format of the main function using <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code> for input argument
+<ul><li>lists of arguments are linked to <code>control.R</code>
+</li>
+<li>remove the prefixes from control arguments</li>
+</ul></li>
+<li>remove following scripts from the package: <code>tdlmm.R</code>, <code>tdlnm.R</code>
+</li>
+<li>update credible interval bands to be transparent</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.0.2" id="dlmtree-1002">dlmtree 1.0.0.2<a class="anchor" aria-label="anchor" href="#dlmtree-1002"></a></h2>
-<ul><li>fix to shiny.hdlm and shiny.hdlmm to remove bug where no data is selected</li>
-<li>fix to combine.models.R to correctly combine tree posterior samples</li>
-<li>fix to summary.tdlmm in rowMeans to stop autodrop of dimension</li>
+<ul><li>fix to <code>shiny.hdlm</code> and <code>shiny.hdlmm</code> to remove bug where no data is selected</li>
+<li>fix to <code>combine.models.R</code> to correctly combine tree posterior samples</li>
+<li>fix to <code>summary.tdlmm</code> in rowMeans to stop autodrop of dimension</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.0.1" id="dlmtree-1001">dlmtree 1.0.0.1<a class="anchor" aria-label="anchor" href="#dlmtree-1001"></a></h2>

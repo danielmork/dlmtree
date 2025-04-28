@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">dlmtree</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,7 @@
 <span>  <span class="va">group.index</span>,</span>
 <span>  conf.level <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  exposure <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  return.mcmc <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  keep.mcmc <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  mem.safe <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -63,15 +63,15 @@
 
 
 <dl><dt id="arg-object">object<a class="anchor" aria-label="anchor" href="#arg-object"></a></dt>
-<dd><p>an object of a model fit. Must be 'hdlm' or 'hdlmm'</p></dd>
+<dd><p>object of a model fit. Must be 'hdlm' or 'hdlmm'</p></dd>
 
 
 <dt id="arg-new-data">new.data<a class="anchor" aria-label="anchor" href="#arg-new-data"></a></dt>
-<dd><p>a data frame with new observations with the same number of modifiers</p></dd>
+<dd><p>data frame with new observations with the same number of modifiers</p></dd>
 
 
 <dt id="arg-group-index">group.index<a class="anchor" aria-label="anchor" href="#arg-group-index"></a></dt>
-<dd><p>a list of index (row numbers) for subgroup specification</p></dd>
+<dd><p>list of index (row numbers) for subgroup specification</p></dd>
 
 
 <dt id="arg-conf-level">conf.level<a class="anchor" aria-label="anchor" href="#arg-conf-level"></a></dt>
@@ -82,7 +82,7 @@
 <dd><p>exposure of interest for 'hdlmm' method</p></dd>
 
 
-<dt id="arg-return-mcmc">return.mcmc<a class="anchor" aria-label="anchor" href="#arg-return-mcmc"></a></dt>
+<dt id="arg-keep-mcmc">keep.mcmc<a class="anchor" aria-label="anchor" href="#arg-keep-mcmc"></a></dt>
 <dd><p>store mcmc in the output</p></dd>
 
 
@@ -96,8 +96,35 @@
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of distributed lag effects per subgroups</p>
-    </div>
+    <p>A list with the following components:</p>
+<dl><dt>conf.level</dt>
+<dd><p>Specified confidence level</p></dd>
+
+<dt>mod</dt>
+<dd><p>a list of modifers with a vector of values from the model</p></dd>
+
+<dt>n</dt>
+<dd><p>Number of observation per specified subgroup</p></dd>
+
+<dt>groupIndex</dt>
+<dd><p>list of index (row numbers) for specified subgroup</p></dd>
+
+<dt>dlmMean</dt>
+<dd><p>distributed lag effects per subgroups</p></dd>
+
+<dt>dlmCI</dt>
+<dd><p>credible intervals for distributed lag effects per subgroups</p></dd>
+
+<dt>dlmCum</dt>
+<dd><p>cumulative effects per subgroups</p></dd>
+
+<dt>dlFunction</dt>
+<dd><p>type of DLM class</p></dd>
+
+<dt>plotData</dt>
+<dd><p>data frame built for easier visualization of distributed lag effects for each subgroup (facet)</p></dd>
+
+</dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>estDLM</p>

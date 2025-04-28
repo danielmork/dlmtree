@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">dlmtree</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -106,20 +106,23 @@ It can be loaded with the following code.</p>
 </h3>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">hdlm.fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dlmtree.html">dlmtree</a></span><span class="op">(</span>formula <span class="op">=</span> <span class="va">bwgaz</span> <span class="op">~</span> <span class="va">ChildSex</span> <span class="op">+</span> <span class="va">MomAge</span> <span class="op">+</span> <span class="va">MomPriorBMI</span> <span class="op">+</span></span>
-<span>                                        <span class="va">Race</span> <span class="op">+</span> <span class="va">Hispanic</span> <span class="op">+</span> <span class="va">SmkAny</span> <span class="op">+</span> <span class="va">EstMonthConcept</span>,</span>
+<span>                      <span class="va">Race</span> <span class="op">+</span> <span class="va">Hispanic</span> <span class="op">+</span> <span class="va">SmkAny</span> <span class="op">+</span> <span class="va">EstMonthConcept</span>,</span>
 <span>                    data <span class="op">=</span> <span class="va">sbd_cov</span>,</span>
 <span>                    exposure.data <span class="op">=</span> <span class="va">sbd_exp</span><span class="op">[[</span><span class="st">"PM25"</span><span class="op">]</span><span class="op">]</span>,</span>
-<span>                    family <span class="op">=</span> <span class="st">"gaussian"</span>, dlm.type <span class="op">=</span> <span class="st">"linear"</span>, het <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>                    hdlm.modifiers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ChildSex"</span>, <span class="st">"MomAge"</span>, <span class="st">"MomPriorBMI"</span>, <span class="st">"SmkAny"</span><span class="op">)</span>,</span>
-<span>                    hdlm.modifier.splits <span class="op">=</span> <span class="fl">15</span>,</span>
-<span>                    n.burn <span class="op">=</span> <span class="fl">2500</span>, n.iter <span class="op">=</span> <span class="fl">10000</span>, n.thin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
+<span>                    family <span class="op">=</span> <span class="st">"gaussian"</span>,</span>
+<span>                    dlm.type <span class="op">=</span> <span class="st">"linear"</span>,</span>
+<span>                    het <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                    control.het <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>                      modifiers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ChildSex"</span>, <span class="st">"MomAge"</span>, <span class="st">"MomPriorBMI"</span>, <span class="st">"SmkAny"</span><span class="op">)</span>,</span>
+<span>                      modifier.splits <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>,</span>
+<span>                    control.mcmc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>n.burn <span class="op">=</span> <span class="fl">2500</span>, n.iter <span class="op">=</span> <span class="fl">10000</span>, n.thin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Preparing data...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Running shared HDLM:</span></span>
 <span><span class="co">#&gt; Burn-in % complete </span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
-<span><span class="co">#&gt; MCMC iterations (est time: 3.2 minutes)</span></span>
+<span><span class="co">#&gt; MCMC iterations (est time: 3.3 minutes)</span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
 <span><span class="co">#&gt; Compiling results...</span></span></code></pre></div>
@@ -128,8 +131,8 @@ It can be loaded with the following code.</p>
 <h3 id="model-fit-summary">Model fit summary<a class="anchor" aria-label="anchor" href="#model-fit-summary"></a>
 </h3>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">hdlm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">hdlm.fit</span><span class="op">)</span></span>
-<span><span class="va">hdlm.sum</span></span>
+<code class="sourceCode R"><span><span class="va">hdlm.sum</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/summary.html">summary</a></span><span class="op">(</span><span class="va">hdlm.fit</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/print.html">print</a></span><span class="op">(</span><span class="va">hdlm.sum</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; HDLM summary</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -141,40 +144,41 @@ It can be loaded with the following code.</p>
 <span><span class="co">#&gt; - 2500 burn-in iterations</span></span>
 <span><span class="co">#&gt; - 10000 post-burn iterations</span></span>
 <span><span class="co">#&gt; - 5 thinning factor</span></span>
+<span><span class="co">#&gt; - exposure measured at 37 time points</span></span>
 <span><span class="co">#&gt; - 0.5 modifier sparsity prior</span></span>
 <span><span class="co">#&gt; - 0.95 confidence level</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Fixed effects:</span></span>
 <span><span class="co">#&gt;                        Mean  Lower  Upper</span></span>
-<span><span class="co">#&gt; *(Intercept)          1.284  0.905  1.649</span></span>
-<span><span class="co">#&gt;  ChildSexM            0.110 -0.327  0.560</span></span>
-<span><span class="co">#&gt;  MomAge               0.000 -0.004  0.004</span></span>
+<span><span class="co">#&gt; *(Intercept)          1.269  0.922  1.623</span></span>
+<span><span class="co">#&gt;  ChildSexM            0.124 -0.312  0.552</span></span>
+<span><span class="co">#&gt;  MomAge               0.001 -0.003  0.005</span></span>
 <span><span class="co">#&gt; *MomPriorBMI         -0.021 -0.023 -0.018</span></span>
-<span><span class="co">#&gt;  RaceAsianPI          0.047 -0.080  0.170</span></span>
-<span><span class="co">#&gt;  RaceBlack            0.056 -0.071  0.183</span></span>
-<span><span class="co">#&gt;  Racewhite            0.036 -0.087  0.154</span></span>
-<span><span class="co">#&gt; *HispanicNonHispanic  0.255  0.232  0.277</span></span>
-<span><span class="co">#&gt; *SmkAnyY             -0.403 -0.454 -0.354</span></span>
-<span><span class="co">#&gt;  EstMonthConcept2    -0.049 -0.106  0.005</span></span>
-<span><span class="co">#&gt; *EstMonthConcept3    -0.133 -0.197 -0.071</span></span>
-<span><span class="co">#&gt; *EstMonthConcept4    -0.208 -0.275 -0.142</span></span>
-<span><span class="co">#&gt; *EstMonthConcept5    -0.194 -0.247 -0.145</span></span>
-<span><span class="co">#&gt; *EstMonthConcept6    -0.200 -0.253 -0.148</span></span>
-<span><span class="co">#&gt;  EstMonthConcept7    -0.032 -0.087  0.020</span></span>
-<span><span class="co">#&gt; *EstMonthConcept8     0.151  0.088  0.210</span></span>
-<span><span class="co">#&gt; *EstMonthConcept9     0.392  0.325  0.455</span></span>
-<span><span class="co">#&gt; *EstMonthConcept10    0.382  0.317  0.444</span></span>
-<span><span class="co">#&gt; *EstMonthConcept11    0.339  0.286  0.392</span></span>
-<span><span class="co">#&gt; *EstMonthConcept12    0.139  0.091  0.188</span></span>
+<span><span class="co">#&gt;  RaceAsianPI          0.047 -0.076  0.169</span></span>
+<span><span class="co">#&gt;  RaceBlack            0.055 -0.070  0.180</span></span>
+<span><span class="co">#&gt;  Racewhite            0.036 -0.090  0.150</span></span>
+<span><span class="co">#&gt; *HispanicNonHispanic  0.255  0.232  0.276</span></span>
+<span><span class="co">#&gt; *SmkAnyY             -0.406 -0.458 -0.356</span></span>
+<span><span class="co">#&gt;  EstMonthConcept2    -0.048 -0.101  0.007</span></span>
+<span><span class="co">#&gt; *EstMonthConcept3    -0.125 -0.185 -0.064</span></span>
+<span><span class="co">#&gt; *EstMonthConcept4    -0.194 -0.255 -0.133</span></span>
+<span><span class="co">#&gt; *EstMonthConcept5    -0.192 -0.245 -0.138</span></span>
+<span><span class="co">#&gt; *EstMonthConcept6    -0.198 -0.248 -0.148</span></span>
+<span><span class="co">#&gt;  EstMonthConcept7    -0.035 -0.087  0.017</span></span>
+<span><span class="co">#&gt; *EstMonthConcept8     0.149  0.092  0.207</span></span>
+<span><span class="co">#&gt; *EstMonthConcept9     0.399  0.334  0.464</span></span>
+<span><span class="co">#&gt; *EstMonthConcept10    0.395  0.333  0.454</span></span>
+<span><span class="co">#&gt; *EstMonthConcept11    0.347  0.292  0.398</span></span>
+<span><span class="co">#&gt; *EstMonthConcept12    0.143  0.097  0.193</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; * = CI does not contain zero</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Modifiers:</span></span>
 <span><span class="co">#&gt;                PIP</span></span>
 <span><span class="co">#&gt; ChildSex    1.0000</span></span>
-<span><span class="co">#&gt; MomAge      0.8595</span></span>
-<span><span class="co">#&gt; MomPriorBMI 0.8660</span></span>
-<span><span class="co">#&gt; SmkAny      0.1920</span></span>
+<span><span class="co">#&gt; MomAge      0.9485</span></span>
+<span><span class="co">#&gt; MomPriorBMI 0.9225</span></span>
+<span><span class="co">#&gt; SmkAny      0.2005</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; PIP = Posterior inclusion probability</span></span>
 <span><span class="co">#&gt; </span></span>

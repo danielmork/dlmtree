@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">dlmtree</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,10 +60,11 @@
 
 <dt id="arg-plot-type">plot.type<a class="anchor" aria-label="anchor" href="#arg-plot-type"></a></dt>
 <dd><p>string indicating plot type, options are 'mean' (default)
-which shows mean exposure-time response surface, 'se', 'ci-min', 'ci-max',
-'slice' which takes a slice of the plot at a given 'val' or 'time',
-'animate' which creates a animation of slices of the surface plot across
-exposure values (requires package gganimate)</p></dd>
+which shows mean exposure-time response surface, 'cumulative' which shows the cumulative effects per
+exposure-concentration level, 'effect' which returns a grid of exposure concentration and lag
+ to determine if the credible interval contains zero, with the direction of the effect indicated,
+'se', 'ci-min', 'ci-max', 'slice' which takes a slice of the plot at a given 'val' or 'time',
+'animate' which creates a animation of slices of the surface plot across exposure values (requires package gganimate)</p></dd>
 
 
 <dt id="arg-val">val<a class="anchor" aria-label="anchor" href="#arg-val"></a></dt>

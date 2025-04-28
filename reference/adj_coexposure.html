@@ -15,7 +15,7 @@ of interest."><meta property="og:image" content="https://danielmork.github.io/dl
 
     <a class="navbar-brand me-2" href="../index.html">dlmtree</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -107,9 +107,38 @@ Default is 0.95.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>data.frame of plot data with exposure name, posterior mean, and
-credible intervals, or posterior samples if keep.mcmc = TRUE</p>
-    </div>
+    <p>A list with the following components (or posterior samples if keep.mcmc = TRUE):</p>
+<dl><dt>Name</dt>
+<dd><p>vector of exposure names</p></dd>
+
+<dt>Time</dt>
+<dd><p>integer vector of lags</p></dd>
+
+<dt>Effect</dt>
+<dd><p>posterior mean of marginal effects</p></dd>
+
+<dt>SE</dt>
+<dd><p>standard error of the estimate</p></dd>
+
+<dt>Lower</dt>
+<dd><p>lower bound of credible interval of the marginal effect estimate</p></dd>
+
+<dt>Upper</dt>
+<dd><p>upper bound of credible interval of the marginal effect estimate</p></dd>
+
+<dt>cEffect</dt>
+<dd><p>cumulative marginal effects</p></dd>
+
+<dt>cLower</dt>
+<dd><p>lower bound of credible interval of the cumulative marginal effect</p></dd>
+
+<dt>cUpper</dt>
+<dd><p>upper bound of credible interval of the cumulative marginal effect</p></dd>
+
+<dt>CW</dt>
+<dd><p>boolean vector indicating critical window</p></dd>
+
+</dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>adj_coexposure</p>

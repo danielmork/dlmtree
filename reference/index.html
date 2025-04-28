@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">dlmtree</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,6 +55,60 @@
 
         </dt>
         <dd>Fit tree structured distributed lag models</dd>
+      </dl><dl><dt>
+
+          <code><a href="dlmtree.control.diagnose.html">dlmtree.control.diagnose()</a></code>
+
+        </dt>
+        <dd>Diagnostic control settings for dlmtree model fitting</dd>
+      </dl><dl><dt>
+
+          <code><a href="dlmtree.control.family.html">dlmtree.control.family()</a></code>
+
+        </dt>
+        <dd>Family control settings for dlmtree model fitting</dd>
+      </dl><dl><dt>
+
+          <code><a href="dlmtree.control.het.html">dlmtree.control.het()</a></code>
+
+        </dt>
+        <dd>Control settings for dlmtree model fitting, when used for heterogeneous models</dd>
+      </dl><dl><dt>
+
+          <code><a href="dlmtree.control.hyper.html">dlmtree.control.hyper()</a></code>
+
+        </dt>
+        <dd>Hyperparameter control settings for dlmtree model fitting</dd>
+      </dl><dl><dt>
+
+          <code><a href="dlmtree.control.mcmc.html">dlmtree.control.mcmc()</a></code>
+
+        </dt>
+        <dd>MCMC control settings for dlmtree model fitting</dd>
+      </dl><dl><dt>
+
+          <code><a href="dlmtree.control.mix.html">dlmtree.control.mix()</a></code>
+
+        </dt>
+        <dd>Control settings for dlmtree model fitting, when used for mixture models</dd>
+      </dl><dl><dt>
+
+          <code><a href="dlmtree.control.monotone.html">dlmtree.control.monotone()</a></code>
+
+        </dt>
+        <dd>Control settings for dlmtree model fitting, when used for monotone model</dd>
+      </dl><dl><dt>
+
+          <code><a href="dlmtree.control.tdlnm.html">dlmtree.control.tdlnm()</a></code>
+
+        </dt>
+        <dd>Control settings for dlmtree model fitting, when used for TDLNM</dd>
+      </dl><dl><dt>
+
+          <code><a href="diagnose.html">diagnose()</a></code>
+
+        </dt>
+        <dd>diagnose</dd>
       </dl></div><div class="section level2">
       <h2 id="model-summary">Model summary<a class="anchor" aria-label="anchor" href="#model-summary"></a></h2>
 
@@ -80,40 +134,10 @@
         <dd>Combines information from DLMs of mixture exposures.</dd>
       </dl><dl><dt>
 
-          <code><a href="summary.hdlm.html">summary(<i>&lt;hdlm&gt;</i>)</a></code>
+          <code><a href="summary.html">summary()</a></code>
 
         </dt>
-        <dd>Creates a summary object of class 'hdlm'</dd>
-      </dl><dl><dt>
-
-          <code><a href="summary.hdlmm.html">summary(<i>&lt;hdlmm&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Creates a summary object of class 'hdlmm'</dd>
-      </dl><dl><dt>
-
-          <code><a href="summary.monotone.html">summary(<i>&lt;monotone&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Creates a summary object of class 'monotone'</dd>
-      </dl><dl><dt>
-
-          <code><a href="summary.tdlm.html">summary(<i>&lt;tdlm&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Creates a summary object of class 'tdlm'</dd>
-      </dl><dl><dt>
-
-          <code><a href="summary.tdlmm.html">summary(<i>&lt;tdlmm&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Creates a summary object of class 'tdlmm'</dd>
-      </dl><dl><dt>
-
-          <code><a href="summary.tdlnm.html">summary(<i>&lt;tdlnm&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Creates a summary object of class 'tdlnm'</dd>
+        <dd>summary</dd>
       </dl><dl><dt>
 
           <code><a href="estDLM.html">estDLM()</a></code>
@@ -128,16 +152,10 @@
         <dd>Makes a 'pretty' output of a group of numbers</dd>
       </dl><dl><dt>
 
-          <code><a href="predict.hdlm.html">predict(<i>&lt;hdlm&gt;</i>)</a></code>
+          <code><a href="predict.html">predict()</a></code>
 
         </dt>
-        <dd>Calculates predicted response for HDLM</dd>
-      </dl><dl><dt>
-
-          <code><a href="predict.hdlmm.html">predict(<i>&lt;hdlmm&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Calculates predicted response for HDLMM</dd>
+        <dd>predict</dd>
       </dl><dl><dt>
 
           <code><a href="adj_coexposure.html">adj_coexposure()</a></code>
@@ -146,76 +164,10 @@
         <dd>Adjusting for expected changes in co-exposure (TDLMM)</dd>
       </dl><dl><dt>
 
-          <code><a href="print.hdlm.html">print(<i>&lt;hdlm&gt;</i>)</a></code>
+          <code><a href="print.html">print()</a></code>
 
         </dt>
-        <dd>Print a hdlm Object</dd>
-      </dl><dl><dt>
-
-          <code><a href="print.hdlmm.html">print(<i>&lt;hdlmm&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Print a hdlmm Object</dd>
-      </dl><dl><dt>
-
-          <code><a href="print.monotone.html">print(<i>&lt;monotone&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Print a monotone Object</dd>
-      </dl><dl><dt>
-
-          <code><a href="print.summary.hdlm.html">print(<i>&lt;summary.hdlm&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Prints an overview with summary of model class 'hdlm'</dd>
-      </dl><dl><dt>
-
-          <code><a href="print.summary.hdlmm.html">print(<i>&lt;summary.hdlmm&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Prints an overview with summary of model class 'hdlmm'</dd>
-      </dl><dl><dt>
-
-          <code><a href="print.summary.monotone.html">print(<i>&lt;summary.monotone&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Prints an overview with summary of model class 'monotone'</dd>
-      </dl><dl><dt>
-
-          <code><a href="print.summary.tdlm.html">print(<i>&lt;summary.tdlm&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Prints an overview with summary of model class 'tdlm'</dd>
-      </dl><dl><dt>
-
-          <code><a href="print.summary.tdlmm.html">print(<i>&lt;summary.tdlmm&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Prints an overview with summary of model class 'tdlmm'</dd>
-      </dl><dl><dt>
-
-          <code><a href="print.summary.tdlnm.html">print(<i>&lt;summary.tdlnm&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Prints an overview with summary of model class 'tdlnm'</dd>
-      </dl><dl><dt>
-
-          <code><a href="print.tdlm.html">print(<i>&lt;tdlm&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Print a tdlm Object</dd>
-      </dl><dl><dt>
-
-          <code><a href="print.tdlmm.html">print(<i>&lt;tdlmm&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Print a tdlmm Object</dd>
-      </dl><dl><dt>
-
-          <code><a href="print.tdlnm.html">print(<i>&lt;tdlnm&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Print a tdlnm Object</dd>
+        <dd>print</dd>
       </dl></div><div class="section level2">
       <h2 id="visualization">Visualization<a class="anchor" aria-label="anchor" href="#visualization"></a></h2>
 
@@ -274,18 +226,6 @@
 
         </dt>
         <dd>shiny</dd>
-      </dl><dl><dt>
-
-          <code><a href="shiny.hdlm.html">shiny(<i>&lt;hdlm&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Executes a 'shiny' app for HDLM.</dd>
-      </dl><dl><dt>
-
-          <code><a href="shiny.hdlmm.html">shiny(<i>&lt;hdlmm&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Executes a 'shiny' app for HDLMM.</dd>
       </dl><dl><dt>
 
           <code><a href="splitpoints.html">splitpoints()</a></code>
@@ -493,18 +433,6 @@
 
         </dt>
         <dd>Calculates the posterior inclusion probability (PIP).</dd>
-      </dl><dl><dt>
-
-          <code><a href="tdlmm.html">tdlmm()</a></code>
-
-        </dt>
-        <dd>Treed Distributed Lag Mixture Models (Deprecated)</dd>
-      </dl><dl><dt>
-
-          <code><a href="tdlnm.html">tdlnm()</a></code>
-
-        </dt>
-        <dd>Treed Distributed Lag Non-Linear Models (Deprecated)</dd>
       </dl><dl><dt>
 
           <code><a href="tdlmm_Cpp.html">tdlmm_Cpp()</a></code>
