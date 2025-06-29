@@ -24,7 +24,6 @@ public:
   VectorXd R;          // Partial residual (Also, Y - fhat): Store the current one -> update the next one
   MatrixXd Rmat;       // Each column is partial residual
   MatrixXd Vg;         // V_gamma
-  Eigen::LLT<Eigen::MatrixXd> VgLLT; // LLt
   MatrixXd VgInv;      // V_gamma inverse
   MatrixXd VgChol;     // V_gamma cholesky decomposition
   VectorXd X1;        
