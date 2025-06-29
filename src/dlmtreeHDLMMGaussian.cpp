@@ -66,10 +66,11 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
   ctr->Zw = ctr->Z; 
   ctr->pZ = (ctr->Z).cols(); 
 
-  ctr->VgInv  = (ctr->Z).transpose() * (ctr->Z); 
-  ctr->VgInv.diagonal().array() += 1.0 / 100000.0;
-  ctr->Vg     = ctr->VgInv.inverse();  
-  ctr->VgChol = (ctr->Vg).llt().matrixL();      
+  ctr->Zt     = (ctr->Z).transpose();
+  ctr->VgInv  = ctr->Zt * (ctr->Z); 
+  ctr->VgInv.diagonal().array() += 1.0 / 10000.0;
+  ctr->Vg     = ctr->VgInv.inverse();
+  ctr->VgChol = (ctr->Vg).llt().matrixL();
 
   // Binomial flag              
   ctr->binomial = as<bool>(model["binomial"]);  
@@ -77,7 +78,6 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
 
   // Tree prior probabilities for the modifier tree and DLM tree
   ctr->stepProbMod  = as<std::vector<double>>(model["stepProbMod"]);
-  ctr->stepProb     = as<std::vector<double>>(model["stepProbTDLM"]);
   ctr->treePriorMod = as<std::vector<double>>(model["treePriorMod"]); 
   ctr->treePrior    = as<std::vector<double>>(model["treePriorTDLM"]);
 
@@ -577,7 +577,7 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
   treeMHR mhr0, mhr;                                  
 
   // Pre-calculation for MH ratio update
-  Eigen::VectorXd ZtR = (ctr->Z).transpose() * (ctr->R);
+  Eigen::VectorXd ZtR = ctr->Zt * (ctr->R);
 
   // -- List terminal nodes --
   modTerm   = modTree->listTerminal();   
@@ -604,238 +604,6 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
   mhr0 = dlmtreeHDLMM_MHR(modTerm, dlmTerm1, dlmTerm2, 
                           ctr, ZtR, treeVar, 
                           m1Var, m2Var, mixVar);
-
-  // // [Tree pair update]
-  // // *** Propose a new TDLMM tree 1 ***
-  // newExp    = m1; 
-  // newExpVar = m1Var;
-  // newMixVar = mixVar;
-  // stepMhr = 0;
-  // success = 0;
-
-  // // *** Propose a new dlmtree 1 ***
-  // // Choose a transition and update
-  // step1 = sampleInt(ctr->stepProb, 1);
-  // if ((dlmTerm1.size() == 1) && (step1 < 3)){
-  //   step1 = 0;
-  // }
-
-  // if(step1 < 3){ 
-  //   stepMhr = tdlmProposeTree(dlmTree1, Exp[m1], ctr, step1);     // Given current tree -> propose a new tree
-  //   success = dlmTree1->isProposed();                             // Update to proposed
-  //   newDlmTerm1 = dlmTree1->listTerminal(1);                      // If proposed, list the terminal nodes of the tree
-  // } else {
-  //   newExp = sampleInt(ctr->expProb);         // Sample an exposure
-  //   if (newExp != m1) {                       // If new Exposure is not the same as the previous one,
-  //     success   = 1;                          // It is good
-  //     newExpVar = ctr->muExp(newExp);         // Find the exposure-specific variance for the new exposure
-  //     newTree   = new Node(*dlmTree1);        // We need a new tree for a new exposure
-  //     newTree->setUpdate(1);                  // Set an update flag + for children as well (This is used for "update NodeVals")
-  //     newDlmTerm1 = newTree->listTerminal();  // List the terminal node of this new tree
-
-  //     for (Node* nt : newDlmTerm1)            // Go through the new terminal node
-  //       Exp[newExp]->updateNodeVals(nt);      // Update the math terms
-
-  //     // Update the interaction using the new exposure as well for TDLMMns/all
-  //     if ((ctr->interaction) && ((ctr->interaction == 2) || (newExp != m2))) {
-  //       if (newExp <= m2)
-  //         newMixVar = ctr->muMix(m2, newExp); 
-  //       else
-  //         newMixVar = ctr->muMix(newExp, m2); 
-  //     } else {
-  //       newMixVar = 0;
-  //     }
-  //   }
-  // }
-
-  // // * dlmTree 1 MHR 
-  // // StepMHR: Transition ratio
-  // // mhr0 & mhr: Likelihood of R
-  // // If successful, calculate MH ratio
-  // if (success) {  
-  //   // If transition is successful, we have a new dlm terminal node.
-  //   newDlmTerm1 = dlmTree1->listTerminal(1);
-  //   modTree->setUpdateXmat(1);
-
-  //   // MH ratio with a new terminal and the exposure: newDlmTerm1, newExpVar
-  //   mhr = dlmtreeHDLMM_MHR(modTerm, 
-  //                          newDlmTerm1, dlmTerm2, ctr, ZtR, treeVar, 
-  //                          newExpVar, m2Var, newMixVar);
-
-  //   // MH ratio - dlmTree 
-  //   if (RtR < 0) {
-  //     RtR = (ctr->R).dot(ctr->R);
-  //     RtZVgZtR = ZtR.dot((ctr->Vg).selfadjointView<Eigen::Lower>() * ZtR);
-  //   }
-
-  //   // MH ratio
-  //   ratio = stepMhr + 
-  //           mhr.logVThetaChol - mhr0.logVThetaChol -
-  //           (0.5 * (ctr->n + 1.0) *
-  //           (log(0.5 * (RtR - RtZVgZtR - mhr.beta) + ctr->xiInvSigma2) -
-  //           log(0.5 * (RtR - RtZVgZtR - mhr0.beta) + ctr->xiInvSigma2))) -
-  //           (0.5 * ((mhr.nTerm1 * mhr0.nModTerm * log(treeVar * newExpVar)) -
-  //           (mhr0.nTerm1 * mhr0.nModTerm * log(treeVar * m1Var)))); 
-
-  //   // Interaction
-  //   if (newMixVar != 0){ 
-  //     ratio -= 0.5 * log(treeVar * newMixVar) * mhr.nTerm1 * mhr0.nTerm2 * mhr0.nModTerm;
-  //   }
-
-  //   if (mixVar != 0){ 
-  //     ratio += 0.5 * log(treeVar * mixVar) * mhr0.nTerm1 * mhr0.nTerm2 * mhr0.nModTerm;
-  //   }
-
-  //   // Accept / Reject
-  //   if ((log(R::runif(0, 1)) < ratio) && (ratio == ratio)) {
-  //     mhr0 = mhr;
-  //     success = 2;
-
-  //     if (step1 == 3) { 
-  //       m1      = newExp;
-  //       m1Var   = newExpVar;
-  //       mixVar  = newMixVar;
-  //       dlmTree1->replaceNodeVals(newTree);
-  //     } else {
-  //       dlmTree1->accept(); 
-  //     }
-  //     // Update parameters with new tree
-  //     dlmTerm1 = dlmTree1->listTerminal();
-  //     for (Node* n : modTerm) {
-  //       n->nodevals->updateXmat = 0;
-  //     }
-
-  //   } else {  
-  //     modTree->setUpdateXmat(1); 
-  //   }
-  // }
-  // dlmTree1->reject();
-
-  // // Reset new tree value for tree2
-  // if (newTree != 0)
-  //   delete newTree;
-  // newTree = 0;
-
-  // // * Record tree 1
-  // if (ctr->diagnostics) {
-  //   Eigen::VectorXd acc(9);
-  //   acc << ctr->record, t, 1, step1, success, m1, dlmTerm1.size(), stepMhr, ratio;
-  //   (dgn->treeDLMAccept).push_back(acc);
-  // }
-
-  
-  // // *** Propose a new TDLMM tree 2 ***
-  // newExp    = m2; 
-  // newExpVar = m2Var;
-  // newMixVar = mixVar;
-  // stepMhr = 0;
-  // success = 0;
-
-  // // Choose a transition and update
-  // step2 = sampleInt(ctr->stepProb, 1);
-  // if ((dlmTerm2.size() == 1) && (step2 < 3)){
-  //   step2 = 0;
-  // }
-
-  // if(step2 < 3){ 
-  //   stepMhr = tdlmProposeTree(dlmTree2, Exp[m2], ctr, step2);
-  //   success = dlmTree2->isProposed();
-  //   newDlmTerm2 = dlmTree2->listTerminal(1);
-
-  // } else { 
-  //   newExp = sampleInt(ctr->expProb); 
-  //   if (newExp != m2) { 
-  //     success   = 1;
-  //     newExpVar = ctr->muExp(newExp);    
-  //     newTree   = new Node(*dlmTree2);   
-  //     newTree->setUpdate(1);
-  //     newDlmTerm2   = newTree->listTerminal();
-
-  //     for (Node* nt : newDlmTerm2)
-  //       Exp[newExp]->updateNodeVals(nt);
-
-  //     if ((ctr->interaction) && ((ctr->interaction == 2) || (newExp != m1))) {
-  //       if (newExp <= m1)
-  //         newMixVar = ctr->muMix(m1, newExp);
-  //       else
-  //         newMixVar = ctr->muMix(newExp, m1);
-  //     } else {
-  //       newMixVar = 0;
-  //     }
-  //   }
-  // }
-
-  // // * dlmTree 2 MHR 
-  // // StepMHR: Transition ratio
-  // // mhr0 & mhr: Likelihood of R
-  // // If successful, calculate MH ratio
-  // if (success) {
-  //   newDlmTerm2 = dlmTree2->listTerminal(1);
-  //   modTree->setUpdateXmat(1);
-
-  //   // MH ratio with a new terminal and the exposure: newDlmTerm1, newExpVar
-  //   mhr = dlmtreeHDLMM_MHR(modTerm, 
-  //                          dlmTerm1, newDlmTerm2, ctr, ZtR, treeVar, 
-  //                          m1Var, newExpVar, newMixVar);
-
-  //   // MH ratio - dlmTree
-  //   if (RtR < 0) {
-  //     RtR = (ctr->R).dot(ctr->R);
-  //     RtZVgZtR = ZtR.dot((ctr->Vg).selfadjointView<Eigen::Lower>() * ZtR);
-  //   }
-
-  //   ratio = stepMhr + 
-  //           mhr.logVThetaChol - mhr0.logVThetaChol -
-  //           (0.5 * (ctr->n + 1.0) *
-  //           (log(0.5 * (RtR - RtZVgZtR - mhr.beta) + ctr->xiInvSigma2) -
-  //           log(0.5 * (RtR - RtZVgZtR - mhr0.beta) + ctr->xiInvSigma2))) -
-  //           (0.5 * ((mhr.nTerm2 * mhr0.nModTerm * log(treeVar * newExpVar)) -
-  //           (mhr0.nTerm2 * mhr0.nModTerm * log(treeVar * m2Var))));
-
-  //   // Interaction
-  //   if (newMixVar != 0){ 
-  //     ratio -= 0.5 * log(treeVar * newMixVar) * mhr0.nTerm1 * mhr.nTerm2 * mhr0.nModTerm;
-  //   }
-
-  //   if (mixVar != 0){ 
-  //     ratio += 0.5 * log(treeVar * mixVar) * mhr0.nTerm1 * mhr0.nTerm2 * mhr0.nModTerm;
-  //   }
-
-  //   if ((log(R::runif(0, 1)) < ratio) && (ratio == ratio)) {
-  //     mhr0 = mhr;
-  //     success = 2;
-
-  //     if (step2 == 3) { 
-  //       m2      = newExp;
-  //       m2Var   = newExpVar;
-  //       mixVar  = newMixVar;
-  //       dlmTree2->replaceNodeVals(newTree);
-  //     } else {
-  //       dlmTree2->accept();
-  //     }
-
-  //     dlmTerm2 = dlmTree2->listTerminal(); 
-  //     // No need to update Xmat for dlmtree accept
-  //     for (Node* n : modTerm) {
-  //       n->nodevals->updateXmat = 0;
-  //     }
-
-  //   } else { 
-  //     modTree->setUpdateXmat(1); 
-  //   }
-  // } 
-  // dlmTree2->reject();  
-
-  // if (newTree != 0)
-  //   delete newTree;
-  // newTree = 0;
-
-  // // * Record tree 2
-  // if (ctr->diagnostics) {
-  //   Eigen::VectorXd acc(9);
-  //   acc << ctr->record, t, 2, step2, success, m2, dlmTerm2.size(), stepMhr, ratio;
-  //   (dgn->treeDLMAccept).push_back(acc);
-  // }
 
 
   // [New tree proposal method] ------------------------------------------------------------------------------------------------
@@ -1302,7 +1070,7 @@ treeMHR dlmtreeHDLMM_MHR(std::vector<Node*> modTerm,
         k = (pXDlm1 + pXDlm2) + i * pXDlm2 + j; 
         Xd.col(k)   = (((dlmTerm1[i]->nodevals)->X).array() * ((dlmTerm2[j]->nodevals)->X).array()).matrix();
         diagVar(k)  = 1.0 / (mixVar * treeVar);
-        ZtX.col(k)  = ctr->Zw.transpose() * Xd.col(k); 
+        ZtX.col(k)  = ctr->Zt * Xd.col(k); 
       }
     }
   }

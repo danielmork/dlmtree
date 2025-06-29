@@ -19,14 +19,16 @@ public:
   VectorXd Y;
   VectorXd Y0;         // Fixed response
   MatrixXd Z;          // Design matrix for fixed effect
+  MatrixXd Zt;         // Design matrix transpose (used for Gaussian HDLMM)
   MatrixXd Xd;
   VectorXd R;          // Partial residual (Also, Y - fhat): Store the current one -> update the next one
   MatrixXd Rmat;       // Each column is partial residual
   MatrixXd Vg;         // V_gamma
+  Eigen::LLT<Eigen::MatrixXd> VgLLT; // LLt
   MatrixXd VgInv;      // V_gamma inverse
   MatrixXd VgChol;     // V_gamma cholesky decomposition
   VectorXd X1;        
-  VectorXd ZtX1;       // Z transponse * X1
+  VectorXd ZtX1;       // Z transpose * X1
   VectorXd VgZtX1;     // V_gamma * Z transpose * X1 -> Maybe for tdlnm?
   VectorXd gamma;
   VectorXd fhat;
