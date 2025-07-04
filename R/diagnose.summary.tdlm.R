@@ -1,6 +1,7 @@
 #' @method diagnose summary.tdlm
 #' @rdname diagnose
 diagnose.summary.tdlm <- function(x, ...) {
+  `%notin%` <- Negate(`%in%`)
   
   if (is.null(x$mcmc.samples)){
     stop("MCMC samples are missing. Make sure to set `mcmc = T` when running `summary()` function.")

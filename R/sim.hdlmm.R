@@ -110,8 +110,9 @@ sim.hdlmm <- function(sim = "A",
     start.time1 <- sample(1:(pX - 7), 1)
     start.time2 <- sample(1:(pX - 7), 1)
     start.time3 <- sample(1:(pX - 7), 1)
+    
     dlmFun <- function(dat.row) {
-      if (dat.row$mod_num > 0) { 
+      if (dat.row$mod_num > 0) {
         if (dat.row$mod_bin == 1) {
           e1 <- rep(0, pX)
           e1[start.time1:(start.time1 + 7)] <- effect.size
@@ -127,6 +128,7 @@ sim.hdlmm <- function(sim = "A",
         e3
       }
     }
+    
     fixedIdx <- list(which(dat$mod_num > 0 & dat$mod_bin == 1),   
                      which(dat$mod_num > 0 & dat$mod_bin == 0),  
                      which(dat$mod_num < 0))               
