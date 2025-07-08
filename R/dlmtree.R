@@ -725,8 +725,8 @@ dlmtree <- function(formula,
   # *** Scale data ***
   if (model$family == "gaussian") {
     model$Ymean   <- sum(range(model$Y))/2
-    #model$Yscale  <- diff(range(model$Y - model$Ymean))
-    model$Yscale  <- sd(model$Y - model$Ymean)
+    model$Yscale  <- diff(range(model$Y - model$Ymean))
+    #model$Yscale  <- sd(model$Y - model$Ymean)
     model$Y       <- (model$Y - model$Ymean) / model$Yscale
   } else {
     model$Yscale  <- 1
