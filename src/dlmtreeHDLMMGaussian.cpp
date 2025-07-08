@@ -66,11 +66,10 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
   ctr->Zw = ctr->Z; 
   ctr->pZ = (ctr->Z).cols(); 
 
-  ctr->Zt     = (ctr->Z).transpose();
+  ctr->Zt    = (ctr->Z).transpose();
   ctr->VgInv  = ctr->Zt * (ctr->Z); 
   ctr->VgInv.diagonal().array() += 1.0 / 100000.0;
-  // ctr->Vg     = ctr->VgInv.inverse();
-  ctr->Vg     = ctr->VgInv.ldlt().solve(Eigen::MatrixXd::Identity(ctr->VgInv.rows(), ctr->VgInv.cols()));
+  ctr->Vg     = ctr->VgInv.inverse();
   ctr->VgChol = (ctr->Vg).llt().matrixL();
 
   // Binomial flag              
@@ -96,7 +95,7 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
 
   // Sparsity hyperparameter 
   ctr->mixKappa = as<double>(model["mixPrior"]); 
-  bool updateKappa = false;  
+  bool updateKappa = true;  
   if (ctr->mixKappa < 0) {       
     updateKappa = true;
     ctr->mixKappa = 1;
@@ -128,7 +127,7 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
   // *** Mixture / interaction management ***
   ctr->interaction  = as<int>(model["interaction"]);
   ctr->nMix         = 0;
-  if (ctr->interaction > 0) { 
+  if (ctr->interaction) { 
     ctr->nMix += int (ctr->nExp * (ctr->nExp - 1.0) / 2.0); 
     if (ctr->interaction == 2) {
       ctr->nMix += ctr->nExp;
@@ -275,7 +274,6 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
 
   // Thinning and burn-in process
   for (ctr->b = 1; ctr->b <= (ctr->iter + ctr->burn); (ctr->b)++) {
-    Rcpp::checkUserInterrupt();
     if ((ctr->b > ctr->burn) && (((ctr->b - ctr->burn) % ctr->thin) == 0)) {
       ctr->record = floor((ctr->b - ctr->burn) / ctr->thin);
     } else {
@@ -332,17 +330,8 @@ Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model){
     ctr->sumTermT2  = (ctr->sumTermT2Exp).sum();
     ctr->totTerm    = (ctr->totTermExp).sum();
     if(ctr->interaction > 0) {
-      ctr->sumTermT2 += (ctr->sumTermT2Mix).sum();
-      ctr->totTerm += (ctr->totTermMix).sum();
-    }
-
-    if (ctr->b % 100 == 0) {
-    Rcpp::Rcout << "Iteration " << ctr->b 
-                << " | sigma2: " << ctr->sigma2 
-                << " | nu: " << ctr->nu 
-                << " | totTerm: " << ctr->totTerm 
-                << " | sumTermT2: " << ctr->sumTermT2 
-                << std::endl;
+      ctr->totTerm    += (ctr->totTermMix).sum();
+      ctr->sumTermT2  += (ctr->sumTermT2Mix).sum();
     }
 
     // Update gamma
@@ -684,8 +673,8 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
           (0.5 * (ctr->n + 1.0) *
           (log(0.5 * (RtR - RtZVgZtR - mhr.beta) + ctr->xiInvSigma2) -
           log(0.5 * (RtR - RtZVgZtR - mhr0.beta) + ctr->xiInvSigma2))) -
-          (0.5 * (((mhr.nTerm1 + mhr0.nTerm2) * mhr0.nModTerm * log(treeVar * newExpVar)) -
-          ((mhr0.nTerm1 + mhr0.nTerm2) * mhr0.nModTerm * log(treeVar * m1Var)))); 
+          (0.5 * ((mhr.nTerm1 * mhr0.nModTerm * log(treeVar * newExpVar)) -
+          (mhr0.nTerm1 * mhr0.nModTerm * log(treeVar * m1Var)))); 
 
   // Interaction
   if (newMixVar != 0){ 
@@ -740,18 +729,8 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
   newMixVar = mixVar;
   stepMhr   = 0;
   success   = 1;
-
-  // *** Create a new tree for proposal ***
-  newTree = new Node(0, 1);               // Start from the root
-  newTree->nodestruct = expNS->clone();   // Construct nodestruct
-  drawTree(newTree, newTree, ctr->treePrior[0], ctr->treePrior[1]); // Grow a tree structure from the root
-  newTree->setUpdate(1);                  // Update
-  newDlmTerm2 = newTree->listTerminal();  // List the number of terminal nodes for the new tree
-  for (Node* nt : newDlmTerm2) {          // Go through the new terminal node
-    Exp[newExp]->updateNodeVals(nt);      // Update the calculations
-  }
-
-  // *** Propose a new dlmtree 2 ***
+  
+    // *** Propose a new dlmtree 2 ***
   step2     = 0;                          // Always propose
   newExp    = sampleInt(ctr->expProb);    // Sample an exposure for the new tree
   newExpVar = ctr->muExp(newExp);         // Find the exposure-specific variance for the new exposure
@@ -768,6 +747,17 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
   } else {
     newMixVar = 0;
   }
+  // *** Create a new tree for proposal ***
+  newTree = new Node(0, 1);               // Start from the root
+  newTree->nodestruct = expNS->clone();   // Construct nodestruct
+  drawTree(newTree, newTree, ctr->treePrior[0], ctr->treePrior[1]); // Grow a tree structure from the root
+  newTree->setUpdate(1);                  // Update
+  newDlmTerm2 = newTree->listTerminal();  // List the number of terminal nodes for the new tree
+  for (Node* nt : newDlmTerm2) {          // Go through the new terminal node
+    Exp[newExp]->updateNodeVals(nt);      // Update the calculations
+  }
+
+
   
   // MH ratio
   modTree->setUpdateXmat(1);
@@ -789,8 +779,8 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
           (0.5 * (ctr->n + 1.0) *
           (log(0.5 * (RtR - RtZVgZtR - mhr.beta) + ctr->xiInvSigma2) -
           log(0.5 * (RtR - RtZVgZtR - mhr0.beta) + ctr->xiInvSigma2))) -
-          (0.5 * (((mhr0.nTerm1 + mhr.nTerm2) * mhr0.nModTerm * log(treeVar * newExpVar)) -
-          ((mhr0.nTerm1 + mhr0.nTerm2) * mhr0.nModTerm * log(treeVar * m2Var))));
+          (0.5 * ((mhr.nTerm2 * mhr0.nModTerm * log(treeVar * newExpVar)) -
+          (mhr0.nTerm2 * mhr0.nModTerm * log(treeVar * m2Var))));
 
   // Interaction
   if (newMixVar != 0){ 
@@ -914,10 +904,8 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
   // Update exposure information
   (ctr->dlmTree1Exp)(t)   = m1;
   (ctr->dlmTree2Exp)(t)   = m2;
-  // (ctr->expCount)(m1)++;                 
-  // (ctr->expCount)(m2)++;  
-  (ctr->expCount)(m1)     += mhr0.nModTerm;                 
-  (ctr->expCount)(m2)     += mhr0.nModTerm;                  
+  (ctr->expCount)(m1)++;                 
+  (ctr->expCount)(m2)++;                
   (ctr->expInf)(m1)       += ((ctr->tau)(t)); 
   (ctr->expInf)(m2)       += ((ctr->tau)(t)); 
   (ctr->totTermExp)(m1)   += mhr0.nModTerm * mhr0.nTerm1;   
@@ -1035,11 +1023,11 @@ void dlmtreeHDLMMGaussian_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
 
 
 treeMHR dlmtreeHDLMM_MHR(std::vector<Node*> modTerm,  
-                         std::vector<Node*> dlmTerm1,
-                         std::vector<Node*> dlmTerm2,
-                         dlmtreeCtr* ctr, 
-                         Eigen::VectorXd ZtR, 
-                         double treeVar, double m1Var, double m2Var, double mixVar)
+                          std::vector<Node*> dlmTerm1,
+                          std::vector<Node*> dlmTerm2,
+                          dlmtreeCtr* ctr, 
+                          Eigen::VectorXd ZtR, 
+                          double treeVar, double m1Var, double m2Var, double mixVar)
 
 {
   std::size_t s; 
@@ -1053,9 +1041,9 @@ treeMHR dlmtreeHDLMM_MHR(std::vector<Node*> modTerm,
   int pXMod = modTerm.size();
 
   // Number of terminal nodes
-  int pXDlm1  = dlmTerm1.size();
-  int pXDlm2  = dlmTerm2.size();
-  int pXDlm   = pXDlm1 + pXDlm2;
+  int pXDlm1 = dlmTerm1.size();
+  int pXDlm2 = dlmTerm2.size();
+  int pXDlm = pXDlm1 + pXDlm2;
   int interaction = 0;
   if (mixVar != 0) { 
     pXDlm += pXDlm1 * pXDlm2; 
@@ -1068,27 +1056,27 @@ treeMHR dlmtreeHDLMM_MHR(std::vector<Node*> modTerm,
   // Rcout << "Define parameters for calculation \n";
   Eigen::MatrixXd Xd, ZtX, VgZtX;
   Eigen::VectorXd diagVar;
-  Xd.resize(ctr->n, pXDlm);           Xd.setZero(); 
-  ZtX.resize(ctr->pZ, pXComb);        ZtX.setZero();
-  VgZtX.resize(ctr->pZ, pXComb);      VgZtX.setZero();
-  diagVar.resize(pXDlm);              diagVar.setZero(); 
+  Xd.resize(ctr->n, pXDlm);         Xd.setZero(); 
+  ZtX.resize(ctr->pZ, pXComb);      ZtX.setZero();
+  VgZtX.resize(ctr->pZ, pXComb);    VgZtX.setZero();
+  diagVar.resize(pXDlm);            diagVar.setZero(); 
   
   // Building exposure matrix, Xd & ZtX
   int i, j, k;
 
   // dlmTree 1
   for (i = 0; i < pXDlm1; i++) {               
-    Xd.col(i)   = (dlmTerm1[i]->nodevals)->X;
-    diagVar(i)  = 1.0 / (m1Var * treeVar);
-    ZtX.col(i)  = (dlmTerm1[i]->nodevals)->ZtX;
+    Xd.col(i) = (dlmTerm1[i]->nodevals)->X;
+    diagVar(i) = 1.0 / (m1Var * treeVar);
+    ZtX.col(i) = (dlmTerm1[i]->nodevals)->ZtX;
   }
 
   // dlmTree 2
   for (j = 0; j < pXDlm2; j++) {               
     k = pXDlm1 + j;                            
-    Xd.col(k)   = (dlmTerm2[j]->nodevals)->X; 
-    diagVar(k)  = 1.0 / (m2Var * treeVar);      
-    ZtX.col(k)  = (dlmTerm2[j]->nodevals)->ZtX;
+    Xd.col(k) = (dlmTerm2[j]->nodevals)->X; 
+    diagVar(k) = 1.0 / (m2Var * treeVar);      
+    ZtX.col(k) = (dlmTerm2[j]->nodevals)->ZtX;
   }
 
   // Mixture & interaction
@@ -1096,16 +1084,16 @@ treeMHR dlmtreeHDLMM_MHR(std::vector<Node*> modTerm,
     for (i = 0; i < pXDlm1; i++) {
       for (j = 0; j < pXDlm2; j++) {
         k = (pXDlm1 + pXDlm2) + i * pXDlm2 + j; 
-        Xd.col(k)   = (((dlmTerm1[i]->nodevals)->X).array() * ((dlmTerm2[j]->nodevals)->X).array()).matrix();
-        diagVar(k)  = 1.0 / (mixVar * treeVar);
-        ZtX.col(k)  = ctr->Zt * Xd.col(k); 
+        Xd.col(k) = (((dlmTerm1[i]->nodevals)->X).array() * ((dlmTerm2[j]->nodevals)->X).array()).matrix();
+        diagVar(k) = 1.0 / (mixVar * treeVar);
+        ZtX.col(k) = ctr->Zw.transpose() * Xd.col(k); 
       }
     }
   }
 
   // MH ratio element calculation
   if(pXMod == 1){   
-    Eigen::MatrixXd VgZtX = ctr->Vg * ZtX; 
+    const Eigen::MatrixXd VgZtX = ctr->Vg * ZtX; 
     Eigen::MatrixXd tempV(pXDlm, pXDlm);        
     Eigen::VectorXd XtVzInvR; 
 
@@ -1139,31 +1127,31 @@ treeMHR dlmtreeHDLMM_MHR(std::vector<Node*> modTerm,
 
     // Exposure 1 return
     // Rcout << "pxMod == 1: Exposure 1 segment \n";
-    draw1Temp   = ThetaDraw.head(pXDlm1);            
+    draw1Temp = ThetaDraw.head(pXDlm1);            
     out.term1T2 = (draw1Temp).dot(draw1Temp);      
-    out.nTerm1  = double(pXDlm1);                   
+    out.nTerm1 = double(pXDlm1);                   
 
     // Exposure 2 return
     // Rcout << "pxMod == 1: Exposure 2 segment \n";
-    draw2Temp   = ThetaDraw.segment(pXDlm1, pXDlm2); 
+    draw2Temp = ThetaDraw.segment(pXDlm1, pXDlm2); 
     out.term2T2 = (draw2Temp).dot(draw2Temp);      
-    out.nTerm2  = double(pXDlm2);                   
+    out.nTerm2 = double(pXDlm2);                   
 
     // Mixture return
-    if (interaction > 0) {    
+    if (interaction) {    
       // Rcout << "pxMod == 1: Interaction/Mixture segment \n";
-      out.drawMix   = ThetaDraw.tail(pXDlm - pXDlm1 - pXDlm2);  // Extract last (pX1 x pX2) element for mixture
-      out.mixT2     = (out.drawMix).dot(out.drawMix);             // Mixture dot product for MHR math
-      out.nTermMix  = double(pXDlm - pXDlm1 - pXDlm2);
+      out.drawMix = ThetaDraw.tail(pXDlm - pXDlm1 - pXDlm2);  // Extract last (pX1 x pX2) element for mixture
+      out.mixT2 = (out.drawMix).dot(out.drawMix);             // Mixture dot product for MHR math
+      out.nTermMix = double(pXDlm - pXDlm1 - pXDlm2);
     }
 
     // Calculate and store parameters for MHR math 
     // Rcout << "pxMod == 1: MH ratio math calculation \n";
     out.fitted = Xd * out.drawAll;  // exposure matrix x delta
 
-    out.beta          = ThetaHat.dot(XtVzInvR);  // The big chunk in Eq(8)
+    out.beta = ThetaHat.dot(XtVzInvR);  // The big chunk in Eq(8)
     out.logVThetaChol = VThetaChol.diagonal().array().log().sum(); // |V_theta_a|
-    out.termT2        = (out.drawAll).dot(out.drawAll);
+    out.termT2 = (out.drawAll).dot(out.drawAll);
     
     out.nDlmTerm = pXDlm * 1.0; 
     out.nModTerm = pXMod * 1.0;    // = 1
@@ -1172,88 +1160,64 @@ treeMHR dlmtreeHDLMM_MHR(std::vector<Node*> modTerm,
   } // End of modifier tree with only one node
 
   // *** Multiple Modifier nodes ***
-  // Declare shared block structures
-    Eigen::MatrixXd XtXblock(pXComb, pXComb);    XtXblock.setZero();
-    Eigen::VectorXd XtR(pXComb);                 XtR.setZero();
+  Eigen::MatrixXd Xtemp, Ztemp;
+  Eigen::VectorXd Rtemp;
+  Eigen::MatrixXd XtXblock(pXComb, pXComb);    XtXblock.setZero();
+  Eigen::VectorXd XtR(pXComb);                 XtR.setZero();
+  Eigen::MatrixXd LInv(pXDlm, pXDlm);          LInv.setZero();  
+  LInv.diagonal().array() += diagVar.array();
 
-    // // Declare the final full ZtX and VgZtX matrices to be filled post loop
-    // Eigen::MatrixXd ZtX(ctr->pZ, pXComb);        ZtX.setZero();
-    // Eigen::MatrixXd VgZtX(ctr->pZ, pXComb);      VgZtX.setZero();
+  // Create block matrices corresponding to modifier nodes
+  int start = 0;
+  for (Node* n : modTerm) { 
+    // Retrieve indices subset by the modifier tree
+    Xtemp.resize(n->nodevals->idx.size(), pXDlm);     Xtemp.setZero();  
+    Ztemp.resize(n->nodevals->idx.size(), ctr->pZ);   Ztemp.setZero();  
+    Rtemp.resize(n->nodevals->idx.size());            Rtemp.setZero();  
+    
+    // Loop through indices and (subset) update Xtemp, Ztemp, Rtemp
+    j = 0;
+    for (int i : n->nodevals->idx) {
+      Xtemp.row(j) = Xd.row(i);  
+      Ztemp.row(j) = ctr->Z.row(i); 
+      Rtemp(j) = ctr->R(i);         
+      j++;
+    } // end loop over node indices
+      
+    n->nodevals->XtX.resize(pXDlm, pXDlm);
+    n->nodevals->XtX = Xtemp.transpose() * Xtemp;
+    n->nodevals->ZtXmat.resize(ctr->pZ, pXDlm);
+    n->nodevals->ZtXmat = Ztemp.transpose() * Xtemp;
+    n->nodevals->VgZtXmat.resize(ctr->pZ, pXDlm);
+    n->nodevals->VgZtXmat = ctr->Vg * n->nodevals->ZtXmat;
+    n->nodevals->updateXmat = 0;
+    
+    XtR.segment(start, pXDlm) = Xtemp.transpose() * Rtemp;
+      
+    // Update blocks
+    XtXblock.block(start, start, pXDlm, pXDlm) = ((n->nodevals->XtX) + LInv).inverse();
+    ZtX.block(0, start, ctr->pZ, pXDlm) = n->nodevals->ZtXmat;
+    VgZtX.block(0, start, ctr->pZ, pXDlm) = n->nodevals->VgZtXmat;
+    
+    // Move to the next block
+    start += pXDlm;
+  } // End of subsetting and building blocks
 
-    // Prepare LInv (diagonal matrix)
-    Eigen::MatrixXd LInv(pXDlm, pXDlm);          LInv.setZero();
-    LInv.diagonal().array() += diagVar.array();
-
-    // Thread-safe per-node block storage
-    std::vector<Eigen::MatrixXd> XtXblock_list(pXMod);
-    std::vector<Eigen::VectorXd> XtR_list(pXMod);
-    std::vector<Eigen::MatrixXd> ZtX_list(pXMod);
-    std::vector<Eigen::MatrixXd> VgZtX_list(pXMod);
-
-    // Initialize dimensions before parallel region
-    for (int s = 0; s < pXMod; ++s) {
-      XtXblock_list[s]  = Eigen::MatrixXd(pXDlm, pXDlm);
-      XtR_list[s]       = Eigen::VectorXd(pXDlm);
-      ZtX_list[s]       = Eigen::MatrixXd(ctr->pZ, pXDlm);
-      VgZtX_list[s]     = Eigen::MatrixXd(ctr->pZ, pXDlm);
-    }
-
-    // Declare temp containers outside for thread-local reuse
-    Eigen::MatrixXd Xtemp, Ztemp;
-    Eigen::VectorXd Rtemp;
-
-    #pragma omp parallel for private(Xtemp, Ztemp, Rtemp) schedule(static)
-    for (int s = 0; s < pXMod; ++s) {
-      Node* n = modTerm[s];
-
-      int n_idx = n->nodevals->idx.size();
-      Xtemp.resize(n_idx, pXDlm);     Xtemp.setZero();  
-      Ztemp.resize(n_idx, ctr->pZ);   Ztemp.setZero();  
-      Rtemp.resize(n_idx);            Rtemp.setZero();  
-
-      Eigen::VectorXi idx = Eigen::Map<Eigen::VectorXi>(n->nodevals->idx.data(), n->nodevals->idx.size());
-      Xtemp = Xd(idx, Eigen::all);
-      Ztemp = ctr->Z(idx, Eigen::all);
-      Rtemp = ctr->R(idx);
-
-      n->nodevals->XtX.noalias()        = Xtemp.transpose() * Xtemp;
-      n->nodevals->ZtXmat.noalias()     = Ztemp.transpose() * Xtemp;
-      n->nodevals->VgZtXmat.noalias()   = ctr->Vg * n->nodevals->ZtXmat;
-      n->nodevals->updateXmat = 0;
-
-      XtXblock_list[s] = (n->nodevals->XtX + LInv).ldlt()
-                          .solve(Eigen::MatrixXd::Identity(pXDlm, pXDlm));
-      XtR_list[s]      = Xtemp.transpose() * Rtemp;
-      ZtX_list[s]      = n->nodevals->ZtXmat;
-      VgZtX_list[s]    = n->nodevals->VgZtXmat;
-    }
-
-    // Merge block results
-    int start = 0;
-    for (int s = 0; s < pXMod; ++s) {
-      XtXblock.block(start, start, pXDlm, pXDlm) = XtXblock_list[s];
-      XtR.segment(start, pXDlm)                  = XtR_list[s];
-      ZtX.block(0, start, ctr->pZ, pXDlm)        = ZtX_list[s];
-      VgZtX.block(0, start, ctr->pZ, pXDlm)      = VgZtX_list[s];
-      start += pXDlm;
-    }
- 
   // Compute elements of MH ratio
   // Rcout << "pxMod != 1: VTheta / ThetaHat calculation \n";
-  Eigen::MatrixXd ZtXXi       = ZtX * XtXblock;
-  Eigen::MatrixXd VTheta      = XtXblock;
-  // Original: VTheta.noalias() += ZtXXi.transpose() * (ctr->VgInv - ZtXXi * ZtX.transpose()).inverse() * ZtXXi;
-  // Changed to use LDLT solve for numerical stability
-  VTheta.noalias() += ZtXXi.transpose() * (ctr->VgInv - ZtXXi * ZtX.transpose()).ldlt().solve(Eigen::MatrixXd::Identity((ctr->VgInv - ZtXXi * ZtX.transpose()).rows(), (ctr->VgInv - ZtXXi * ZtX.transpose()).cols())) * ZtXXi;
-  
-  Eigen::VectorXd XtVzInvR    = XtR;
+  Eigen::MatrixXd ZtXXi = ZtX * XtXblock;
+  Eigen::MatrixXd VTheta = XtXblock;
+  VTheta.noalias() += ZtXXi.transpose() * 
+    (ctr->VgInv - ZtXXi * ZtX.transpose()).inverse() * ZtXXi;
+  Eigen::VectorXd XtVzInvR = XtR;
   XtVzInvR.noalias() -= VgZtX.transpose() * ZtR;
-  Eigen::VectorXd ThetaHat    = VTheta * XtVzInvR;
-  Eigen::MatrixXd VThetaChol  = VTheta.llt().matrixL();
+  Eigen::VectorXd ThetaHat = VTheta * XtVzInvR;
+  Eigen::MatrixXd VThetaChol = VTheta.llt().matrixL();
 
   // Store the sampled values and also add variance 
   out.drawAll = ThetaHat;
-  out.drawAll.noalias() += VThetaChol * as<Eigen::VectorXd>(rnorm(pXComb, 0.0, sqrt(ctr->sigma2)));
+  out.drawAll.noalias() += 
+      VThetaChol * as<Eigen::VectorXd>(rnorm(pXComb, 0.0, sqrt(ctr->sigma2)));
 
   // drawAll = mod1-dlm1 / mod1-dlm2 / mod1-dlm1&2 / mod2-dlm1 / mod2-dlm2 / mod2-dlm1&2 / mod3 ...
   // Fitted value & terminal effect draws
@@ -1270,25 +1234,25 @@ treeMHR dlmtreeHDLMM_MHR(std::vector<Node*> modTerm,
   // Store Term1T2/Term2T2/MixT2 & nTerm1/nTerm2
   out.term1T2 = 0;
   out.term2T2 = 0;
-  out.mixT2   = 0;
+  out.mixT2 = 0;
   
   for (s = 0; s < modTerm.size(); s++) { 
     // Extract draws from the block matrix for each modifier terminal node
     drawTemp = out.drawAll.segment(s * pXDlm, pXDlm); 
 
     // Tree 1 draw 
-    draw1Temp   = drawTemp.head(pXDlm1);
+    draw1Temp = drawTemp.head(pXDlm1);
     out.term1T2 += (draw1Temp).dot(draw1Temp);
 
     // Tree 2 draw
-    draw2Temp   = drawTemp.segment(pXDlm1, pXDlm2);
+    draw2Temp = drawTemp.segment(pXDlm1, pXDlm2);
     out.term2T2 += (draw2Temp).dot(draw2Temp);
 
     // [Mixture] Tree 1 x Tree 2 draw
     if (interaction) {
-      drawMixTemp   = drawTemp.tail(pXDlm - pXDlm1 - pXDlm2);
-      out.mixT2     += (drawMixTemp).dot(drawMixTemp);
-      out.nTermMix  = double(pXDlm - pXDlm1 - pXDlm2);
+      drawMixTemp = drawTemp.tail(pXDlm - pXDlm1 - pXDlm2);
+      out.mixT2 += (drawMixTemp).dot(drawMixTemp);
+      out.nTermMix = drawMixTemp.size();
     }
 
     // Calculate fitted for each modifier terminal
@@ -1299,14 +1263,14 @@ treeMHR dlmtreeHDLMM_MHR(std::vector<Node*> modTerm,
 
   // Calculation return
   // Rcout << "pxMod != 1: MH ratio math calculation \n";
-  out.beta          = ThetaHat.dot(XtVzInvR);
+  out.beta = ThetaHat.dot(XtVzInvR);
   out.logVThetaChol = VThetaChol.diagonal().array().log().sum();
-  out.termT2        = (out.drawAll).dot(out.drawAll);
+  out.termT2 = (out.drawAll).dot(out.drawAll);
 
-  out.nTerm1    = double(pXDlm1);
-  out.nTerm2    = double(pXDlm2);
-  out.nDlmTerm  = pXDlm * 1.0; 
-  out.nModTerm  = pXMod * 1.0;
+  out.nTerm1 = double(pXDlm1);
+  out.nTerm2 = double(pXDlm2);
+  out.nDlmTerm = pXDlm * 1.0; 
+  out.nModTerm = pXMod * 1.0;
 
   return(out);
 }
