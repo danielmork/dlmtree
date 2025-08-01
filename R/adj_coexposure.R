@@ -19,8 +19,17 @@
 #' @param keep.mcmc If TRUE, return posterior samples.
 #' @param verbose TRUE (default) or FALSE: print output
 #'
-#' @return data.frame of plot data with exposure name, posterior mean, and
-#' credible intervals, or posterior samples if keep.mcmc = TRUE
+#' @return A list with the following components (or posterior samples if keep.mcmc = TRUE):
+#' \item{Name}{vector of exposure names}
+#' \item{Time}{integer vector of lags}
+#' \item{Effect}{posterior mean of marginal effects}
+#' \item{SE}{standard error of the estimate}
+#' \item{Lower}{lower bound of credible interval of the marginal effect estimate}
+#' \item{Upper}{upper bound of credible interval of the marginal effect estimate}
+#' \item{cEffect}{cumulative marginal effects}
+#' \item{cLower}{lower bound of credible interval of the cumulative marginal effect}
+#' \item{cUpper}{upper bound of credible interval of the cumulative marginal effect}
+#' \item{CW}{boolean vector indicating critical window}
 #' @importFrom mgcv bam
 #' @export
 
@@ -87,7 +96,7 @@ adj_coexposure <- function(exposure.data,
   }
   
   
-  modelSummary <- summary(object, keep.mcmc = TRUE, verbose = FALSE)
+  modelSummary <- summary(object, mcmc = TRUE, verbose = FALSE)
   expDLM <- list() # For output
   
   for (exposure in names(modelSummary$DLM)) {
@@ -110,7 +119,7 @@ adj_coexposure <- function(exposure.data,
         if (modelSummary$MIX[[mix]]$rows == exposure) {
           mcmc <- mcmc +
             # add same time interactions using expected changes
-            t(sapply(1:modelSummary$nLags, function(k) {
+            t(sapply(1:modelSummary$n.lag, function(k) {
               modelSummary$MIX[[mix]]$mcmc[k,k,]
             })) * 
             (predLevels[[exposure]][[modelSummary$MIX[[mix]]$rows]][2] * 
@@ -119,7 +128,7 @@ adj_coexposure <- function(exposure.data,
                predLevels[[exposure]][[modelSummary$MIX[[mix]]$cols]][1]) +
             # add different time interactions using IQR change in primary exposure
             # (other exposures set to mean)
-            t(sapply(1:modelSummary$nLags, function(k) {
+            t(sapply(1:modelSummary$n.lag, function(k) {
               colSums(modelSummary$MIX[[mix]]$mcmc[k,-k,]) # interaction sum removing time k
             })) * 
             diff(predLevels[[exposure]][[modelSummary$MIX[[mix]]$rows]]) *
@@ -128,7 +137,7 @@ adj_coexposure <- function(exposure.data,
         } else if (modelSummary$MIX[[mix]]$cols == exposure) {
           mcmc <- mcmc +
             # add same time interactions using expected changes
-            t(sapply(1:modelSummary$nLags, function(k) {
+            t(sapply(1:modelSummary$n.lag, function(k) {
               modelSummary$MIX[[mix]]$mcmc[k,k,]
             })) * 
             (predLevels[[exposure]][[modelSummary$MIX[[mix]]$rows]][2] * 
@@ -137,7 +146,7 @@ adj_coexposure <- function(exposure.data,
                predLevels[[exposure]][[modelSummary$MIX[[mix]]$cols]][1]) +
             # add different time interactions using IQR change in primary exposure
             # (other exposure set to mean)
-            t(sapply(1:modelSummary$nLags, function(k) {
+            t(sapply(1:modelSummary$n.lag, function(k) {
               colSums(modelSummary$MIX[[mix]]$mcmc[-k,k,]) # interaction sum removing time k
             })) * 
             diff(predLevels[[exposure]][[modelSummary$MIX[[mix]]$cols]]) *
@@ -146,7 +155,7 @@ adj_coexposure <- function(exposure.data,
         } else {
           mcmc <- mcmc +
             # add same time interactions using expected changes
-            t(sapply(1:modelSummary$nLags, function(k) {
+            t(sapply(1:modelSummary$n.lag, function(k) {
               modelSummary$MIX[[mix]]$mcmc[k,k,]
             })) * 
             (predLevels[[exposure]][[modelSummary$MIX[[mix]]$rows]][2] * 
@@ -164,7 +173,7 @@ adj_coexposure <- function(exposure.data,
       expDLM[[exposure]] <- 
         suppressWarnings(
         data.frame("Name" = exposure,
-                   "Time" = 1:modelSummary$nLags,
+                   "Time" = 1:modelSummary$n.lag,
                    "Effect" = apply(mcmc, 1, mean),
                    "SE" = sqrt(diag(cov(t(mcmc)))),
                    # Credible interval using conf.level

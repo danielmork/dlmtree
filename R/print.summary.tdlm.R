@@ -1,15 +1,5 @@
-#' print.summary.tdlm
-#'
-#' @title Prints an overview with summary of model class 'tdlm'
-#' @description Method for printing an overview with summary of model class 'tdlm'
-#' 
-#' @param x an object of type 'summary.tdlnm', result of call to summary.tdlnm()
-#' @param digits integer number of digits to round
-#' @param ... additional parameters
-#'
-#' @returns output of tdlm fit in R console
-#' @export
-#'
+#' @method print summary.tdlm
+#' @rdname print
 print.summary.tdlm <- function(x, digits = 3, ...)
 {
   cat("---\n")
@@ -30,6 +20,7 @@ print.summary.tdlm <- function(x, digits = 3, ...)
   cat("-", x$ctr$n.burn, "burn-in iterations\n")
   cat("-", x$ctr$n.iter, "post-burn iterations\n")
   cat("-", x$ctr$n.thin, "thinning factor\n")
+  cat("- exposure measured at", x$n.lag, "time points\n")
   cat("-", x$conf.level, "confidence level\n")
 
   if (x$ctr$response != "zinb") {
@@ -89,9 +80,7 @@ print.summary.tdlm <- function(x, digits = 3, ...)
                         "Lower" = round(x$r.ci[1], digits),
                         "Upper" = round(x$r.ci[2], digits))
     row.names(r.out) <- "Dispersion"
-      #ifelse(x$r.ci[1,] > 0 | x$b2.ci[2,] < 0,
-      #      paste0("*", names(x$b2.mean)),
-      #      paste0(" ", names(x$b2.mean)))
+
     print(r.out)
     cat("---\n")
   }

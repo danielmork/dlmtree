@@ -27,12 +27,11 @@ combine.models <- function(mlist) {
   out$tau           <- do.call(rbind, lapply(mlist, function(l) l$tau))
   out$termNodes     <- do.call(rbind, lapply(mlist, function(l) l$termNodes))
   out$gamma         <- do.call(rbind, lapply(mlist, function(l) l$gamma))
-  out$fhat            <- rowMeans(do.call(cbind, lapply(mlist, function(l) l$fhat)))
-  out$Yhat            <- rowMeans(do.call(cbind, lapply(mlist, function(l) l$Yhat)))
+  out$fhat          <- rowMeans(do.call(cbind, lapply(mlist, function(l) l$fhat)))
+  out$Yhat          <- rowMeans(do.call(cbind, lapply(mlist, function(l) l$Yhat)))
   out$sigma2        <- do.call(c, lapply(mlist, function(l) l$sigma2))
   if(out$monotone) {
     out$zirtGamma   <- do.call(rbind, lapply(mlist, function(l) l$zirtGamma ))
-    # out$zirtCov     <- do.call(rbind, lapply(mlist, function(l) l$zirtCov))
     out$timeProbs   <- do.call(rbind, lapply(mlist, function(l) l$timeProbs))
     out$zirtSplitCounts  <- do.call(rbind, lapply(mlist, function(l) l$zirtSplitCounts))
   }

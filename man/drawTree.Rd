@@ -14,7 +14,7 @@ drawTree(depth, alpha, beta)
 \item{beta}{tree size parameter, beta > 0}
 }
 \value{
-A integer value of number of terminal nodes
+integer value of number of terminal nodes
 }
 \description{
 A recursive method for drawing a new tree structure

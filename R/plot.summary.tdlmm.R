@@ -35,20 +35,19 @@ plot.summary.tdlmm <- function(x,
   if (is.null(exposure1)) {
     if (type == "marginal") {
       cat("Plotting DLM marginal effects:\n")
-    } #else if (type == "nonlinear") {
-    #cat("Plotting DLM marginal nonlinear effects:\n")
-    #}
-    for (ex.name in x$expNames) {
+    } 
+    
+    for (ex.name in x$exp.names) {
       if (!cw.plots.only | any(x$DLM[[ex.name]]$marg.cw)) {
         plot(plot.summary.tdlmm(x, type, ex.name, NULL, time1, time2, ...))
         readline(prompt = "Press [enter] to continue")
       }
     }
 
-    if (length(x$mixNames) > 0 & x$interaction > 0) {
+    if (length(x$mix.names) > 0 & x$interaction > 0) {
       cat("Plotting interaction effects:\n")
-      for (ex.name1 in x$expNames) {
-        for (ex.name2 in x$expNames) {
+      for (ex.name1 in x$exp.names) {
+        for (ex.name2 in x$exp.names) {
           if (paste0(ex.name1, "-", ex.name2) %in% names(x$MIX)) {
             if (!cw.plots.only | any(x$MIX[[paste0(ex.name1, "-", ex.name2)]]$cw)) {
               plot(plot.summary.tdlmm(x, type, ex.name1,
@@ -65,15 +64,15 @@ plot.summary.tdlmm <- function(x,
   # Plot setup
   args        <- list(...)
   start.time  <- ifelse(!is.null(args$start.time), args$start.time, 1)
-  Lags        <- start.time:(start.time + x$nLags - 1)
+  Lags        <- start.time:(start.time + x$n.lag - 1)
   base_size   <- ifelse(!is.null(args$base_size), args$base_size, 11)
 
   if (is.numeric(exposure1)) {
-    if (exposure1 > length(x$expNames)) {
+    if (exposure1 > length(x$exp.names)) {
       stop("exposure1 incorrectly specified")
     }
       
-    exposure1 <- x$expNames[exposure1]
+    exposure1 <- x$exp.names[exposure1]
   }
 
   # Plot DLM
@@ -94,7 +93,7 @@ plot.summary.tdlmm <- function(x,
         dat[, c("Est", "CIMin", "CIMax")] <- exp(dat[, c("Est", "CIMin", "CIMax")])
       }
 
-      if (!is.null(trueDLM)) {  # SI: df for a plot returning trueDLM
+      if (!is.null(trueDLM)) {  # df for a plot returning trueDLM
         if (is.null(scale)) {
           dat$trueDLM <- trueDLM
         } else {
@@ -106,7 +105,7 @@ plot.summary.tdlmm <- function(x,
     if (!is.null(trueDLM)) { # draws an additional line of true DLM effect
       p <- ggplot(dat) +
             geom_hline(yintercept = ifelse(is.null(scale), 0, 1), color = "red", linetype = "dashed") +
-            geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey") +
+            geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey", alpha = 0.7) +
             geom_line(aes(x = `X`, y = `Est`)) +
             geom_line(aes(x = `X`, y = `trueDLM`), col = "blue", linetype = "dashed") + # SI
             theme_bw(base_size = base_size) +
@@ -116,7 +115,7 @@ plot.summary.tdlmm <- function(x,
     } else { # No true DLM (original code)
       p <- ggplot(dat) +
             geom_hline(yintercept = ifelse(is.null(scale), 0, 1), color = "red", linetype = "dashed") +
-            geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey") +
+            geom_ribbon(aes(x = `X`, ymin = `CIMin`, ymax = `CIMax`), fill = "grey", alpha = 0.7) +
             geom_line(aes(x = `X`, y = `Est`)) +
             theme_bw(base_size = base_size) +
             scale_y_continuous(expand = c(0, 0)) +
@@ -129,11 +128,11 @@ plot.summary.tdlmm <- function(x,
     # Plot Mixture
   } else {
     if (is.numeric(exposure2)) {
-      if (exposure2 > length(x$expNames)){
+      if (exposure2 > length(x$exp.names)){
         stop("exposure2 incorrectly specified")
       }
         
-      exposure2 <- x$expNames[exposure2]
+      exposure2 <- x$exp.names[exposure2]
     }
 
     plotDat <- data.frame(x = rep(Lags, length(Lags)),

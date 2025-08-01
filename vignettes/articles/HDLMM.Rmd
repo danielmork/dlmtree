@@ -53,20 +53,23 @@ sbd_exp <- sbd_exp %>% lapply(as.matrix)
 ```{r hdlmm.fit}
 # Gaussian
 hdlmm.fit <- dlmtree(formula = bwgaz ~ ChildSex + MomAge + MomPriorBMI +
-                                        Race + Hispanic + SmkAny + EstMonthConcept,
-                     data = sbd_cov,
-                     exposure.data = sbd_exp,
-                     family = "gaussian",
-                     dlm.type = "linear", mixture = TRUE, het = TRUE,
-                     hdlm.modifiers = c("ChildSex", "MomAge", "MomPriorBMI", "SmkAny"),
-                     hdlm.modifier.splits = 15,
-                     n.burn = 2500, n.iter = 10000, n.thin = 5)
+                      Race + Hispanic + SmkAny + EstMonthConcept,
+                    data = sbd_cov,
+                    exposure.data = sbd_exp,
+                    family = "gaussian",
+                    dlm.type = "linear",
+                    mixture = TRUE,
+                    het = TRUE,
+                    control.het = list(
+                      modifiers = c("ChildSex", "MomAge", "MomPriorBMI", "SmkAny"),
+                      modifier.splits = 10),
+                    control.mcmc = list(n.burn = 2500, n.iter = 10000, n.thin = 5))
 ```
 
 ### Model fit summary
 ```{r hdlmm.sum}
 hdlmm.sum <- summary(hdlmm.fit)
-hdlmm.sum
+print(hdlmm.sum)
 ```
 
 ### Launching Shiny app

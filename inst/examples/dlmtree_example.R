@@ -12,7 +12,7 @@
                       exposure.data = D$exposures[[1]],
                       dlm.type = "linear",
                       family = "logit",
-                      binomial.size = 1)
+                      control.family = list(binomial.size = 1))
 
   # summarize results
   tdlm.sum <- summary(tdlm.fit)
@@ -41,7 +41,7 @@
 
 
 
-  # Heterogenious TDLM (HDLM), similar to first example but with heterogenious exposure response
+  # Heterogeneous TDLM (HDLM), similar to first example but with heterogeneous exposure response
   D <- sim.hdlmm(sim = "B", n = 1000)
   hdlm.fit <- dlmtree(y ~ .,
                       data = D$dat,
@@ -70,7 +70,7 @@
   D <- sim.tdlmm(sim = "B", error = 25, n = 1000)
   tdlmm.fit <- dlmtree(y ~ .,
                        data = D$dat, exposure.data = D$exposures,
-                       mixture.interactions = "noself",
+                       control.mix = list(interactions = "noself"),
                        dlm.type = "linear", family = "gaussian",
                        mixture = TRUE)
 
@@ -85,7 +85,7 @@
 
 
 
-  # heterogenious version of TDLMM
+  # heterogeneous version of TDLMM
   D <- sim.hdlmm(sim = "D", n = 1000)
   hdlmm.fit <- dlmtree(y ~ .,
                        data = D$dat,

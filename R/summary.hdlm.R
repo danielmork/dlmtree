@@ -1,48 +1,80 @@
-#' summary.hdlm
+#' @method summary hdlm
+#' @rdname summary
 #'
-#' @title Creates a summary object of class 'hdlm'
-#' @description Method for creating a summary object of class 'hdlm'
-#'
-#' @param object an object of class 'hdlm'
-#' @param conf.level confidence level for computation of credible intervals
-#' @param ... additional parameters
-#'
-#' 
-#' @returns list of type 'summary.hdlm'
 #' @export
-#'
-summary.hdlm <- function(object, conf.level = 0.95, ...)
+summary.hdlm <- function(x, conf.level = 0.95, mcmc = FALSE, ...)
 {
-  Lags    <- max(object$TreeStructs$tmax)
-  Iter    <- max(object$TreeStructs$Iter)
+  Lags    <- max(x$TreeStructs$tmax)
+  Iter    <- max(x$TreeStructs$Iter)
   ci.lims <-  c((1 - conf.level) / 2, 1 - (1 - conf.level) / 2)
 
   # Fixed effect estimates
-  gamma.mean  <- colMeans(object$gamma)
-  gamma.ci    <- apply(object$gamma, 2, quantile, probs = ci.lims)
+  gamma.mean  <- colMeans(x$gamma)
+  gamma.ci    <- apply(x$gamma, 2, quantile, probs = ci.lims)
 
   # posterior inclusion probability of modifiers
-  pip_df <- data.frame("PIP" = pip(object))
+  pip_df <- data.frame("PIP" = pip(x))
 
   # Return
-  ret <- list("ctr" = list(class    = object$class,
-                           n.trees  = object$nTrees,
-                           n.iter   = object$nIter,
-                           n.thin   = object$nThin,
-                           n.burn   = object$nBurn,
-                           response = object$family),
+  ret <- list("ctr" = list(class    = x$class,
+                           n.trees  = x$nTrees,
+                           n.iter   = x$nIter,
+                           n.thin   = x$nThin,
+                           n.burn   = x$nBurn,
+                           response = x$family),
               "conf.level"   = conf.level,
-              "sig.to.noise" = ifelse(is.null(object$sigma2), NA,
-                                        var(object$fhat) / mean(object$sigma2)),
-              "rse"          = sd(object$sigma2),
-              "n"            = nrow(object$data),
-              "modPrior"     = object$zeta,
+              "n.lag"        = Lags,
+              "sig.to.noise" = ifelse(is.null(x$sigma2), NA,
+                                        var(x$fhat) / mean(x$sigma2)),
+              "rse"          = sd(x$sigma2),
+              "n"            = nrow(x$data),
+              "modPrior"     = x$zeta,
+              "mod.names"    = x$modNames,
               "pip"          = pip_df,
               "gamma.mean"   = gamma.mean,
               "gamma.ci"     = gamma.ci,
-              "formula"      = object$formula)
+              "formula"      = x$formula)
 
   class(ret) <- "summary.hdlm"
+  
+  mcmc.samples <- list()    
+  if (mcmc) {
+    # Used for diagnose function
+    ret$modIsNum <- x$modIsNum
+    ret$data <- x$data
+    
+    # dlm
+    mcmc.samples$dlm.mcmc     <- x$TreeStructs
+    
+    # tree
+    mcmc.samples$modtree.size <- x$termNodesDLM
+    mcmc.samples$dlmtree.size <- x$termNodesMod
+    
+    # mhr parameters
+    mcmc.samples$mod.accept <- x$treeModAccept[, 1:2]
+    mcmc.samples$dlm.accept <- x$treeDLMAccept[, 1:2]
+    
+    colnames(mcmc.samples$mod.accept) <- c("step", "success")
+    colnames(mcmc.samples$dlm.accept) <- c("step", "success")
+    
+    
+    # other parameters
+    if (x$zinb) {
+      param.vec <- c("tau", "nu", "sigma2", "b1", "b2")
+    } else {
+      param.vec <- c("tau", "nu", "sigma2", "gamma")
+    }
+    
+    hyper <- list()
+    for (param in param.vec) {
+      if (param %in% names(x)) {
+        hyper[[param]] <- x[[param]]
+      }
+    }
+    mcmc.samples$hyper <- do.call(cbind, hyper)
+    
+    ret$mcmc.samples <- mcmc.samples
+  }
   
   return(ret)
 }

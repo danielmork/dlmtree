@@ -1,48 +1,26 @@
-#' summary.monotone
+#' @method summary monotone
+#' @rdname summary
 #'
-#' @title Creates a summary object of class 'monotone'
-#' @description Method for creating a summary object of class 'monotone'
-#'
-#' @param object an object of class 'monotone'
-#' @param pred.at numerical vector of exposure values to make predictions for
-#' at each time period
-#' @param cenval scalar exposure value that acts as a reference point for
-#' predictions at all other exposure values
-#' @param conf.level confidence level for computation of credible intervals
-#' @param exposure.se scalar smoothing factor, if different from model
-#' @param mcmc TRUE or FALSE (default): return MCMC samplers
-#' @param verbose TRUE (default) or FALSE: print output
-#' @param ... additional parameters
-#'
-#' @returns Summary of monotone fit
 #' @export
-#'
-summary.monotone <- function(object,
-                             pred.at = NULL,
-                             cenval = 0,
-                             conf.level = 0.95,
-                             exposure.se = NULL,
-                             mcmc = FALSE,
-                             verbose = TRUE, 
-                             ...)
+summary.monotone <- function(x, conf.level = 0.95, pred.at = NULL, cenval = 0, exposure.se = NULL, mcmc = FALSE, verbose = TRUE, ...)
 {
-  Iter    <- object$mcmcIter
-  Lags    <- object$pExp
+  Iter    <- x$mcmcIter
+  Lags    <- x$pExp
   ci.lims <- c((1 - conf.level) / 2, 1 - (1 - conf.level) / 2)
 
-  if (is.null(exposure.se) && !is.na(object$SE[1])) {
-    exposure.se <- mean(as.matrix(object$SE))
+  if (is.null(exposure.se) && !is.na(x$SE[1])) {
+    exposure.se <- mean(as.matrix(x$SE))
   } else if (is.null(exposure.se)) {
     exposure.se = 0
   }
 
   # Determine how to break up data for summary
   if (is.null(pred.at)) {
-    pred.at <- object$Xsplits
+    pred.at <- x$Xsplits
   } else {
-    pred.at <- sort(unique(pred.at[which(pred.at >= object$Xrange[1] & pred.at <= object$Xrange[2])]))
+    pred.at <- sort(unique(pred.at[which(pred.at >= x$Xrange[1] & pred.at <= x$Xrange[2])]))
   }
-  edge.vals <- sort(c(object$Xrange, rowMeans(cbind(pred.at[-1], pred.at[-length(pred.at)]))))
+  edge.vals <- sort(c(x$Xrange, rowMeans(cbind(pred.at[-1], pred.at[-length(pred.at)]))))
 
 
   # Calculate DLNM estimates for gridded values 'pred.at'
@@ -50,21 +28,16 @@ summary.monotone <- function(object,
     cat("Centered DLNM at exposure value", cenval, "\n")
   }
   cen.quant <- which.min(abs(pred.at - cenval))
-  # if (object$shape == "Piecewise Linear") {
-  #   dlmest <- dlnmPLEst(as.matrix(object$TreeStructs), pred.at, Lags, Iter, cen.quant)
-  # } else 
 
   if (exposure.se == 0) {
-    dlmest <- dlnmEst(as.matrix(object$TreeStructs), pred.at, Lags, Iter, cen.quant, exposure.se)
+    dlmest <- dlnmEst(as.matrix(x$TreeStructs), pred.at, Lags, Iter, cen.quant, exposure.se)
   } else {
-    dlmest <- dlnmEst(as.matrix(object$TreeStructs), pred.at, Lags, Iter, cenval, exposure.se)
+    dlmest <- dlnmEst(as.matrix(x$TreeStructs), pred.at, Lags, Iter, cenval, exposure.se)
   }
 
   # Bayes factor
-  splitIter <- t(object$zirtSplitCounts)
+  splitIter <- t(x$zirtSplitCounts)
   splitProb <- rowMeans(splitIter > 0)
-  # logBF <- log10(splitProb) - log10(1 - splitProb) -
-  #   (log10(1 - (1 - object$zirtGamma0)) - log10((1 - object$zirtGamma0)))
 
   # Generate cumulative estimtes
   cumexp <- as.data.frame(t(sapply(1:length(pred.at), function(i) {
@@ -82,17 +55,7 @@ summary.monotone <- function(object,
   colnames(plot.dat) <- c("Tmin", "Tmax", "Xmin", "Xmax", "PredVal", "Est", "SD", "CIMin", "CIMax", "Effect")
   for (i in 1:Lags) {
     for (j in 1:length(pred.at)) {
-      # if (object$monotone & zirt.cond) {
-      #   if (sum(splitIter[,i]) == 0 | splitProb[i] < 0.5) {
-      #     plot.dat[(i - 1) * length(pred.at) + j, ] <-
-      #       c(i - 1, i, edge.vals[j], edge.vals[j + 1], pred.at[j],
-      #         0, 0, 0, 0, 0)
-      #     next;
-      #   }
-      #   coordest <- dlmest[i,j,which(splitIter[,i] == 1)]
-      # } else {
       coordest  <- dlmest[i,j,]  
-      # }
       me        <- mean(coordest)
       s         <- sd(coordest)
       ci        <- quantile(coordest, ci.lims)
@@ -109,21 +72,22 @@ summary.monotone <- function(object,
   plot.dat$Effect <- factor(plot.dat$Effect, levels = c(-1, 0, 1), labels = c("-", " ", "+"))
 
   # Fixed effect estimates
-  gamma.mean  <- colMeans(object$gamma)
-  gamma.ci    <- apply(object$gamma, 2, quantile, probs = ci.lims)
+  gamma.mean  <- colMeans(x$gamma)
+  gamma.ci    <- apply(x$gamma, 2, quantile, probs = ci.lims)
 
   # Return
-  ret <- list("ctr" = list(class    = object$class,
-                           n.trees  = object$nTrees,
-                           n.iter   = object$nIter,
-                           n.thin   = object$nThin,
-                           n.burn   = object$nBurn,
-                           response = object$family),
+  ret <- list("ctr" = list(class    = x$class,
+                           n.trees  = x$nTrees,
+                           n.iter   = x$nIter,
+                           n.thin   = x$nThin,
+                           n.burn   = x$nBurn,
+                           response = x$family),
               "conf.level"        = conf.level,
-              "sig.to.noise"      = ifelse(is.null(object$sigma2), NA,
-                                       var(object$fhat) / mean(object$sigma2)),
-              "rse"               = sd(object$sigma2),
-              "n"                 = nrow(object$data),
+              "n.lag"             = Lags,
+              "sig.to.noise"      = ifelse(is.null(x$sigma2), NA,
+                                           var(x$fhat) / mean(x$sigma2)),
+              "rse"               = sd(x$sigma2),
+              "n"                 = nrow(x$data),
               "plot.dat"          = plot.dat,
               "matfit"            = matfit,
               "cilower"           = cilower,
@@ -133,20 +97,47 @@ summary.monotone <- function(object,
               "pred.at"           = pred.at,
               "gamma.mean"        = gamma.mean,
               "gamma.ci"          = gamma.ci,
-              # "logBF" = logBF,
               "splitProb"         = splitProb,
               "splitIter"         = splitIter,
-              "formula"           = object$formula,
-              "formula.zi"        = object$formula.zi)
-
+              "formula"           = x$formula)
+  
+  mcmc.samples <- list()    
+  if (mcmc) {
+    # dlm
+    mcmc.samples$dlm.mcmc                <- dlmest
+    dimnames(mcmc.samples$dlm.mcmc)[[1]] <- 1:Lags
+    dimnames(mcmc.samples$dlm.mcmc)[[2]] <- pred.at
+    
+    mcmc.samples$cumulative.mcmc           <- sapply(1:length(pred.at), function(i) { colSums(dlmest[,i,]) })
+    colnames(mcmc.samples$cumulative.mcmc) <- as.character(pred.at)
+    
+    # tree
+    mcmc.samples$tree.size <- x$termNodes
+    
+    # mhr parameters
+    mcmc.samples$accept <- x$treeAccept[, 1:2]
+    names(mcmc.samples$accept) <- c("step", "success")
+    
+    
+    # other parameters
+    if (x$zinb) {
+      param.vec <- c("tau", "nu", "sigma2", "b1", "b2")
+    } else {
+      param.vec <- c("tau", "nu", "sigma2", "gamma")
+    }
+    
+    hyper <- list()
+    for (param in param.vec) {
+      if (param %in% names(x)) {
+        hyper[[param]] <- x[[param]]
+      }
+    }
+    mcmc.samples$hyper <- do.call(cbind, hyper)
+    
+    ret$mcmc.samples <- mcmc.samples
+  }
 
   class(ret) <- "summary.monotone"
-  
-  if (mcmc) {
-    ret$dlm_mcmc                  <- dlmest
-    ret$cumulative_mcmc           <- sapply(1:length(pred.at), function(i) { colSums(dlmest[,i,]) })
-    colnames(ret$cumulative_mcmc) <- as.character(pred.at)
-  }
   
   return(ret)
 }

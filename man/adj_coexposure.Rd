@@ -34,8 +34,17 @@ Default is 0.95.}
 \item{verbose}{TRUE (default) or FALSE: print output}
 }
 \value{
-data.frame of plot data with exposure name, posterior mean, and
-credible intervals, or posterior samples if keep.mcmc = TRUE
+A list with the following components (or posterior samples if keep.mcmc = TRUE):
+\item{Name}{vector of exposure names}
+\item{Time}{integer vector of lags}
+\item{Effect}{posterior mean of marginal effects}
+\item{SE}{standard error of the estimate}
+\item{Lower}{lower bound of credible interval of the marginal effect estimate}
+\item{Upper}{upper bound of credible interval of the marginal effect estimate}
+\item{cEffect}{cumulative marginal effects}
+\item{cLower}{lower bound of credible interval of the cumulative marginal effect}
+\item{cUpper}{upper bound of credible interval of the cumulative marginal effect}
+\item{CW}{boolean vector indicating critical window}
 }
 \description{
 Estimates the marginal effects of an exposure while accounting

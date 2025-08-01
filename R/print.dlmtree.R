@@ -1,10 +1,5 @@
-#' Print a tdlnm Object
-#'
-#' @param x An object of class tdlnm.
-#' @param ... Not used.
-#'
-#' @return Assorted model output.
-#' @export
+#' @method print tdlnm
+#' @rdname print
 #'
 print.tdlnm <- function(x, ...){
   
@@ -12,16 +7,11 @@ print.tdlnm <- function(x, ...){
   cat("\n\nCall:\n")
   print(x$call)
   cat("\nAvailable methods:",paste(methods(class=x$class), sep=", "))
-
+  
 }
 
-#' Print a tdlm Object
-#'
-#' @param x An object of class tdlm.
-#' @param ... Not used.
-#'
-#' @return Assorted model output.
-#' @export
+#' @method print tdlm
+#' @rdname print
 #'
 print.tdlm <- function(x, ...){
   
@@ -33,13 +23,8 @@ print.tdlm <- function(x, ...){
 }
 
 
-#' Print a tdlmm Object
-#'
-#' @param x An object of class tdlmm.
-#' @param ... Not used.
-#'
-#' @return Assorted model output.
-#' @export
+#' @method print tdlmm
+#' @rdname print
 #'
 print.tdlmm <- function(x, ...){
   
@@ -50,13 +35,8 @@ print.tdlmm <- function(x, ...){
   
 }
 
-#' Print a hdlm Object
-#'
-#' @param x An object of class hdlm.
-#' @param ... Not used.
-#'
-#' @return Assorted model output.
-#' @export
+#' @method print hdlm
+#' @rdname print
 #'
 print.hdlm <- function(x, ...){
   
@@ -68,13 +48,9 @@ print.hdlm <- function(x, ...){
 }
 
 
-#' Print a hdlmm Object
-#'
-#' @param x An object of class hdlmm.
-#' @param ... Not used.
-#'
-#' @return Assorted model output.
-#' @export
+
+#' @method print hdlmm
+#' @rdname print
 #'
 print.hdlmm <- function(x, ...){
   
@@ -86,13 +62,8 @@ print.hdlmm <- function(x, ...){
 }
 
 
-#' Print a monotone Object
-#'
-#' @param x An object of class monotone
-#' @param ... Not used.
-#'
-#' @return Assorted model output.
-#' @export
+#' @method print monotone
+#' @rdname print
 #'
 print.monotone <- function(x, ...){
   
