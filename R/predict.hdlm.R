@@ -42,12 +42,12 @@ predict.hdlm <- function(x,
   new.mf  <- model.frame(delete.response(x$formula), 
                          new.data,
                          na.action = na.fail, 
-                         drop.unused.levels = TRUE,
-                         xlev = x$termLevels)
+                         drop.unused.levels = TRUE)#,
+                         #xlev = x$termLevels)
 
   z       <- model.matrix(delete.response(x$formula), 
-                          new.mf,
-                          xlev = x$termLevels)
+                          new.mf)#,
+                          #xlev = x$termLevels)
 
   n   <- nrow(z)
   mod <- lapply(x$modNames, function(m) {
