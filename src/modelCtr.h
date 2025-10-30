@@ -2,6 +2,7 @@
 using namespace Rcpp;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
+using Eigen::VectorXi;
 using namespace Eigen;
 
 /**
@@ -52,7 +53,17 @@ public:
   VectorXd kappa;        // Kappa = y_i - n_i/2
   VectorXd Ystar;        // Ystar which is updated every iteration of MCMC, also called z1 in ZINB
   VectorXd binomialSize; // n from Binomial (n, p)
-  VectorXd Lambda;       
+  VectorXd Lambda;      
+
+  // Cluster random effects ------------------------------------
+  bool randomEffects;
+  int nClus;            // Number of clusters
+  VectorXi niClus;      // Number of obs per cluster
+  VectorXd deltaCoef;   // Vector of random effect coefficients
+  VectorXi clusterIDs;  // Data position of cluster IDs
+  VectorXd deltaRE;     // Vector of individual random effects
+  double nuDelta;       // Random effect variance parameter
+  std::vector<double> reIGParams; // Inverse Gamma parameters
 
   // ZINB & NB --------------------------------------------------
   bool zinb; // Indicator boolean for ZINB
@@ -149,6 +160,10 @@ public:
   MatrixXd tree2Exp;
   MatrixXd muExp;
   MatrixXd muMix;
+
+  // Random effects
+  VectorXd nuDelta;
+  VectorXd deltaCoef;
 
   // ZINB
   MatrixXd b1;

@@ -30,29 +30,62 @@ using Eigen::Upper;
  * @param ctr model control data
  */
 void tdlmModelEst(modelCtr *ctr){ 
-  if(!(ctr->zinb)){ 
+  if(!(ctr->zinb)) { 
     const VectorXd ZR = ctr->Zw.transpose() * ctr->R; 
     ctr->gamma        = ctr->Vg * ZR; 
-    // * Update sigma^2 and xi_sigma2
-    if (!(ctr->binomial)) {
-      rHalfCauchyFC(&(ctr->sigma2), (double)ctr->n + (double)ctr->totTerm, 
-                    ctr->R.dot(ctr->R) - ZR.dot(ctr->gamma) + ctr->sumTermT2 / ctr->nu, &(ctr->xiInvSigma2));
-      // Rcout << ctr->sigma2 << "\n";
-      
-      if ((ctr->sigma2 != ctr->sigma2)) {// ! stop if infinite or nan variance
-        // Rcout << ctr->sigma2 << " " << ctr->totTerm << " " << 
-        //   ctr->R.dot(ctr->R) << " " << ZR.dot(ctr->gamma) << " " << ctr->R << " " <<
-        //   " " << ctr->Z << " " << ZR << " " << (ctr->gamma) << " " << ctr->sumTermT2 / ctr->nu << " " << ctr->xiInvSigma2;
-        stop("\nNaN values (sigma) occured during model run, rerun model.\n");
-      }
-    }
 
     // * Draw fixed effect coefficients' variance
     ctr->gamma.noalias() += ctr->VgChol * as<VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2))); 
 
+    // * Calculate Z*gamma if needed
+    VectorXd Zgamma(ctr->n);
+    if (ctr->binomial | ctr->randomEffects) {
+      Zgamma.setZero();
+      Zgamma = ctr->Z * ctr->gamma;
+    }
+
+
+
+
+    // * Estimate random effects
+    if (ctr->randomEffects) {
+
+      // calculate mean and variance 
+      VectorXd resid = ctr->Ystar - ctr->fhat - Zgamma;
+      VectorXd muRE(ctr->nClus); muRE.setZero();
+      VectorXd varRE(ctr->nClus); varRE.setZero();
+      for (int i = 0; i < ctr->n; ++i) {
+        int c = ctr->clusterIDs[i];
+        muRE[c] += resid[i] * ctr->Omega[i];
+        varRE[c] += ctr->Omega[i];
+      }
+      varRE.array() += 1.0 / ctr->nuDelta;
+
+      // sample random intercepts
+      ctr->deltaCoef = muRE.array() / varRE.array();
+      ctr->deltaCoef += (as<VectorXd>(rnorm(ctr->nClus, 0 , sqrt(ctr->sigma2))).array() / varRE.array().sqrt()).matrix();
+
+      // assign random intercepts to individuals
+      for (int i = 0; i < ctr->n; ++i) {
+        int c = ctr->clusterIDs[i];
+        ctr->deltaRE[i] <- ctr->deltaCoef[c];
+      }
+
+      // sample nuDelta
+      ctr->nuDelta = 1.0 / R::rgamma(0.5 * ctr->nClus + ctr->reIGParams[0],
+                                     2.0 * ctr->sigma2 / (ctr->deltaCoef.array().square().sum() + 
+                                     2.0 * ctr->sigma2 * ctr->reIGParams[1]));
+      // Rcout << "\n" << ctr->deltaCoef.array().square().sum() << " " << ctr->nuDelta << " " << ctr->sigma2;
+    } // end estimate random effect vars
+
+
+
+
+
+    // Binomial model
     // * Update polya gamma vars
     if (ctr->binomial) {
-      VectorXd psi  = ctr->fhat + ctr->Z * ctr->gamma;
+      VectorXd psi  = ctr->fhat + Zgamma + ctr->deltaRE;
       
       // Latent variable, Omega
       ctr->Omega    = rcpp_pgdraw(ctr->binomialSize, psi); 
@@ -70,8 +103,37 @@ void tdlmModelEst(modelCtr *ctr){
       
       // Update the V_gamma cholesky using LLT Decomposition, Lower triangular part of matrix L
       ctr->VgChol = ctr->Vg.llt().matrixL();
-      ctr->Ystar      = ctr->kappa.array() / ctr->Omega.array();  // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
-      ctr->R      = ctr->Ystar - ctr->fhat; // Recalc R using new Y
+      ctr->Ystar = ctr->kappa.array() / ctr->Omega.array();  // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
+    } // end update polya gamma vars (binomial model)
+    
+
+
+    // Recalc R using new Ystar (binomial) or new cluster intercepts
+    if (ctr->binomial | ctr->randomEffects) {
+      ctr->R = ctr->Ystar - ctr->fhat - ctr->deltaRE; 
+    }
+
+    
+    // * Update sigma^2 and xi_sigma2
+    if (!(ctr->binomial)) {
+      rHalfCauchyFC(&(ctr->sigma2), 
+                    (double)ctr->n + (double)ctr->totTerm + (double)ctr->nClus, 
+                    ctr->R.dot(ctr->R) - ZR.dot(ctr->gamma) + 
+                    ctr->sumTermT2 / ctr->nu +
+                    ctr->deltaCoef.array().square().sum() / ctr->nuDelta, 
+                    &(ctr->xiInvSigma2));
+      // Rcout << ctr->sigma2 << "\n";
+      
+      if ((ctr->sigma2 != ctr->sigma2)) {// ! stop if infinite or nan variance
+        // Rcout << ctr->sigma2 << " " << ctr->totTerm << " " << 
+          // ctr->R.dot(ctr->R) << " " << ZR.dot(ctr->gamma) << " " << ctr->R << " " <<
+          // " " << ctr->Z << " " << ZR << " " << (ctr->gamma) << " " << ctr->sumTermT2 / ctr->nu << " " << ctr->xiInvSigma2 << 
+          // " " << ctr->nClus << " " << ctr->deltaCoef.array().square().sum()
+          // << " " << ctr->nuDelta;
+        // Rcout << "\n" << ctr->deltaCoef.array().square().sum() << " " << ctr->nuDelta << " " << ctr->sigma2;
+
+        stop("\nNaN values (sigma) occured during model run, rerun model.\n");
+      }
     }
 
 
@@ -190,6 +252,8 @@ void tdlmModelEst(modelCtr *ctr){
     ctr->b2.noalias() += ctr->VgChol * as<Eigen::VectorXd>(rnorm(ctr->pZ, 0, sqrt(ctr->sigma2)));
   } // End ZINB
 } // end tdlmModelEst function
+
+
 
 /**
  * @brief Construct a new progress Meter::progress Meter object

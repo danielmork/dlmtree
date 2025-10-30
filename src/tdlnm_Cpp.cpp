@@ -272,6 +272,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   ctr->diagnostics = as<bool>(model["diagnostics"]);
 
   ctr->binomial = as<bool>(model["binomial"]);
+  ctr->randomEffects = as<bool>(model["randomEffects"]);
   ctr->zinb = as<bool>(model["zinb"]); 
   ctr->stepProb = as<std::vector<double> >(model["stepProbTDLM"]);
   ctr->treePrior = as<std::vector<double> >(model["treePriorTDLM"]);
@@ -320,6 +321,20 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     ctr->kappa = ctr->Y0 - 0.5 * (ctr->binomialSize); 
     ctr->Ystar = ctr->kappa; 
     ctr->Omega.resize(ctr->n);                    ctr->Omega.setOnes();
+  }
+
+
+  // *** Set up parameters for random effects model ***
+  ctr->nClus = 0;
+  ctr->nuDelta = 1.0;
+  ctr->deltaRE.resize(ctr->n);          ctr->deltaRE.setZero();
+  ctr->deltaCoef.resize(1);             ctr->deltaCoef.setZero();
+  if (ctr->randomEffects) {
+    ctr->niClus = as<Eigen::VectorXi>(model["niClus"]);
+    ctr->nClus = ctr->niClus.size();
+    ctr->deltaCoef.resize(ctr->nClus);  ctr->deltaCoef.setZero();
+    ctr->clusterIDs = as<Eigen::VectorXi>(model["clusterIDs"]);
+    ctr->reIGParams = as<std::vector<double> >(model["reIGParams"]);
   }
 
 
@@ -422,6 +437,10 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   dgn->timeProbs.resize(ctr->pX - 1, ctr->nRec);    (dgn->timeProbs).setZero();
   VectorXd Yhat(ctr->n);                             Yhat.setZero();
 
+  // Random effects log
+  dgn->deltaCoef.resize(ctr->nClus);  dgn->deltaCoef.setZero();
+  dgn->nuDelta.resize(ctr->nRec);     dgn->nuDelta.setZero();
+
   // ZINB specific log
   (dgn->b1).resize(ctr->pZ1, ctr->nRec);             (dgn->b1).setZero(); 
   (dgn->b2).resize(ctr->pZ, ctr->nRec);              (dgn->b2).setZero(); 
@@ -506,6 +525,10 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
       dgn->fhat += ctr->fhat;
       Yhat += ctr->fhat + ctr->Z * ctr->gamma;
 
+      // Random effects
+      dgn->deltaCoef += ctr->deltaCoef / ctr->nRec;
+      dgn->nuDelta(ctr->record - 1) = ctr->nuDelta;
+
       // ZINB
       (dgn->b1).col(ctr->record - 1) = ctr->b1;
       (dgn->b2).col(ctr->record - 1) = ctr->b2;
@@ -533,11 +556,15 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     Accept.row(s) = dgn->TreeAccept[s];
   }
 
+  // Random effects
+  VectorXd deltaCoef = dgn->deltaCoef;
+  VectorXd nuDelta = dgn->nuDelta;
+
   // ZINB specific return 
-  Eigen::MatrixXd b1 = (dgn->b1).transpose(); 
-  Eigen::MatrixXd b2 = (dgn->b2).transpose();
-  Eigen::VectorXd r = dgn->r; 
-  Eigen::MatrixXd wMat = dgn->wMat; 
+  MatrixXd b1 = (dgn->b1).transpose(); 
+  MatrixXd b2 = (dgn->b2).transpose();
+  VectorXd r = dgn->r; 
+  MatrixXd wMat = dgn->wMat; 
 
   delete prog;
   // delete ctr;
@@ -556,6 +583,8 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
                             Named("termNodes")    = wrap(termNodes),
                             Named("gamma")        = wrap(gamma),
                             Named("treeAccept")   = wrap(Accept),
+                            Named("deltaCoef")    = wrap(deltaCoef),
+                            Named("nuDelta")      = wrap(nuDelta),
                             Named("b1")           = wrap(b1),
                             Named("b2")           = wrap(b2),
                             Named("r")            = wrap(r),
