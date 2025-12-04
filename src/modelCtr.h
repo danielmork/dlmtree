@@ -63,7 +63,6 @@ public:
   VectorXi clusterIDs;  // Data position of cluster IDs
   VectorXd deltaRE;     // Vector of individual random effects
   double nuDelta;       // Random effect variance parameter
-  std::vector<double> reIGParams; // Inverse Gamma parameters
 
   // ZINB & NB --------------------------------------------------
   bool zinb; // Indicator boolean for ZINB
@@ -162,8 +161,9 @@ public:
   MatrixXd muMix;
 
   // Random effects
-  VectorXd nuDelta;
-  VectorXd deltaCoef;
+  VectorXd nuDelta;    // Variance parameters posterior samples
+  VectorXd deltaCoef;  // E[delta]
+  VectorXd deltaCoef2; // E[delta^2]
 
   // ZINB
   MatrixXd b1;
@@ -261,10 +261,6 @@ public:
   MatrixXd muMix;
   
   // DLM and cumulative effect estimates
-  MatrixXd exDLM;
-  MatrixXd ex2DLM;
-  VectorXd cumDLM;
-  VectorXd cum2DLM;
   std::vector<VectorXd> DLMexp;
   std::vector<std::string> termRule;
   std::vector<std::string> termRuleMIX;
@@ -277,6 +273,12 @@ public:
   MatrixXd b2; // Count coefficient
   VectorXd r; // dispersion parameter
   MatrixXd wMat;
+
+
+  // Random effects
+  VectorXd nuDelta;    // Variance parameters posterior samples
+  VectorXd deltaCoef;  // E[delta]
+  VectorXd deltaCoef2; // E[delta^2]
 
   // Mixtures
   // std::vector<VectorXd> MIXexp;

@@ -29,7 +29,7 @@ double calcLogRatioTDLM(treeMHR mhr0, treeMHR mhr, double RtR, double RtZVgZtR,
   }
 }
 
-treeMHR dlmtreeNestedMHR(std::vector<Node*> modTerm, 
+treeMHR dlmtreeNested_MHR(std::vector<Node*> modTerm, 
                          dlmtreeCtr* ctr, 
                          VectorXd ZtR, 
                          double treevar, 
@@ -197,7 +197,7 @@ treeMHR dlmtreeNestedMHR(std::vector<Node*> modTerm,
 
 
 
-void dlmtreeTDLMTreeMCMC(int t, Node* modTree, NodeStruct* expNS,
+void dlmtreeNested_TreeMCMC(int t, Node* modTree, NodeStruct* expNS,
                          dlmtreeCtr* ctr, dlmtreeLog *dgn,
                          modDat* Mod, exposureDat* Exp)
 {
@@ -230,7 +230,7 @@ void dlmtreeTDLMTreeMCMC(int t, Node* modTree, NodeStruct* expNS,
   }
   stepMhr = modProposeTree(modTree, Mod, ctr, step);
   success = modTree->isProposed();
-  mhr0    = dlmtreeNestedMHR(modTerm, ctr, ZtR, treevar, 0);
+  mhr0    = dlmtreeNested_MHR(modTerm, ctr, ZtR, treevar, 0);
 
   if (success) {
     newModTerm = modTree->listTerminal(1);
@@ -250,7 +250,7 @@ void dlmtreeTDLMTreeMCMC(int t, Node* modTree, NodeStruct* expNS,
       } // end loop over nested trees      
     } // end draw nested trees if grow or prune
     // Rcout << "2!";
-    mhr   = dlmtreeNestedMHR(newModTerm, ctr, ZtR, treevar, 1);
+    mhr   = dlmtreeNested_MHR(newModTerm, ctr, ZtR, treevar, 1);
     ratio = calcLogRatioTDLM(mhr0, mhr, RtR, RtZVgZtR, ctr, stepMhr, treevar);
     
     if ((log(R::runif(0, 1)) < ratio) && (ratio == ratio)) {
@@ -280,7 +280,7 @@ void dlmtreeTDLMTreeMCMC(int t, Node* modTree, NodeStruct* expNS,
       MatrixXd VgZtXmat         = tn->nodevals->VgZtXmat;
       tn->nodevals->updateXmat  = 1;
 
-      mhr   = dlmtreeNestedMHR(modTerm, ctr, ZtR, treevar, 1);
+      mhr   = dlmtreeNested_MHR(modTerm, ctr, ZtR, treevar, 1);
       ratio = calcLogRatioTDLM(mhr0, mhr, RtR, RtZVgZtR, ctr, stepMhr, treevar);
       
       if ((log(R::runif(0, 1)) < ratio) && (ratio == ratio)) {
@@ -366,7 +366,7 @@ void dlmtreeTDLMTreeMCMC(int t, Node* modTree, NodeStruct* expNS,
 //' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 //' @export
 // [[Rcpp::export]]
-Rcpp::List dlmtreeTDLM_cpp(const Rcpp::List model)
+Rcpp::List dlmtreeNested(const Rcpp::List model)
 {
   int t;
   // ---- Set up general control variables ----
@@ -407,6 +407,19 @@ Rcpp::List dlmtreeTDLM_cpp(const Rcpp::List model)
     ctr->binomialSize = as<VectorXd>(model["binomialSize"]);
     ctr->kappa        = ctr->Y - 0.5 * (ctr->binomialSize);
     ctr->Y            = ctr->kappa;
+  }
+
+  // *** Set up parameters for random effects model ***
+  ctr->randomEffects = as<bool>(model["randomEffects"]);
+  ctr->nClus = 0;
+  ctr->nuDelta = 1.0;
+  ctr->deltaRE.resize(ctr->n);          ctr->deltaRE.setZero();
+  ctr->deltaCoef.resize(1);             ctr->deltaCoef.setZero();
+  if (ctr->randomEffects) {
+    ctr->niClus = as<Eigen::VectorXi>(model["niClus"]);
+    ctr->nClus = ctr->niClus.size();
+    ctr->deltaCoef.resize(ctr->nClus);  ctr->deltaCoef.setZero();
+    ctr->clusterIDs = as<Eigen::VectorXi>(model["clusterIDs"]);
   }
 
   // * Setup modifier data
@@ -492,6 +505,12 @@ Rcpp::List dlmtreeTDLM_cpp(const Rcpp::List model)
   (dgn->modKappa).resize(ctr->nRec);                      (dgn->modKappa).setZero();
   (dgn->termNodesMod).resize(ctr->nTrees, ctr->nRec);     (dgn->termNodesMod).setZero();
   (dgn->termNodesDLM).resize(ctr->nTrees, ctr->nRec);     (dgn->termNodesDLM).setZero();
+
+
+  // Random effects log
+  dgn->deltaCoef.resize(ctr->nClus);  dgn->deltaCoef.setZero();
+  dgn->deltaCoef2.resize(ctr->nClus);  dgn->deltaCoef2.setZero();
+  dgn->nuDelta.resize(ctr->nRec);     dgn->nuDelta.setZero();
     
   // * Initial draws
   (ctr->fhat).resize(ctr->n);   (ctr->fhat).setZero();
@@ -546,7 +565,7 @@ Rcpp::List dlmtreeTDLM_cpp(const Rcpp::List model)
     ctr->modInf.setZero();
     
     for (t = 0; t < ctr->nTrees; t++) {
-      dlmtreeTDLMTreeMCMC(t, modTrees[t], expNS, ctr, dgn, Mod, Exp);
+      dlmtreeNested_TreeMCMC(t, modTrees[t], expNS, ctr, dgn, Mod, Exp);
       ctr->fhat += (ctr->Rmat).col(t);
       if (t < ctr->nTrees - 1){
         ctr->R += (ctr->Rmat).col(t + 1) - (ctr->Rmat).col(t);
@@ -587,6 +606,11 @@ Rcpp::List dlmtreeTDLM_cpp(const Rcpp::List model)
       (dgn->modInf).col(ctr->record - 1)        = ctr->modInf / ctr->modInf.maxCoeff();
       (dgn->modKappa)(ctr->record - 1)          = ctr->modKappa;
       dgn->fhat += ctr->fhat;
+
+      // Random effects
+      dgn->deltaCoef += ctr->deltaCoef / ctr->nRec;
+      dgn->deltaCoef2 += ctr->deltaCoef.array().square().matrix() / ctr->nRec;
+      dgn->nuDelta(ctr->record - 1) = ctr->nuDelta;
     } // end record
 
     // * Mark progress
@@ -617,6 +641,11 @@ Rcpp::List dlmtreeTDLM_cpp(const Rcpp::List model)
   MatrixXd modCount     = (dgn->modCount).transpose();
   MatrixXd modInf       = (dgn->modInf).transpose();
 
+  // Random effects
+  Eigen::VectorXd deltaCoef = dgn->deltaCoef;
+  Eigen::VectorXd deltaCoef2 = dgn->deltaCoef2;
+  Eigen::VectorXd nuDelta = dgn->nuDelta;
+
   MatrixXd modAccept((dgn->treeModAccept).size(), 5);
   MatrixXd dlmAccept((dgn->treeDLMAccept).size(), 5);
 
@@ -638,6 +667,9 @@ Rcpp::List dlmtreeTDLM_cpp(const Rcpp::List model)
                             Named("sigma2")         = wrap(sigma2),
                             Named("nu")             = wrap(nu),
                             Named("tau")            = wrap(tau),
+                            Named("deltaCoef")    = wrap(deltaCoef),
+                            Named("deltaCoef2")   = wrap(deltaCoef2),
+                            Named("nuDelta")      = wrap(nuDelta),
                             Named("gamma")          = wrap(gamma),
                             Named("termNodesMod")   = wrap(termNodesMod),
                             Named("kappa")          = wrap(kappa),

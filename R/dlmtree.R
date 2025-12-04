@@ -79,7 +79,6 @@ dlmtree <- function(formula,
   shrinkage         <- control.hyper$shrinkage
   dlmtree.params    <- control.hyper$params
   dlmtree.step.prob <- control.hyper$step.prob
-  cluster.inv.gamma <- control.hyper$cluster.inv.gamma
   
   # Family control parameters
   binomial.size <- control.family$binomial.size
@@ -470,7 +469,6 @@ dlmtree <- function(formula,
       stop("cluster id not sufficiently stratified (too many groups or too few observations per group)")
     }
     model$niClus <- table(model$clusterIDs)
-    model$reIGParams <- cluster.inv.gamma
   }
 
   # *** Exposure splits ***
@@ -794,9 +792,9 @@ dlmtree <- function(formula,
                 "tdlm"  = tdlnm_Cpp(model),
                 "tdlmm" = tdlmm_Cpp(model),
                 "hdlm"  = switch(hdlm.dlmtree.type, 
-                                 "shared" = dlmtreeHDLMGaussian(model), 
-                                 "nested" = dlmtreeTDLM_cpp(model)),
-                "hdlmm" = dlmtreeHDLMMGaussian(model),
+                                 "shared" = dlmtreeShared(model), 
+                                 "nested" = dlmtreeNested(model)),
+                "hdlmm" = dlmtreeMixtures(model),
                 "tdlnm" = tdlnm_Cpp(model),
                 "monotone" = monotdlnm_Cpp(model))
 

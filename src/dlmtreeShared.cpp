@@ -8,11 +8,11 @@
 using namespace Rcpp;
 
 
-void dlmtreeHDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
+void dlmtreeShared_TreeMCMC(int t, Node* modTree, Node* dlmTree,
                                   dlmtreeCtr* ctr, dlmtreeLog *dgn,
                                   modDat* Mod, exposureDat* Exp);
 
-treeMHR dlmtreeTDLM_MHR(std::vector<Node*> modTerm,
+treeMHR dlmtreeShared_MHR(std::vector<Node*> modTerm,
                         std::vector<Node*> dlmTerm,
                         dlmtreeCtr* ctr, 
                         Eigen::VectorXd ZtR, 
@@ -25,7 +25,7 @@ treeMHR dlmtreeTDLM_MHR(std::vector<Node*> modTerm,
 //' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 //' @export
 // [[Rcpp::export]]
-Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
+Rcpp::List dlmtreeShared(const Rcpp::List model)
 {
   int t;
   // ---- Set up general control variables ----
@@ -57,6 +57,20 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
   ctr->treePrior    = as<std::vector<double> >(model["treePriorMod"]);
   ctr->treePriorMod = as<std::vector<double> >(model["treePriorTDLM"]);
   ctr->shrinkage    = as<int>(model["shrinkage"]);
+
+  // *** Set up parameters for random effects model ***
+  Rcout << "re_setup";
+  ctr->randomEffects = as<bool>(model["randomEffects"]);
+  ctr->nClus = 0;
+  ctr->nuDelta = 1.0;
+  ctr->deltaRE.resize(ctr->n);          ctr->deltaRE.setZero();
+  ctr->deltaCoef.resize(1);             ctr->deltaCoef.setZero();
+  if (ctr->randomEffects) {
+    ctr->niClus = as<Eigen::VectorXi>(model["niClus"]);
+    ctr->nClus = ctr->niClus.size();
+    ctr->deltaCoef.resize(ctr->nClus);  ctr->deltaCoef.setZero();
+    ctr->clusterIDs = as<Eigen::VectorXi>(model["clusterIDs"]);
+  }
 
   // ---- Setup modifier data ----
   modDat *Mod = new modDat(as<std::vector<int> >(model["modIsNum"]),
@@ -125,17 +139,16 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
   (dgn->termNodesMod).resize(ctr->nTrees, ctr->nRec);   (dgn->termNodesMod).setZero();
   (dgn->termNodesDLM).resize(ctr->nTrees, ctr->nRec);   (dgn->termNodesDLM).setZero();
 
-  // ---- DLM estimates ----
-  // if (ctr->nSplits == 0) {
-  //   dgn->exDLM.resize(ctr->pX, ctr->n); dgn->exDLM.setZero();
-  //   dgn->ex2DLM.resize(ctr->pX, ctr->n); dgn->ex2DLM.setZero();
-  //   dgn->cumDLM.resize(ctr->n); dgn->cumDLM.setZero();
-  //   dgn->cum2DLM.resize(ctr->n); dgn->cum2DLM.setZero();
-  // }
+  // Random effects log
+  dgn->deltaCoef.resize(ctr->nClus);  dgn->deltaCoef.setZero();
+  dgn->deltaCoef2.resize(ctr->nClus);  dgn->deltaCoef2.setZero();
+  dgn->nuDelta.resize(ctr->nRec);     dgn->nuDelta.setZero();
+
 
   // ---- Initial draws ----
   (ctr->fhat).resize(ctr->n); (ctr->fhat).setZero();
   ctr->R = ctr->Y;
+  ctr->Ystar = ctr->Y
   (ctr->gamma).resize(ctr->pZ);
   // Load initial params for faster convergence in binomial model
   if (ctr->binomial) {
@@ -153,7 +166,9 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
   ctr->sumTermT2  = 0;
   ctr->nu         = 1.0; // Need to define for first update of sigma2
   ctr->sigma2     = 1.0;
+  Rcout << "samp1";
   tdlmModelEst(ctr);
+  Rcout << "!";
   double xiInv    = R::rgamma(1, 0.5);
   ctr->nu = 1.0 / R::rgamma(0.5 * ctr->nTrees + 0.5, 1.0 / xiInv);
 
@@ -169,11 +184,10 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
   (ctr->Rmat).resize(ctr->n, ctr->nTrees);    ctr->Rmat.setZero();
   ctr->modCount.resize(ctr->pM);              ctr->modCount.setZero();
   ctr->modInf.resize(ctr->pM);                ctr->modInf.setZero();
-  // ctr->exDLM.resize(ctr->pX, ctr->n);
   
   // create progress meter
   progressMeter* prog = new progressMeter(ctr);
-
+  Rcout << "begin";
   std::size_t s;
   // ---- MCMC ----
   for (ctr->b = 1; ctr->b <= (ctr->iter + ctr->burn); (ctr->b)++) {
@@ -188,12 +202,11 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
     ctr->R += (ctr->Rmat).col(0);
     (ctr->fhat).setZero();
     ctr->totTerm = 0.0; ctr->sumTermT2 = 0.0;
-    // ctr->exDLM.setZero();
     ctr->modCount.setZero();
     ctr->modInf.setZero();
 
     for (t = 0; t < ctr->nTrees; t++) {
-      dlmtreeHDLMGaussian_TreeMCMC(t, modTrees[t], dlmTrees[t], ctr, dgn, Mod, Exp);
+      dlmtreeShared_TreeMCMC(t, modTrees[t], dlmTrees[t], ctr, dgn, Mod, Exp);
       ctr->fhat += (ctr->Rmat).col(t);
 
       if (t < ctr->nTrees - 1){
@@ -240,8 +253,11 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
       (dgn->totTerm)(ctr->record - 1)           = ctr->totTerm;
       dgn->fhat += ctr->fhat;
 
-      // if (ctr->nSplits == 0)
-      //   dlmtreeRecDLM(ctr, dgn);
+      // Random effects
+      dgn->deltaCoef += ctr->deltaCoef / ctr->nRec;
+      dgn->deltaCoef2 += ctr->deltaCoef.array().square().matrix() / ctr->nRec;
+      dgn->nuDelta(ctr->record - 1) = ctr->nuDelta;
+
     } // end record
 
     // -- Progress --
@@ -252,16 +268,8 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
 
 
   // -- Prepare outout --
-  // Eigen::MatrixXd exDLM, ex2DLM;
-  // Eigen::VectorXd cumDLM, cum2DLM;
   Eigen::MatrixXd TreeStructs;
   Rcpp::StringVector termRule(dgn->termRule.size());
-  // if (ctr->nSplits == 0) {
-  //   exDLM = dgn->exDLM.transpose();
-  //   ex2DLM = dgn->ex2DLM.transpose();
-  //   cumDLM = dgn->cumDLM;
-  //   cum2DLM = dgn->cum2DLM;
-  // }
   TreeStructs.resize((dgn->DLMexp).size(), 9);
   for (s = 0; s < (dgn->DLMexp).size(); ++s){
     TreeStructs.row(s) = dgn->DLMexp[s];
@@ -283,6 +291,11 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
   Eigen::MatrixXd modCount      = (dgn->modCount).transpose();
   Eigen::MatrixXd modInf        = (dgn->modInf).transpose();
 
+  // Random effects
+  Eigen::VectorXd deltaCoef = dgn->deltaCoef;
+  Eigen::VectorXd deltaCoef2 = dgn->deltaCoef2;
+  Eigen::VectorXd nuDelta = dgn->nuDelta;
+
   Eigen::MatrixXd modAccept((dgn->treeModAccept).size(), 5);
   for (s = 0; s < (dgn->treeModAccept).size(); ++s){
     modAccept.row(s) = dgn->treeModAccept[s];
@@ -303,18 +316,16 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
     delete dlmTrees[s];
   }
 
-  return(Rcpp::List::create(// Named("DLM") = wrap(exDLM),
-                            // Named("DLMse") = wrap(ex2DLM),
-                            // Named("DLfun") = wrap(cumDLM),
-                            // Named("DLfunse") = wrap(cum2DLM),
-                            // Named("fhat") = wrap(fhat),
-                            Named("TreeStructs")    = wrap(TreeStructs),
+  return(Rcpp::List::create(Named("TreeStructs")    = wrap(TreeStructs),
                             Named("termRules")      = wrap(termRule),
                             Named("termNodesDLM")   = wrap(termNodesDLM),
                             Named("totTerm")        = wrap(totTerm),
                             Named("sigma2")         = wrap(sigma2),
                             Named("nu")             = wrap(nu),
                             Named("tau")            = wrap(tau),
+                            Named("deltaCoef")    = wrap(deltaCoef),
+                            Named("deltaCoef2")   = wrap(deltaCoef2),
+                            Named("nuDelta")      = wrap(nuDelta),
                             Named("gamma")          = wrap(gamma),
                             Named("termNodesMod")   = wrap(termNodesMod),
                             Named("kappa")          = wrap(kappa),
@@ -324,10 +335,10 @@ Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model)
                             Named("treeModAccept")  = wrap(modAccept),
                             Named("treeDLMAccept")  = wrap(dlmAccept)));
 
-} // end dlmtreeHDLMGaussian
+} // end dlmtreeShared
 
 
-void dlmtreeHDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
+void dlmtreeShared_TreeMCMC(int t, Node* modTree, Node* dlmTree,
                                   dlmtreeCtr* ctr, dlmtreeLog *dgn,
                                   modDat* Mod, exposureDat* Exp)
 {
@@ -348,7 +359,7 @@ void dlmtreeHDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
   // -- List terminal nodes --
   modTerm = modTree->listTerminal();
   dlmTerm = dlmTree->listTerminal();
-  mhr0    = dlmtreeTDLM_MHR(modTerm, dlmTerm, ctr, ZtR, treevar);
+  mhr0    = dlmtreeShared_MHR(modTerm, dlmTerm, ctr, ZtR, treevar);
 
   // -- Propose new TDLM tree --
   switch (dlmTerm.size()) {
@@ -362,7 +373,7 @@ void dlmtreeHDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
   if (success) {
     newDlmTerm = dlmTree->listTerminal(1);
     modTree->setUpdateXmat(1);
-    mhr = dlmtreeTDLM_MHR(modTerm, newDlmTerm, ctr, ZtR, treevar);
+    mhr = dlmtreeShared_MHR(modTerm, newDlmTerm, ctr, ZtR, treevar);
     
     ratio =
       stepMhr +
@@ -411,7 +422,7 @@ void dlmtreeHDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
 
   if (success && (stepMhr == stepMhr)) {
     newModTerm = modTree->listTerminal(1);
-    mhr   = dlmtreeTDLM_MHR(newModTerm, dlmTerm, ctr, ZtR, treevar);
+    mhr   = dlmtreeShared_MHR(newModTerm, dlmTerm, ctr, ZtR, treevar);
     ratio = stepMhr + mhr.logVThetaChol - mhr0.logVThetaChol -
       (0.5 * (ctr->n + 1.0) *
         (log(0.5 * (RtR - RtZVgZtR - mhr.beta) + ctr->xiInvSigma2) -
@@ -479,26 +490,15 @@ void dlmtreeHDLMGaussian_TreeMCMC(int t, Node* modTree, Node* dlmTree,
           mhr0.draw[s * mhr0.nDlmTerm + s2];
         dgn->termRule.push_back(rule);
         dgn->DLMexp.push_back(rec);
-        
-        // if (ctr->nSplits == 0) {
-        //   for (int t2 = dlmTerm[s2]->nodestruct->get(3) - 1; t2 < dlmTerm[s2]->nodestruct->get(4); ++t2){
-        //     draw(t2) = mhr0.draw(s * mhr0.nDlmTerm + s2);
-        //   }
-        // }
       } // end loop over tdlm nodes
-      
-      // if (ctr->nSplits == 0) {
-      //   for (int i : modTerm[s]->nodevals->idx)
-      //     ctr->exDLM.col(i) += draw;
-      // }
     } // end loop over modifier nodes to update partial DLM est
   } // end record
 
 
-} // end dlmtreeHDLMGaussian_TreeMCMC function
+} // end dlmtreeShared_TreeMCMC function
 
 
-treeMHR dlmtreeTDLM_MHR(std::vector<Node*> modTerm, 
+treeMHR dlmtreeShared_MHR(std::vector<Node*> modTerm, 
                         std::vector<Node*> dlmTerm,
                         dlmtreeCtr* ctr, 
                         Eigen::VectorXd ZtR, 

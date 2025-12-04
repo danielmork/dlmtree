@@ -12,6 +12,7 @@ dlmtree(
   family = "gaussian",
   mixture = FALSE,
   het = FALSE,
+  cluster = NULL,
   control.mcmc = list(),
   control.hyper = list(),
   control.family = list(),
@@ -38,6 +39,8 @@ named list containing equally sized numerical matrices of exposure data having s
 \item{mixture}{flag for mixture, set to TRUE for tdlmm and hdlmm (default: FALSE).}
 
 \item{het}{flag for heterogeneity, set to TRUE for hdlm and hdlmm (default: FALSE).}
+
+\item{cluster}{variable name from data for cluster identifier. For best perforamnce, data should ideally be presorted by this variable.}
 
 \item{control.mcmc}{list of MCMC control parameters. This is passed to \link{dlmtree.control.mcmc}.}
 

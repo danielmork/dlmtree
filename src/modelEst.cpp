@@ -49,7 +49,7 @@ void tdlmModelEst(modelCtr *ctr){
 
     // * Estimate random effects
     if (ctr->randomEffects) {
-
+      Rcout << 1;
       // calculate mean and variance 
       VectorXd resid = ctr->Ystar - ctr->fhat - Zgamma;
       VectorXd muRE(ctr->nClus); muRE.setZero();
@@ -60,26 +60,22 @@ void tdlmModelEst(modelCtr *ctr){
         varRE[c] += ctr->Omega[i];
       }
       varRE.array() += 1.0 / ctr->nuDelta;  
-
+      Rcout << 2;
       // sample random intercepts
       ctr->deltaCoef = muRE.array() / varRE.array();
       ctr->deltaCoef += (as<VectorXd>(rnorm(ctr->nClus, 0 , sqrt(ctr->sigma2))).array() / varRE.array().sqrt()).matrix();
-
+      Rcout << 3;
       // assign random intercepts to individuals
       for (int i = 0; i < ctr->n; ++i) {
         int c = ctr->clusterIDs[i];
         ctr->deltaRE[i] <- ctr->deltaCoef[c];
       }
-
+      Rcout << 4;
       // sample nuDelta
       double xiDelta = 0.0;
       rHalfCauchyFC(&(ctr->nuDelta), ctr->nClus,
                     ctr->deltaCoef.array().square().sum() / ctr->sigma2,
                     &(xiDelta));
-      // ctr->nuDelta = 1.0 / R::rgamma(0.5 * ctr->nClus + ctr->reIGParams[0],
-      //                                2.0 * ctr->sigma2 / (ctr->deltaCoef.array().square().sum() + 
-      //                                2.0 * ctr->sigma2 * ctr->reIGParams[1]));
-      // Rcout << "\n" << ctr->deltaCoef.array().square().sum() << " " << ctr->nuDelta << " " << ctr->sigma2;
     } // end estimate random effect vars
 
 
