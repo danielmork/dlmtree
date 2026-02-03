@@ -1,4 +1,4 @@
-dPackage: dlmtree
+Package: dlmtree
 Type: Package
 Title: Bayesian Treed Distributed Lag Models
 Version: 1.1.1
@@ -23,6 +23,5 @@ Imports:
     coda
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen
 RoxygenNote: 7.3.2
-SystemRequirements: C++17
 URL: https://github.com/danielmork/dlmtree, https://danielmork.github.io/dlmtree/
 BugReports: https://github.com/danielmork/dlmtree/issues
