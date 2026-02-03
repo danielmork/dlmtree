@@ -455,8 +455,6 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   ctr->nu = 1.0; 
   ctr->sigma2 = 1.0;
 
-  tdlmModelEst(ctr);
-
   rHalfCauchyFC(&(ctr->nu), ctr->nTrees, 0.0);
   (ctr->tau).resize(ctr->nTrees);                   (ctr->tau).setOnes();
   if (ctr->shrinkage > 0) {
@@ -465,6 +463,10 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     }
   }
   
+  // Initial model fit
+  tdlmModelEst(ctr);
+
+
   // * Create progress meter
   progressMeter* prog = new progressMeter(ctr);
 
@@ -493,7 +495,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     } // end update trees
 
     // * Update model
-    ctr->R = ctr->Ystar - ctr->fhat; 
+    ctr->R = ctr->Ystar - ctr->fhat - ctr->deltaRE; 
     tdlmModelEst(ctr);
     rHalfCauchyFC(&(ctr->nu), ctr->totTerm, ctr->sumTermT2 / ctr->sigma2);
     if ((ctr->sigma2 != ctr->sigma2) || (ctr->nu != ctr->nu)) {

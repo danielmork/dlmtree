@@ -553,14 +553,14 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   ctr->sumTermT2  = 0.0;
   ctr->nu         = 1.0; // ! Need to define nu and sigma2 prior to ModelEst
   ctr->sigma2     = 1.0;
-  
-  tdlmModelEst(ctr);     // initial draws for gamma, sigma2, omega (binomial)
 
   rHalfCauchyFC(&(ctr->nu), ctr->nTrees, 0.0);
   if (ctr->shrinkage) {
     for (t = 0; t < ctr->nTrees; t++) 
       rHalfCauchyFC(&(ctr->tau(t)), 0.0, 0.0);
   }
+  
+  tdlmModelEst(ctr);     // initial draws for gamma, sigma2, omega (binomial)
   
   // * Create progress meter
   progressMeter* prog = new progressMeter(ctr);
@@ -591,7 +591,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
     } // end update trees
 
     // * Update model
-    ctr->R = ctr->Ystar - ctr->fhat;
+    ctr->R = ctr->Ystar - ctr->fhat - ctr->deltaRE;
     tdlmModelEst(ctr);
 
     rHalfCauchyFC(&(ctr->nu), ctr->totTerm, ctr->sumTermT2 / ctr->sigma2);

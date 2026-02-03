@@ -54,8 +54,9 @@ Rcpp::List dlmtreeMixtures(const Rcpp::List model){
   ctr->nTrees = as<int>(model["nTrees"]);  
 
   // Data setup
-  ctr->Y = as<Eigen::VectorXd>(model["Y"]);
-  ctr->n = (ctr->Y).size();
+  ctr->Y0 = as<Eigen::VectorXd>(model["Y"]);
+  ctr->Ystar = ctr->Y0;
+  ctr->n = (ctr->Ystar).size();
 
   // Modifier tree hyperparameter
   ctr->modZeta  = as<double>(model["zeta"]); 
@@ -238,7 +239,7 @@ Rcpp::List dlmtreeMixtures(const Rcpp::List model){
   // *** Initial draws ***
   (ctr->fhat).resize(ctr->n);      
   (ctr->fhat).setZero();   
-  ctr->R = ctr->Y;                  
+  ctr->R = ctr->Ystar;                  
   (ctr->gamma).resize(ctr->pZ); 
 
   // *** Exposure specific parameters ***
@@ -260,9 +261,6 @@ Rcpp::List dlmtreeMixtures(const Rcpp::List model){
   ctr->sumTermT2  = 0;
   ctr->nu         = 1.0;
   ctr->sigma2     = 1.0;
-
-  // Initial model fitting
-  tdlmModelEst(ctr); 
 
   // Shrinkage hyperparameters
   rHalfCauchyFC(&(ctr->nu), ctr->nTrees, 0.0);           
@@ -286,6 +284,10 @@ Rcpp::List dlmtreeMixtures(const Rcpp::List model){
 
   // Partial residual matrix
   (ctr->Rmat).resize(ctr->n, ctr->nTrees);  (ctr->Rmat).setZero();
+  
+
+  // Initial model fitting
+  tdlmModelEst(ctr); 
   
   // *** MCMC ***
   // Create a progress meter
@@ -345,7 +347,7 @@ Rcpp::List dlmtreeMixtures(const Rcpp::List model){
 
     // Rcout << "Tree ensemble update finished \n";
     // Update the parameters
-    ctr->R          = ctr->Y - ctr->fhat;
+    ctr->R          = ctr->Ystar - ctr->fhat - ctr->deltaRE;
     ctr->sumTermT2  = (ctr->sumTermT2Exp).sum();
     ctr->totTerm    = (ctr->totTermExp).sum();
     if(ctr->interaction > 0) {

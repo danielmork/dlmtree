@@ -814,9 +814,6 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   ctr->nu = 1.0; 
   ctr->sigma2 = 1.0;
 
-  // Model estimation with the initial values
-  tdlmModelEst(ctr); 
-
   // Horseshoe hyperparameters
   rHalfCauchyFC(&(ctr->nu), ctr->nTrees, 0.0);
   (ctr->tau).resize(ctr->nTrees);                 (ctr->tau).setOnes();
@@ -828,6 +825,9 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   ctr->nTerm2.resize(ctr->nTrees);                (ctr->nTerm2).setOnes();
   (ctr->Rmat).resize(ctr->n, ctr->nTrees);        (ctr->Rmat).setZero();
 
+
+  // Model estimation with the initial values
+  tdlmModelEst(ctr); 
 
   // *** Create Progress Meter ***
   progressMeter* prog = new progressMeter(ctr);
@@ -873,7 +873,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
     }
 
     // Pre-calculations for control and variance
-    ctr->R = ctr->Ystar - ctr->fhat;             
+    ctr->R = ctr->Ystar - ctr->fhat - ctr->deltaRE;             
     ctr->sumTermT2 = (ctr->sumTermT2Exp).sum();
     ctr->totTerm = (ctr->totTermExp).sum();
     if(ctr->interaction) {

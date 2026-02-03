@@ -11,7 +11,7 @@ using namespace Eigen;
  */
 struct modelCtr {
 public:
-  bool verbose, diagnostics, debug;
+  bool verbose, diagnostics, debug, updateSingleNodeModel;
   int n, pZ, pZ1, pX, nRec, nSplits, nTrees;
   int b, iter, thin, burn, record, threads, shrinkage;
   double sigma2, xiInvSigma2, nu, VTheta1Inv, totTerm, sumTermT2;
@@ -188,17 +188,17 @@ public:
   VectorXd modInf;
   
   // Gaussian Process
-  MatrixXd X;
-  MatrixXd XtXall;
-  MatrixXd ZtXall;
-  MatrixXd VgZtXall;
-  MatrixXd VThetaInvall;
-  MatrixXd DistMat;
-  MatrixXd LambdaInv;
-  MatrixXd LambdaInvNew;
-  double phi, phiNew, phiMH, phiMHNew;
-  double logLambdaDet, logLambdaDetNew;
-  int covarType;
+  // MatrixXd X;
+  // MatrixXd XtXall;
+  // MatrixXd ZtXall;
+  // MatrixXd VgZtXall;
+  // MatrixXd VThetaInvall;
+  // MatrixXd DistMat;
+  // MatrixXd LambdaInv;
+  // MatrixXd LambdaInvNew;
+  // double phi, phiNew, phiMH, phiMHNew;
+  // double logLambdaDet, logLambdaDetNew;
+  // int covarType;
 
   // Mixtures
   int interaction, nExp, nMix;

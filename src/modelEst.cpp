@@ -49,7 +49,7 @@ void tdlmModelEst(modelCtr *ctr){
 
     // * Estimate random effects
     if (ctr->randomEffects) {
-      Rcout << 1;
+      // Rcout << 1;
       // calculate mean and variance 
       VectorXd resid = ctr->Ystar - ctr->fhat - Zgamma;
       VectorXd muRE(ctr->nClus); muRE.setZero();
@@ -60,17 +60,17 @@ void tdlmModelEst(modelCtr *ctr){
         varRE[c] += ctr->Omega[i];
       }
       varRE.array() += 1.0 / ctr->nuDelta;  
-      Rcout << 2;
+      // Rcout << 2;
       // sample random intercepts
       ctr->deltaCoef = muRE.array() / varRE.array();
       ctr->deltaCoef += (as<VectorXd>(rnorm(ctr->nClus, 0 , sqrt(ctr->sigma2))).array() / varRE.array().sqrt()).matrix();
-      Rcout << 3;
+      // Rcout << 3;
       // assign random intercepts to individuals
       for (int i = 0; i < ctr->n; ++i) {
         int c = ctr->clusterIDs[i];
         ctr->deltaRE[i] <- ctr->deltaCoef[c];
       }
-      Rcout << 4;
+      // Rcout << 4;
       // sample nuDelta
       double xiDelta = 0.0;
       rHalfCauchyFC(&(ctr->nuDelta), ctr->nClus,
@@ -105,13 +105,6 @@ void tdlmModelEst(modelCtr *ctr){
       ctr->VgChol = ctr->Vg.llt().matrixL();
       ctr->Ystar = ctr->kappa.array() / ctr->Omega.array();  // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
     } // end update polya gamma vars (binomial model)
-    
-
-
-    // Recalc R using new Ystar (binomial) or new cluster intercepts
-    if (ctr->binomial | ctr->randomEffects) {
-      ctr->R = ctr->Ystar - ctr->fhat - ctr->deltaRE; 
-    }
 
     
     // * Update sigma^2 and xi_sigma2
@@ -122,15 +115,17 @@ void tdlmModelEst(modelCtr *ctr){
                     ctr->sumTermT2 / ctr->nu +
                     ctr->deltaCoef.array().square().sum() / ctr->nuDelta, 
                     &(ctr->xiInvSigma2));
-      // Rcout << ctr->sigma2 << "\n";
       
       if ((ctr->sigma2 != ctr->sigma2)) {// ! stop if infinite or nan variance
-        // Rcout << ctr->sigma2 << " " << ctr->totTerm << " " << 
-          // ctr->R.dot(ctr->R) << " " << ZR.dot(ctr->gamma) << " " << ctr->R << " " <<
-          // " " << ctr->Z << " " << ZR << " " << (ctr->gamma) << " " << ctr->sumTermT2 / ctr->nu << " " << ctr->xiInvSigma2 << 
-          // " " << ctr->nClus << " " << ctr->deltaCoef.array().square().sum()
-          // << " " << ctr->nuDelta;
-        // Rcout << "\n" << ctr->deltaCoef.array().square().sum() << " " << ctr->nuDelta << " " << ctr->sigma2;
+        Rcout << "Error occurred during iteration " << ctr->b << "\n" <<
+          "n = " << ctr->n << "; tree nodes = " << ctr->totTerm << 
+          "; clusters = " << ctr->nClus << "\n" <<
+          "R.R = " << ctr->R.dot(ctr->R) << "; ZR.gamma = " << 
+          ZR.dot(ctr->gamma) << "\n" <<
+          "sumTermT2 = " << ctr->sumTermT2 << "; nu = " << ctr->nu <<
+          "; sum.deltaCoef2 = " << ctr->deltaCoef.array().square().sum() <<
+          "; nuDelta = " << ctr->nuDelta << "; xiInvSigma2 = " <<
+          ctr->xiInvSigma2;
 
         stop("\nNaN values (sigma) occured during model run, rerun model.\n");
       }
@@ -859,52 +854,52 @@ double zeroInflatedTreeMHR(VectorXd timeProbs, std::vector<Node*> trees, int t, 
  * @param n pointer to node
  * @param ctr pointer to model control
  */
-void updateGPMats(Node* n, dlmtreeCtr* ctr){
-  if (n->nodevals->updateXmat == 0)
-    return;
-  if (n->depth == 0) {
-    n->nodevals->XtX        = ctr->XtXall;
-    n->nodevals->ZtXmat     = ctr->ZtXall;
-    n->nodevals->VgZtXmat   = ctr->VgZtXall;
-    n->nodevals->updateXmat = 0;
-    return;
-  }
-
-  Node* par = n->parent;
-  if (par->nodevals->updateXmat)
-    updateGPMats(par, ctr);
-  Node* sib = n->sib();
-  std::vector<int> idx;
-  if (n->nodevals->idx.size() <= sib->nodevals->idx.size()) {
-    idx = n->nodevals->idx;
-  } else {
-    idx = sib->nodevals->idx;
-  }
-  
-  MatrixXd Xtemp(idx.size(), ctr->pX);    Xtemp.setZero();
-  MatrixXd Ztemp(idx.size(), ctr->pZ);    Ztemp.setZero();
-  
-  for (std::size_t i = 0; i < idx.size(); ++i) {
-    Xtemp.row(i) = ctr->X.row(idx[i]);
-    Ztemp.row(i) = ctr->Z.row(idx[i]);
-  }
-  
-  if (n->nodevals->idx.size() <= sib->nodevals->idx.size()) {
-    n->nodevals->XtX        = Xtemp.transpose() * Xtemp;
-    n->nodevals->ZtXmat     = Ztemp.transpose() * Xtemp;
-    n->nodevals->VgZtXmat   = ctr->Vg * n->nodevals->ZtXmat;
-    sib->nodevals->XtX      = par->nodevals->XtX - n->nodevals->XtX;
-    sib->nodevals->ZtXmat   = par->nodevals->ZtXmat - n->nodevals->ZtXmat;
-    sib->nodevals->VgZtXmat = par->nodevals->VgZtXmat - n->nodevals->VgZtXmat;
-  } else {
-    sib->nodevals->XtX      = Xtemp.transpose() * Xtemp;
-    sib->nodevals->ZtXmat   = Ztemp.transpose() * Xtemp;
-    sib->nodevals->VgZtXmat = ctr->Vg * sib->nodevals->ZtXmat;
-    n->nodevals->XtX        = par->nodevals->XtX - sib->nodevals->XtX;
-    n->nodevals->ZtXmat     = par->nodevals->ZtXmat - sib->nodevals->ZtXmat;
-    n->nodevals->VgZtXmat   = par->nodevals->VgZtXmat - sib->nodevals->VgZtXmat;
-  }
-  n->nodevals->updateXmat   = 0;
-  sib->nodevals->updateXmat = 0;
-  
-}
+// void updateGPMats(Node* n, dlmtreeCtr* ctr){
+//   if (n->nodevals->updateXmat == 0)
+//     return;
+//   if (n->depth == 0) {
+//     n->nodevals->XtX        = ctr->XtXall;
+//     n->nodevals->ZtXmat     = ctr->ZtXall;
+//     n->nodevals->VgZtXmat   = ctr->VgZtXall;
+//     n->nodevals->updateXmat = 0;
+//     return;
+//   }
+// 
+//   Node* par = n->parent;
+//   if (par->nodevals->updateXmat)
+//     updateGPMats(par, ctr);
+//   Node* sib = n->sib();
+//   std::vector<int> idx;
+//   if (n->nodevals->idx.size() <= sib->nodevals->idx.size()) {
+//     idx = n->nodevals->idx;
+//   } else {
+//     idx = sib->nodevals->idx;
+//   }
+//   
+//   MatrixXd Xtemp(idx.size(), ctr->pX);    Xtemp.setZero();
+//   MatrixXd Ztemp(idx.size(), ctr->pZ);    Ztemp.setZero();
+//   
+//   for (std::size_t i = 0; i < idx.size(); ++i) {
+//     Xtemp.row(i) = ctr->X.row(idx[i]);
+//     Ztemp.row(i) = ctr->Z.row(idx[i]);
+//   }
+//   
+//   if (n->nodevals->idx.size() <= sib->nodevals->idx.size()) {
+//     n->nodevals->XtX        = Xtemp.transpose() * Xtemp;
+//     n->nodevals->ZtXmat     = Ztemp.transpose() * Xtemp;
+//     n->nodevals->VgZtXmat   = ctr->Vg * n->nodevals->ZtXmat;
+//     sib->nodevals->XtX      = par->nodevals->XtX - n->nodevals->XtX;
+//     sib->nodevals->ZtXmat   = par->nodevals->ZtXmat - n->nodevals->ZtXmat;
+//     sib->nodevals->VgZtXmat = par->nodevals->VgZtXmat - n->nodevals->VgZtXmat;
+//   } else {
+//     sib->nodevals->XtX      = Xtemp.transpose() * Xtemp;
+//     sib->nodevals->ZtXmat   = Ztemp.transpose() * Xtemp;
+//     sib->nodevals->VgZtXmat = ctr->Vg * sib->nodevals->ZtXmat;
+//     n->nodevals->XtX        = par->nodevals->XtX - sib->nodevals->XtX;
+//     n->nodevals->ZtXmat     = par->nodevals->ZtXmat - sib->nodevals->ZtXmat;
+//     n->nodevals->VgZtXmat   = par->nodevals->VgZtXmat - sib->nodevals->VgZtXmat;
+//   }
+//   n->nodevals->updateXmat   = 0;
+//   sib->nodevals->updateXmat = 0;
+//   
+// }

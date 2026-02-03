@@ -860,6 +860,11 @@ dlmtree <- function(formula,
       }
     }
 
+    if (model$randomEffects) {
+      model$deltaCoef <- model$deltaCoef * model$Yscale
+      model$deltaCoef2 <- model$deltaCoef2 * model$Yscale^2
+    }
+
     colnames(model$gamma) <- model$Znames
   }
 
