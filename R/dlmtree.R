@@ -725,8 +725,8 @@ dlmtree <- function(formula,
   # *** Scale data ***
   if (model$family == "gaussian") {
     model$Ymean   <- sum(range(model$Y))/2
-    #model$Yscale  <- diff(range(model$Y - model$Ymean))
-    model$Yscale  <- sd(model$Y - model$Ymean)
+    model$Yscale  <- diff(range(model$Y - model$Ymean))
+    #model$Yscale  <- sd(model$Y - model$Ymean)
     model$Y       <- (model$Y - model$Ymean) / model$Yscale
   } else {
     model$Yscale  <- 1
@@ -1058,12 +1058,15 @@ dlmtree <- function(formula,
           model$TreeStructs$est[idx] <- model$TreeStructs$est[idx] * model$Yscale / model$X[[i]]$Xscale
 
         for(j in i:length(model$X)) {
-          if ((model$interaction > 1) || (j > i))
+          if ((model$interaction > 1) || (j > i)){
             model$mixNames <- c(model$mixNames, paste0(model$expNames[i], "-", model$expNames[j]))
-
-          idx <- which(model$MIX$exp1 == (i - 1) & model$MIX$exp2 == (j - 1))
-          if (length(idx) > 0) {
-            model$MIX$est[idx] <- model$MIX$est[idx] * model$Yscale / (model$X[[i]]$Xscale * model$X[[j]]$Xscale)
+          }
+            
+          if (nrow(model$MIX) > 0) {
+            idx <- which(model$MIX$exp1 == (i - 1) & model$MIX$exp2 == (j - 1))
+            if (length(idx) > 0) {
+              model$MIX$est[idx] <- model$MIX$est[idx] * model$Yscale / (model$X[[i]]$Xscale * model$X[[j]]$Xscale)
+            }
           }
         }
       }

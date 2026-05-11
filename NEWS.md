@@ -1,3 +1,6 @@
+# dlmtree 1.1.1
+* removed C++11 from DESCRIPTION per CRAN requirements
+
 # dlmtree 1.1.0
 * new feature: `diagnose()` function - launches a Shiny panel for assessing MCMC convergence, which includes:
   * trace plots and density plots for the estimated distributed lag function
