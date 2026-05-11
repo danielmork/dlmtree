@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">dlmtree</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -119,7 +119,7 @@ It can be loaded with the following code.</p>
 <span><span class="co">#&gt; Burn-in % complete </span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
-<span><span class="co">#&gt; MCMC iterations (est time: 40 seconds)</span></span>
+<span><span class="co">#&gt; MCMC iterations (est time: 32 seconds)</span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
 <span><span class="co">#&gt; Compiling results...</span></span></code></pre></div>
@@ -186,7 +186,7 @@ It can be loaded with the following code.</p>
 <span>     xlab <span class="op">=</span> <span class="st">"Time axis label"</span>, </span>
 <span>     ylab <span class="op">=</span> <span class="st">"Exposure-concentration axis label"</span>, </span>
 <span>     flab <span class="op">=</span> <span class="st">"Effect color label"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="TDLNM_files/figure-html/tdlnm.plot-1.png" width="700"></p>
+<p><img src="TDLNM_files/figure-html/tdlnm.plot-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level3">
 <h3 id="slicing-on-exposure-concentration">Slicing on exposure-concentration<a class="anchor" aria-label="anchor" href="#slicing-on-exposure-concentration"></a>
@@ -194,10 +194,10 @@ It can be loaded with the following code.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># slicing on exposure-concentration</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"slice"</span>, val <span class="op">=</span> <span class="fl">1</span>, main <span class="op">=</span> <span class="st">"Slice at concentration 1"</span><span class="op">)</span> </span></code></pre></div>
-<p><img src="TDLNM_files/figure-html/unnamed-chunk-3-1.png" width="700"></p>
+<p><img src="TDLNM_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="700"></p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"slice"</span>, val <span class="op">=</span> <span class="fl">2</span>, main <span class="op">=</span> <span class="st">"Slice at concentration 2"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="TDLNM_files/figure-html/unnamed-chunk-3-2.png" width="700"></p>
+<p><img src="TDLNM_files/figure-html/unnamed-chunk-3-2.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level3">
 <h3 id="slicing-on-time-lag">Slicing on time lag<a class="anchor" aria-label="anchor" href="#slicing-on-time-lag"></a>
@@ -205,13 +205,13 @@ It can be loaded with the following code.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># slicing on exposure-concentration</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"slice"</span>, time <span class="op">=</span> <span class="fl">7</span>, main <span class="op">=</span> <span class="st">"Slice at time 7"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="TDLNM_files/figure-html/unnamed-chunk-4-1.png" width="700"></p>
+<p><img src="TDLNM_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="700"></p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"slice"</span>, time <span class="op">=</span> <span class="fl">15</span>, main <span class="op">=</span> <span class="st">"Slice at time 15"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="TDLNM_files/figure-html/unnamed-chunk-4-2.png" width="700"></p>
+<p><img src="TDLNM_files/figure-html/unnamed-chunk-4-2.png" class="r-plt" alt="" width="700"></p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"slice"</span>, time <span class="op">=</span> <span class="fl">33</span>, main <span class="op">=</span> <span class="st">"Slice at time 33"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="TDLNM_files/figure-html/unnamed-chunk-4-3.png" width="700"></p>
+<p><img src="TDLNM_files/figure-html/unnamed-chunk-4-3.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level3">
 <h3 id="different-plot-type-options">different plot.type options<a class="anchor" aria-label="anchor" href="#different-plot-type-options"></a>
@@ -219,20 +219,20 @@ It can be loaded with the following code.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Standard error, credible intervals</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"se"</span>, main <span class="op">=</span> <span class="st">"Standard error"</span><span class="op">)</span>  </span></code></pre></div>
-<p><img src="TDLNM_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
+<p><img src="TDLNM_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="700"></p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"ci-min"</span>, main <span class="op">=</span> <span class="st">"Credible interval lower bound"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="TDLNM_files/figure-html/unnamed-chunk-5-2.png" width="700"></p>
+<p><img src="TDLNM_files/figure-html/unnamed-chunk-5-2.png" class="r-plt" alt="" width="700"></p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"ci-max"</span>, main <span class="op">=</span> <span class="st">"Credible interval upper bound"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="TDLNM_files/figure-html/unnamed-chunk-5-3.png" width="700"></p>
+<p><img src="TDLNM_files/figure-html/unnamed-chunk-5-3.png" class="r-plt" alt="" width="700"></p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Cumulative effect and significance</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"cumulative"</span>, main <span class="op">=</span> <span class="st">"Cumulative effect per exposure-concentration"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="TDLNM_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
+<p><img src="TDLNM_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="700"></p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tdlnm.sum</span>, plot.type <span class="op">=</span> <span class="st">"effect"</span>, main <span class="op">=</span> <span class="st">"Significant effects with directions"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="TDLNM_files/figure-html/unnamed-chunk-6-2.png" width="700"></p>
+<p><img src="TDLNM_files/figure-html/unnamed-chunk-6-2.png" class="r-plt" alt="" width="700"></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -245,7 +245,7 @@ It can be loaded with the following code.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>
