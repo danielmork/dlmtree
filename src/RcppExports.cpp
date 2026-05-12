@@ -24,80 +24,36 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// dlmtreeGPFixedGaussian
-Rcpp::List dlmtreeGPFixedGaussian(const Rcpp::List model);
-RcppExport SEXP _dlmtree_dlmtreeGPFixedGaussian(SEXP modelSEXP) {
+// dlmtreeMixtures
+Rcpp::List dlmtreeMixtures(const Rcpp::List model);
+RcppExport SEXP _dlmtree_dlmtreeMixtures(SEXP modelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
-    rcpp_result_gen = Rcpp::wrap(dlmtreeGPFixedGaussian(model));
+    rcpp_result_gen = Rcpp::wrap(dlmtreeMixtures(model));
     return rcpp_result_gen;
 END_RCPP
 }
-// dlmtreeGPGaussian
-Rcpp::List dlmtreeGPGaussian(const Rcpp::List model);
-RcppExport SEXP _dlmtree_dlmtreeGPGaussian(SEXP modelSEXP) {
+// dlmtreeNested
+Rcpp::List dlmtreeNested(const Rcpp::List model);
+RcppExport SEXP _dlmtree_dlmtreeNested(SEXP modelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
-    rcpp_result_gen = Rcpp::wrap(dlmtreeGPGaussian(model));
+    rcpp_result_gen = Rcpp::wrap(dlmtreeNested(model));
     return rcpp_result_gen;
 END_RCPP
 }
-// dlmtreeHDLMGaussian
-Rcpp::List dlmtreeHDLMGaussian(const Rcpp::List model);
-RcppExport SEXP _dlmtree_dlmtreeHDLMGaussian(SEXP modelSEXP) {
+// dlmtreeShared
+Rcpp::List dlmtreeShared(const Rcpp::List model);
+RcppExport SEXP _dlmtree_dlmtreeShared(SEXP modelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
-    rcpp_result_gen = Rcpp::wrap(dlmtreeHDLMGaussian(model));
-    return rcpp_result_gen;
-END_RCPP
-}
-// dlmtreeHDLMMGaussian
-Rcpp::List dlmtreeHDLMMGaussian(const Rcpp::List model);
-RcppExport SEXP _dlmtree_dlmtreeHDLMMGaussian(SEXP modelSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
-    rcpp_result_gen = Rcpp::wrap(dlmtreeHDLMMGaussian(model));
-    return rcpp_result_gen;
-END_RCPP
-}
-// dlmtreeTDLMFixedGaussian
-Rcpp::List dlmtreeTDLMFixedGaussian(const Rcpp::List model);
-RcppExport SEXP _dlmtree_dlmtreeTDLMFixedGaussian(SEXP modelSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
-    rcpp_result_gen = Rcpp::wrap(dlmtreeTDLMFixedGaussian(model));
-    return rcpp_result_gen;
-END_RCPP
-}
-// dlmtreeTDLMNestedGaussian
-Rcpp::List dlmtreeTDLMNestedGaussian(const Rcpp::List model);
-RcppExport SEXP _dlmtree_dlmtreeTDLMNestedGaussian(SEXP modelSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
-    rcpp_result_gen = Rcpp::wrap(dlmtreeTDLMNestedGaussian(model));
-    return rcpp_result_gen;
-END_RCPP
-}
-// dlmtreeTDLM_cpp
-Rcpp::List dlmtreeTDLM_cpp(const Rcpp::List model);
-RcppExport SEXP _dlmtree_dlmtreeTDLM_cpp(SEXP modelSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::List >::type model(modelSEXP);
-    rcpp_result_gen = Rcpp::wrap(dlmtreeTDLM_cpp(model));
+    rcpp_result_gen = Rcpp::wrap(dlmtreeShared(model));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -244,13 +200,9 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dlmtree_cppIntersection", (DL_FUNC) &_dlmtree_cppIntersection, 2},
-    {"_dlmtree_dlmtreeGPFixedGaussian", (DL_FUNC) &_dlmtree_dlmtreeGPFixedGaussian, 1},
-    {"_dlmtree_dlmtreeGPGaussian", (DL_FUNC) &_dlmtree_dlmtreeGPGaussian, 1},
-    {"_dlmtree_dlmtreeHDLMGaussian", (DL_FUNC) &_dlmtree_dlmtreeHDLMGaussian, 1},
-    {"_dlmtree_dlmtreeHDLMMGaussian", (DL_FUNC) &_dlmtree_dlmtreeHDLMMGaussian, 1},
-    {"_dlmtree_dlmtreeTDLMFixedGaussian", (DL_FUNC) &_dlmtree_dlmtreeTDLMFixedGaussian, 1},
-    {"_dlmtree_dlmtreeTDLMNestedGaussian", (DL_FUNC) &_dlmtree_dlmtreeTDLMNestedGaussian, 1},
-    {"_dlmtree_dlmtreeTDLM_cpp", (DL_FUNC) &_dlmtree_dlmtreeTDLM_cpp, 1},
+    {"_dlmtree_dlmtreeMixtures", (DL_FUNC) &_dlmtree_dlmtreeMixtures, 1},
+    {"_dlmtree_dlmtreeNested", (DL_FUNC) &_dlmtree_dlmtreeNested, 1},
+    {"_dlmtree_dlmtreeShared", (DL_FUNC) &_dlmtree_dlmtreeShared, 1},
     {"_dlmtree_dlnmEst", (DL_FUNC) &_dlmtree_dlnmEst, 6},
     {"_dlmtree_splitPIP", (DL_FUNC) &_dlmtree_splitPIP, 3},
     {"_dlmtree_dlnmPLEst", (DL_FUNC) &_dlmtree_dlnmPLEst, 5},

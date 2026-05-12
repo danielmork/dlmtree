@@ -159,7 +159,6 @@ void monoTDLNMTreeUpdate(int t, Node* tree, tdlmCtr* ctr, tdlmLog* dgn, exposure
   double ratio    = 0.0;
   double treevar  = ctr->nu * ctr->tau(t);
   std::vector<Node*> dlnmTerm, newDlnmTerm, nestedTerm;
-  Node* nestedTree;
   treeMHR mhr0, mhr;
   
   // List current tree terminal nodes
@@ -399,6 +398,20 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
     ctr->kappa        = ctr->Y0 - 0.5 * (ctr->binomialSize);
     ctr->Ystar        = ctr->kappa;
   }
+
+
+  // *** Set up parameters for random effects model ***
+  ctr->randomEffects = as<bool>(model["randomEffects"]);
+  ctr->nClus = 0;
+  ctr->nuDelta = 1.0;
+  ctr->deltaRE.resize(ctr->n);          ctr->deltaRE.setZero();
+  ctr->deltaCoef.resize(1);             ctr->deltaCoef.setZero();
+  if (ctr->randomEffects) {
+    ctr->niClus = as<Eigen::VectorXi>(model["niClus"]);
+    ctr->nClus = ctr->niClus.size();
+    ctr->deltaCoef.resize(ctr->nClus);  ctr->deltaCoef.setZero();
+    ctr->clusterIDs = as<Eigen::VectorXi>(model["clusterIDs"]);
+  }
   
   // * Create exposure data management
   if (ctr->debug)
@@ -509,6 +522,12 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   dgn->kappa.resize(ctr->nRec);                     dgn->kappa.setZero();
   dgn->timeProbs.resize(ctr->pX - 1, ctr->nRec);    dgn->timeProbs.setZero();
   dgn->zirtSplitCounts.resize(ctr->pX, ctr->nRec);  dgn->zirtSplitCounts.setZero();
+
+  // Random effects log
+  dgn->deltaCoef.resize(ctr->nClus);  dgn->deltaCoef.setZero();
+  dgn->deltaCoef2.resize(ctr->nClus);  dgn->deltaCoef2.setZero();
+  dgn->nuDelta.resize(ctr->nRec);     dgn->nuDelta.setZero();
+
   VectorXd Yhat(ctr->n); Yhat.setZero();
   
   // * Initial values and draws
@@ -534,14 +553,14 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   ctr->sumTermT2  = 0.0;
   ctr->nu         = 1.0; // ! Need to define nu and sigma2 prior to ModelEst
   ctr->sigma2     = 1.0;
-  
-  tdlmModelEst(ctr);     // initial draws for gamma, sigma2, omega (binomial)
 
   rHalfCauchyFC(&(ctr->nu), ctr->nTrees, 0.0);
   if (ctr->shrinkage) {
     for (t = 0; t < ctr->nTrees; t++) 
       rHalfCauchyFC(&(ctr->tau(t)), 0.0, 0.0);
   }
+  
+  tdlmModelEst(ctr);     // initial draws for gamma, sigma2, omega (binomial)
   
   // * Create progress meter
   progressMeter* prog = new progressMeter(ctr);
@@ -572,7 +591,7 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
     } // end update trees
 
     // * Update model
-    ctr->R = ctr->Ystar - ctr->fhat;
+    ctr->R = ctr->Ystar - ctr->fhat - ctr->deltaRE;
     tdlmModelEst(ctr);
 
     rHalfCauchyFC(&(ctr->nu), ctr->totTerm, ctr->sumTermT2 / ctr->sigma2);
@@ -615,6 +634,11 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
       dgn->timeProbs.col(ctr->record -1)        = trees[0]->nodestruct->getTimeProbs();
       dgn->zirtSplitCounts.col(ctr->record - 1) = ctr->zirtSplitCounts;
       Yhat += ctr->fhat + ctr->Z * ctr->gamma;
+
+      // Random effects
+      dgn->deltaCoef += ctr->deltaCoef / ctr->nRec;
+      dgn->deltaCoef2 += ctr->deltaCoef.array().square().matrix() / ctr->nRec;
+      dgn->nuDelta(ctr->record - 1) = ctr->nuDelta;
     }
     
     // * Update progress
@@ -636,6 +660,11 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
   MatrixXd timeProbs = (dgn->timeProbs).transpose();
   MatrixXd zirtSplitCounts = (dgn->zirtSplitCounts).transpose();
   VectorXd YhatOut = Yhat / ctr->nRec;
+
+  // Random effects
+  VectorXd deltaCoef = dgn->deltaCoef;
+  VectorXd deltaCoef2 = dgn->deltaCoef2;
+  VectorXd nuDelta = dgn->nuDelta;
   delete prog;
   delete dgn;
   delete Exp;
@@ -652,6 +681,9 @@ Rcpp::List monotdlnm_Cpp(const Rcpp::List model)
     Named("nu")               = wrap(nu),
     Named("kappa")            = wrap(kappa),
     Named("tau")              = wrap(tau),
+    Named("deltaCoef")    = wrap(deltaCoef),
+    Named("deltaCoef2")   = wrap(deltaCoef2),
+    Named("nuDelta")      = wrap(nuDelta),
     Named("termNodes")        = wrap(termNodes),
     Named("gamma")            = wrap(gamma),
     Named("zirtGamma")        = wrap(zirtGamma),
