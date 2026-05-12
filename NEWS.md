@@ -3,6 +3,9 @@
   * access by using the 'cluster' input into any modeling function
 * update sampling methods in HDLM to sample entire trees (vs. grow/prune/change)
 
+# dlmtree 1.1.1
+* removed C++11 from DESCRIPTION per CRAN requirements
+
 # dlmtree 1.1.0
 * new feature: `diagnose()` function - launches a Shiny panel for assessing MCMC convergence, which includes:
   * trace plots and density plots for the estimated distributed lag function
