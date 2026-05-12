@@ -127,9 +127,11 @@ Eigen::VectorXd rDirichlet(const Eigen::VectorXd &alpha) {
  */
 void rHalfCauchyFC(double* x2, double a, double b, double* yInv){
   double yi = R::rgamma(1.0, *x2 / (*x2 + 1.0));
-  if (yInv != 0){
+  if (yInv != 0)
     *yInv = yi;
-  }
+
+  if (b < 0.0) // catch error that might arise early in modeling runs
+    b = 0.0;
 
   *x2 = 1.0 / R::rgamma(0.5 * (a + 1.0), 2.0 / (b + 2.0 * yi));
 }

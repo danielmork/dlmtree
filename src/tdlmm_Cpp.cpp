@@ -580,9 +580,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
 
   // Mixture & Shrinkage
   ctr->modKappa = as<double>(model["mixPrior"]);
-  bool updateKappa = false; 
   if (ctr->modKappa < 0) {
-    updateKappa = true;
     ctr->modKappa = 1;
   }
   ctr->shrinkage = as<int>(model["shrinkage"]);  
@@ -626,7 +624,22 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
     ctr->binomialSize = as<Eigen::VectorXd>(model["binomialSize"]);  
     ctr->kappa = ctr->Y0 - 0.5 * (ctr->binomialSize);                
     ctr->Ystar = ctr->kappa;                                         
-  }                                                                  
+  }      
+
+
+
+  // *** Set up parameters for random effects model ***
+  ctr->randomEffects = as<bool>(model["randomEffects"]);
+  ctr->nClus = 0;
+  ctr->nuDelta = 1.0;
+  ctr->deltaRE.resize(ctr->n);          ctr->deltaRE.setZero();
+  ctr->deltaCoef.resize(1);             ctr->deltaCoef.setZero();
+  if (ctr->randomEffects) {
+    ctr->niClus = as<Eigen::VectorXi>(model["niClus"]);
+    ctr->nClus = ctr->niClus.size();
+    ctr->deltaCoef.resize(ctr->nClus);  ctr->deltaCoef.setZero();
+    ctr->clusterIDs = as<Eigen::VectorXi>(model["clusterIDs"]);
+  }                                                            
 
   // *** Set up parameters for ZINB model ***
   ctr->r = 5; 
@@ -753,6 +766,11 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   (dgn->tree1Exp).resize(ctr->nTrees, ctr->nRec);   (dgn->tree1Exp).setZero();
   (dgn->tree2Exp).resize(ctr->nTrees, ctr->nRec);   (dgn->tree2Exp).setZero();
 
+  // Random effects log
+  dgn->deltaCoef.resize(ctr->nClus);  dgn->deltaCoef.setZero();
+  dgn->deltaCoef2.resize(ctr->nClus);  dgn->deltaCoef2.setZero();
+  dgn->nuDelta.resize(ctr->nRec);     dgn->nuDelta.setZero();
+
   // ZINB specific log
   (dgn->b1).resize(ctr->pZ1, ctr->nRec);             (dgn->b1).setZero(); 
   (dgn->b2).resize(ctr->pZ, ctr->nRec);              (dgn->b2).setZero(); 
@@ -796,9 +814,6 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   ctr->nu = 1.0; 
   ctr->sigma2 = 1.0;
 
-  // Model estimation with the initial values
-  tdlmModelEst(ctr); 
-
   // Horseshoe hyperparameters
   rHalfCauchyFC(&(ctr->nu), ctr->nTrees, 0.0);
   (ctr->tau).resize(ctr->nTrees);                 (ctr->tau).setOnes();
@@ -810,6 +825,9 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   ctr->nTerm2.resize(ctr->nTrees);                (ctr->nTerm2).setOnes();
   (ctr->Rmat).resize(ctr->n, ctr->nTrees);        (ctr->Rmat).setZero();
 
+
+  // Model estimation with the initial values
+  tdlmModelEst(ctr); 
 
   // *** Create Progress Meter ***
   progressMeter* prog = new progressMeter(ctr);
@@ -855,7 +873,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
     }
 
     // Pre-calculations for control and variance
-    ctr->R = ctr->Ystar - ctr->fhat;             
+    ctr->R = ctr->Ystar - ctr->fhat - ctr->deltaRE;             
     ctr->sumTermT2 = (ctr->sumTermT2Exp).sum();
     ctr->totTerm = (ctr->totTermExp).sum();
     if(ctr->interaction) {
@@ -916,6 +934,11 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
       (dgn->b2).col(ctr->record - 1) = ctr->b2;
       (dgn->r)(ctr->record - 1) = ctr->r;
       (dgn->wMat).col(ctr->record - 1) = ctr->w;
+
+      // Random effects
+      dgn->deltaCoef += ctr->deltaCoef / ctr->nRec;
+      dgn->deltaCoef2 += ctr->deltaCoef.array().square().matrix() / ctr->nRec;
+      dgn->nuDelta(ctr->record - 1) = ctr->nuDelta;
       
       // mixture specific
       if (ctr->interaction) {
@@ -967,6 +990,11 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
   Eigen::VectorXd r = dgn->r; 
   Eigen::MatrixXd wMat = dgn->wMat; 
 
+  // Random effects
+  Eigen::VectorXd deltaCoef = dgn->deltaCoef;
+  Eigen::VectorXd deltaCoef2 = dgn->deltaCoef2;
+  Eigen::VectorXd nuDelta = dgn->nuDelta;
+
   // Interaction
   if (ctr->interaction) {
     muMix.resize((dgn->muMix).cols(), (dgn->muMix).rows());
@@ -995,6 +1023,9 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
                             Named("sigma2") = wrap(sigma2),
                             Named("nu") = wrap(nu),
                             Named("tau") = wrap(tau),
+                            Named("deltaCoef")    = wrap(deltaCoef),
+                            Named("deltaCoef2")   = wrap(deltaCoef2),
+                            Named("nuDelta")      = wrap(nuDelta),
                             Named("termNodes") = wrap(termNodes),
                             Named("termNodes2") = wrap(termNodes2), 
                             Named("tree1Exp") = wrap(tree1Exp),

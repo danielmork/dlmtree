@@ -29,7 +29,6 @@ dlmtree.control.mcmc <- function(
 #' controlling dlm tree depth. (default: alpha = 0.95, beta = 2)
 #' @param step.prob numerical vector for probability of each step for dlm tree updates: 1) grow/prune,
 #' 2) change, 3) switch exposure. (default: c(0.25, 0.25, 0.25))
-#' 
 #' @returns list of hyperparameter control parameters.
 #' @export
 dlmtree.control.hyper <- function(

@@ -18,6 +18,7 @@
 #' @param family 'gaussian' for continuous response, 'logit' for binomial, 'zinb' for zero-inflated negative binomial.
 #' @param mixture flag for mixture, set to TRUE for tdlmm and hdlmm (default: FALSE).
 #' @param het flag for heterogeneity, set to TRUE for hdlm and hdlmm (default: FALSE).
+#' @param cluster variable name from data for cluster identifier. For best perforamnce, data should ideally be presorted by this variable.
 #' @param control.mcmc list of MCMC control parameters. This is passed to \link{dlmtree.control.mcmc}.
 #' @param control.hyper list of hyperparameter control parameters. This is passed to \link{dlmtree.control.hyper}
 #' @param control.family list of family control parameters. This is passed to \link{dlmtree.control.family}
@@ -45,7 +46,8 @@ dlmtree <- function(formula,
                     dlm.type = "linear",
                     family = "gaussian",
                     mixture = FALSE,
-                    het = FALSE,                
+                    het = FALSE,
+                    cluster = NULL,                
                     # Control parameters
                     control.mcmc = list(),
                     control.hyper = list(),
@@ -150,7 +152,7 @@ dlmtree <- function(formula,
 
   # Stop for unavailable models
   if (het) { # HDLM & HDLMM
-    if (family %in% c("logit", "zinb")) {
+    if (family %in% c("zinb", "logit")) {
       stop("'logit' or 'zinb' are unavailable for heterogeneous models. Set family to 'gaussian'.")
     }
 
@@ -453,6 +455,22 @@ dlmtree <- function(formula,
       !model$intercept & !model$intercept.zi) 
     stop("no valid variables in formula")
 
+
+  # Cluster random effects
+  model$randomEffects <- FALSE
+  if (!is.null(cluster)) {
+    model$randomEffects <- TRUE
+    if (!(cluster %in% colnames(data))) {
+      stop("cluster id does not exist in data")
+    }
+    model$clusterIDs <- as.integer(as.factor(data[[cluster]])) - 1
+    model$nClus <- length(unique(model$clusterIDs))
+    if (model$nClus >= nrow(data)/2) {
+      stop("cluster id not sufficiently stratified (too many groups or too few observations per group)")
+    }
+    model$niClus <- table(model$clusterIDs)
+  }
+
   # *** Exposure splits ***
   model$splitProb <- as.double(c())
   model$timeProb  <- rep(1 / (model$pExp - 1), model$pExp - 1)
@@ -703,7 +721,7 @@ dlmtree <- function(formula,
   # Covariates for main model
   model$Z <- model.matrix(model$formula, data = mf)
   QR <- qr(crossprod(model$Z))
-  model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)])]
+  model$Z <- model$Z[,sort(QR$pivot[seq_len(QR$rank)]), drop = F]
   model$droppedCovar <- colnames(model$Z)[QR$pivot[-seq_len(QR$rank)]]
   model$Z <- scaleModelMatrix(model$Z)
   if (length(model$droppedCovar) > 0 & model$verbose) {
@@ -714,7 +732,7 @@ dlmtree <- function(formula,
   # Covariates for ZI model
   model$Z.zi <- model.matrix(model$formula.zi, data = mf.zi)
   QR.zi <- qr(crossprod(model$Z.zi)) 
-  model$Z.zi <- model$Z.zi[,sort(QR.zi$pivot[seq_len(QR.zi$rank)])]
+  model$Z.zi <- model$Z.zi[,sort(QR.zi$pivot[seq_len(QR.zi$rank)]), drop = F]
   model$droppedCovar.zi <- colnames(model$Z.zi)[QR.zi$pivot[-seq_len(QR.zi$rank)]]
   model$Z.zi <- scaleModelMatrix(model$Z.zi)
   if (length(model$droppedCovar.zi) > 0 & model$verbose & family == "zinb") {
@@ -774,9 +792,9 @@ dlmtree <- function(formula,
                 "tdlm"  = tdlnm_Cpp(model),
                 "tdlmm" = tdlmm_Cpp(model),
                 "hdlm"  = switch(hdlm.dlmtree.type, 
-                                 "shared" = dlmtreeHDLMGaussian(model), 
-                                 "nested" = dlmtreeTDLM_cpp(model)),
-                "hdlmm" = dlmtreeHDLMMGaussian(model),
+                                 "shared" = dlmtreeShared(model), 
+                                 "nested" = dlmtreeNested(model)),
+                "hdlmm" = dlmtreeMixtures(model),
                 "tdlnm" = tdlnm_Cpp(model),
                 "monotone" = monotdlnm_Cpp(model))
 
@@ -840,6 +858,11 @@ dlmtree <- function(formula,
       if (ncol(model$Z) > 1) {
         model$gamma[,1] <- model$gamma[,1] - model$gamma[,-1,drop=FALSE] %*% model$Zmean[-1]
       }
+    }
+
+    if (model$randomEffects) {
+      model$deltaCoef <- model$deltaCoef * model$Yscale
+      model$deltaCoef2 <- model$deltaCoef2 * model$Yscale^2
     }
 
     colnames(model$gamma) <- model$Znames

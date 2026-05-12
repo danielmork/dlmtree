@@ -2,6 +2,7 @@
 using namespace Rcpp;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
+using Eigen::VectorXi;
 using namespace Eigen;
 
 /**
@@ -10,7 +11,7 @@ using namespace Eigen;
  */
 struct modelCtr {
 public:
-  bool verbose, diagnostics, debug;
+  bool verbose, diagnostics, debug, updateSingleNodeModel;
   int n, pZ, pZ1, pX, nRec, nSplits, nTrees;
   int b, iter, thin, burn, record, threads, shrinkage;
   double sigma2, xiInvSigma2, nu, VTheta1Inv, totTerm, sumTermT2;
@@ -53,7 +54,16 @@ public:
   VectorXd kappa;        // Kappa = y_i - n_i/2
   VectorXd Ystar;        // Ystar which is updated every iteration of MCMC, also called z1 in ZINB
   VectorXd binomialSize; // n from Binomial (n, p)
-  VectorXd Lambda;       
+  VectorXd Lambda;      
+
+  // Cluster random effects ------------------------------------
+  bool randomEffects;
+  int nClus;            // Number of clusters
+  VectorXi niClus;      // Number of obs per cluster
+  VectorXd deltaCoef;   // Vector of random effect coefficients
+  VectorXi clusterIDs;  // Data position of cluster IDs
+  VectorXd deltaRE;     // Vector of individual random effects
+  double nuDelta;       // Random effect variance parameter
 
   // ZINB & NB --------------------------------------------------
   bool zinb; // Indicator boolean for ZINB
@@ -151,6 +161,11 @@ public:
   MatrixXd muExp;
   MatrixXd muMix;
 
+  // Random effects
+  VectorXd nuDelta;    // Variance parameters posterior samples
+  VectorXd deltaCoef;  // E[delta]
+  VectorXd deltaCoef2; // E[delta^2]
+
   // ZINB
   MatrixXd b1;
   MatrixXd b2;
@@ -171,20 +186,19 @@ public:
   MatrixXd exDLM;
   VectorXd modCount;
   VectorXd modInf;
-  VectorXd kappa;
   
   // Gaussian Process
-  MatrixXd X;
-  MatrixXd XtXall;
-  MatrixXd ZtXall;
-  MatrixXd VgZtXall;
-  MatrixXd VThetaInvall;
-  MatrixXd DistMat;
-  MatrixXd LambdaInv;
-  MatrixXd LambdaInvNew;
-  double phi, phiNew, phiMH, phiMHNew;
-  double logLambdaDet, logLambdaDetNew;
-  int covarType;
+  // MatrixXd X;
+  // MatrixXd XtXall;
+  // MatrixXd ZtXall;
+  // MatrixXd VgZtXall;
+  // MatrixXd VThetaInvall;
+  // MatrixXd DistMat;
+  // MatrixXd LambdaInv;
+  // MatrixXd LambdaInvNew;
+  // double phi, phiNew, phiMH, phiMHNew;
+  // double logLambdaDet, logLambdaDetNew;
+  // int covarType;
 
   // Mixtures
   int interaction, nExp, nMix;
@@ -247,10 +261,6 @@ public:
   MatrixXd muMix;
   
   // DLM and cumulative effect estimates
-  MatrixXd exDLM;
-  MatrixXd ex2DLM;
-  VectorXd cumDLM;
-  VectorXd cum2DLM;
   std::vector<VectorXd> DLMexp;
   std::vector<std::string> termRule;
   std::vector<std::string> termRuleMIX;
@@ -263,6 +273,12 @@ public:
   MatrixXd b2; // Count coefficient
   VectorXd r; // dispersion parameter
   MatrixXd wMat;
+
+
+  // Random effects
+  VectorXd nuDelta;    // Variance parameters posterior samples
+  VectorXd deltaCoef;  // E[delta]
+  VectorXd deltaCoef2; // E[delta^2]
 
   // Mixtures
   // std::vector<VectorXd> MIXexp;
