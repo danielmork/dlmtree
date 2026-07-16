@@ -30,7 +30,7 @@ using Eigen::Upper;
  * @param ctr model control data
  */
 void tdlmModelEst(modelCtr *ctr){ 
-  if(!(ctr->zinb)) { 
+  if (!(ctr->zinb)) { 
     const VectorXd ZR = ctr->Zw.transpose() * ctr->R; 
     ctr->gamma        = ctr->Vg * ZR; 
 
@@ -98,7 +98,8 @@ void tdlmModelEst(modelCtr *ctr){
       VgInv.triangularView<Eigen::Upper>() = VgInv.transpose().eval(); 
 
       // Constructing V_gamma = Inverse of V_gamma Inverse
-      ctr->Vg.triangularView<Eigen::Lower>() = VgInv.inverse();
+      ctr->Vg.triangularView<Eigen::Lower>() = 
+        VgInv.llt().solve(Eigen::MatrixXd::Identity(ctr->pZ, ctr->pZ));
       ctr->Vg.triangularView<Eigen::Upper>() = ctr->Vg.transpose().eval();
       
       // Update the V_gamma cholesky using LLT Decomposition, Lower triangular part of matrix L
@@ -117,8 +118,7 @@ void tdlmModelEst(modelCtr *ctr){
                     &(ctr->xiInvSigma2));
       
       if ((ctr->sigma2 != ctr->sigma2)) {// ! stop if infinite or nan variance
-        Rcout << "Error occurred during iteration " << ctr->b << "\n" <<
-          "n = " << ctr->n << "; tree nodes = " << ctr->totTerm << 
+        Rcout << "NaN sigma^2. Error occurred during iteration " << ctr->b << "\n" << "n = " << ctr->n << "; tree nodes = " << ctr->totTerm << 
           "; clusters = " << ctr->nClus << "\n" <<
           "R.R = " << ctr->R.dot(ctr->R) << "; ZR.gamma = " << 
           ZR.dot(ctr->gamma) << "\n" <<
@@ -130,6 +130,7 @@ void tdlmModelEst(modelCtr *ctr){
         stop("\nNaN values (sigma) occured during model run, rerun model.\n");
       }
     }
+
 
 
   } else { // ZINB
@@ -608,40 +609,6 @@ VectorXd countMods(Node* tree, modDat* Mod){
         unavailProb(i) = Mod->modProb[i];
       }
     }
-    // if (unavail.size() > 0) {
-    //   std::shuffle(unavail.begin(), unavail.end(), std::default_random_engine());
-    //   double totProb = unavailProb.sum();
-    //   int pseudoDraw = R::rgeom(std::max(0.00000001, 1 - totProb));
-    //   int binomDraw = 0;
-    //   if (pseudoDraw > 0) {
-    //     for (int i : unavail) {
-    //       binomDraw = R::rbinom(pseudoDraw, unavailProb(i) / totProb);
-    //       if (binomDraw > 0)
-    //         modCount(i) += binomDraw * 1.0;
-    //       totProb -= unavailProb(i);
-    //       pseudoDraw -= binomDraw;
-    //       if (pseudoDraw < 1)
-    //         break;
-    //     } // end multinom
-    //   } // end pseudoDraw
-    // } // end unavail
-    // if (unavail.size() > 0) {
-    //   std::shuffle(unavail.begin(), unavail.end(), std::default_random_engine());
-    //   double totProb = unavailProb.sum();
-    //   int pseudoDraw = R::rgeom(std::max(0.00000001, 1 - totProb));
-    //   int binomDraw = 0;
-    //   if (pseudoDraw > 0) {
-    //     for (int i : unavail) {
-    //       binomDraw = R::rbinom(pseudoDraw, unavailProb(i) / totProb);
-    //       if (binomDraw > 0)
-    //         modCount(i) += binomDraw * 1.0;
-    //       totProb -= unavailProb(i);
-    //       pseudoDraw -= binomDraw;
-    //       if (pseudoDraw < 1)
-    //         break;
-    //     } // end multinom
-    //   } // end pseudoDraw
-    // } // end unavail
   } // end modCount
   return(modCount);
 } // end countMods function
@@ -847,59 +814,3 @@ double zeroInflatedTreeMHR(VectorXd timeProbs, std::vector<Node*> trees, int t, 
 
   return (mhr);
 } // end zeroInflatedTreeMHR function
-
-/**
- * @brief update design matrices for subgroup Gaussian process DLM
- * 
- * @param n pointer to node
- * @param ctr pointer to model control
- */
-// void updateGPMats(Node* n, dlmtreeCtr* ctr){
-//   if (n->nodevals->updateXmat == 0)
-//     return;
-//   if (n->depth == 0) {
-//     n->nodevals->XtX        = ctr->XtXall;
-//     n->nodevals->ZtXmat     = ctr->ZtXall;
-//     n->nodevals->VgZtXmat   = ctr->VgZtXall;
-//     n->nodevals->updateXmat = 0;
-//     return;
-//   }
-// 
-//   Node* par = n->parent;
-//   if (par->nodevals->updateXmat)
-//     updateGPMats(par, ctr);
-//   Node* sib = n->sib();
-//   std::vector<int> idx;
-//   if (n->nodevals->idx.size() <= sib->nodevals->idx.size()) {
-//     idx = n->nodevals->idx;
-//   } else {
-//     idx = sib->nodevals->idx;
-//   }
-//   
-//   MatrixXd Xtemp(idx.size(), ctr->pX);    Xtemp.setZero();
-//   MatrixXd Ztemp(idx.size(), ctr->pZ);    Ztemp.setZero();
-//   
-//   for (std::size_t i = 0; i < idx.size(); ++i) {
-//     Xtemp.row(i) = ctr->X.row(idx[i]);
-//     Ztemp.row(i) = ctr->Z.row(idx[i]);
-//   }
-//   
-//   if (n->nodevals->idx.size() <= sib->nodevals->idx.size()) {
-//     n->nodevals->XtX        = Xtemp.transpose() * Xtemp;
-//     n->nodevals->ZtXmat     = Ztemp.transpose() * Xtemp;
-//     n->nodevals->VgZtXmat   = ctr->Vg * n->nodevals->ZtXmat;
-//     sib->nodevals->XtX      = par->nodevals->XtX - n->nodevals->XtX;
-//     sib->nodevals->ZtXmat   = par->nodevals->ZtXmat - n->nodevals->ZtXmat;
-//     sib->nodevals->VgZtXmat = par->nodevals->VgZtXmat - n->nodevals->VgZtXmat;
-//   } else {
-//     sib->nodevals->XtX      = Xtemp.transpose() * Xtemp;
-//     sib->nodevals->ZtXmat   = Ztemp.transpose() * Xtemp;
-//     sib->nodevals->VgZtXmat = ctr->Vg * sib->nodevals->ZtXmat;
-//     n->nodevals->XtX        = par->nodevals->XtX - sib->nodevals->XtX;
-//     n->nodevals->ZtXmat     = par->nodevals->ZtXmat - sib->nodevals->ZtXmat;
-//     n->nodevals->VgZtXmat   = par->nodevals->VgZtXmat - sib->nodevals->VgZtXmat;
-//   }
-//   n->nodevals->updateXmat   = 0;
-//   sib->nodevals->updateXmat = 0;
-//   
-// }
