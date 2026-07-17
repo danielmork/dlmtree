@@ -428,9 +428,8 @@ void dlmtreeShared_TreeMCMC(int t,
     modTree->nodevals->XtX = modTree->nodevals->XtXProposed;
     modTree->nodevals->ZtXmat = modTree->nodevals->ZtXmatProposed;
     modTree->nodevals->VgZtXmat = modTree->nodevals->VgZtXmatProposed;
-    modTree->setUpdateXmat(0);
-
   }
+  modTree->setUpdateXmat(0);
   
   // Reset new tree value 
   if (newTree != 0)
@@ -475,8 +474,8 @@ void dlmtreeShared_TreeMCMC(int t,
     modTree->nodevals->XtX = modTree->nodevals->XtXProposed;
     modTree->nodevals->ZtXmat = modTree->nodevals->ZtXmatProposed;
     modTree->nodevals->VgZtXmat = modTree->nodevals->VgZtXmatProposed;
-    modTree->setUpdateXmat(0);
   } 
+  modTree->setUpdateXmat(0);
 
   // Reset new tree value 
   if (newTree != 0)
@@ -568,8 +567,8 @@ treeMHR dlmtreeShared_MHR(Node* modTree,
   if (pXDlm == 1) {
     // Single Modifier node
     if (pXMod == 1) {
-      double VTheta = 1.0 / (ctr->VTheta1Inv + 1.0 / treevar);
-      double XtVzInvR = (ctr->X1).dot((ctr->Omega).asDiagonal() * ctr->R) - ctr->VgZtX1.dot(ZtR);
+      double VTheta     = 1.0 / (ctr->VTheta1Inv + 1.0 / treevar);
+      double XtVzInvR   = (ctr->X1).dot((ctr->Omega).asDiagonal() * ctr->R) - ctr->VgZtX1.dot(ZtR);
       double VThetaChol = sqrt(VTheta);
       double ThetaHat   = VTheta * XtVzInvR;
       out.draw.resize(1);
@@ -585,9 +584,9 @@ treeMHR dlmtreeShared_MHR(Node* modTree,
     } // return single TDLM and single modifier node
 
     // Setup matrices for multiple modifier + single TDLM
-    X.col(0) = ctr->X1;
-    ZtX.col(0)    = ctr->Zw.transpose() * ctr->X1;
-    VgZtX.col(0)  = ctr->Vg * ctr->ZtX1;
+    X.col(0)      = ctr->X1;
+    ZtX.col(0)    = ctr->ZtX1;
+    VgZtX.col(0)  = ctr->VgZtX1;
 
   // Multiple TDLM nodes
   } else {
@@ -637,7 +636,7 @@ treeMHR dlmtreeShared_MHR(Node* modTree,
 
 
   // Multiple Modifier nodes
-  Eigen::MatrixXd Xtemp, Ztemp;
+  Eigen::MatrixXd Xtemp, Zwtemp;
   Eigen::VectorXd Rtemp, Otemp;
   Eigen::VectorXd XtR(pXComb);                 XtR.setZero();
   Eigen::MatrixXd XtXblock(pXComb, pXComb);    XtXblock.setZero();
@@ -645,17 +644,25 @@ treeMHR dlmtreeShared_MHR(Node* modTree,
 
   // Build tree matrices
   if ((modTree->nodevals->updateXmat) || (ctr->binomial)) {
-    Xtemp.resize(ctr->n, pXComb); Xtemp.setZero();
     int start = 0;
     for (Node* n : modTerm) {
+      int j = 0;
+      Xtemp.resize(n->nodevals->idx.size(), pXDlm); Xtemp.setZero();
+      Zwtemp.resize(n->nodevals->idx.size(), ctr->pZ); Zwtemp.setZero();
+      Otemp.resize(n->nodevals->idx.size()); Otemp.setZero();
+      Rtemp.resize(n->nodevals->idx.size()); Rtemp.setZero();
       for (int i : n->nodevals->idx) {
-        Xtemp.block(i, start, 1, pXDlm) = X.row(i);
-      } // end loop over node indices
+        Xtemp.row(j) = X.row(i);
+        Zwtemp.row(j) = ctr->Zw.row(i);
+        Otemp(j) = ctr->Omega(i);
+        XtR.segment(start, pXDlm).noalias() += 
+          X.row(i).transpose() * ctr->Omega(i) * ctr->R(i); 
+        ++j;
+      }
+      XtXblock.block(start, start, pXDlm, pXDlm) = Xtemp.transpose() * Otemp.asDiagonal() * Xtemp;
+      ZtX.block(0, start, ctr->pZ, pXDlm) = Zwtemp.transpose() * Xtemp;
       start += pXDlm;
     }
-    XtR = Xtemp.transpose() * ctr->Omega.asDiagonal() * ctr->R;
-    XtXblock = Xtemp.transpose() * ctr->Omega.asDiagonal() * Xtemp;
-    ZtX = ctr->Z.transpose() * ctr->Omega.asDiagonal() * Xtemp;
     VgZtX = ctr->Vg * ZtX;
 
     if (!(ctr->binomial)) {
@@ -673,13 +680,13 @@ treeMHR dlmtreeShared_MHR(Node* modTree,
     for (Node* n : modTerm) {
       for (int i : n->nodevals->idx) { // loop over node indices
         XtR.segment(start, pXDlm).noalias() += 
-          X.row(i).transpose() * ctr->R(i); 
+          X.row(i).transpose() * ctr->Omega(i) * ctr->R(i); 
       }
       start += pXDlm;
     }
     XtXblock = modTree->nodevals->XtX;
-    ZtX = modTree->nodevals->ZtXmat;
-    VgZtX = modTree->nodevals->VgZtXmat;
+    ZtX      = modTree->nodevals->ZtXmat;
+    VgZtX    = modTree->nodevals->VgZtXmat;
 
   } // End building tree matrices
 
