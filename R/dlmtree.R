@@ -152,8 +152,11 @@ dlmtree <- function(formula,
 
   # Stop for unavailable models
   if (het) { # HDLM & HDLMM
-    if (family %in% c("zinb", "logit")) {
-      stop("'logit' or 'zinb' are unavailable for heterogeneous models. Set family to 'gaussian'.")
+    if (family %in% c("zinb")) {
+      stop("'zinb' is unavailable for heterogeneous models. Set family to 'gaussian'.")
+    } else if (family == "logit") {
+      if (hdlm.dlmtree.type != "shared")
+        stop("'logit' family is currently only available for hdlm.dlmtree.type='shared'")
     }
 
     if (dlm.type %in% c("nonlinear", "monotone")) {
@@ -657,7 +660,7 @@ dlmtree <- function(formula,
 
     for(i in 1:model$pM) {
       if (model$modIsNum[i]) {
-        if (length(unique(model$Mo[[i]])) < hdlm.modifier.splits) {
+        if (length(unique(model$Mo[[i]])) < hdlm.modifier.splits + 2) {
           uniqueVals                <- sort(unique(model$Mo[[i]]))
           model$modSplitValRef[[i]] <- rowMeans(cbind(uniqueVals[-length(uniqueVals)], uniqueVals[-1]))
         } else {

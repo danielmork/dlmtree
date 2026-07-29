@@ -39,6 +39,7 @@ NodeVals::NodeVals(const NodeVals& x)
   Xpl               = x.Xpl;
   XplProposed       = x.XplProposed;
   XtX               = x.XtX;
+  XtXProposed       = x.XtXProposed;
   ZtX               = x.ZtX;
   ZtXmat            = x.ZtXmat;
   ZtXmatProposed    = x.ZtXmatProposed;
