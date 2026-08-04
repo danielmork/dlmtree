@@ -18,7 +18,7 @@
 #' @param family 'gaussian' for continuous response, 'logit' for binomial, 'zinb' for zero-inflated negative binomial.
 #' @param mixture flag for mixture, set to TRUE for tdlmm and hdlmm (default: FALSE).
 #' @param het flag for heterogeneity, set to TRUE for hdlm and hdlmm (default: FALSE).
-#' @param cluster variable name from data for cluster identifier. For best perforamnce, data should ideally be presorted by this variable.
+#' @param cluster variable name from data for cluster identifier. For best performance, data should ideally be presorted by this variable.
 #' @param control.mcmc list of MCMC control parameters. This is passed to \link{dlmtree.control.mcmc}.
 #' @param control.hyper list of hyperparameter control parameters. This is passed to \link{dlmtree.control.hyper}
 #' @param control.family list of family control parameters. This is passed to \link{dlmtree.control.family}
