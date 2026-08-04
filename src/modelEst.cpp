@@ -68,7 +68,7 @@ void tdlmModelEst(modelCtr *ctr){
       // assign random intercepts to individuals
       for (int i = 0; i < ctr->n; ++i) {
         int c = ctr->clusterIDs[i];
-        ctr->deltaRE[i] <- ctr->deltaCoef[c];
+        ctr->deltaRE[i] = ctr->deltaCoef[c];
       }
       
       // sample nuDelta

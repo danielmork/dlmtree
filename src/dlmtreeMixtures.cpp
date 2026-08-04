@@ -234,7 +234,12 @@ Rcpp::List dlmtreeMixtures(const Rcpp::List model){
       (dgn->termNodesDLM1).setZero(); 
   (dgn->termNodesDLM2).resize(ctr->nTrees, ctr->nRec);  
       (dgn->termNodesDLM2).setZero(); 
-  (dgn->mixKappa).resize(ctr->nRec);            (dgn->mixKappa).setZero();      
+  (dgn->mixKappa).resize(ctr->nRec);            (dgn->mixKappa).setZero();     
+
+  // Random effects log
+  dgn->deltaCoef.resize(ctr->nClus);   dgn->deltaCoef.setZero();
+  dgn->deltaCoef2.resize(ctr->nClus);  dgn->deltaCoef2.setZero();
+  dgn->nuDelta.resize(ctr->nRec);      dgn->nuDelta.setZero(); 
 
   // *** Initial draws ***
   (ctr->fhat).resize(ctr->n);      
