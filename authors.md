@@ -12,7 +12,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/danielmork/dlmtree/blob/master/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/danielmork/dlmtree/blob/1.2.0/DESCRIPTION)
 
 Mork D, Im S, Wilson A (2026). *dlmtree: Bayesian Treed Distributed Lag
 Models*. R package version 1.2.0,

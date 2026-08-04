@@ -53,7 +53,7 @@ fit <- dlmtree(y ~ .,
 #> Burn-in % complete 
 #> [0--------25--------50--------75--------100]
 #>  ''''''''''''''''''''''''''''''''''''''''''
-#> MCMC iterations (est time: 8 seconds)
+#> MCMC iterations (est time: 6 seconds)
 #> [0--------25--------50--------75--------100]
 #>  ''''''''''''''''''''''''''''''''''''''''''
 #> Compiling results...

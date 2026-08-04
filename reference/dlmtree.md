@@ -156,7 +156,7 @@ website](https://danielmork.github.io/dlmtree/).
 #> Burn-in % complete 
 #> [0--------25--------50--------75--------100]
 #>  ''''''''''''''''''''''''''''''''''''''''''
-#> MCMC iterations (est time: 4 seconds)
+#> MCMC iterations (est time: 2 seconds)
 #> [0--------25--------50--------75--------100]
 #>  ''''''''''''''''''''''''''''''''''''''''''
 #> Compiling results...
@@ -233,7 +233,7 @@ website](https://danielmork.github.io/dlmtree/).
 #> 
 #> $formula
 #> y ~ .
-#> <environment: 0x558aaf58db68>
+#> <environment: 0x5616df0fe830>
 #> 
 #> $gamma.mean
 #> (Intercept)          c1          c2          c3          c4          c5 
@@ -272,7 +272,7 @@ website](https://danielmork.github.io/dlmtree/).
 #> Burn-in % complete 
 #> [0--------25--------50--------75--------100]
 #>  ''''''''''''''''''''''''''''''''''''''''''
-#> MCMC iterations (est time: 2 seconds)
+#> MCMC iterations (est time: 0 seconds)
 #> [0--------25--------50--------75--------100]
 #>  ''''''''''''''''''''''''''''''''''''''''''
 #> Compiling results...
@@ -2965,7 +2965,7 @@ website](https://danielmork.github.io/dlmtree/).
 #> 
 #> $formula
 #> y ~ .
-#> <environment: 0x558aaf58db68>
+#> <environment: 0x5616df0fe830>
 #> 
 #> attr(,"class")
 #> [1] "summary.tdlnm"
@@ -3078,7 +3078,7 @@ website](https://danielmork.github.io/dlmtree/).
 #> 
 #> $formula
 #> y ~ .
-#> <environment: 0x558aaf58db68>
+#> <environment: 0x5616df0fe830>
 #> 
 #> attr(,"class")
 #> [1] "summary.hdlm"
@@ -3258,7 +3258,7 @@ website](https://danielmork.github.io/dlmtree/).
 #> 
 #> $formula
 #> y ~ .
-#> <environment: 0x558aaf58db68>
+#> <environment: 0x5616df0fe830>
 #> 
 #> attr(,"class")
 #> [1] "summary.hdlmm"
