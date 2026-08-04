@@ -40,7 +40,7 @@ named list containing equally sized numerical matrices of exposure data having s
 
 \item{het}{flag for heterogeneity, set to TRUE for hdlm and hdlmm (default: FALSE).}
 
-\item{cluster}{variable name from data for cluster identifier. For best perforamnce, data should ideally be presorted by this variable.}
+\item{cluster}{variable name from data for cluster identifier. For best performance, data should ideally be presorted by this variable.}
 
 \item{control.mcmc}{list of MCMC control parameters. This is passed to \link{dlmtree.control.mcmc}.}
 
