@@ -382,7 +382,6 @@ void dlmtreeShared_TreeMCMC(int t,
                             NodeStruct* expNS, 
                             NodeStruct* modNS)
 {
-  int step;
   int success     = 0;
   double stepMhr  = 0.0;
   double ratio    = 0.0;
@@ -438,7 +437,7 @@ void dlmtreeShared_TreeMCMC(int t,
   
   // * Record dlmtree
   Eigen::VectorXd accDLM(5);
-  accDLM << step, success, dlmTerm.size(), stepMhr, ratio;
+  accDLM << 0, success, dlmTerm.size(), stepMhr, ratio;
   (dgn->treeDLMAccept).push_back(accDLM);
   
 
@@ -486,7 +485,7 @@ void dlmtreeShared_TreeMCMC(int t,
 
   // * Record modtree
   Eigen::VectorXd accMod(5);
-  accMod << step, success, modTerm.size(), stepMhr, ratio;
+  accMod << 0, success, modTerm.size(), stepMhr, ratio;
   (dgn->treeModAccept).push_back(accMod);
 
   // -- Update variance and residuals --
