@@ -27,13 +27,9 @@
 <url><loc>https://danielmork.github.io/dlmtree/reference/dlmtree.control.monotone.html</loc></url>
 <url><loc>https://danielmork.github.io/dlmtree/reference/dlmtree.control.tdlnm.html</loc></url>
 <url><loc>https://danielmork.github.io/dlmtree/reference/dlmtree.html</loc></url>
-<url><loc>https://danielmork.github.io/dlmtree/reference/dlmtreeGPFixedGaussian.html</loc></url>
-<url><loc>https://danielmork.github.io/dlmtree/reference/dlmtreeGPGaussian.html</loc></url>
-<url><loc>https://danielmork.github.io/dlmtree/reference/dlmtreeHDLMGaussian.html</loc></url>
-<url><loc>https://danielmork.github.io/dlmtree/reference/dlmtreeHDLMMGaussian.html</loc></url>
-<url><loc>https://danielmork.github.io/dlmtree/reference/dlmtreeTDLMFixedGaussian.html</loc></url>
-<url><loc>https://danielmork.github.io/dlmtree/reference/dlmtreeTDLMNestedGaussian.html</loc></url>
-<url><loc>https://danielmork.github.io/dlmtree/reference/dlmtreeTDLM_cpp.html</loc></url>
+<url><loc>https://danielmork.github.io/dlmtree/reference/dlmtreeMixtures.html</loc></url>
+<url><loc>https://danielmork.github.io/dlmtree/reference/dlmtreeNested.html</loc></url>
+<url><loc>https://danielmork.github.io/dlmtree/reference/dlmtreeShared.html</loc></url>
 <url><loc>https://danielmork.github.io/dlmtree/reference/dlnmEst.html</loc></url>
 <url><loc>https://danielmork.github.io/dlmtree/reference/dlnmPLEst.html</loc></url>
 <url><loc>https://danielmork.github.io/dlmtree/reference/drawTree.html</loc></url>

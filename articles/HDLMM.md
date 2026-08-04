@@ -65,7 +65,7 @@ hdlmm.fit <- dlmtree(formula = bwgaz ~ ChildSex + MomAge + MomPriorBMI +
     #> Burn-in % complete 
     #> [0--------25--------50--------75--------100]
     #>  ''''''''''''''''''''''''''''''''''''''''''
-    #> MCMC iterations (est time: 17 minutes)
+    #> MCMC iterations (est time: 15 minutes)
     #> [0--------25--------50--------75--------100]
     #>  ''''''''''''''''''''''''''''''''''''''''''
     #> Compiling results...
@@ -96,39 +96,39 @@ print(hdlmm.sum)
     #> 
     #> Fixed effects:
     #>                        Mean  Lower  Upper
-    #> *(Intercept)          1.537  1.063  1.961
-    #>  ChildSexM           -0.458 -0.988  0.042
-    #>  MomAge               0.000 -0.002  0.004
+    #> *(Intercept)          1.515  0.996  1.974
+    #>  ChildSexM           -0.454 -1.114  0.274
+    #>  MomAge               0.000 -0.003  0.004
     #> *MomPriorBMI         -0.021 -0.025 -0.017
-    #>  RaceAsianPI          0.025 -0.104  0.155
-    #>  RaceBlack            0.034 -0.098  0.160
-    #>  Racewhite            0.015 -0.108  0.138
-    #> *HispanicNonHispanic  0.255  0.233  0.278
-    #> *SmkAnyY             -0.382 -0.443 -0.154
-    #> *EstMonthConcept2     0.120  0.052  0.193
-    #> *EstMonthConcept3     0.219  0.118  0.316
-    #> *EstMonthConcept4     0.314  0.181  0.445
-    #> *EstMonthConcept5     0.425  0.276  0.575
-    #> *EstMonthConcept6     0.413  0.256  0.574
-    #> *EstMonthConcept7     0.450  0.298  0.608
-    #> *EstMonthConcept8     0.427  0.288  0.572
-    #> *EstMonthConcept9     0.478  0.351  0.608
-    #> *EstMonthConcept10    0.338  0.225  0.452
-    #> *EstMonthConcept11    0.224  0.136  0.313
-    #>  EstMonthConcept12    0.050 -0.008  0.111
+    #>  RaceAsianPI          0.026 -0.094  0.139
+    #>  RaceBlack            0.035 -0.092  0.157
+    #>  Racewhite            0.016 -0.100  0.129
+    #> *HispanicNonHispanic  0.255  0.232  0.277
+    #> *SmkAnyY             -0.387 -0.444 -0.251
+    #> *EstMonthConcept2     0.118  0.049  0.189
+    #> *EstMonthConcept3     0.216  0.113  0.318
+    #> *EstMonthConcept4     0.311  0.177  0.443
+    #> *EstMonthConcept5     0.421  0.268  0.574
+    #> *EstMonthConcept6     0.409  0.246  0.577
+    #> *EstMonthConcept7     0.446  0.279  0.608
+    #> *EstMonthConcept8     0.427  0.277  0.579
+    #> *EstMonthConcept9     0.482  0.355  0.606
+    #> *EstMonthConcept10    0.340  0.234  0.447
+    #> *EstMonthConcept11    0.223  0.138  0.309
+    #>  EstMonthConcept12    0.049 -0.014  0.109
     #> ---
     #> * = CI does not contain zero
     #> 
     #> Modifiers:
     #>                PIP
     #> ChildSex    1.0000
-    #> MomAge      0.8865
+    #> MomAge      0.8550
     #> MomPriorBMI 1.0000
-    #> SmkAny      0.1630
+    #> SmkAny      0.0905
     #> ---
     #> PIP = Posterior inclusion probability
     #> 
-    #> residual standard errors: 0.008
+    #> residual standard errors: 0.02
     #> ---
     #> To obtain exposure effect estimates, use the 'shiny(fit)' function.
 

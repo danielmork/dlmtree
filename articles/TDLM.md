@@ -60,7 +60,7 @@ tdlm.fit <- dlmtree(formula = bwgaz ~ ChildSex + MomAge + MomPriorBMI +
     #> Burn-in % complete 
     #> [0--------25--------50--------75--------100]
     #>  ''''''''''''''''''''''''''''''''''''''''''
-    #> MCMC iterations (est time: 32 seconds)
+    #> MCMC iterations (est time: 24 seconds)
     #> [0--------25--------50--------75--------100]
     #>  ''''''''''''''''''''''''''''''''''''''''''
     #> Compiling results...
@@ -89,26 +89,26 @@ print(tdlm.sum)
     #> 
     #> Fixed effect coefficients:
     #>                        Mean  Lower  Upper
-    #> *(Intercept)          2.292  2.030  2.553
-    #> *ChildSexM           -2.105 -2.126 -2.084
+    #> *(Intercept)          2.286  2.014  2.544
+    #> *ChildSexM           -2.105 -2.125 -2.084
     #> MomAge                0.000 -0.001  0.002
     #> *MomPriorBMI         -0.021 -0.023 -0.019
-    #> RaceAsianPI           0.064 -0.054  0.192
-    #> RaceBlack             0.074 -0.050  0.202
-    #> Racewhite             0.054 -0.061  0.176
-    #> *HispanicNonHispanic  0.254  0.231  0.278
-    #> *SmkAnyY             -0.403 -0.448 -0.355
-    #> EstMonthConcept2     -0.048 -0.108  0.011
-    #> *EstMonthConcept3    -0.143 -0.208 -0.077
-    #> *EstMonthConcept4    -0.228 -0.298 -0.160
-    #> *EstMonthConcept5    -0.206 -0.265 -0.148
-    #> *EstMonthConcept6    -0.205 -0.259 -0.154
-    #> EstMonthConcept7     -0.031 -0.087  0.024
-    #> *EstMonthConcept8     0.144  0.080  0.209
-    #> *EstMonthConcept9     0.393  0.324  0.461
-    #> *EstMonthConcept10    0.372  0.303  0.436
-    #> *EstMonthConcept11    0.332  0.273  0.393
-    #> *EstMonthConcept12    0.130  0.075  0.183
+    #> RaceAsianPI           0.066 -0.065  0.187
+    #> RaceBlack             0.076 -0.051  0.201
+    #> Racewhite             0.057 -0.065  0.178
+    #> *HispanicNonHispanic  0.255  0.232  0.278
+    #> *SmkAnyY             -0.403 -0.451 -0.357
+    #> EstMonthConcept2     -0.049 -0.109  0.011
+    #> *EstMonthConcept3    -0.143 -0.210 -0.080
+    #> *EstMonthConcept4    -0.228 -0.294 -0.162
+    #> *EstMonthConcept5    -0.205 -0.262 -0.148
+    #> *EstMonthConcept6    -0.205 -0.258 -0.150
+    #> EstMonthConcept7     -0.032 -0.086  0.024
+    #> *EstMonthConcept8     0.145  0.083  0.206
+    #> *EstMonthConcept9     0.394  0.329  0.461
+    #> *EstMonthConcept10    0.372  0.307  0.439
+    #> *EstMonthConcept11    0.332  0.271  0.389
+    #> *EstMonthConcept12    0.131  0.077  0.185
     #> ---
     #> * = CI does not contain zero
     #> 
@@ -117,47 +117,47 @@ print(tdlm.sum)
     #> signal-to-noise = 0.021
     #> critical windows: 11-20,36 
     #>              Mean  Lower  Upper
-    #> Period 1    0.002 -0.005  0.014
-    #> Period 2    0.000 -0.006  0.009
+    #> Period 1    0.003 -0.005  0.015
+    #> Period 2    0.000 -0.006  0.010
     #> Period 3   -0.002 -0.009  0.004
-    #> Period 4   -0.002 -0.009  0.003
+    #> Period 4   -0.002 -0.010  0.003
     #> Period 5   -0.001 -0.007  0.004
     #> Period 6   -0.001 -0.006  0.005
     #> Period 7   -0.001 -0.006  0.005
-    #> Period 8   -0.001 -0.007  0.004
-    #> Period 9   -0.002 -0.011  0.004
-    #> Period 10  -0.002 -0.012  0.005
-    #> *Period 11 -0.016 -0.024 -0.006
-    #> *Period 12 -0.017 -0.023 -0.009
-    #> *Period 13 -0.017 -0.023 -0.012
+    #> Period 8   -0.001 -0.008  0.004
+    #> Period 9   -0.002 -0.012  0.004
+    #> Period 10  -0.003 -0.014  0.006
+    #> *Period 11 -0.016 -0.025 -0.005
+    #> *Period 12 -0.017 -0.024 -0.010
+    #> *Period 13 -0.017 -0.024 -0.012
     #> *Period 14 -0.017 -0.022 -0.011
     #> *Period 15 -0.017 -0.022 -0.011
     #> *Period 16 -0.017 -0.022 -0.010
-    #> *Period 17 -0.018 -0.024 -0.012
-    #> *Period 18 -0.019 -0.028 -0.013
-    #> *Period 19 -0.018 -0.025 -0.010
-    #> *Period 20 -0.015 -0.023 -0.003
-    #> Period 21  -0.006 -0.019  0.002
-    #> Period 22  -0.002 -0.010  0.005
+    #> *Period 17 -0.017 -0.024 -0.011
+    #> *Period 18 -0.019 -0.029 -0.013
+    #> *Period 19 -0.018 -0.027 -0.011
+    #> *Period 20 -0.015 -0.024 -0.003
+    #> Period 21  -0.005 -0.018  0.003
+    #> Period 22  -0.002 -0.009  0.006
     #> Period 23  -0.003 -0.011  0.003
-    #> Period 24  -0.002 -0.008  0.004
-    #> Period 25   0.000 -0.006  0.006
+    #> Period 24  -0.002 -0.009  0.004
+    #> Period 25  -0.001 -0.005  0.006
     #> Period 26   0.000 -0.005  0.006
     #> Period 27  -0.001 -0.006  0.005
     #> Period 28  -0.001 -0.006  0.004
     #> Period 29  -0.001 -0.007  0.004
-    #> Period 30  -0.001 -0.008  0.004
+    #> Period 30  -0.002 -0.008  0.003
     #> Period 31  -0.002 -0.008  0.004
-    #> Period 32  -0.001 -0.008  0.005
+    #> Period 32  -0.001 -0.008  0.006
     #> Period 33   0.002 -0.005  0.010
     #> Period 34   0.004 -0.003  0.011
-    #> Period 35   0.005 -0.001  0.013
-    #> *Period 36  0.007  0.000  0.016
+    #> Period 35   0.006 -0.001  0.014
+    #> *Period 36  0.008  0.000  0.017
     #> Period 37   0.008  0.000  0.018
     #> ---
     #> * = CI does not contain zero
     #> 
-    #> residual standard errors: 0.004
+    #> residual standard errors: 0.01
     #> ---
 
 ### Exposure effect

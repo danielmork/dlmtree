@@ -1,5 +1,5 @@
 pandoc: 3.8.3
-pkgdown: 2.2.0
+pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   articles/HDLM: HDLM.html
@@ -7,7 +7,7 @@ articles:
   articles/TDLM: TDLM.html
   articles/TDLMM: TDLMM.html
   articles/TDLNM: TDLNM.html
-last_built: 2026-05-11T20:04Z
+last_built: 2026-08-04T20:33Z
 urls:
   reference: https://danielmork.github.io/dlmtree/reference
   article: https://danielmork.github.io/dlmtree/articles

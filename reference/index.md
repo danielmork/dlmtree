@@ -105,20 +105,12 @@ Built-in datasets
 - [`dlmEst()`](https://danielmork.github.io/dlmtree/reference/dlmEst.md)
   : Calculates the distributed lag effect with DLM matrix for linear
   models.
-- [`dlmtreeGPFixedGaussian()`](https://danielmork.github.io/dlmtree/reference/dlmtreeGPFixedGaussian.md)
-  : dlmtree model with fixed Gaussian process approach
-- [`dlmtreeGPGaussian()`](https://danielmork.github.io/dlmtree/reference/dlmtreeGPGaussian.md)
-  : dlmtree model with Gaussian process approach
-- [`dlmtreeHDLMGaussian()`](https://danielmork.github.io/dlmtree/reference/dlmtreeHDLMGaussian.md)
-  : dlmtree model with shared HDLM approach
-- [`dlmtreeHDLMMGaussian()`](https://danielmork.github.io/dlmtree/reference/dlmtreeHDLMMGaussian.md)
+- [`dlmtreeMixtures()`](https://danielmork.github.io/dlmtree/reference/dlmtreeMixtures.md)
   : dlmtree model with HDLMM approach
-- [`dlmtreeTDLMFixedGaussian()`](https://danielmork.github.io/dlmtree/reference/dlmtreeTDLMFixedGaussian.md)
-  : dlmtree model with fixed Gaussian approach
-- [`dlmtreeTDLMNestedGaussian()`](https://danielmork.github.io/dlmtree/reference/dlmtreeTDLMNestedGaussian.md)
-  : dlmtree model with nested Gaussian approach
-- [`dlmtreeTDLM_cpp()`](https://danielmork.github.io/dlmtree/reference/dlmtreeTDLM_cpp.md)
+- [`dlmtreeNested()`](https://danielmork.github.io/dlmtree/reference/dlmtreeNested.md)
   : dlmtree model with nested HDLM approach
+- [`dlmtreeShared()`](https://danielmork.github.io/dlmtree/reference/dlmtreeShared.md)
+  : dlmtree model with shared HDLM approach
 - [`dlnmEst()`](https://danielmork.github.io/dlmtree/reference/dlnmEst.md)
   : Calculates the distributed lag effect with DLM matrix for non-linear
   models.

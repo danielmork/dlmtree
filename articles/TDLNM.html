@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>TDLNM • dlmtree</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="TDLNM">
 </head>
@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">dlmtree</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -119,7 +119,7 @@ It can be loaded with the following code.</p>
 <span><span class="co">#&gt; Burn-in % complete </span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
-<span><span class="co">#&gt; MCMC iterations (est time: 32 seconds)</span></span>
+<span><span class="co">#&gt; MCMC iterations (est time: 28 seconds)</span></span>
 <span><span class="co">#&gt; [0--------25--------50--------75--------100]</span></span>
 <span><span class="co">#&gt;  ''''''''''''''''''''''''''''''''''''''''''</span></span>
 <span><span class="co">#&gt; Compiling results...</span></span></code></pre></div>
@@ -147,35 +147,35 @@ It can be loaded with the following code.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Fixed effect coefficients:</span></span>
 <span><span class="co">#&gt;                        Mean  Lower  Upper</span></span>
-<span><span class="co">#&gt; (Intercept)           0.170 -0.892  1.220</span></span>
-<span><span class="co">#&gt; *ChildSexM           -2.106 -2.126 -2.086</span></span>
+<span><span class="co">#&gt; (Intercept)           0.163 -0.863  1.194</span></span>
+<span><span class="co">#&gt; *ChildSexM           -2.106 -2.127 -2.085</span></span>
 <span><span class="co">#&gt; MomAge                0.001 -0.001  0.002</span></span>
-<span><span class="co">#&gt; *MomPriorBMI         -0.021 -0.022 -0.019</span></span>
-<span><span class="co">#&gt; RaceAsianPI           0.026 -0.101  0.153</span></span>
-<span><span class="co">#&gt; RaceBlack             0.033 -0.090  0.159</span></span>
-<span><span class="co">#&gt; Racewhite             0.013 -0.111  0.133</span></span>
-<span><span class="co">#&gt; *HispanicNonHispanic  0.256  0.234  0.278</span></span>
-<span><span class="co">#&gt; *SmkAnyY             -0.397 -0.442 -0.349</span></span>
-<span><span class="co">#&gt; *EstMonthConcept2     0.118  0.033  0.202</span></span>
-<span><span class="co">#&gt; *EstMonthConcept3     0.233  0.100  0.364</span></span>
-<span><span class="co">#&gt; *EstMonthConcept4     0.369  0.208  0.532</span></span>
-<span><span class="co">#&gt; *EstMonthConcept5     0.496  0.325  0.671</span></span>
-<span><span class="co">#&gt; *EstMonthConcept6     0.449  0.275  0.628</span></span>
-<span><span class="co">#&gt; *EstMonthConcept7     0.384  0.210  0.559</span></span>
-<span><span class="co">#&gt; *EstMonthConcept8     0.235  0.067  0.403</span></span>
-<span><span class="co">#&gt; *EstMonthConcept9     0.260  0.099  0.430</span></span>
-<span><span class="co">#&gt; *EstMonthConcept10    0.155  0.015  0.306</span></span>
-<span><span class="co">#&gt; *EstMonthConcept11    0.125  0.016  0.234</span></span>
-<span><span class="co">#&gt; EstMonthConcept12     0.019 -0.054  0.094</span></span>
+<span><span class="co">#&gt; *MomPriorBMI         -0.021 -0.023 -0.019</span></span>
+<span><span class="co">#&gt; RaceAsianPI           0.025 -0.095  0.153</span></span>
+<span><span class="co">#&gt; RaceBlack             0.032 -0.098  0.155</span></span>
+<span><span class="co">#&gt; Racewhite             0.012 -0.107  0.131</span></span>
+<span><span class="co">#&gt; *HispanicNonHispanic  0.255  0.232  0.278</span></span>
+<span><span class="co">#&gt; *SmkAnyY             -0.398 -0.446 -0.350</span></span>
+<span><span class="co">#&gt; *EstMonthConcept2     0.118  0.034  0.200</span></span>
+<span><span class="co">#&gt; *EstMonthConcept3     0.234  0.104  0.367</span></span>
+<span><span class="co">#&gt; *EstMonthConcept4     0.371  0.209  0.535</span></span>
+<span><span class="co">#&gt; *EstMonthConcept5     0.498  0.319  0.677</span></span>
+<span><span class="co">#&gt; *EstMonthConcept6     0.450  0.277  0.624</span></span>
+<span><span class="co">#&gt; *EstMonthConcept7     0.386  0.217  0.549</span></span>
+<span><span class="co">#&gt; *EstMonthConcept8     0.235  0.071  0.397</span></span>
+<span><span class="co">#&gt; *EstMonthConcept9     0.259  0.103  0.421</span></span>
+<span><span class="co">#&gt; *EstMonthConcept10    0.152  0.013  0.291</span></span>
+<span><span class="co">#&gt; *EstMonthConcept11    0.119  0.014  0.227</span></span>
+<span><span class="co">#&gt; EstMonthConcept12     0.016 -0.061  0.092</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; * = CI does not contain zero</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; DLNM effect:</span></span>
-<span><span class="co">#&gt; range = [-0.042, 0.058]</span></span>
-<span><span class="co">#&gt; signal-to-noise = 0.405</span></span>
-<span><span class="co">#&gt; critical windows: 1-7,10-34 </span></span>
+<span><span class="co">#&gt; range = [-0.041, 0.063]</span></span>
+<span><span class="co">#&gt; signal-to-noise = 0.41</span></span>
+<span><span class="co">#&gt; critical windows: 4-6,10-34 </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; residual standard errors: 0.004</span></span></code></pre></div>
+<span><span class="co">#&gt; residual standard errors: 0.008</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="exposure-time-surface">Exposure-time surface<a class="anchor" aria-label="anchor" href="#exposure-time-surface"></a>
@@ -245,7 +245,7 @@ It can be loaded with the following code.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

@@ -61,7 +61,7 @@ tdlmm.fit <- dlmtree(formula = bwgaz ~ ChildSex + MomAge + MomPriorBMI +
 #> Burn-in % complete 
 #> [0--------25--------50--------75--------100]
 #>  ''''''''''''''''''''''''''''''''''''''''''
-#> MCMC iterations (est time: 3.1 minutes)
+#> MCMC iterations (est time: 2.5 minutes)
 #> [0--------25--------50--------75--------100]
 #>  ''''''''''''''''''''''''''''''''''''''''''
 #> Compiling results...
@@ -134,26 +134,26 @@ print(tdlmm.sum)
 #> 
 #> Fixed effects:
 #>                        Mean  Lower  Upper
-#> *(Intercept)          0.171  0.041  0.304
-#> *ChildSexM           -2.063 -2.084 -2.042
+#> *(Intercept)          0.171  0.044  0.296
+#> *ChildSexM           -2.063 -2.085 -2.041
 #>  MomAge               0.001 -0.001  0.002
 #> *MomPriorBMI         -0.020 -0.022 -0.019
-#>  RaceAsianPI          0.026 -0.066  0.117
-#>  RaceBlack            0.033 -0.059  0.130
-#>  Racewhite            0.016 -0.069  0.106
-#> *HispanicNonHispanic  0.247  0.224  0.270
-#> *SmkAnyY             -0.394 -0.444 -0.344
-#> *EstMonthConcept2     0.080  0.011  0.147
-#> *EstMonthConcept3     0.119  0.025  0.210
-#> *EstMonthConcept4     0.158  0.037  0.278
-#> *EstMonthConcept5     0.235  0.106  0.372
-#> *EstMonthConcept6     0.179  0.047  0.315
-#> *EstMonthConcept7     0.223  0.094  0.364
-#> *EstMonthConcept8     0.222  0.094  0.357
-#> *EstMonthConcept9     0.320  0.196  0.445
-#> *EstMonthConcept10    0.199  0.086  0.312
-#> *EstMonthConcept11    0.131  0.035  0.229
-#>  EstMonthConcept12   -0.002 -0.072  0.069
+#>  RaceAsianPI          0.027 -0.064  0.114
+#>  RaceBlack            0.035 -0.060  0.128
+#>  Racewhite            0.016 -0.071  0.100
+#> *HispanicNonHispanic  0.248  0.225  0.271
+#> *SmkAnyY             -0.395 -0.445 -0.347
+#> *EstMonthConcept2     0.079  0.006  0.151
+#> *EstMonthConcept3     0.117  0.019  0.218
+#> *EstMonthConcept4     0.167  0.049  0.288
+#> *EstMonthConcept5     0.254  0.127  0.383
+#> *EstMonthConcept6     0.198  0.066  0.330
+#> *EstMonthConcept7     0.242  0.114  0.373
+#> *EstMonthConcept8     0.238  0.122  0.366
+#> *EstMonthConcept9     0.337  0.224  0.456
+#> *EstMonthConcept10    0.213  0.110  0.319
+#> *EstMonthConcept11    0.143  0.055  0.237
+#>  EstMonthConcept12    0.007 -0.060  0.073
 #> ---
 #> * = CI does not contain zero
 #> 
@@ -162,25 +162,25 @@ print(tdlmm.sum)
 #> * = Exposure selected by Bayes Factor
 #> (x.xx) = Relative effect size
 #> 
-#>  *PM25 (0.78): 4,11-20
-#>  *TEMP (0.78): 4-21
-#>  *NO2 (0.68): 9-14,17-18,23
+#>  *PM25 (0.77): 4,11-21,23
+#>  *TEMP (0.98): 4-19
+#>  *NO2 (0.49): 9-25
 #> --
 #> Interaction effects: critical windows
 #> 
-#>  PM25/TEMP (0.95):
-#>  11/5-17
-#>  12/4-21
-#>  13/4-21
-#>  14/4-21
-#>  15/4-21
-#>  16/4-21
-#>  17/4-21
-#>  18/4-21
-#>  19/4-21
-#>  20/4-21
+#>  PM25/TEMP (0.98):
+#>  11/4-29
+#>  12/4-29
+#>  13/4-30
+#>  14/4-30
+#>  15/4-29
+#>  16/4-29
+#>  17/4-29
+#>  18/4-30
+#>  19/4-30
+#>  20/4-29
 #> ---
-#> residual standard errors: 0.005
+#> residual standard errors: 0.013
 ```
 
 ### Main exposure effect
