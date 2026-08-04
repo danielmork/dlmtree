@@ -151,7 +151,7 @@ estDLM <- function(object,
     }
     out$dlmMean[[names(group.index)[i]]]  <- rowMeans(mcmc)
     out$dlmCI[[names(group.index)[i]]]    <- apply(mcmc, 1, quantile, probs = ci.lims)
-    out$dlmCum[[names(group.index)[i]]]   <- c(mean = mean(rowMeans(mcmc)), quantile(colSums(mcmc), probs = ci.lims))
+    out$dlmCum[[names(group.index)[i]]]   <- c(mean = mean(colSums(mcmc)), quantile(colSums(mcmc), probs = ci.lims))
   }
   out$dlFunction <- "dlm"
 

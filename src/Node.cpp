@@ -39,6 +39,7 @@ NodeVals::NodeVals(const NodeVals& x)
   Xpl               = x.Xpl;
   XplProposed       = x.XplProposed;
   XtX               = x.XtX;
+  XtXProposed       = x.XtXProposed;
   ZtX               = x.ZtX;
   ZtXmat            = x.ZtXmat;
   ZtXmatProposed    = x.ZtXmatProposed;
@@ -187,7 +188,13 @@ bool Node::change()
   return(0);
 }
 
-// Swap node rule with child node rule
+/**
+ * @brief Swap current node rule with identified child node rule
+ * 
+ * @param child 
+ * @return true 
+ * @return false 
+ */
 bool Node::swap(Node* child)
 {
   if (child->c1 == 0) {
@@ -227,6 +234,11 @@ bool Node::swap(Node* child)
   return(0);
 }
 
+/**
+ * @brief replaces existing node structure with structure contained
+ * in the 'proposed' Node* object and deletes existing structure
+ * 
+ */
 void Node::accept()
 {
   // If update occured at top of tree, change out structure and subnodes
@@ -304,6 +316,10 @@ void Node::accept()
   }
 }
 
+/**
+ * @brief deletes the Node* structure contained in 'proposed' object
+ * 
+ */
 void Node::reject()
 {
   if (proposed != 0) {
@@ -339,7 +355,11 @@ void Node::reject()
   }
 }
 
-
+/**
+ * @brief count of number of terminal nodes
+ * 
+ * @return int 
+ */
 int Node::nTerminal()
 {
   if (c1 == 0) {
@@ -363,7 +383,16 @@ int Node::nGen2()
   }
 }
 
-
+/**
+ * @brief List all terminal nodes of tree. If follow_proposed = 1,
+ * will follow any nodes contained in 'proposed' object
+ * in place of c1 and c2. The accept() method will then substitute
+ * 'proposed' nodes into existing node structure and delete previous
+ * structure.
+ * 
+ * @param follow_proposed 
+ * @return std::vector<Node*> 
+ */
 std::vector<Node*> Node::listTerminal(bool follow_proposed)
 {
   Node* follow;
@@ -382,6 +411,11 @@ std::vector<Node*> Node::listTerminal(bool follow_proposed)
   }
 }
 
+/**
+ * @brief count of number of internal 'splitting' nodes
+ * 
+ * @return std::vector<Node*> 
+ */
 std::vector<Node*> Node::listInternal()
 {
   std::vector<Node*> v;
@@ -408,7 +442,12 @@ std::vector<Node*> Node::listGen2()
 }
 
 
-
+/**
+ * @brief identifies the adjacent node from the most recent
+ * splitting rule
+ * 
+ * @return Node* 
+ */
 Node* Node::sib()
 {
   if (depth > 0) {

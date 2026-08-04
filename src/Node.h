@@ -22,6 +22,7 @@ public:
   Node* nestedTree;
   
   Eigen::MatrixXd XplProposed;
+  Eigen::MatrixXd XtXProposed;
   Eigen::MatrixXd ZtXmatProposed;
   Eigen::MatrixXd VgZtXmatProposed;
   Eigen::MatrixXd Xpl;

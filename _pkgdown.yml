@@ -68,13 +68,9 @@ reference:
   contents:
   - cppIntersection
   - dlmEst
-  - dlmtreeGPFixedGaussian
-  - dlmtreeGPGaussian
-  - dlmtreeHDLMGaussian
-  - dlmtreeHDLMMGaussian
-  - dlmtreeTDLMFixedGaussian
-  - dlmtreeTDLMNestedGaussian
-  - dlmtreeTDLM_cpp
+  - dlmtreeMixtures
+  - dlmtreeNested
+  - dlmtreeShared
   - dlnmEst
   - dlnmPLEst
   - drawTree

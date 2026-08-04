@@ -17,19 +17,6 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using Eigen::Lower;
 
-// #ifdef _OPENMP
-//   #include <omp.h>
-//   // [[Rcpp::plugins(openmp)]]
-// #else
-//   #define omp_get_num_threads()  1
-//   #define omp_get_thread_num()   0
-//   #define omp_get_max_threads()  1
-//   #define omp_get_thread_limit() 1
-//   #define omp_get_num_procs()    1
-//   #define omp_set_nested(a)   // empty statement to remove the call
-//   #define omp_get_wtime()        0
-// #endif
-
 /**
  * @brief calculate half of metropolis-hastings ratio for given tree
  * 
@@ -323,6 +310,20 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   }
 
 
+  // *** Set up parameters for random effects model ***
+  ctr->randomEffects = as<bool>(model["randomEffects"]);
+  ctr->nClus = 0;
+  ctr->nuDelta = 1.0;
+  ctr->deltaRE.resize(ctr->n);          ctr->deltaRE.setZero();
+  ctr->deltaCoef.resize(1);             ctr->deltaCoef.setZero();
+  if (ctr->randomEffects) {
+    ctr->niClus = as<Eigen::VectorXi>(model["niClus"]);
+    ctr->nClus = ctr->niClus.size();
+    ctr->deltaCoef.resize(ctr->nClus);  ctr->deltaCoef.setZero();
+    ctr->clusterIDs = as<Eigen::VectorXi>(model["clusterIDs"]);
+  }
+
+
   // *** Set up parameters for ZINB model ***
   ctr->r = 5; 
 
@@ -422,6 +423,11 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   dgn->timeProbs.resize(ctr->pX - 1, ctr->nRec);    (dgn->timeProbs).setZero();
   VectorXd Yhat(ctr->n);                             Yhat.setZero();
 
+  // Random effects log
+  dgn->deltaCoef.resize(ctr->nClus);  dgn->deltaCoef.setZero();
+  dgn->deltaCoef2.resize(ctr->nClus);  dgn->deltaCoef2.setZero();
+  dgn->nuDelta.resize(ctr->nRec);     dgn->nuDelta.setZero();
+
   // ZINB specific log
   (dgn->b1).resize(ctr->pZ1, ctr->nRec);             (dgn->b1).setZero(); 
   (dgn->b2).resize(ctr->pZ, ctr->nRec);              (dgn->b2).setZero(); 
@@ -449,8 +455,6 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   ctr->nu = 1.0; 
   ctr->sigma2 = 1.0;
 
-  tdlmModelEst(ctr);
-
   rHalfCauchyFC(&(ctr->nu), ctr->nTrees, 0.0);
   (ctr->tau).resize(ctr->nTrees);                   (ctr->tau).setOnes();
   if (ctr->shrinkage > 0) {
@@ -459,6 +463,10 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     }
   }
   
+  // Initial model fit
+  tdlmModelEst(ctr);
+
+
   // * Create progress meter
   progressMeter* prog = new progressMeter(ctr);
 
@@ -487,7 +495,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     } // end update trees
 
     // * Update model
-    ctr->R = ctr->Ystar - ctr->fhat; 
+    ctr->R = ctr->Ystar - ctr->fhat - ctr->deltaRE; 
     tdlmModelEst(ctr);
     rHalfCauchyFC(&(ctr->nu), ctr->totTerm, ctr->sumTermT2 / ctr->sigma2);
     if ((ctr->sigma2 != ctr->sigma2) || (ctr->nu != ctr->nu)) {
@@ -505,6 +513,11 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
       dgn->timeProbs.col(ctr->record -1) = trees[0]->nodestruct->getTimeProbs();
       dgn->fhat += ctr->fhat;
       Yhat += ctr->fhat + ctr->Z * ctr->gamma;
+
+      // Random effects
+      dgn->deltaCoef += ctr->deltaCoef / ctr->nRec;
+      dgn->deltaCoef2 += ctr->deltaCoef.array().square().matrix() / ctr->nRec;
+      dgn->nuDelta(ctr->record - 1) = ctr->nuDelta;
 
       // ZINB
       (dgn->b1).col(ctr->record - 1) = ctr->b1;
@@ -533,11 +546,16 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     Accept.row(s) = dgn->TreeAccept[s];
   }
 
+  // Random effects
+  VectorXd deltaCoef = dgn->deltaCoef;
+  VectorXd deltaCoef2 = dgn->deltaCoef2;
+  VectorXd nuDelta = dgn->nuDelta;
+
   // ZINB specific return 
-  Eigen::MatrixXd b1 = (dgn->b1).transpose(); 
-  Eigen::MatrixXd b2 = (dgn->b2).transpose();
-  Eigen::VectorXd r = dgn->r; 
-  Eigen::MatrixXd wMat = dgn->wMat; 
+  MatrixXd b1 = (dgn->b1).transpose(); 
+  MatrixXd b2 = (dgn->b2).transpose();
+  VectorXd r = dgn->r; 
+  MatrixXd wMat = dgn->wMat; 
 
   delete prog;
   // delete ctr;
@@ -556,6 +574,9 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
                             Named("termNodes")    = wrap(termNodes),
                             Named("gamma")        = wrap(gamma),
                             Named("treeAccept")   = wrap(Accept),
+                            Named("deltaCoef")    = wrap(deltaCoef),
+                            Named("deltaCoef2")   = wrap(deltaCoef2),
+                            Named("nuDelta")      = wrap(nuDelta),
                             Named("b1")           = wrap(b1),
                             Named("b2")           = wrap(b2),
                             Named("r")            = wrap(r),

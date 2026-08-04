@@ -11,58 +11,13 @@ cppIntersection <- function(A, B) {
     .Call(`_dlmtree_cppIntersection`, A, B)
 }
 
-#' dlmtree model with fixed Gaussian process approach
-#'
-#' @param model A list of parameter and data contained for the model fitting
-#' @returns A list of dlmtree model fit, mainly posterior mcmc samples
-#' @export
-dlmtreeGPFixedGaussian <- function(model) {
-    .Call(`_dlmtree_dlmtreeGPFixedGaussian`, model)
-}
-
-#' dlmtree model with Gaussian process approach
-#'
-#' @param model A list of parameter and data contained for the model fitting
-#' @returns A list of dlmtree model fit, mainly posterior mcmc samples
-#' @export
-dlmtreeGPGaussian <- function(model) {
-    .Call(`_dlmtree_dlmtreeGPGaussian`, model)
-}
-
-#' dlmtree model with shared HDLM approach
-#'
-#' @param model A list of parameter and data contained for the model fitting
-#' @returns A list of dlmtree model fit, mainly posterior mcmc samples
-#' @export
-dlmtreeHDLMGaussian <- function(model) {
-    .Call(`_dlmtree_dlmtreeHDLMGaussian`, model)
-}
-
 #' dlmtree model with HDLMM approach
 #'
 #' @param model A list of parameter and data contained for the model fitting
 #' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 #' @export
-dlmtreeHDLMMGaussian <- function(model) {
-    .Call(`_dlmtree_dlmtreeHDLMMGaussian`, model)
-}
-
-#' dlmtree model with fixed Gaussian approach
-#'
-#' @param model A list of parameter and data contained for the model fitting
-#' @returns A list of dlmtree model fit, mainly posterior mcmc samples
-#' @export
-dlmtreeTDLMFixedGaussian <- function(model) {
-    .Call(`_dlmtree_dlmtreeTDLMFixedGaussian`, model)
-}
-
-#' dlmtree model with nested Gaussian approach
-#'
-#' @param model A list of parameter and data contained for the model fitting
-#' @returns A list of dlmtree model fit, mainly posterior mcmc samples
-#' @export
-dlmtreeTDLMNestedGaussian <- function(model) {
-    .Call(`_dlmtree_dlmtreeTDLMNestedGaussian`, model)
+dlmtreeMixtures <- function(model) {
+    .Call(`_dlmtree_dlmtreeMixtures`, model)
 }
 
 #' dlmtree model with nested HDLM approach
@@ -70,8 +25,17 @@ dlmtreeTDLMNestedGaussian <- function(model) {
 #' @param model A list of parameter and data contained for the model fitting
 #' @returns A list of dlmtree model fit, mainly posterior mcmc samples
 #' @export
-dlmtreeTDLM_cpp <- function(model) {
-    .Call(`_dlmtree_dlmtreeTDLM_cpp`, model)
+dlmtreeNested <- function(model) {
+    .Call(`_dlmtree_dlmtreeNested`, model)
+}
+
+#' dlmtree model with shared HDLM approach
+#'
+#' @param model A list of parameter and data contained for the model fitting
+#' @returns A list of dlmtree model fit, mainly posterior mcmc samples
+#' @export
+dlmtreeShared <- function(model) {
+    .Call(`_dlmtree_dlmtreeShared`, model)
 }
 
 #' Calculates the distributed lag effect with DLM matrix for non-linear models.
