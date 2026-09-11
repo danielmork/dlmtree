@@ -44,7 +44,7 @@ treeMHR dlmtreeMixtures_MHR(std::vector<Node*> modTerm,
 // [[Rcpp::export]]
 Rcpp::List dlmtreeMixtures(const Rcpp::List model){ 
   // *** Set up general control variables ***
-  dlmtreeCtr *ctr = new dlmtreeCtr;
+  dlmtreeCtr *ctr = new dlmtreeCtr();
 
   // MCMC parameters
   ctr->iter   = as<int>(model["nIter"]); 
@@ -194,7 +194,7 @@ Rcpp::List dlmtreeMixtures(const Rcpp::List model){
   // delete expNS;
 
   // *** Logs ***
-  dlmtreeLog *dgn = new dlmtreeLog;
+  dlmtreeLog *dgn = new dlmtreeLog();
   (dgn->gamma).resize(ctr->pZ, ctr->nRec);    (dgn->gamma).setZero();  
   (dgn->sigma2).resize(ctr->nRec);            (dgn->sigma2).setZero(); 
   (dgn->nu).resize(ctr->nRec);                (dgn->nu).setZero();     
@@ -484,16 +484,14 @@ Rcpp::List dlmtreeMixtures(const Rcpp::List model){
     // Progress mark
     prog->printMark();
   } // end MCMC
-  // Rcout << "MCMC complete \n";
 
+  prog->printMark(); 
 
   // *** Prepare outout ***
-  // Rcout << "Preparing output \n";
-  Eigen::MatrixXd TreeStructs((dgn->DLMexp).size(), 10);    
+  Eigen::MatrixXd TreeStructs((dgn->DLMexp).size(), 10);
   Rcpp::StringVector termRule(dgn->termRule.size());        
   Rcpp::StringVector termRuleMIX(dgn->termRuleMIX.size());  
 
-  // Store rec() vectors
   std::size_t s; 
   for (s = 0; s < (dgn->DLMexp).size(); s++){ 
     TreeStructs.row(s) = dgn->DLMexp[s];
@@ -563,10 +561,13 @@ Rcpp::List dlmtreeMixtures(const Rcpp::List model){
   delete prog;
   delete ctr;
   delete dgn;
+
   for (s = 0; s < Exp.size(); s++){       
     delete Exp[s];
   }
+
   delete Mod;
+
   for (s = 0; s < modTrees.size(); s++) { 
     delete modTrees[s];
     delete dlmTrees1[s];
@@ -595,8 +596,8 @@ Rcpp::List dlmtreeMixtures(const Rcpp::List model){
                             Named("modCount")       = wrap(modCount),
                             Named("modInf")         = wrap(modInf),
                             Named("treeDLMAccept")  = wrap(dlmAccept),
-                            Named("treeModAccept")  = wrap(modAccept)));
-                            //Named("fhat") = wrap(fhat),
+                            Named("treeModAccept")  = wrap(modAccept),
+                            Named("fhat") = wrap(fhat)));
                             //Named("totTerm") = wrap(totTerm),
                             //Named("expInf") = wrap(expInf),
                             //Named("mixInf") = wrap(mixInf),

@@ -1044,34 +1044,11 @@ dlmtree <- function(formula,
     # *** Combine the rules and the exposure data frames for HDLM, HDLMM ***
     if (model$class == "hdlmm") {
     # Combine DLM with rules with colnames
-      log_line <- sprintf(
-        "dim(TreeStructs)=%dx%d  length(rule)=%d  class(rule)=%s  interaction=%s\n",
-        nrow(model$TreeStructs), ncol(model$TreeStructs),
-        length(rule), class(rule), model$interaction
-      )
-      cat(log_line, file = "/Users/seongwonim/Desktop/dlmtree-dev/debug_log.txt", append = TRUE)
-
-      # Combine DLM with rules with colnames
-      combined <- cbind.data.frame(rule, model$TreeStructs)
-      cat(sprintf("AFTER cbind: dim=%dx%d  class=%s\n",
-                  nrow(combined), ncol(combined), paste(class(combined), collapse=",")),
-          file = "/Users/seongwonim/Desktop/dlmtree-dev/debug_log.txt", append = TRUE)
-      cat(sprintf("BEFORE cbind: TreeStructs class=%s\n", paste(class(model$TreeStructs), collapse=",")),
-          file = "/Users/seongwonim/Desktop/dlmtree-dev/debug_log.txt", append = TRUE)
-      model$TreeStructs           <- combined
+      model$TreeStructs           <- cbind.data.frame(rule, model$TreeStructs)
       colnames(model$TreeStructs) <- c("Rule", "Iter", "Tree", "Mod", "dlmPair", "dlmTerm", "exp", "tmin", "tmax", "est", "kappa")
-
-      cat(sprintf("TreeStructs colnames SUCCEEDED, ncol=%d\n", ncol(model$TreeStructs)),
-      file = "/Users/seongwonim/Desktop/dlmtree-dev/debug_log.txt", append = TRUE)
       
       # Default of model$MIX is a vector of zeros
       if (model$interaction != 0) {
-        log_line2 <- sprintf(
-          "MIX before cbind: nrow=%d ncol=%d  ruleMIX length=%d class=%s  termRuleMIX length=%d\n",
-          nrow(model$MIX), ncol(model$MIX), length(ruleMIX), class(ruleMIX), length(model$termRuleMIX)
-        )
-        cat(log_line2, file = "/Users/seongwonim/Desktop/dlmtree-dev/debug_log.txt", append = TRUE)
-
         model$MIX           <- as.data.frame(model$MIX)
         model$MIX           <- cbind.data.frame(ruleMIX, model$MIX)
         colnames(model$MIX) <- c("Rule", "Iter", "Tree", "Mod", "exp1", "tmin1", "tmax1", "exp2", "tmin2", "tmax2", "est")
