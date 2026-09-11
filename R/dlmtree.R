@@ -984,46 +984,46 @@ dlmtree <- function(formula,
     # Mixture interaction for hdlmm
     if (model$class == "hdlmm" & model$interaction > 0) {
       splitRulesMIX <- strsplit(model$termRuleMIX, "&", TRUE) 
-      ruleMIX <- sapply(splitRulesMIX, function(str) {
-                paste0(lapply(sort(str), function(rule) {
-                  # no rule
-                  if (length(rule) == 0) {
-                    return("")
-                  # *** Continuous ***
-                  # >=
-                  } else if (length(spl <- strsplit(rule, ">=", TRUE)[[1]]) == 2) {
-                    return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1], "']] >= ",
-                                  model$modSplitValRef[[as.numeric(spl[1]) + 1]][
-                                    as.numeric(spl[2]) + 1]))
-                  # >
-                  } else if (length(spl <- strsplit(rule, "<", TRUE)[[1]]) == 2) {
-                    return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1], "']] < ",
-                                  model$modSplitValRef[[as.numeric(spl[1]) + 1]][
-                                    as.numeric(spl[2]) + 1]))
-                  # *** Categorical ***
-                  # in
-                  } else if (length(spl <- strsplit(rule, "[]", TRUE)[[1]]) == 2) {
-                    inList <- paste0("c('", paste0(model$modSplitValRef[[
-                      as.numeric(spl[1]) + 1]][
-                        eval(parse(text = paste0("c(", spl[2], ")"))) + 1
-                      ], collapse = "','"), "')")
-                    return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1],
-                                  "']] %in% ", inList))
-                  # not in
-                  } else if (length(spl <- strsplit(rule, "][", TRUE)[[1]]) == 2) {
-                    inList <- paste0("c('", paste0(model$modSplitValRef[[
-                      as.numeric(spl[1]) + 1]][
-                        eval(parse(text = paste0("c(", spl[2], ")"))) + 1
-                      ], collapse = "','"), "')")
-                    return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1],
-                                  "']] %notin% ", inList))
-                  } else {
-                    return("")
-                  }
-                }), collapse = " & ")})
-    } else {
-      ruleMIX = NA
-    }
+      ruleMIX <- as.character(sapply(splitRulesMIX, function(str) {
+                  paste0(lapply(sort(str), function(rule) {
+                    # no rule
+                    if (length(rule) == 0) {
+                      return("")
+                    # *** Continuous ***
+                    # >=
+                    } else if (length(spl <- strsplit(rule, ">=", TRUE)[[1]]) == 2) {
+                      return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1], "']] >= ",
+                                    model$modSplitValRef[[as.numeric(spl[1]) + 1]][
+                                      as.numeric(spl[2]) + 1]))
+                    # >
+                    } else if (length(spl <- strsplit(rule, "<", TRUE)[[1]]) == 2) {
+                      return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1], "']] < ",
+                                    model$modSplitValRef[[as.numeric(spl[1]) + 1]][
+                                      as.numeric(spl[2]) + 1]))
+                    # *** Categorical ***
+                    # in
+                    } else if (length(spl <- strsplit(rule, "[]", TRUE)[[1]]) == 2) {
+                      inList <- paste0("c('", paste0(model$modSplitValRef[[
+                        as.numeric(spl[1]) + 1]][
+                          eval(parse(text = paste0("c(", spl[2], ")"))) + 1
+                        ], collapse = "','"), "')")
+                      return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1],
+                                    "']] %in% ", inList))
+                    # not in
+                    } else if (length(spl <- strsplit(rule, "][", TRUE)[[1]]) == 2) {
+                      inList <- paste0("c('", paste0(model$modSplitValRef[[
+                        as.numeric(spl[1]) + 1]][
+                          eval(parse(text = paste0("c(", spl[2], ")"))) + 1
+                        ], collapse = "','"), "')")
+                      return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1],
+                                    "']] %notin% ", inList))
+                    } else {
+                      return("")
+                    }
+                  }), collapse = " & ")}))
+        } else {
+          ruleMIX = NA
+        }
         
     model$modPairs <- sort(table(do.call(c, lapply(splitRules, function(r) {
       if (length(r) == 0) {
@@ -1043,12 +1043,35 @@ dlmtree <- function(formula,
 
     # *** Combine the rules and the exposure data frames for HDLM, HDLMM ***
     if (model$class == "hdlmm") {
+    # Combine DLM with rules with colnames
+      log_line <- sprintf(
+        "dim(TreeStructs)=%dx%d  length(rule)=%d  class(rule)=%s  interaction=%s\n",
+        nrow(model$TreeStructs), ncol(model$TreeStructs),
+        length(rule), class(rule), model$interaction
+      )
+      cat(log_line, file = "/Users/seongwonim/Desktop/dlmtree-dev/debug_log.txt", append = TRUE)
+
       # Combine DLM with rules with colnames
-      model$TreeStructs           <- cbind.data.frame(rule, model$TreeStructs)
+      combined <- cbind.data.frame(rule, model$TreeStructs)
+      cat(sprintf("AFTER cbind: dim=%dx%d  class=%s\n",
+                  nrow(combined), ncol(combined), paste(class(combined), collapse=",")),
+          file = "/Users/seongwonim/Desktop/dlmtree-dev/debug_log.txt", append = TRUE)
+      cat(sprintf("BEFORE cbind: TreeStructs class=%s\n", paste(class(model$TreeStructs), collapse=",")),
+          file = "/Users/seongwonim/Desktop/dlmtree-dev/debug_log.txt", append = TRUE)
+      model$TreeStructs           <- combined
       colnames(model$TreeStructs) <- c("Rule", "Iter", "Tree", "Mod", "dlmPair", "dlmTerm", "exp", "tmin", "tmax", "est", "kappa")
+
+      cat(sprintf("TreeStructs colnames SUCCEEDED, ncol=%d\n", ncol(model$TreeStructs)),
+      file = "/Users/seongwonim/Desktop/dlmtree-dev/debug_log.txt", append = TRUE)
       
       # Default of model$MIX is a vector of zeros
       if (model$interaction != 0) {
+        log_line2 <- sprintf(
+          "MIX before cbind: nrow=%d ncol=%d  ruleMIX length=%d class=%s  termRuleMIX length=%d\n",
+          nrow(model$MIX), ncol(model$MIX), length(ruleMIX), class(ruleMIX), length(model$termRuleMIX)
+        )
+        cat(log_line2, file = "/Users/seongwonim/Desktop/dlmtree-dev/debug_log.txt", append = TRUE)
+
         model$MIX           <- as.data.frame(model$MIX)
         model$MIX           <- cbind.data.frame(ruleMIX, model$MIX)
         colnames(model$MIX) <- c("Rule", "Iter", "Tree", "Mod", "exp1", "tmin1", "tmax1", "exp2", "tmin2", "tmax2", "est")
