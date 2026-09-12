@@ -44,7 +44,7 @@ treeMHR dlmtreeMixtures_MHR(std::vector<Node*> modTerm,
 // [[Rcpp::export]]
 Rcpp::List dlmtreeMixtures(const Rcpp::List model){ 
   // *** Set up general control variables ***
-  dlmtreeCtr *ctr = new dlmtreeCtr;
+  dlmtreeCtr *ctr = new dlmtreeCtr();
 
   // MCMC parameters
   ctr->iter   = as<int>(model["nIter"]); 
@@ -194,7 +194,14 @@ Rcpp::List dlmtreeMixtures(const Rcpp::List model){
   // delete expNS;
 
   // *** Logs ***
-  dlmtreeLog *dgn = new dlmtreeLog;
+  dlmtreeLog *dgn = new dlmtreeLog();
+
+  // Pre-allocate: sizes are known up front, avoiding repeated
+  // reallocation and copying of Eigen objects during the run.
+  std::size_t nTreeUpdates = (std::size_t)(ctr->iter + ctr->burn) * ctr->nTrees;
+  (dgn->treeDLMAccept).reserve(nTreeUpdates * 2);  // two dlm trees per tree pair
+  (dgn->treeModAccept).reserve(nTreeUpdates);
+
   (dgn->gamma).resize(ctr->pZ, ctr->nRec);    (dgn->gamma).setZero();  
   (dgn->sigma2).resize(ctr->nRec);            (dgn->sigma2).setZero(); 
   (dgn->nu).resize(ctr->nRec);                (dgn->nu).setZero();     
@@ -484,16 +491,14 @@ Rcpp::List dlmtreeMixtures(const Rcpp::List model){
     // Progress mark
     prog->printMark();
   } // end MCMC
-  // Rcout << "MCMC complete \n";
 
+  prog->printMark(); 
 
   // *** Prepare outout ***
-  // Rcout << "Preparing output \n";
-  Eigen::MatrixXd TreeStructs((dgn->DLMexp).size(), 10);    
+  Eigen::MatrixXd TreeStructs((dgn->DLMexp).size(), 10);
   Rcpp::StringVector termRule(dgn->termRule.size());        
   Rcpp::StringVector termRuleMIX(dgn->termRuleMIX.size());  
 
-  // Store rec() vectors
   std::size_t s; 
   for (s = 0; s < (dgn->DLMexp).size(); s++){ 
     TreeStructs.row(s) = dgn->DLMexp[s];
@@ -563,10 +568,13 @@ Rcpp::List dlmtreeMixtures(const Rcpp::List model){
   delete prog;
   delete ctr;
   delete dgn;
+
   for (s = 0; s < Exp.size(); s++){       
     delete Exp[s];
   }
+
   delete Mod;
+
   for (s = 0; s < modTrees.size(); s++) { 
     delete modTrees[s];
     delete dlmTrees1[s];
@@ -595,8 +603,8 @@ Rcpp::List dlmtreeMixtures(const Rcpp::List model){
                             Named("modCount")       = wrap(modCount),
                             Named("modInf")         = wrap(modInf),
                             Named("treeDLMAccept")  = wrap(dlmAccept),
-                            Named("treeModAccept")  = wrap(modAccept)));
-                            //Named("fhat") = wrap(fhat),
+                            Named("treeModAccept")  = wrap(modAccept),
+                            Named("fhat") = wrap(fhat)));
                             //Named("totTerm") = wrap(totTerm),
                             //Named("expInf") = wrap(expInf),
                             //Named("mixInf") = wrap(mixInf),
@@ -923,7 +931,7 @@ void dlmtreeMixtures_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
   for (Node* nt : newDlmTerm1) {          // Go through the new terminal node
     Exp[newExp]->updateNodeVals(nt);      // Update the calculations
   }
-  
+
   // MH ratio
   modTree->setUpdateXmat(1);
 
@@ -1027,8 +1035,6 @@ void dlmtreeMixtures_TreeMCMC(int t, NodeStruct* expNS, Node* modTree,
   for (Node* nt : newDlmTerm2) {          // Go through the new terminal node
     Exp[newExp]->updateNodeVals(nt);      // Update the calculations
   }
-
-
   
   // MH ratio
   modTree->setUpdateXmat(1);
@@ -1440,7 +1446,9 @@ treeMHR dlmtreeMixtures_MHR(std::vector<Node*> modTerm,
 
   // Create block matrices corresponding to modifier nodes
   int start = 0;
+
   for (Node* n : modTerm) { 
+
     // Retrieve indices subset by the modifier tree
     Xtemp.resize(n->nodevals->idx.size(), pXDlm);     Xtemp.setZero();  
     Ztemp.resize(n->nodevals->idx.size(), ctr->pZ);   Ztemp.setZero();  
@@ -1455,21 +1463,24 @@ treeMHR dlmtreeMixtures_MHR(std::vector<Node*> modTerm,
       j++;
     } // end loop over node indices
       
-    n->nodevals->XtX.resize(pXDlm, pXDlm);
-    n->nodevals->XtX = Xtemp.transpose() * Xtemp;
-    n->nodevals->ZtXmat.resize(ctr->pZ, pXDlm);
-    n->nodevals->ZtXmat = Ztemp.transpose() * Xtemp;
-    n->nodevals->VgZtXmat.resize(ctr->pZ, pXDlm);
-    n->nodevals->VgZtXmat = ctr->Vg * n->nodevals->ZtXmat;
-    n->nodevals->updateXmat = 0;
-    
+    if (n->nodevals->updateXmat) {
+      n->nodevals->XtX.resize(pXDlm, pXDlm);
+      n->nodevals->XtX = Xtemp.transpose() * Xtemp;
+      n->nodevals->ZtXmat.resize(ctr->pZ, pXDlm);
+      n->nodevals->ZtXmat = Ztemp.transpose() * Xtemp;
+      n->nodevals->VgZtXmat.resize(ctr->pZ, pXDlm);
+      n->nodevals->VgZtXmat = ctr->Vg * n->nodevals->ZtXmat;
+      n->nodevals->updateXmat = 0;
+    }
+
     XtR.segment(start, pXDlm) = Xtemp.transpose() * Rtemp;
-      
+
     // Update blocks
-    XtXblock.block(start, start, pXDlm, pXDlm) = ((n->nodevals->XtX) + LInv).inverse();
+    Eigen::MatrixXd blockMat = (n->nodevals->XtX) + LInv;
+    XtXblock.block(start, start, pXDlm, pXDlm) = blockMat.llt().solve(Eigen::MatrixXd::Identity(pXDlm, pXDlm));
     ZtX.block(0, start, ctr->pZ, pXDlm) = n->nodevals->ZtXmat;
     VgZtX.block(0, start, ctr->pZ, pXDlm) = n->nodevals->VgZtXmat;
-    
+
     // Move to the next block
     start += pXDlm;
   } // End of subsetting and building blocks
@@ -1478,8 +1489,10 @@ treeMHR dlmtreeMixtures_MHR(std::vector<Node*> modTerm,
   // Rcout << "pxMod != 1: VTheta / ThetaHat calculation \n";
   Eigen::MatrixXd ZtXXi = ZtX * XtXblock;
   Eigen::MatrixXd VTheta = XtXblock;
-  VTheta.noalias() += ZtXXi.transpose() * 
-    (ctr->VgInv - ZtXXi * ZtX.transpose()).inverse() * ZtXXi;
+
+  Eigen::MatrixXd innerMat = ctr->VgInv - ZtXXi * ZtX.transpose();
+  VTheta.noalias() += ZtXXi.transpose() * innerMat.llt().solve(ZtXXi);
+
   Eigen::VectorXd XtVzInvR = XtR;
   XtVzInvR.noalias() -= VgZtX.transpose() * ZtR;
   Eigen::VectorXd ThetaHat = VTheta * XtVzInvR;
@@ -1487,8 +1500,7 @@ treeMHR dlmtreeMixtures_MHR(std::vector<Node*> modTerm,
 
   // Store the sampled values and also add variance 
   out.drawAll = ThetaHat;
-  out.drawAll.noalias() += 
-      VThetaChol * as<Eigen::VectorXd>(rnorm(pXComb, 0.0, sqrt(ctr->sigma2)));
+  out.drawAll.noalias() += VThetaChol * as<Eigen::VectorXd>(rnorm(pXComb, 0.0, sqrt(ctr->sigma2)));
 
   // drawAll = mod1-dlm1 / mod1-dlm2 / mod1-dlm1&2 / mod2-dlm1 / mod2-dlm2 / mod2-dlm1&2 / mod3 ...
   // Fitted value & terminal effect draws
@@ -1506,7 +1518,7 @@ treeMHR dlmtreeMixtures_MHR(std::vector<Node*> modTerm,
   out.term1T2 = 0;
   out.term2T2 = 0;
   out.mixT2 = 0;
-  
+
   for (s = 0; s < modTerm.size(); s++) { 
     // Extract draws from the block matrix for each modifier terminal node
     drawTemp = out.drawAll.segment(s * pXDlm, pXDlm); 
