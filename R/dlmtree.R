@@ -943,87 +943,63 @@ dlmtree <- function(formula,
     modNames    <- names(model$Mo)                     
     splitRules  <- strsplit(model$termRules, "&", TRUE)
 
-    rule <- sapply(splitRules, function(str) {
-              paste0(lapply(sort(str), function(rule) {
-                # no rule
-                if (length(rule) == 0) {
-                  return("")
-                # *** Continuous ***
-                # >=
-                } else if (length(spl <- strsplit(rule, ">=", TRUE)[[1]]) == 2) {
-                  return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1], "']] >= ",
-                                model$modSplitValRef[[as.numeric(spl[1]) + 1]][
-                                  as.numeric(spl[2]) + 1]))
-                # >
-                } else if (length(spl <- strsplit(rule, "<", TRUE)[[1]]) == 2) {
-                  return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1], "']] < ",
-                                model$modSplitValRef[[as.numeric(spl[1]) + 1]][
-                                  as.numeric(spl[2]) + 1]))
-                # *** Categorical ***
-                # in
-                } else if (length(spl <- strsplit(rule, "[]", TRUE)[[1]]) == 2) {
-                  inList <- paste0("c('", paste0(model$modSplitValRef[[
-                    as.numeric(spl[1]) + 1]][
-                      eval(parse(text = paste0("c(", spl[2], ")"))) + 1
-                    ], collapse = "','"), "')")
-                  return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1],
-                                "']] %in% ", inList))
-                # not in
-                } else if (length(spl <- strsplit(rule, "][", TRUE)[[1]]) == 2) {
-                  inList <- paste0("c('", paste0(model$modSplitValRef[[
-                    as.numeric(spl[1]) + 1]][
-                      eval(parse(text = paste0("c(", spl[2], ")"))) + 1
-                    ], collapse = "','"), "')")
-                  return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1],
-                                "']] %notin% ", inList))
-                } else {
-                  return("")
-                }
-              }), collapse = " & ")})
+    # Parse only distinct rule strings, then expand by lookup.
+    # The same rule is pushed once per DLM term in the C++ recording loop,
+    # so termRules typically holds ~100x more entries than distinct rules
+    parseRuleStr <- function(str) {
+      paste0(lapply(sort(str), function(rule) {
+        # no rule
+        if (length(rule) == 0) {
+          return("")
+        # *** Continuous ***
+        # >=
+        } else if (length(spl <- strsplit(rule, ">=", TRUE)[[1]]) == 2) {
+          return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1], "']] >= ",
+                        model$modSplitValRef[[as.numeric(spl[1]) + 1]][
+                          as.numeric(spl[2]) + 1]))
+        # >
+        } else if (length(spl <- strsplit(rule, "<", TRUE)[[1]]) == 2) {
+          return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1], "']] < ",
+                        model$modSplitValRef[[as.numeric(spl[1]) + 1]][
+                          as.numeric(spl[2]) + 1]))
+        # *** Categorical ***
+        # in
+        } else if (length(spl <- strsplit(rule, "[]", TRUE)[[1]]) == 2) {
+          inList <- paste0("c('", paste0(model$modSplitValRef[[
+            as.numeric(spl[1]) + 1]][
+              eval(parse(text = paste0("c(", spl[2], ")"))) + 1
+            ], collapse = "','"), "')")
+          return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1],
+                        "']] %in% ", inList))
+        # not in
+        } else if (length(spl <- strsplit(rule, "][", TRUE)[[1]]) == 2) {
+          inList <- paste0("c('", paste0(model$modSplitValRef[[
+            as.numeric(spl[1]) + 1]][
+              eval(parse(text = paste0("c(", spl[2], ")"))) + 1
+            ], collapse = "','"), "')")
+          return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1],
+                        "']] %notin% ", inList))
+        } else {
+          return("")
+        }
+      }), collapse = " & ")
+    }
+
+    # Main effect rules
+    uniqueRuleStr <- unique(model$termRules)
+    uniqueParsed  <- as.character(sapply(strsplit(uniqueRuleStr, "&", TRUE),
+                                         parseRuleStr))
+    rule <- uniqueParsed[match(model$termRules, uniqueRuleStr)]
 
     # Mixture interaction for hdlmm
     if (model$class == "hdlmm" & model$interaction > 0) {
-      splitRulesMIX <- strsplit(model$termRuleMIX, "&", TRUE) 
-      ruleMIX <- as.character(sapply(splitRulesMIX, function(str) {
-                  paste0(lapply(sort(str), function(rule) {
-                    # no rule
-                    if (length(rule) == 0) {
-                      return("")
-                    # *** Continuous ***
-                    # >=
-                    } else if (length(spl <- strsplit(rule, ">=", TRUE)[[1]]) == 2) {
-                      return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1], "']] >= ",
-                                    model$modSplitValRef[[as.numeric(spl[1]) + 1]][
-                                      as.numeric(spl[2]) + 1]))
-                    # >
-                    } else if (length(spl <- strsplit(rule, "<", TRUE)[[1]]) == 2) {
-                      return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1], "']] < ",
-                                    model$modSplitValRef[[as.numeric(spl[1]) + 1]][
-                                      as.numeric(spl[2]) + 1]))
-                    # *** Categorical ***
-                    # in
-                    } else if (length(spl <- strsplit(rule, "[]", TRUE)[[1]]) == 2) {
-                      inList <- paste0("c('", paste0(model$modSplitValRef[[
-                        as.numeric(spl[1]) + 1]][
-                          eval(parse(text = paste0("c(", spl[2], ")"))) + 1
-                        ], collapse = "','"), "')")
-                      return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1],
-                                    "']] %in% ", inList))
-                    # not in
-                    } else if (length(spl <- strsplit(rule, "][", TRUE)[[1]]) == 2) {
-                      inList <- paste0("c('", paste0(model$modSplitValRef[[
-                        as.numeric(spl[1]) + 1]][
-                          eval(parse(text = paste0("c(", spl[2], ")"))) + 1
-                        ], collapse = "','"), "')")
-                      return(paste0("mod[['", modNames[as.numeric(spl[1]) + 1],
-                                    "']] %notin% ", inList))
-                    } else {
-                      return("")
-                    }
-                  }), collapse = " & ")}))
-        } else {
-          ruleMIX = NA
-        }
+      uniqueRuleStrMIX <- unique(model$termRuleMIX)
+      uniqueParsedMIX  <- as.character(sapply(strsplit(uniqueRuleStrMIX, "&", TRUE),
+                                              parseRuleStr))
+      ruleMIX <- as.character(uniqueParsedMIX[match(model$termRuleMIX, uniqueRuleStrMIX)])
+    } else {
+      ruleMIX = NA
+    }
         
     model$modPairs <- sort(table(do.call(c, lapply(splitRules, function(r) {
       if (length(r) == 0) {
