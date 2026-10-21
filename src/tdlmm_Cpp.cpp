@@ -780,8 +780,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
 
 
   // *** Initial draws ***
-  (ctr->fhat).resize(ctr->n);                         (ctr->fhat).setZero();     
-  ctr->R = ctr->Ystar;                                                          
+  (ctr->fhat).resize(ctr->n);                         (ctr->fhat).setZero();                                                        
   (ctr->gamma).resize(ctr->pZ);                                               
   // Load initial params for faster convergence in binomial model
   if (ctr->binomial) {
@@ -795,6 +794,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
     // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
     ctr->Ystar = ctr->kappa.array() / ctr->Omega.array();
   }
+  ctr->R = ctr->Ystar;       
   (ctr->totTermExp).resize(ctr->nExp);                (ctr->totTermExp).setZero();    
   (ctr->sumTermT2Exp).resize(ctr->nExp);              (ctr->sumTermT2Exp).setZero();  
   (ctr->muExp).resize(ctr->nExp);                     (ctr->muExp).setOnes();                       
@@ -872,8 +872,7 @@ Rcpp::List tdlmm_Cpp(const Rcpp::List model)
         ctr->R += (ctr->Rmat).col(t + 1) - (ctr->Rmat).col(t); 
     }
 
-    // Pre-calculations for control and variance
-    ctr->R = ctr->Ystar - ctr->fhat - ctr->deltaRE;             
+    // Pre-calculations for control and variance        
     ctr->sumTermT2 = (ctr->sumTermT2Exp).sum();
     ctr->totTerm = (ctr->totTermExp).sum();
     if(ctr->interaction) {
