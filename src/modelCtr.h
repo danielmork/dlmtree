@@ -338,6 +338,7 @@ public:
   double pXd;
   double m1Var, m2Var;
   double nTermMix;
+  double minEig, maxEig;
 };
 
 

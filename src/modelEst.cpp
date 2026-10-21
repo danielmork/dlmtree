@@ -30,6 +30,7 @@ using Eigen::Upper;
  * @param ctr model control data
  */
 void tdlmModelEst(modelCtr *ctr){ 
+  ctr->R = ctr->Ystar - ctr->fhat - ctr->deltaRE;
   if (!(ctr->zinb)) { 
     const VectorXd ZR = ctr->Zw.transpose() * ctr->R; 
     ctr->gamma        = ctr->Vg * ZR; 
@@ -105,6 +106,7 @@ void tdlmModelEst(modelCtr *ctr){
       // Update the V_gamma cholesky using LLT Decomposition, Lower triangular part of matrix L
       ctr->VgChol = ctr->Vg.llt().matrixL();
       ctr->Ystar = ctr->kappa.array() / ctr->Omega.array();  // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
+      ctr->R = ctr->Ystar - ctr->fhat - ctr->deltaRE;
     } // end update polya gamma vars (binomial model)
 
     
@@ -240,7 +242,7 @@ void tdlmModelEst(modelCtr *ctr){
 
     // R (partial residual)
     Eigen::VectorXd fhatStar = ctr->fhat.array() * (1 - ctr->w.array()); 
-    ctr->R = ctr->Ystar - fhatStar;
+    ctr->R = ctr->Ystar - fhatStar - ctr->deltaRE;
 
     // 4-3: Sample gamma_2
     const Eigen::VectorXd ZR = ctr->Zw.transpose() * (ctr->R);
