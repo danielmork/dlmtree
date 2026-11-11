@@ -33,7 +33,7 @@ treeMHR dlnmMHR(std::vector<Node*> nodes, tdlmCtr *ctr,
 {
   treeMHR out;
   int pX = int(nodes.size());
-  
+
   if ((pX == 1) && (!ctr->binomial) && (!ctr->zinb)) { // single terminal node, cont. response
     double VTheta = var / (var * ctr->VTheta1Inv + 1.0);
     double XtVzInvR = (ctr->X1).dot(ctr->R) - (ctr->VgZtX1).dot(ZtR);
@@ -48,7 +48,6 @@ treeMHR dlnmMHR(std::vector<Node*> nodes, tdlmCtr *ctr,
     out.logVThetaChol = log(VThetaChol);
 
   } else { // 2+ terminal nodes or binomial response
-
     MatrixXd ZtX(ctr->pZ, pX);      ZtX.setZero();
     MatrixXd VgZtX(ctr->pZ, pX);    VgZtX.setZero();
 
@@ -97,6 +96,7 @@ treeMHR dlnmMHR(std::vector<Node*> nodes, tdlmCtr *ctr,
 
     XtVzInvR.noalias() -= VgZtX.transpose() * ZtR;
     tempV.diagonal().array() += 1.0 / var;
+    // tempV.diagonal().array() += 1e-6 * tempV.diagonal().mean();
     const MatrixXd VTheta = tempV.inverse();
     const MatrixXd VThetaChol = VTheta.llt().matrixL();
     const VectorXd ThetaHat = VTheta * XtVzInvR;
@@ -108,10 +108,34 @@ treeMHR dlnmMHR(std::vector<Node*> nodes, tdlmCtr *ctr,
     out.draw.noalias() += VThetaChol * as<VectorXd>(rnorm(pX, 0, sqrt(ctr->sigma2)));
     out.beta = ThetaHat.dot(XtVzInvR);
     out.logVThetaChol = VThetaChol.diagonal().array().log().sum();
+    
+    // Eigen::SelfAdjointEigenSolver<MatrixXd> es(tempV, Eigen::EigenvaluesOnly);
+    // VectorXd ev = es.eigenvalues();
+    // out.minEig = ev(0);
+    // out.maxEig = ev(ev.size() - 1);
+    // const int nNonPos = (ev.array() <= 0.0).count();
+    // Rcout << " | min=" << out.minEig
+    //       << " | max=" << out.maxEig
+    //       << " | cond=" << (out.minEig > 0 ? out.maxEig / out.minEig : R_PosInf)
+    //       << "\n";
   } // end 2+ terminal nodes
+
+  
 
   out.termT2 = (out.draw).dot(out.draw);
   out.nTerm = double(pX);
+  // out.termT2 = 0;
+  // out.nTerm = 0;
+  // for (std::size_t s = 0; s < nodes.size(); ++s) {
+  //   if (out.Xd.col(s).sum() > 1) {
+  //     out.termT2 += out.draw(s) * out.draw(s);
+  //     out.nTerm += 1;
+  //     Rcout << out.Xd.col(s).sum() << " ";
+  //   }
+  // }
+
+  // Rcout << nodes.size() << " : " << out.nTerm << "\n";
+  // Rcout << out.draw.maxCoeff() << "\n";
 
   return(out);
 } // end drawMHR
@@ -173,6 +197,9 @@ void tdlnmTreeMCMC(int t, Node *tree, tdlmCtr *ctr, tdlmLog *dgn,
                   log(0.5 * (RtR - RtZVgZtR - mhr0.beta) + ctr->xiInvSigma2))) -
                   (log(treevar) * 0.5 * (mhr.nTerm - mhr0.nTerm));
     }
+
+    // if ((mhr.minEig < mhr.maxEig * 1e-6 || mhr.minEig < 0 || mhr.nTerm > 8) && mhr.nTerm > mhr0.nTerm)
+    //   ratio = R_NegInf;
     
     if (log(R::runif(0, 1)) < ratio) {
       mhr0 = mhr;
@@ -284,7 +311,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   // V_gamma for ZI model
   Eigen::MatrixXd VgInv1(ctr->pZ1, ctr->pZ1);    
   VgInv1 = (ctr->Z1).transpose() * (ctr->Z1);    
-  VgInv1.diagonal().array() += 1.0 / 10000.0;      
+  VgInv1.diagonal().array() += 1.0 / 100000.0;      
   ctr->Vg1 = VgInv1.inverse();
   VgInv1.resize(0,0);    
   ctr->VgChol1 = (ctr->Vg1).llt().matrixL();
@@ -292,7 +319,7 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   // V_gamma for (Gaussian / Binary / NB model) 
   Eigen::MatrixXd VgInv(ctr->pZ, ctr->pZ);
   VgInv = (ctr->Z).transpose() * (ctr->Z);
-  VgInv.diagonal().array() += 1.0 / 10000.0;
+  VgInv.diagonal().array() += 1.0 / 100000.0;
   ctr->Vg = VgInv.inverse();
   VgInv.resize(0,0);
   ctr->VgChol = (ctr->Vg).llt().matrixL();    
@@ -436,7 +463,6 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
   
   // * Initial values and draws
   ctr->fhat.resize(ctr->n);                         (ctr->fhat).setZero();
-  ctr->R = ctr->Ystar; 
   ctr->gamma.resize(ctr->pZ);
   // Load initial params for faster convergence in binomial model
   if (ctr->binomial) {
@@ -444,12 +470,13 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     ctr->Omega = rcpp_pgdraw(ctr->binomialSize, ctr->fhat + ctr->Z * ctr->gamma);
     ctr->Zw = ctr->Omega.asDiagonal() * ctr->Z;
     ctr->VgInv = ctr->Z.transpose() * ctr->Zw;
-    ctr->VgInv.diagonal().array() += 1 / 1000.0;
+    ctr->VgInv.diagonal().array() += 1 / 100000.0;
     ctr->Vg = ctr->VgInv.inverse();
     ctr->VgChol = ctr->Vg.llt().matrixL();
     // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
     ctr->Ystar = ctr->kappa.array() / ctr->Omega.array();
   }
+  ctr->R = ctr->Ystar; 
   ctr->totTerm = 0;
   ctr->sumTermT2 = 0;
   ctr->nu = 1.0; 
@@ -495,7 +522,6 @@ Rcpp::List tdlnm_Cpp(const Rcpp::List model)
     } // end update trees
 
     // * Update model
-    ctr->R = ctr->Ystar - ctr->fhat - ctr->deltaRE; 
     tdlmModelEst(ctr);
     rHalfCauchyFC(&(ctr->nu), ctr->totTerm, ctr->sumTermT2 / ctr->sigma2);
     if ((ctr->sigma2 != ctr->sigma2) || (ctr->nu != ctr->nu)) {

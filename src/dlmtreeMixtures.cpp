@@ -352,7 +352,6 @@ Rcpp::List dlmtreeMixtures(const Rcpp::List model){
 
     // Rcout << "Tree ensemble update finished \n";
     // Update the parameters
-    ctr->R          = ctr->Ystar - ctr->fhat - ctr->deltaRE;
     ctr->sumTermT2  = (ctr->sumTermT2Exp).sum();
     ctr->totTerm    = (ctr->totTermExp).sum();
     if(ctr->interaction > 0) {

@@ -179,7 +179,6 @@ Rcpp::List dlmtreeNested(const Rcpp::List model)
     
   // * Initial draws
   (ctr->fhat).resize(ctr->n);   (ctr->fhat).setZero();
-  ctr->R = ctr->Ystar;  
   (ctr->gamma).resize(ctr->pZ);
 
   // Load initial params for faster convergence in binomial model
@@ -194,6 +193,7 @@ Rcpp::List dlmtreeNested(const Rcpp::List model)
     // recalculate 'pseudo-Y' = kappa / omega, kappa = (y - n_b)/2
     ctr->Ystar      = ctr->kappa.array() / ctr->Omega.array();
   }
+  ctr->R = ctr->Ystar;  
   ctr->totTerm    = 0;
   ctr->sumTermT2  = 0;
   ctr->nu         = 1.0; // ! Need to define for first update of sigma2
@@ -241,7 +241,6 @@ Rcpp::List dlmtreeNested(const Rcpp::List model)
     } // end update trees
 
     // * Update model
-    ctr->R = ctr->Ystar - ctr->fhat - ctr->deltaRE;    
     tdlmModelEst(ctr);
     rHalfCauchyFC(&(ctr->nu), ctr->totTerm, ctr->sumTermT2 / ctr->sigma2);
     // Rcout << "\n";

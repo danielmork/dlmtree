@@ -246,7 +246,6 @@ Rcpp::List dlmtreeShared(const Rcpp::List model)
     } // end update trees
 
     // -- Update model --
-    ctr->R = ctr->Ystar - ctr->fhat - ctr->deltaRE;
     tdlmModelEst(ctr);
     rHalfCauchyFC(&(ctr->nu), ctr->totTerm, ctr->sumTermT2 / ctr->sigma2);
 
