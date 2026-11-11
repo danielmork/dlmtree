@@ -1,3 +1,7 @@
+# dlmtree 1.2.1
+bug fixes:
+* binary/logit models do not properly updated ctr->R after sampling \Omega
+
 # dlmtree 1.2.0
 * added support for cluster random effects
   * access by using the 'cluster' input into any modeling function
