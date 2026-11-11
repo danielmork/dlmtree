@@ -12,16 +12,16 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/danielmork/dlmtree/blob/1.2.0/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/danielmork/dlmtree/blob/master/DESCRIPTION)
 
 Mork D, Im S, Wilson A (2026). *dlmtree: Bayesian Treed Distributed Lag
-Models*. R package version 1.2.0,
+Models*. R package version 1.2.1,
 <https://github.com/danielmork/dlmtree>.
 
     @Manual{,
       title = {dlmtree: Bayesian Treed Distributed Lag Models},
       author = {Daniel Mork and Seongwon Im and Ander Wilson},
       year = {2026},
-      note = {R package version 1.2.0},
+      note = {R package version 1.2.1},
       url = {https://github.com/danielmork/dlmtree},
     }

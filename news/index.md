@@ -1,6 +1,13 @@
 # Changelog
 
+## dlmtree 1.2.1
+
+bug fixes: \* binary/logit models do not properly updated ctr-\>R after
+sampling
+
 ## dlmtree 1.2.0
+
+CRAN release: 2026-08-04
 
 - added support for cluster random effects
   - access by using the ‘cluster’ input into any modeling function

@@ -60,7 +60,7 @@ tdlm.fit <- dlmtree(formula = bwgaz ~ ChildSex + MomAge + MomPriorBMI +
     #> Burn-in % complete 
     #> [0--------25--------50--------75--------100]
     #>  ''''''''''''''''''''''''''''''''''''''''''
-    #> MCMC iterations (est time: 28 seconds)
+    #> MCMC iterations (est time: 16 seconds)
     #> [0--------25--------50--------75--------100]
     #>  ''''''''''''''''''''''''''''''''''''''''''
     #> Compiling results...
@@ -89,71 +89,71 @@ print(tdlm.sum)
     #> 
     #> Fixed effect coefficients:
     #>                        Mean  Lower  Upper
-    #> *(Intercept)          2.286  2.014  2.544
-    #> *ChildSexM           -2.105 -2.125 -2.084
+    #> *(Intercept)          2.409  2.135  2.679
+    #> *ChildSexM           -2.106 -2.126 -2.086
     #> MomAge                0.000 -0.001  0.002
-    #> *MomPriorBMI         -0.021 -0.023 -0.019
-    #> RaceAsianPI           0.066 -0.065  0.187
-    #> RaceBlack             0.076 -0.051  0.201
-    #> Racewhite             0.057 -0.065  0.178
-    #> *HispanicNonHispanic  0.255  0.232  0.278
-    #> *SmkAnyY             -0.403 -0.451 -0.357
-    #> EstMonthConcept2     -0.049 -0.109  0.011
-    #> *EstMonthConcept3    -0.143 -0.210 -0.080
-    #> *EstMonthConcept4    -0.228 -0.294 -0.162
-    #> *EstMonthConcept5    -0.205 -0.262 -0.148
-    #> *EstMonthConcept6    -0.205 -0.258 -0.150
-    #> EstMonthConcept7     -0.032 -0.086  0.024
-    #> *EstMonthConcept8     0.145  0.083  0.206
-    #> *EstMonthConcept9     0.394  0.329  0.461
-    #> *EstMonthConcept10    0.372  0.307  0.439
-    #> *EstMonthConcept11    0.332  0.271  0.389
-    #> *EstMonthConcept12    0.131  0.077  0.185
+    #> *MomPriorBMI         -0.021 -0.022 -0.019
+    #> RaceAsianPI           0.044 -0.082  0.173
+    #> RaceBlack             0.055 -0.077  0.186
+    #> Racewhite             0.035 -0.084  0.160
+    #> *HispanicNonHispanic  0.254  0.231  0.276
+    #> *SmkAnyY             -0.404 -0.451 -0.358
+    #> EstMonthConcept2     -0.053 -0.113  0.011
+    #> *EstMonthConcept3    -0.149 -0.215 -0.084
+    #> *EstMonthConcept4    -0.232 -0.299 -0.162
+    #> *EstMonthConcept5    -0.206 -0.265 -0.150
+    #> *EstMonthConcept6    -0.205 -0.259 -0.149
+    #> EstMonthConcept7     -0.034 -0.091  0.023
+    #> *EstMonthConcept8     0.140  0.077  0.205
+    #> *EstMonthConcept9     0.387  0.317  0.454
+    #> *EstMonthConcept10    0.367  0.300  0.431
+    #> *EstMonthConcept11    0.329  0.271  0.387
+    #> *EstMonthConcept12    0.127  0.075  0.181
     #> ---
     #> * = CI does not contain zero
     #> 
     #> DLM effect:
     #> range = [-0.019, 0.008]
-    #> signal-to-noise = 0.021
-    #> critical windows: 11-20,36 
+    #> signal-to-noise = 0.022
+    #> critical windows: 11-20 
     #>              Mean  Lower  Upper
-    #> Period 1    0.003 -0.005  0.015
-    #> Period 2    0.000 -0.006  0.010
-    #> Period 3   -0.002 -0.009  0.004
-    #> Period 4   -0.002 -0.010  0.003
-    #> Period 5   -0.001 -0.007  0.004
+    #> Period 1    0.002 -0.005  0.015
+    #> Period 2    0.000 -0.007  0.009
+    #> Period 3   -0.002 -0.010  0.004
+    #> Period 4   -0.003 -0.011  0.002
+    #> Period 5   -0.002 -0.008  0.004
     #> Period 6   -0.001 -0.006  0.005
     #> Period 7   -0.001 -0.006  0.005
-    #> Period 8   -0.001 -0.008  0.004
-    #> Period 9   -0.002 -0.012  0.004
-    #> Period 10  -0.003 -0.014  0.006
-    #> *Period 11 -0.016 -0.025 -0.005
+    #> Period 8   -0.002 -0.008  0.004
+    #> Period 9   -0.003 -0.013  0.004
+    #> Period 10  -0.003 -0.014  0.005
+    #> *Period 11 -0.016 -0.024 -0.007
     #> *Period 12 -0.017 -0.024 -0.010
-    #> *Period 13 -0.017 -0.024 -0.012
+    #> *Period 13 -0.018 -0.024 -0.012
     #> *Period 14 -0.017 -0.022 -0.011
     #> *Period 15 -0.017 -0.022 -0.011
-    #> *Period 16 -0.017 -0.022 -0.010
-    #> *Period 17 -0.017 -0.024 -0.011
-    #> *Period 18 -0.019 -0.029 -0.013
-    #> *Period 19 -0.018 -0.027 -0.011
-    #> *Period 20 -0.015 -0.024 -0.003
-    #> Period 21  -0.005 -0.018  0.003
-    #> Period 22  -0.002 -0.009  0.006
-    #> Period 23  -0.003 -0.011  0.003
+    #> *Period 16 -0.017 -0.022 -0.011
+    #> *Period 17 -0.018 -0.023 -0.012
+    #> *Period 18 -0.019 -0.030 -0.013
+    #> *Period 19 -0.019 -0.028 -0.011
+    #> *Period 20 -0.015 -0.024 -0.002
+    #> Period 21  -0.007 -0.019  0.002
+    #> Period 22  -0.003 -0.011  0.005
+    #> Period 23  -0.003 -0.012  0.002
     #> Period 24  -0.002 -0.009  0.004
-    #> Period 25  -0.001 -0.005  0.006
-    #> Period 26   0.000 -0.005  0.006
-    #> Period 27  -0.001 -0.006  0.005
-    #> Period 28  -0.001 -0.006  0.004
-    #> Period 29  -0.001 -0.007  0.004
-    #> Period 30  -0.002 -0.008  0.003
-    #> Period 31  -0.002 -0.008  0.004
+    #> Period 25  -0.001 -0.006  0.005
+    #> Period 26  -0.001 -0.005  0.005
+    #> Period 27  -0.001 -0.006  0.004
+    #> Period 28  -0.001 -0.007  0.003
+    #> Period 29  -0.002 -0.008  0.003
+    #> Period 30  -0.002 -0.009  0.003
+    #> Period 31  -0.002 -0.009  0.004
     #> Period 32  -0.001 -0.008  0.006
-    #> Period 33   0.002 -0.005  0.010
-    #> Period 34   0.004 -0.003  0.011
-    #> Period 35   0.006 -0.001  0.014
-    #> *Period 36  0.008  0.000  0.017
-    #> Period 37   0.008  0.000  0.018
+    #> Period 33   0.002 -0.005  0.009
+    #> Period 34   0.003 -0.004  0.011
+    #> Period 35   0.005 -0.002  0.013
+    #> Period 36   0.007  0.000  0.016
+    #> Period 37   0.008  0.000  0.017
     #> ---
     #> * = CI does not contain zero
     #> 

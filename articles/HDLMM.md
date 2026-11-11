@@ -65,7 +65,7 @@ hdlmm.fit <- dlmtree(formula = bwgaz ~ ChildSex + MomAge + MomPriorBMI +
     #> Burn-in % complete 
     #> [0--------25--------50--------75--------100]
     #>  ''''''''''''''''''''''''''''''''''''''''''
-    #> MCMC iterations (est time: 14 minutes)
+    #> MCMC iterations (est time: 7.7 minutes)
     #> [0--------25--------50--------75--------100]
     #>  ''''''''''''''''''''''''''''''''''''''''''
     #> Compiling results...

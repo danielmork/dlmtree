@@ -60,7 +60,7 @@ tdlnm.fit <- dlmtree(formula = bwgaz ~ ChildSex + MomAge + MomPriorBMI +
 #> Burn-in % complete 
 #> [0--------25--------50--------75--------100]
 #>  ''''''''''''''''''''''''''''''''''''''''''
-#> MCMC iterations (est time: 28 seconds)
+#> MCMC iterations (est time: 16 seconds)
 #> [0--------25--------50--------75--------100]
 #>  ''''''''''''''''''''''''''''''''''''''''''
 #> Compiling results...
@@ -89,35 +89,35 @@ print(tdlnm.sum)
 #> 
 #> Fixed effect coefficients:
 #>                        Mean  Lower  Upper
-#> (Intercept)           0.163 -0.863  1.194
+#> (Intercept)           0.186 -2.892  3.193
 #> *ChildSexM           -2.106 -2.127 -2.085
 #> MomAge                0.001 -0.001  0.002
 #> *MomPriorBMI         -0.021 -0.023 -0.019
-#> RaceAsianPI           0.025 -0.095  0.153
-#> RaceBlack             0.032 -0.098  0.155
-#> Racewhite             0.012 -0.107  0.131
-#> *HispanicNonHispanic  0.255  0.232  0.278
-#> *SmkAnyY             -0.398 -0.446 -0.350
-#> *EstMonthConcept2     0.118  0.034  0.200
-#> *EstMonthConcept3     0.234  0.104  0.367
-#> *EstMonthConcept4     0.371  0.209  0.535
-#> *EstMonthConcept5     0.498  0.319  0.677
-#> *EstMonthConcept6     0.450  0.277  0.624
-#> *EstMonthConcept7     0.386  0.217  0.549
-#> *EstMonthConcept8     0.235  0.071  0.397
-#> *EstMonthConcept9     0.259  0.103  0.421
-#> *EstMonthConcept10    0.152  0.013  0.291
-#> *EstMonthConcept11    0.119  0.014  0.227
-#> EstMonthConcept12     0.016 -0.061  0.092
+#> RaceAsianPI           0.026 -0.101  0.156
+#> RaceBlack             0.030 -0.102  0.160
+#> Racewhite             0.012 -0.113  0.138
+#> *HispanicNonHispanic  0.256  0.232  0.278
+#> *SmkAnyY             -0.397 -0.442 -0.351
+#> *EstMonthConcept2     0.123  0.036  0.203
+#> *EstMonthConcept3     0.238  0.105  0.362
+#> *EstMonthConcept4     0.371  0.211  0.524
+#> *EstMonthConcept5     0.500  0.329  0.676
+#> *EstMonthConcept6     0.453  0.276  0.630
+#> *EstMonthConcept7     0.391  0.220  0.567
+#> *EstMonthConcept8     0.241  0.074  0.413
+#> *EstMonthConcept9     0.268  0.106  0.436
+#> *EstMonthConcept10    0.160  0.017  0.297
+#> *EstMonthConcept11    0.123  0.017  0.230
+#> EstMonthConcept12     0.014 -0.062  0.086
 #> ---
 #> * = CI does not contain zero
 #> 
 #> DLNM effect:
-#> range = [-0.041, 0.063]
-#> signal-to-noise = 0.41
-#> critical windows: 4-6,10-34 
+#> range = [-0.047, 0.067]
+#> signal-to-noise = 0.411
+#> critical windows: 1-7,11-34 
 #> 
-#> residual standard errors: 0.008
+#> residual standard errors: 0.011
 ```
 
 ### Exposure-time surface
